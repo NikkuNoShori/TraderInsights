@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #ffffff;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --primary: #6366f1;
+    --primary-foreground: #ffffff;
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+    --text-muted: #6b7280;
+    --dark-bg: #1a1b1e;
+    --dark-paper: #25262b;
+    --dark-border: #2e2e35;
+    --dark-text: #f3f4f6;
+    --dark-muted: #6b7280;
+  }
+
+  .dark {
+    --background: var(--dark-bg);
+    --card: var(--dark-paper);
+    --border: var(--dark-border);
+    --text-primary: var(--dark-text);
+    --text-secondary: var(--dark-text);
+    --text-muted: var(--dark-muted);
+  }
+}
+
+/* Optional: Add any global styles here */
+body {
+  @apply bg-background text-text-primary;
+}
+
+@layer components {
+  .card {
+    @apply bg-card border border-border rounded-lg shadow-sm;
+  }
+
+  .btn {
+    @apply px-4 py-2 rounded-md font-medium transition-colors;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary text-primary-foreground hover:opacity-90;
+  }
+
+  .input {
+    @apply w-full rounded-md border-border bg-card px-3 py-2 
+           text-sm text-text-primary
+           focus:outline-none focus:ring-2 
+           focus:ring-primary focus:border-transparent;
+  }
+}
+
+@keyframes progress {
+  0% { width: 0; }
+  50% { width: 70%; }
+  100% { width: 100%; }
+}
+
+.animate-progress {
+  animation: progress 2s ease-in-out;
+}

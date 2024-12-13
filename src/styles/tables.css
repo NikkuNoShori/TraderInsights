@@ -1,0 +1,68 @@
+@layer components {
+  /* Table Container */
+  .table-container {
+    @apply overflow-x-auto bg-white dark:bg-dark-paper rounded-lg shadow;
+  }
+
+  /* Base Table */
+  .table-base {
+    @apply min-w-full;
+  }
+
+  /* Table Header */
+  .table-header-group tr {
+    @apply grid grid-cols-7 text-center bg-white dark:bg-dark-paper border-b border-gray-200 dark:border-gray-700;
+  }
+
+  .table-header-cell {
+    @apply px-6 py-4 text-sm font-semibold text-gray-900 dark:text-white;
+  }
+
+  /* Table Body */
+  .table-body {
+    @apply divide-y divide-gray-200 dark:divide-gray-700;
+  }
+
+  .table-row {
+    @apply grid grid-cols-7 text-center hover:bg-gray-50 dark:hover:bg-gray-800/50;
+  }
+
+  /* Table Cells */
+  .table-cell {
+    @apply px-6 py-4 text-sm text-gray-500 dark:text-gray-400;
+  }
+
+  .table-cell-bold {
+    @apply px-6 py-4 text-sm font-medium text-gray-900 dark:text-white;
+  }
+
+  .table-cell-side {
+    @apply px-6 py-4 text-sm text-blue-500 dark:text-blue-400;
+  }
+
+  .table-cell-numeric {
+    @apply px-6 py-4 text-sm text-gray-500 dark:text-gray-400;
+  }
+
+  /* Cell Content */
+  .cell-profit {
+    @apply text-orange-500 dark:text-orange-400;
+  }
+
+  .cell-loss {
+    @apply text-red-500 dark:text-red-400;
+  }
+
+  .cell-neutral {
+    @apply text-gray-500 dark:text-gray-400;
+  }
+
+  /* Actions */
+  .table-actions {
+    @apply px-6 py-4;
+  }
+
+  .table-action-button {
+    @apply text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-500;
+  }
+} 

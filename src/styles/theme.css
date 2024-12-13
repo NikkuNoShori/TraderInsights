@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Dark theme colors */
+    --background: rgb(17, 17, 17);
+    --card: rgb(28, 28, 28);
+    --card-hover: rgb(35, 35, 35);
+    
+    /* Consolidate text colors */
+    --text: rgb(255, 255, 255);
+    --text-muted: rgba(255, 255, 255, 0.6);
+    --text-dim: rgba(255, 255, 255, 0.4);
+    
+    /* Single source of truth for each color type */
+    --border: rgba(255, 255, 255, 0.1);
+    --border-hover: rgba(255, 255, 255, 0.2);
+    
+    --success: rgb(52, 211, 153);
+    --error: rgb(239, 68, 68);
+    --warning: rgb(251, 191, 36);
+    
+    /* Remove duplicate input/button styles */
+    --input-bg: rgb(35, 35, 35);
+    --input-border: var(--border);
+    --input-text: var(--text);
+    --input-placeholder: var(--text-dim);
+    
+    --button-bg: var(--input-bg);
+    --button-text: var(--text);
+    --button-border: var(--border);
+    --button-hover: rgb(45, 45, 45);
+  }
+}
+
+@layer utilities {
+  .bg-primary {
+    background-color: var(--primary);
+  }
+  .text-primary-foreground {
+    color: var(--primary-foreground);
+  }
+  .bg-secondary {
+    background-color: var(--secondary);
+  }
+  .text-secondary-foreground {
+    color: var(--secondary-foreground);
+  }
+  .text-input {
+    color: var(--input-text);
+  }
+  
+  .placeholder-input::placeholder {
+    color: var(--input-placeholder);
+  }
+  
+  .bg-input {
+    background-color: var(--input-bg);
+  }
+  
+  .border-input {
+    border-color: var(--input-border);
+  }
+
+  .icon-hover {
+    @apply transition-colors duration-200;
+  }
+  
+  .icon-hover:hover {
+    @apply text-text;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply rounded-md px-4 py-2 font-medium transition-colors;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary text-primary-foreground hover:opacity-90;
+  }
+
+  .btn-secondary {
+    @apply btn bg-secondary text-secondary-foreground hover:opacity-90;
+  }
+} 
