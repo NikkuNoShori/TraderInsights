@@ -6,14 +6,15 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      "@": path.resolve(__dirname, "./src"),
     },
-    extensions: ['.js', '.ts', '.jsx', '.tsx']
+    extensions: [".js", ".ts", ".jsx", ".tsx"],
   },
   server: {
     port: 5173,
-    strictPort: false,
-    host: true
+    strictPort: true,
+    host: true,
+    open: true,
   },
   build: {
     sourcemap: true,
@@ -21,12 +22,12 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu'],
-          charts: ['recharts', 'lightweight-charts'],
-          utils: ['date-fns', 'axios']
-        }
-      }
-    }
-  }
+          vendor: ["react", "react-dom", "react-router-dom"],
+          ui: ["@radix-ui/react-dialog", "@radix-ui/react-dropdown-menu"],
+          charts: ["recharts", "lightweight-charts"],
+          utils: ["date-fns", "axios"],
+        },
+      },
+    },
+  },
 });

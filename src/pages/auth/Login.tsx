@@ -1,160 +1,148 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
-import { Logo } from '../../components/ui/Logo';
 import { toast } from 'react-hot-toast';
+import { authService } from '../../services/auth';
 
 export function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isQuickLoading, setIsQuickLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [userExists, setUserExists] = useState<boolean | null>(null);
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  // Check if user exists when email changes
+  useEffect(() => {
+    const checkUser = async () => {
+      if (email && email.includes('@')) {
+        const exists = await authService.checkUserExists(email);
+        setUserExists(exists);
+        // Automatically switch mode based on user existence
+        setIsSignUp(!exists);
+      } else {
+        setUserExists(null);
+      }
+    };
+
+    const debounceTimer = setTimeout(checkUser, 500);
+    return () => clearTimeout(debounceTimer);
+  }, [email]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-      if (error) throw error;
+      const { data, error } = isSignUp 
+        ? await authService.signUp(email, password)
+        : await authService.signIn(email, password);
+
+      if (error) {
+        // Handle specific error cases
+        if (error.message?.includes('already exists')) {
+          setIsSignUp(false);
+          throw new Error('Account already exists. Please sign in instead.');
+        } else if (error.message?.includes('not found')) {
+          setIsSignUp(true);
+          throw new Error('No account found. Please sign up first.');
+        }
+        throw error;
+      }
       
+      if (isSignUp && !data.session) {
+        toast.success('Please check your email to confirm your account');
+        return;
+      }
+
       if (!data.session) {
         throw new Error('No session returned from authentication');
       }
       
-      navigate('/dashboard');
+      navigate('/app/dashboard');
     } catch (error) {
-      console.error('Error signing in:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to sign in. Please try again.');
+      console.error('Authentication error:', error);
+      toast.error(error instanceof Error ? error.message : 'Authentication failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleQuickLogin = async (type: 'dev' | 'customer') => {
-    setIsQuickLoading(true);
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast.error('Please enter your email address');
+      return;
+    }
+
     try {
-      const credentials = type === 'dev'
-        ? { email: 'nickneal17@gmail.com', password: 'SuperSecret123!' }
-        : { email: 'nickneal17+customer@gmail.com', password: 'SuperSecret123!' };
-
-      console.log('Attempting login with:', { type, email: credentials.email });
-
-      const { data, error } = await supabase.auth.signInWithPassword(credentials);
-      
-      if (error) {
-        console.error('Authentication error:', error);
-        throw error;
-      }
-
-      if (!data.session) {
-        console.error('No session returned');
-        throw new Error('No session returned from authentication');
-      }
-
-      console.log('Login successful:', { user: data.user, session: data.session });
-
-      if (type === 'dev') {
-        localStorage.setItem('developer-mode', 'true');
-        console.log('Developer mode enabled');
-      }
-
-      navigate('/dashboard');
+      const { error } = await authService.resetPassword(email);
+      if (error) throw error;
+      toast.success('Password reset instructions sent to your email');
     } catch (error) {
-      console.error('Login failed:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to sign in. Please try again.');
-    } finally {
-      setIsQuickLoading(false);
+      console.error('Reset password error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to send reset instructions');
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
-      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-md dark:bg-gray-800">
-        <div className="flex flex-col items-center">
-          <Logo />
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-            Sign in to your account
-          </h2>
-        </div>
-
-        <form onSubmit={handleEmailLogin} className="mt-8 space-y-6">
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-              />
-            </div>
-            <div>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
-              />
-            </div>
+    <div className="w-full space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-4">
+          <div>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm bg-white dark:bg-gray-800"
+              placeholder="Email address"
+            />
+            {userExists !== null && (
+              <p className="mt-1 text-sm text-gray-500">
+                {userExists 
+                  ? "Account found! Please sign in."
+                  : "No account found. You'll need to sign up."}
+              </p>
+            )}
           </div>
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-          >
-            {isLoading ? 'Signing in...' : 'Sign in'}
-          </button>
-        </form>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300 dark:border-gray-700" />
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-gray-50 dark:bg-dark-bg text-gray-500 dark:text-gray-400">
-              Or quick login
-            </span>
+          <div>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-700 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm bg-white dark:bg-gray-800"
+              placeholder="Password"
+            />
           </div>
         </div>
 
-        <div className="flex gap-4">
+        <div className="flex items-center justify-between">
           <button
             type="button"
-            onClick={() => handleQuickLogin('dev')}
-            disabled={isQuickLoading}
-            className="flex-1 py-2 px-4 border border-primary-200 dark:border-primary-800 rounded-md
-                     text-sm font-medium text-primary-700 dark:text-primary-300
-                     bg-primary-50 dark:bg-primary-900/20
-                     hover:bg-primary-100 dark:hover:bg-primary-900/30
-                     focus:outline-none focus:ring-2 focus:ring-primary-500
-                     disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => setIsSignUp(!isSignUp)}
+            className="text-sm text-primary-600 hover:text-primary-500"
           >
-            {isQuickLoading ? 'Signing in...' : 'Development Login'}
+            {isSignUp ? 'Already have an account? Sign in' : 'Need an account? Sign up'}
           </button>
-
-          <button
-            type="button"
-            onClick={() => handleQuickLogin('customer')}
-            disabled={isQuickLoading}
-            className="flex-1 py-2 px-4 border border-primary-200 dark:border-primary-800 rounded-md
-                     text-sm font-medium text-primary-700 dark:text-primary-300
-                     bg-primary-50 dark:bg-primary-900/20
-                     hover:bg-primary-100 dark:hover:bg-primary-900/30
-                     focus:outline-none focus:ring-2 focus:ring-primary-500
-                     disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isQuickLoading ? 'Signing in...' : 'Customer Login'}
-          </button>
+          {!isSignUp && (
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              className="text-sm text-primary-600 hover:text-primary-500"
+            >
+              Forgot password?
+            </button>
+          )}
         </div>
-      </div>
+
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
+        >
+          {isLoading ? 'Processing...' : isSignUp ? 'Sign up' : 'Sign in'}
+        </button>
+      </form>
     </div>
   );
 }

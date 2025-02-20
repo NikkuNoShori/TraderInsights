@@ -41,8 +41,12 @@ function RouteWrapper({ children }: { children: React.ReactNode }) {
 // Create the router configuration
 const router = createBrowserRouter([
   {
+    path: '/',
+    element: <Navigate to="/auth/login" replace />
+  },
+  {
     path: '/auth',
-    element: <AuthLayout title="Login" subtitle="Welcome back" children={undefined} />,
+    element: <AuthLayout title="Login" subtitle="Welcome back"><Outlet /></AuthLayout>,
     children: [
       {
         path: 'login',
@@ -51,13 +55,13 @@ const router = createBrowserRouter([
     ]
   },
   {
-    path: '/',
+    path: '/app',
     element: <AuthGuard><Layout /></AuthGuard>,
     errorElement: <RouteErrorBoundary />,
     children: [
       {
         index: true,
-        element: <Navigate to="/dashboard" replace />
+        element: <Navigate to="/app/dashboard" replace />
       },
       {
         path: 'dashboard',
@@ -131,13 +135,13 @@ const AppContent = () => {
     try {
       switch (event) {
         case 'SIGNED_IN':
-          await router.navigate('/dashboard');
+          await router.navigate('/app/dashboard');
           break;
         case 'SIGNED_OUT':
           await router.navigate('/auth/login');
           break;
         case 'PASSWORD_RECOVERY':
-          await router.navigate('/reset-password');
+          await router.navigate('/auth/reset-password');
           break;
       }
     } finally {
