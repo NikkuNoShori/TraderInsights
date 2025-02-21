@@ -1,32 +1,47 @@
 import { createClient } from '@supabase/supabase-js';
-import { Database } from '../types/supabase';
+import type { Database } from "../types/supabase";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Get environment variables based on runtime environment
+const isServer = typeof window === "undefined";
+const supabaseUrl = isServer
+  ? process.env.VITE_SUPABASE_URL
+  : import.meta.env.VITE_SUPABASE_URL;
+
+const supabaseAnonKey = isServer
+  ? process.env.VITE_SUPABASE_ANON_KEY
+  : import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('[Supabase] Missing environment variables:', {
+  console.error("[Supabase] Missing environment variables:", {
     hasUrl: !!supabaseUrl,
-    hasKey: !!supabaseAnonKey
+    hasKey: !!supabaseAnonKey,
+    environment: isServer ? "server" : "client",
   });
-  throw new Error('Missing Supabase environment variables');
+  throw new Error("Missing Supabase environment variables");
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
-  }
+    detectSessionInUrl: true,
+  },
 });
 
-// Test the connection
-supabase.auth.getSession().then(({ data, error }) => {
-  console.log('[Supabase] Initial connection test:', {
-    success: !error,
-    hasSession: !!data.session,
-    error: error?.message
-  });
-}).catch(err => {
-  console.error('[Supabase] Connection test failed:', err);
-});
+// Test connection
+if (!isServer) {
+  supabase.auth
+    .getSession()
+    .then(({ data, error }) => {
+      console.log("[Supabase] Initial connection test:", {
+        success: !error,
+        hasSession: !!data.session,
+        error: error?.message,
+      });
+    })
+    .catch((err) => {
+      console.error("[Supabase] Connection test failed:", err);
+    });
+}
+
+export { supabase };

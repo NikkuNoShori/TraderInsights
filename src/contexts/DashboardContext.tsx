@@ -44,14 +44,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
-  // Fetch profiles on mount
-  useEffect(() => {
-    if (user) {
-      fetchProfiles();
-    }
-  }, [user]);
-
-  const fetchProfiles = async () => {
+  const fetchProfiles = useCallback(async () => {
     if (!user) return;
 
     const { data, error } = await supabase
@@ -71,34 +64,95 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       setCurrentProfile(defaultProfile);
       setLayouts(defaultProfile.layout);
     }
-  };
+  }, [user, supabase]);
+
+  // Fetch profiles on mount
+  useEffect(() => {
+    if (user) {
+      fetchProfiles();
+    }
+  }, [user, fetchProfiles]);
 
   const createProfile = async (name: string) => {
     if (!user) return;
 
-    const newProfile: Partial<DashboardProfile> = {
-      name,
-      userId: user.id,
-      isDefault: profiles.length === 0,
-      layout: DEFAULT_LAYOUTS,
-      enabledCards: DEFAULT_ENABLED_CARDS,
-    };
-
     const { data, error } = await supabase
       .from('dashboard_profiles')
-      .insert([newProfile])
+      .insert([{
+        name,
+        user_id: user.id,
+        layout: DEFAULT_LAYOUTS,
+        enabled_cards: DEFAULT_ENABLED_CARDS,
+        is_default: profiles.length === 0
+      }])
       .select()
       .single();
 
-    if (error) throw error;
-    setProfiles(prev => [...prev, data]);
-    if (newProfile.isDefault) {
+    if (error) {
+      console.error('Error creating dashboard profile:', error);
+      return;
+    }
+
+    setProfiles([...profiles, data]);
+    if (data.is_default) {
       setCurrentProfile(data);
       setLayouts(data.layout);
     }
   };
 
-  // ... implement other methods (updateProfile, switchProfile, deleteProfile)
+  const updateProfile = async (id: string, updates: Partial<DashboardProfile>) => {
+    const { data, error } = await supabase
+      .from('dashboard_profiles')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating dashboard profile:', error);
+      return;
+    }
+
+    setProfiles(profiles.map(p => p.id === id ? data : p));
+    if (currentProfile?.id === id) {
+      setCurrentProfile(data);
+      if (updates.layout) {
+        setLayouts(updates.layout);
+      }
+    }
+  };
+
+  const switchProfile = async (id: string) => {
+    const profile = profiles.find(p => p.id === id);
+    if (!profile) return;
+
+    setCurrentProfile(profile);
+    setLayouts(profile.layout);
+  };
+
+  const deleteProfile = async (id: string) => {
+    const { error } = await supabase
+      .from('dashboard_profiles')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting dashboard profile:', error);
+      return;
+    }
+
+    setProfiles(profiles.filter(p => p.id !== id));
+    if (currentProfile?.id === id) {
+      const nextProfile = profiles.find(p => p.id !== id);
+      if (nextProfile) {
+        setCurrentProfile(nextProfile);
+        setLayouts(nextProfile.layout);
+      } else {
+        setCurrentProfile(null);
+        setLayouts(DEFAULT_LAYOUTS);
+      }
+    }
+  };
 
   return (
     <DashboardContext.Provider value={{
@@ -108,10 +162,10 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       isEditing,
       setIsEditing,
       createProfile,
-      updateProfile: async () => {}, // TODO: Implement updateProfile
-      switchProfile: async () => {}, // TODO: Implement switchProfile
-      deleteProfile: async () => {}, // TODO: Implement deleteProfile
-      updateLayouts: handleLayoutChange,
+      updateProfile,
+      switchProfile,
+      deleteProfile,
+      updateLayouts: handleLayoutChange
     }}>
       {children}
     </DashboardContext.Provider>

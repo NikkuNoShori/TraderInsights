@@ -43,6 +43,59 @@ export interface Dashboard {
   updated_at: string;
 }
 
+export type TransactionType = "stock" | "option";
+export type TransactionSide = "Long" | "Short";
+export type TransactionStatus = "open" | "closed";
+
+export interface OptionDetails {
+  strike: number;
+  expiration: string;
+  type: "call" | "put";
+}
+
+export interface TransactionOrder {
+  type: "entry" | "exit";
+  quantity: number;
+  price: number;
+  total: number;
+  date: string;
+  time: string;
+  notes?: string;
+}
+
+export interface Transaction {
+  id: string;
+  user_id: string;
+  date: string;
+  time: string;
+  symbol: string;
+  type: TransactionType;
+  side: TransactionSide;
+  quantity: number;
+  price: number;
+  total: number;
+  notes?: string;
+  chart_image?: string;
+  option_details?: OptionDetails;
+  orders?: TransactionOrder[];
+  status: TransactionStatus;
+  remaining_quantity: number;
+  avg_entry_price?: number;
+  avg_exit_price?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Portfolio {
+  id: string;
+  name: string;
+  description: string | null;
+  initial_balance: number;
+  currency: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {

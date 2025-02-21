@@ -16,26 +16,28 @@ export interface OHLC {
   date: string;
 }
 
+export interface StockData {
+  timestamp: string;
+  price: number;
+  volume: number;
+}
+
 export interface StockQuote {
   symbol: string;
   companyName: string;
   currentPrice: number;
   change: number;
   changePercent: number;
-  marketCap: number;
   volume: number;
-  avgVolume3Month: number;
-  float: number;
-  weekHigh52: number;
-  weekLow52: number;
-  nextEarningsDate: string;
-  sector: string;
-  index: string;
-  open: number;
-  high: number;
-  low: number;
-  afterHoursPrice: number;
-  afterHoursChange: number;
-  afterHoursChangePercent: number;
-  sharesOutstanding: number;
+  marketCap: number;
+}
+
+export interface WatchlistSymbol {
+  symbol: string;
+  lastPrice?: number;
+  change?: number;
+  changePercent?: number;
+  volume?: number;
+  notes?: string;
+  addedAt: string;
 }

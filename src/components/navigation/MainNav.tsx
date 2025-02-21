@@ -55,14 +55,12 @@ const navCategories: NavCategory[] = [
       {
         label: 'Watchlist',
         icon: List,
-        href: '/app/watchlist',
-        isComingSoon: true
+        href: '/app/watchlist'
       },
       {
         label: 'Portfolios',
         icon: Briefcase,
-        href: '/app/portfolios',
-        isComingSoon: true
+        href: '/app/portfolios'
       }
     ]
   },
@@ -73,6 +71,12 @@ const navCategories: NavCategory[] = [
         label: 'Performance',
         icon: LineChart,
         href: '/app/analysis/performance'
+      },
+      {
+        label: 'Statistics',
+        icon: BarChart2,
+        href: '/app/analysis/statistics',
+        isComingSoon: true
       }
     ]
   }

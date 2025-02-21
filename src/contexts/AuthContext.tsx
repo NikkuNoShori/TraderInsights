@@ -4,8 +4,8 @@ import type { User } from '@supabase/supabase-js';
 import type { Profile } from '../types/database';
 import type { UserPermissions } from '../types/auth';
 import { config } from '../config/index';
-import { supabase } from '../lib/supabase';
 import { fetchProfile, fetchPermissions } from '../lib/utils/auth';
+import { apiClient } from '../lib/services/apiClient';
 
 export interface AuthContextType {
   user: User | null;
@@ -17,15 +17,15 @@ export interface AuthContextType {
   updateProfile: (data: Partial<Profile>) => Promise<void>;
 }
 
-export const AuthContext = createContext<AuthContextType | null>(null);
+const AuthContext = createContext<AuthContextType | null>(null);
 
-export const useAuth = () => {
+export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
+}
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<User | null>(null);
@@ -35,11 +35,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const signIn = async (_email: string, _password: string) => {
     try {
       if (config.isProduction) {
-        const { data: response, error } = await supabase.auth.signInWithPassword({
-          email: _email,
-          password: _password
-        });
+        const { data: response, error } = await apiClient.auth.signIn(_email, _password);
         if (error) throw error;
+        if (!response.user) throw new Error('No user returned from authentication');
         
         setUser(response.user);
         const profile = await fetchProfile(response.user.id);
@@ -47,7 +45,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         const userPermissions = await fetchPermissions(response.user.id);
         setPermissions(userPermissions);
       } else {
-        // Local Sign in. We are bypassing supabase auth for now
+        // Local Sign in. We are bypassing auth for now
         loginAsDeveloper();
       }
     } catch (error) {
@@ -100,7 +98,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const signOut = async () => {
     try {
-      // await supabase.auth.signOut();
+      if (config.isProduction) {
+        await apiClient.auth.signOut();
+      }
       setUser(null);
       setProfile(null);
       setPermissions({});
@@ -113,12 +113,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const updateProfile = async (data: Partial<Profile>) => {
     try {
       if (!user) throw new Error('No user logged in');
-      // const { data: updatedProfile, error } = await supabase
-      //   .from('profiles')
-      //   .update(data)
-      //   .eq('id', user.id)
-      //   .single();
-      // if (error) throw error;
+      if (config.isProduction) {
+        await apiClient.auth.updateMetadata({
+          ...data,
+          last_seen_at: new Date().toISOString()
+        });
+      }
       setProfile(prev => prev ? { ...prev, ...data } : null);
     } catch (error) {
       console.error('Profile update error:', error);

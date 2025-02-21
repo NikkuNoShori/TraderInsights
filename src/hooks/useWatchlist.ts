@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useSupabase } from '../contexts/SupabaseContext';
+import { useState, useEffect, useCallback } from "react";
+import { useSupabase } from "../contexts/SupabaseContext";
 
 interface WatchlistItem {
   id: string;
@@ -14,30 +14,32 @@ export function useWatchlist() {
   const [error, setError] = useState<string | null>(null);
   const supabase = useSupabase();
 
-  useEffect(() => {
-    fetchWatchlist();
-  }, []);
-
-  const fetchWatchlist = async () => {
+  const fetchWatchlist = useCallback(async () => {
     try {
       const { data, error } = await supabase
-        .from('watchlist')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .from("watchlist")
+        .select("*")
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       setItems(data || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch watchlist');
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch watchlist"
+      );
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [supabase]);
+
+  useEffect(() => {
+    fetchWatchlist();
+  }, [fetchWatchlist]);
 
   const addToWatchlist = async (symbol: string, notes?: string) => {
     try {
       const { data, error } = await supabase
-        .from('watchlist')
+        .from("watchlist")
         .insert([{ symbol: symbol.toUpperCase(), notes }])
         .select()
         .single();
@@ -46,21 +48,22 @@ export function useWatchlist() {
       setItems([data, ...items]);
       return data;
     } catch (err) {
-      throw err instanceof Error ? err : new Error('Failed to add to watchlist');
+      throw err instanceof Error
+        ? err
+        : new Error("Failed to add to watchlist");
     }
   };
 
   const removeFromWatchlist = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('watchlist')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from("watchlist").delete().eq("id", id);
 
       if (error) throw error;
-      setItems(items.filter(item => item.id !== id));
+      setItems(items.filter((item) => item.id !== id));
     } catch (err) {
-      throw err instanceof Error ? err : new Error('Failed to remove from watchlist');
+      throw err instanceof Error
+        ? err
+        : new Error("Failed to remove from watchlist");
     }
   };
 
@@ -70,6 +73,6 @@ export function useWatchlist() {
     error,
     addToWatchlist,
     removeFromWatchlist,
-    refresh: fetchWatchlist
+    refresh: fetchWatchlist,
   };
-} 
+}

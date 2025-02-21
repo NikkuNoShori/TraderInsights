@@ -1,81 +1,68 @@
 import React from 'react';
-import { Clock, DollarSign } from 'lucide-react';
-import { clsx } from 'clsx';
 import { formatCurrency, formatDate } from '../../utils/formatters';
-import type { Order } from '../../types/transaction';
+import type { TransactionOrder } from '../../types/database';
 
 interface OrdersListProps {
-  orders: Order[];
+  orders: TransactionOrder[];
 }
 
 export function OrdersList({ orders }: OrdersListProps) {
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-medium text-gray-900">Orders</h3>
-      <div className="space-y-3">
-        {orders.map((order) => (
-          <div
-            key={order.id}
-            className="bg-gray-50 rounded-lg p-4 border border-gray-200"
-          >
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <div className="flex items-center text-sm">
-                  <Clock className="h-4 w-4 text-gray-400 mr-2" />
-                  <span className="font-medium text-gray-500">Date:</span>
-                  <span className="ml-2">{formatDate(order.date)}</span>
-                </div>
-                <div className="flex items-center text-sm mt-1">
-                  <Clock className="h-4 w-4 text-gray-400 mr-2" />
-                  <span className="font-medium text-gray-500">Time:</span>
-                  <span className="ml-2">{order.time}</span>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center text-sm">
-                  <span className="font-medium text-gray-500">Type:</span>
-                  <span className={clsx(
-                    'ml-2 px-2 py-0.5 rounded-full text-xs font-medium',
-                    order.action === 'buy'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
-                  )}>
-                    {order.action === 'buy' ? 'Buy' : 'Sell'}
+    <div>
+      <h3 className="text-lg font-medium text-gray-900 mb-4">Orders</h3>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead>
+            <tr>
+              <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Date
+              </th>
+              <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Time
+              </th>
+              <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Type
+              </th>
+              <th className="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Quantity
+              </th>
+              <th className="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Price
+              </th>
+              <th className="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Total
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {orders.map((order, index) => (
+              <tr key={index}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {formatDate(order.date)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {order.time}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    order.type === 'entry' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {order.type}
                   </span>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center text-sm">
-                  <DollarSign className="h-4 w-4 text-gray-400 mr-2" />
-                  <span className="font-medium text-gray-500">Quantity:</span>
-                  <span className="ml-2">{order.quantity}</span>
-                </div>
-                <div className="flex items-center text-sm mt-1">
-                  <DollarSign className="h-4 w-4 text-gray-400 mr-2" />
-                  <span className="font-medium text-gray-500">Price:</span>
-                  <span className="ml-2">{formatCurrency(order.price)}</span>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex items-center text-sm">
-                  <DollarSign className="h-4 w-4 text-gray-400 mr-2" />
-                  <span className="font-medium text-gray-500">Total:</span>
-                  <span className="ml-2">{formatCurrency(order.total)}</span>
-                </div>
-              </div>
-            </div>
-
-            {order.notes && (
-              <div className="mt-3 text-sm text-gray-600 border-t pt-3">
-                <span className="font-medium text-gray-500">Notes:</span>
-                <p className="mt-1">{order.notes}</p>
-              </div>
-            )}
-          </div>
-        ))}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                  {order.quantity}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                  {formatCurrency(order.price)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                  {formatCurrency(order.total)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
