@@ -2,7 +2,7 @@ import React from 'react';
 import { createBrowserRouter, RouterProvider, Navigate, Outlet, useNavigation as useRouterNavigation } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
 import { AuthLayout } from './components/auth/AuthLayout';
-import { Login } from './pages/auth/Login';
+import Login from './pages/auth/Login';
 import Dashboard from './pages/Dashboard';
 import TradingJournal from './pages/TradingJournal';
 import Watchlist from './pages/Watchlist';
@@ -16,7 +16,7 @@ import { Toaster } from 'react-hot-toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import './styles/globals.css';
 import './config/fontawesome';
-import { Settings } from './pages/settings/Settings';
+import Settings from './pages/settings/Settings';
 import { AuthProvider } from './contexts/AuthContext';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/queryClient';
@@ -24,6 +24,8 @@ import { NavigationProvider, useNavigation } from './contexts/NavigationContext'
 import Portfolios from './pages/Portfolios';
 import { RouteErrorBoundary } from './components/routing/RouteErrorBoundary';
 import { RouteLoading } from './components/routing/RouteLoading';
+import RequestPasswordReset from './pages/auth/RequestPasswordReset';
+import ResetPassword from './pages/auth/ResetPassword';
 
 console.log('[App] Starting application initialization');  
 
@@ -51,6 +53,14 @@ const router = createBrowserRouter([
       {
         path: 'login',
         element: <Login />
+      },
+      {
+        path: 'request-reset',
+        element: <RequestPasswordReset />
+      },
+      {
+        path: 'reset-password',
+        element: <ResetPassword />
       }
     ]
   },
@@ -110,6 +120,10 @@ const router = createBrowserRouter([
       },
       {
         path: 'profile',
+        element: <Settings />
+      },
+      {
+        path: 'security',
         element: <Settings />
       },
       {

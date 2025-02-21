@@ -40,7 +40,7 @@ const navCategories: NavCategory[] = [
       {
         label: 'Dashboard',
         icon: LayoutDashboard,
-        href: '/dashboard'
+        href: '/app/dashboard'
       }
     ]
   },
@@ -50,18 +50,18 @@ const navCategories: NavCategory[] = [
       {
         label: 'Journal',
         icon: BookOpen,
-        href: '/journal'
+        href: '/app/journal'
       },
       {
         label: 'Watchlist',
         icon: List,
-        href: '/watchlist',
+        href: '/app/watchlist',
         isComingSoon: true
       },
       {
         label: 'Portfolios',
         icon: Briefcase,
-        href: '/portfolios',
+        href: '/app/portfolios',
         isComingSoon: true
       }
     ]
@@ -72,7 +72,7 @@ const navCategories: NavCategory[] = [
       {
         label: 'Performance',
         icon: LineChart,
-        href: '/analysis/performance'
+        href: '/app/analysis/performance'
       }
     ]
   }
@@ -141,7 +141,7 @@ export function MainNav({ defaultCollapsed = true }: MainNavProps) {
   }, [isCollapsed]);
 
   const handleSettingsClick = () => {
-    navigate('/settings');
+    navigate('/settings/profile');
   };
 
   const handleLogout = async () => {

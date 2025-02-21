@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { User, Palette, Bell } from 'lucide-react';
+import { User, Palette, Bell, Shield } from 'lucide-react';
 import { clsx } from 'clsx';
 
 const settingsLinks = [
@@ -9,6 +9,12 @@ const settingsLinks = [
     label: 'Profile',
     icon: User,
     description: 'Manage your personal information'
+  },
+  {
+    to: '/settings/security',
+    label: 'Security',
+    icon: Shield,
+    description: 'Update password and security settings'
   },
   {
     to: '/settings/appearance',

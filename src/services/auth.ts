@@ -36,17 +36,6 @@ class SupabaseAuthService implements AuthService {
       };
     }
 
-    // First check if the user exists
-    const userExists = await this.checkUserExists(email);
-    if (!userExists) {
-      return {
-        data: { session: null, user: null },
-        error: new Error(
-          "No account found with this email. Please sign up first."
-        ) as AuthError,
-      };
-    }
-
     const response = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -132,17 +121,28 @@ class SupabaseAuthService implements AuthService {
       };
     }
 
-    // Check if user exists before sending reset email
-    const userExists = await this.checkUserExists(email);
-    if (!userExists) {
+    try {
+      // Send reset email regardless of whether user exists
+      // This is a security best practice to prevent email enumeration
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
+
+      if (error) {
+        console.error("Error sending reset password email:", error);
+        return { error };
+      }
+
+      return { error: null };
+    } catch (error) {
+      console.error("Error in reset password flow:", error);
       return {
-        error: new Error("No account found with this email.") as AuthError,
+        error:
+          error instanceof Error
+            ? (error as AuthError)
+            : (new Error("Failed to process reset password request") as AuthError),
       };
     }
-
-    return supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
-    });
   }
 
   async getCurrentUser(): Promise<User | null> {
@@ -160,20 +160,33 @@ class SupabaseAuthService implements AuthService {
 
   async checkUserExists(email: string): Promise<boolean> {
     try {
-      const { data, error } = await supabase
-        .from("users")
-        .select("id")
-        .eq("email", email)
-        .single();
-
-      if (error) {
-        console.error("Error checking user existence:", error);
+      // First validate the email format
+      const emailValidation = validateEmail(email);
+      if (!emailValidation.isValid) {
         return false;
       }
 
-      return !!data;
+      // Use sign in attempt to check if user exists
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password: 'dummy-password-for-check'
+      });
+
+      // If we get an "Invalid login credentials" error, the user exists but password was wrong
+      // If we get a "User not found" error, the user doesn't exist
+      if (error) {
+        if (error.message.includes('Invalid login credentials')) {
+          return true; // User exists but password was wrong
+        }
+        if (error.message.includes('Email not confirmed')) {
+          return true; // User exists but hasn't confirmed email
+        }
+        return false; // Any other error means user doesn't exist
+      }
+
+      return true; // If no error, user exists (though this shouldn't happen with dummy password)
     } catch (error) {
-      console.error("Error checking user existence:", error);
+      console.error('Error checking user existence:', error);
       return false;
     }
   }
