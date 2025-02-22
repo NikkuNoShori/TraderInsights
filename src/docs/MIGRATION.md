@@ -35,7 +35,7 @@
 - [ ] Zustand Implementation
   - [ ] Core stores
   - [ ] Context migration
-  - [ ] Type definitions
+  - [ ] Type definitions  
 
 ### 3. Component Architecture 🏗️ Medium Priority
 ✅ Trading Journal Components
