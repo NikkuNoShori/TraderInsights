@@ -1,20 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { apiClient } from '../../lib/services/apiClient';
 import { validatePassword } from '../../utils/validation';
 import { FormInput } from '../../components/ui/FormInput';
 import { LoadingButton } from '../../components/LoadingButton';
+import { useAuthStore } from '../../stores/authStore';
 
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const messageShownRef = useRef(false);
+
+  const { signIn, loading } = useAuthStore();
 
   // Show any messages passed via navigation state
   useEffect(() => {
@@ -31,7 +32,6 @@ export default function Login() {
   const resetState = () => {
     setEmail('');
     setPassword('');
-    setIsLoading(false);
     setError(null);
   };
 
@@ -59,46 +59,26 @@ export default function Login() {
     if (!validateForm()) {
       return;
     }
-
-    setIsLoading(true);
     
     try {
-      const { data, error } = isSignUp 
-        ? await apiClient.auth.signUp(email, password)
-        : await apiClient.auth.signIn(email, password);
-
-      if (error) {
-        // Handle specific error cases
-        if (error.message?.includes('already exists')) {
-          setIsSignUp(false);
-          throw new Error('Account already exists. Please sign in instead.');
-        } else if (error.message?.includes('not found')) {
-          setIsSignUp(true);
-          throw new Error('No account found. Please sign up first.');
-        } else if (error.message?.includes('Invalid login credentials')) {
-          throw new Error('Invalid email or password. Please try again.');
-        }
-        throw error;
-      }
-      
-      if (isSignUp && !data.session) {
-        toast.success('Please check your email to confirm your account');
-        resetState();
-        return;
-      }
-
-      if (!data.session) {
-        throw new Error('Authentication failed. Please try again.');
-      }
-      
-      // Successfully authenticated
+      await signIn(email, password);
       toast.success('Successfully logged in');
       // Navigation will be handled by auth state change
     } catch (error) {
       console.error('Authentication error:', error);
-      setError(error instanceof Error ? error.message : 'Authentication failed. Please try again.');
-    } finally {
-      setIsLoading(false);
+      // Handle specific error cases
+      const errorMessage = error instanceof Error ? error.message : 'Authentication failed';
+      if (errorMessage.includes('already exists')) {
+        setIsSignUp(false);
+        setError('Account already exists. Please sign in instead.');
+      } else if (errorMessage.includes('not found')) {
+        setIsSignUp(true);
+        setError('No account found. Please sign up first.');
+      } else if (errorMessage.includes('Invalid login credentials')) {
+        setError('Invalid email or password. Please try again.');
+      } else {
+        setError(errorMessage);
+      }
     }
   };
 
@@ -132,7 +112,7 @@ export default function Login() {
         <div className="flex flex-col gap-4">
           <LoadingButton
             type="submit"
-            isLoading={isLoading}
+            isLoading={loading}
             className="w-full px-4 py-2 text-sm"
           >
             {isSignUp ? 'Create Account' : 'Sign In'}

@@ -1,3 +1,4 @@
+import React from 'react';
 import { DashboardGrid } from './DashboardGrid';
 import { StatsCard } from './StatsCard';
 import type { Trade } from '../../types/trade';
@@ -15,15 +16,21 @@ import { Button } from '../ui/button';
 import { useDashboard } from '../../contexts/DashboardContext';
 import { useState } from 'react';
 import { DashboardProfileSelect } from './DashboardProfileSelect';
+import type { Layout } from 'react-grid-layout';
+import { RecentTradesCard } from './RecentTradesCard';
+import { PlaybookCard } from './PlaybookCard';
+import { useDashboardStore } from '../../stores/dashboardStore';
 
 interface DashboardCardsProps {
   trades: Trade[];
+  layouts: Layout[];
 }
 
-export function DashboardCards({ trades }: DashboardCardsProps) {
+export function DashboardCards({ trades, layouts }: DashboardCardsProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const { layouts, updateLayouts } = useDashboard();
+  const { layouts: contextLayouts, updateLayouts: contextUpdateLayouts } = useDashboard();
+  const { isEditing: storeEditing, updateLayouts: storeUpdateLayouts } = useDashboardStore();
 
   const completedTrades = trades.filter(trade => trade.status === 'closed');
   const winningTrades = completedTrades.filter(t => (t.pnl || 0) > 0);
@@ -36,9 +43,15 @@ export function DashboardCards({ trades }: DashboardCardsProps) {
   })();
 
   const handleSaveChanges = () => {
-    updateLayouts(layouts);
+    contextUpdateLayouts(contextLayouts);
+    storeUpdateLayouts(layouts);
     setIsEditing(false);
     setHasUnsavedChanges(false);
+  };
+
+  const handleLayoutChange = (newLayouts: Layout[]) => {
+    if (!isEditing) return;
+    storeUpdateLayouts(newLayouts);
   };
 
   return (
@@ -109,6 +122,10 @@ export function DashboardCards({ trades }: DashboardCardsProps) {
           />
         </div>
       </DashboardGrid>
+      <div className="grid gap-6 mt-6">
+        <RecentTradesCard trades={trades} />
+        <PlaybookCard />
+      </div>
     </div>
   );
 } 
