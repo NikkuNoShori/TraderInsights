@@ -1,6 +1,7 @@
 import { supabase } from "../lib/supabase";
 import { AuthError, AuthResponse, User } from "@supabase/supabase-js";
 import { validateEmail, validatePassword } from "../utils/validation";
+import { authRateLimit } from "../lib/services/authRateLimit";
 
 export interface UserMetadata {
   created_at: string;
@@ -12,7 +13,11 @@ export interface UserMetadata {
 }
 
 export interface AuthService {
-  signIn: (email: string, password: string) => Promise<AuthResponse>;
+  signIn: (
+    email: string,
+    password: string,
+    ip: string
+  ) => Promise<AuthResponse>;
   signUp: (email: string, password: string) => Promise<AuthResponse>;
   signOut: () => Promise<{ error: AuthError | null }>;
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
@@ -26,34 +31,68 @@ export interface AuthService {
 }
 
 class SupabaseAuthService implements AuthService {
-  async signIn(email: string, password: string): Promise<AuthResponse> {
+  async signIn(
+    email: string,
+    password: string,
+    ip: string
+  ): Promise<AuthResponse> {
+    // Check rate limiting before attempting login
+    const { allowed, remainingAttempts, lockoutRemaining } =
+      await authRateLimit.checkLoginAllowed(ip);
+
+    if (!allowed) {
+      const minutes = Math.ceil(lockoutRemaining / 60000);
+      return {
+        data: { session: null, user: null },
+        error: new Error(
+          `Too many failed attempts. Please try again in ${minutes} minutes.`
+        ) as AuthError,
+      };
+    }
+
     // Validate inputs
     const emailValidation = validateEmail(email);
     if (!emailValidation.isValid) {
+      await authRateLimit.recordLoginAttempt(ip, false);
       return {
         data: { session: null, user: null },
         error: new Error(emailValidation.errors[0]) as AuthError,
       };
     }
 
-    const response = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const response = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (response.data.session) {
-      // Update metadata on successful sign in
-      const metadata: Partial<UserMetadata> = {
-        last_sign_in: new Date().toISOString(),
-        last_seen_at: new Date().toISOString(),
-        sign_in_count:
-          (response.data.user?.user_metadata?.sign_in_count || 0) + 1,
-      };
+      // Record the login attempt result
+      await authRateLimit.recordLoginAttempt(ip, !response.error);
 
-      await this.updateUserMetadata(response.data.user!.id, metadata);
+      if (response.error) {
+        if (remainingAttempts > 0) {
+          response.error.message = `${response.error.message}. ${remainingAttempts} attempts remaining.`;
+        }
+        return response;
+      }
+
+      if (response.data.session) {
+        // Update metadata on successful sign in
+        const metadata: Partial<UserMetadata> = {
+          last_sign_in: new Date().toISOString(),
+          last_seen_at: new Date().toISOString(),
+          sign_in_count:
+            (response.data.user?.user_metadata?.sign_in_count || 0) + 1,
+        };
+
+        await this.updateUserMetadata(response.data.user!.id, metadata);
+      }
+
+      return response;
+    } catch (error) {
+      await authRateLimit.recordLoginAttempt(ip, false);
+      throw error;
     }
-
-    return response;
   }
 
   async signUp(email: string, password: string): Promise<AuthResponse> {
@@ -140,7 +179,9 @@ class SupabaseAuthService implements AuthService {
         error:
           error instanceof Error
             ? (error as AuthError)
-            : (new Error("Failed to process reset password request") as AuthError),
+            : (new Error(
+                "Failed to process reset password request"
+              ) as AuthError),
       };
     }
   }
@@ -169,16 +210,16 @@ class SupabaseAuthService implements AuthService {
       // Use sign in attempt to check if user exists
       const { error } = await supabase.auth.signInWithPassword({
         email,
-        password: 'dummy-password-for-check'
+        password: "dummy-password-for-check",
       });
 
       // If we get an "Invalid login credentials" error, the user exists but password was wrong
       // If we get a "User not found" error, the user doesn't exist
       if (error) {
-        if (error.message.includes('Invalid login credentials')) {
+        if (error.message.includes("Invalid login credentials")) {
           return true; // User exists but password was wrong
         }
-        if (error.message.includes('Email not confirmed')) {
+        if (error.message.includes("Email not confirmed")) {
           return true; // User exists but hasn't confirmed email
         }
         return false; // Any other error means user doesn't exist
@@ -186,7 +227,7 @@ class SupabaseAuthService implements AuthService {
 
       return true; // If no error, user exists (though this shouldn't happen with dummy password)
     } catch (error) {
-      console.error('Error checking user existence:', error);
+      console.error("Error checking user existence:", error);
       return false;
     }
   }
@@ -196,8 +237,8 @@ class SupabaseAuthService implements AuthService {
     metadata: Partial<UserMetadata>
   ): Promise<void> {
     try {
-      const { error } = await supabase.auth.admin.updateUserById(userId, {
-        user_metadata: metadata,
+      const { error } = await supabase.auth.updateUser({
+        data: metadata,
       });
 
       if (error) {

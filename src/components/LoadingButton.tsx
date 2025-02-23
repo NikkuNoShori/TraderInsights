@@ -1,33 +1,33 @@
 import React from 'react';
+import { Button } from './ui/button';
 import { Loader2 } from 'lucide-react';
-import { clsx } from 'clsx';
+import { cn } from '../lib/utils';
 
 interface LoadingButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean;
-  children: React.ReactNode;
+  loadingText?: string;
 }
 
-export function LoadingButton({ isLoading, children, className, disabled, ...props }: LoadingButtonProps) {
+export function LoadingButton({
+  children,
+  isLoading,
+  loadingText,
+  className,
+  disabled,
+  ...props
+}: LoadingButtonProps) {
   return (
-    <button
-      {...props}
+    <Button
+      className={cn("relative", className)}
       disabled={isLoading || disabled}
-      className={clsx(
-        'flex items-center space-x-2 px-4 py-2 border border-transparent',
-        'rounded-md text-sm font-medium text-white',
-        'bg-indigo-600 hover:bg-indigo-700',
-        'disabled:opacity-50 disabled:cursor-not-allowed',
-        className
-      )}
+      {...props}
     >
-      {isLoading ? (
-        <>
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <span>Loading...</span>
-        </>
-      ) : (
-        children
+      {isLoading && (
+        <Loader2 className="absolute left-1/2 -translate-x-1/2 h-5 w-5 animate-spin" />
       )}
-    </button>
+      <span className={cn(isLoading && "invisible")}>
+        {isLoading && loadingText ? loadingText : children}
+      </span>
+    </Button>
   );
 }

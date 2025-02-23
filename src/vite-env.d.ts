@@ -6,6 +6,7 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_ANON_KEY: string;
   readonly VITE_API_BASE_URL: string;
   readonly VITE_API_KEY: string;
+  readonly VITE_APP_URL: string;
 
   // Feature Flags
   readonly VITE_ENABLE_REAL_TIME_TRADING: string;
@@ -50,6 +51,7 @@ validateEnv = () => {
     "VITE_SUPABASE_ANON_KEY",
     "VITE_APP_ENV",
     "VITE_LOG_LEVEL",
+    "VITE_APP_URL",
   ] as const;
 
   for (const envVar of requiredEnvVars) {

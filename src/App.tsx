@@ -2,36 +2,42 @@ import React from 'react';
 import { createBrowserRouter, RouterProvider, Navigate, Outlet, useNavigation as useRouterNavigation } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
 import { AuthLayout } from './components/auth/AuthLayout';
-import Login from './pages/auth/Login';
-import Dashboard from './pages/Dashboard';
-import TradingJournal from './pages/TradingJournal';
-import Watchlist from './pages/Watchlist';
-import Performance from './pages/analysis/Performance';
-import { SupabaseProvider } from './contexts/SupabaseContext';
-import { DashboardProvider } from './contexts/DashboardContext';
+import LandingPage from './views/LandingPage';
+import Login from './views/auth/Login';
+import Dashboard from './views/Dashboard';
+import TradingJournal from './views/TradingJournal/index';
+import Watchlist from './views/Watchlist';
+import Performance from './views/analysis/Performance';
 import { ThemeProvider } from './providers/ThemeProvider';
 import { AuthGuard } from './components/AuthGuard';        
-import { supabase } from './lib/supabase';
 import { Toaster } from 'react-hot-toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import './styles/globals.css';
 import './config/fontawesome';
-import Settings from './pages/settings/Settings';
-import { AuthProvider } from './contexts/AuthContext';
+import Settings from './views/settings/Settings';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/queryClient';
-import { NavigationProvider, useNavigation } from './contexts/NavigationContext';
-import Portfolios from './pages/Portfolios';
+import Portfolios from './views/Portfolios';
 import { RouteErrorBoundary } from './components/routing/RouteErrorBoundary';
 import { RouteLoading } from './components/routing/RouteLoading';
-import RequestPasswordReset from './pages/auth/RequestPasswordReset';
-import ResetPassword from './pages/auth/ResetPassword';
+import RequestPasswordReset from './views/auth/RequestPasswordReset';
+import ResetPassword from './views/auth/ResetPassword';
+import { BarChart2, PieChart, Calendar } from 'lucide-react';
+import { StoreProvider } from './providers/StoreProvider';
+import { useNavigationStore } from './stores/navigationStore';
+import { PageHeader } from './components/ui/PageHeader';
+import { ReportingNav } from './components/navigation/ReportingNav';
 
 console.log('[App] Starting application initialization');  
 
 // Create a wrapper component that handles loading states
 function RouteWrapper({ children }: { children: React.ReactNode }) {
   const navigation = useRouterNavigation();
+  const setIsNavigating = useNavigationStore(state => state.setIsNavigating);
+  
+  React.useEffect(() => {
+    setIsNavigating(navigation.state === "loading");
+  }, [navigation.state, setIsNavigating]);
   
   if (navigation.state === "loading") {
     return <RouteLoading />;
@@ -40,15 +46,15 @@ function RouteWrapper({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// Create the router configuration
+// Update the router configuration
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/auth/login" replace />
+    element: <RouteWrapper><LandingPage /></RouteWrapper>
   },
   {
     path: '/auth',
-    element: <AuthLayout title="Login" subtitle="Welcome back"><Outlet /></AuthLayout>,
+    element: <RouteWrapper><AuthLayout title="Login" subtitle="Welcome back"><Outlet /></AuthLayout></RouteWrapper>,
     children: [
       {
         path: 'login',
@@ -66,7 +72,7 @@ const router = createBrowserRouter([
   },
   {
     path: '/app',
-    element: <AuthGuard><Layout /></AuthGuard>,
+    element: <AuthGuard><RouteWrapper><Layout /></RouteWrapper></AuthGuard>,
     errorElement: <RouteErrorBoundary />,
     children: [
       {
@@ -75,12 +81,8 @@ const router = createBrowserRouter([
       },
       {
         path: 'dashboard',
-        element: <RouteWrapper><Dashboard /></RouteWrapper>,
-        errorElement: <RouteErrorBoundary />,
-        loader: async () => {
-          await new Promise(r => setTimeout(r, 500));
-          return null;
-        }
+        element: <Dashboard />,
+        errorElement: <RouteErrorBoundary />
       },
       {
         path: 'journal',
@@ -92,27 +94,78 @@ const router = createBrowserRouter([
       },
       {
         path: 'portfolios',
-        element: <RouteWrapper><Portfolios /></RouteWrapper>,
-        errorElement: <RouteErrorBoundary />,
-        loader: async () => {
-          await new Promise(r => setTimeout(r, 500));
-          return null;
-        }
+        element: <Portfolios />,
+        errorElement: <RouteErrorBoundary />
       },
       {
         path: 'analysis/performance',
-        element: <RouteWrapper><Performance /></RouteWrapper>,
-        errorElement: <RouteErrorBoundary />,
-        loader: async () => {
-          await new Promise(r => setTimeout(r, 500));
-          return null;
-        }
+        element: <Performance />,
+        errorElement: <RouteErrorBoundary />
+      },
+      {
+        path: 'analysis/performance/allocation',
+        element: (
+          <div className="flex-grow p-4">
+            <PageHeader 
+              title="Portfolio Allocation"
+              subtitle="View your portfolio distribution and risk exposure"
+            />
+            <ReportingNav />
+            <div className="flex items-center justify-center h-[calc(100vh-300px)]">
+              <div className="text-center">
+                <PieChart className="w-12 h-12 mx-auto text-gray-400" />
+                <h2 className="mt-4 text-xl font-semibold">Coming Soon</h2>
+                <p className="mt-2 text-gray-600 dark:text-gray-400">
+                  Portfolio allocation analysis is currently in development.
+                </p>
+              </div>
+            </div>
+          </div>
+        ),
+        errorElement: <RouteErrorBoundary />
+      },
+      {
+        path: 'analysis/performance/calendar',
+        element: (
+          <div className="flex-grow p-4">
+            <PageHeader 
+              title="Trading Calendar"
+              subtitle="View your trading activity patterns and timing analysis"
+            />
+            <ReportingNav />
+            <div className="flex items-center justify-center h-[calc(100vh-300px)]">
+              <div className="text-center">
+                <Calendar className="w-12 h-12 mx-auto text-gray-400" />
+                <h2 className="mt-4 text-xl font-semibold">Coming Soon</h2>
+                <p className="mt-2 text-gray-600 dark:text-gray-400">
+                  Trading calendar and timing analysis is currently in development.
+                </p>
+              </div>
+            </div>
+          </div>
+        ),
+        errorElement: <RouteErrorBoundary />
+      },
+      {
+        path: 'analysis/statistics',
+        element: (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <BarChart2 className="w-12 h-12 mx-auto text-gray-400" />
+              <h2 className="mt-4 text-xl font-semibold">Coming Soon</h2>
+              <p className="mt-2 text-gray-600 dark:text-gray-400">
+                Advanced trading statistics and analytics are currently in development.
+              </p>
+            </div>
+          </div>
+        ),
+        errorElement: <RouteErrorBoundary />
       }
     ]
   },
   {
     path: '/settings',
-    element: <AuthGuard><Layout /></AuthGuard>,
+    element: <AuthGuard><RouteWrapper><Layout /></RouteWrapper></AuthGuard>,
     children: [
       {
         index: true,
@@ -136,40 +189,26 @@ const router = createBrowserRouter([
       }
     ]
   }
-]);
+], {
+  future: {
+    v7_normalizeFormMethod: true
+  }
+});
 
 console.log('[App] Router created successfully');
 
-// Create a wrapper component for auth changes
-const AppContent = () => {
-  const { setIsNavigating } = useNavigation();
-
-  const handleAuthChange = async (event: string, user: any) => {
-    setIsNavigating(true);
-    try {
-      switch (event) {
-        case 'SIGNED_IN':
-          await router.navigate('/app/dashboard');
-          break;
-        case 'SIGNED_OUT':
-          await router.navigate('/auth/login');
-          break;
-        case 'PASSWORD_RECOVERY':
-          await router.navigate('/auth/reset-password');
-          break;
-      }
-    } finally {
-      setTimeout(() => setIsNavigating(false), 300);
-    }
-  };
-
+// Create a navigation progress bar component
+function NavigationProgress() {
+  const isNavigating = useNavigationStore(state => state.isNavigating);
+  
+  if (!isNavigating) return null;
+  
   return (
-    <DashboardProvider>
-      <RouterProvider router={router} />
-      <Toaster position="top-right" />
-    </DashboardProvider>
+    <div className="fixed top-0 left-0 w-full h-1">
+      <div className="h-full bg-primary animate-progress" />
+    </div>
   );
-};
+}
 
 // Main App component
 const App = () => {
@@ -178,17 +217,13 @@ const App = () => {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <NavigationProvider>
-          <SupabaseProvider supabase={supabase} onAuthChange={(event, user) => {
-            console.log('Auth change:', event, user);
-          }}>
-            <AuthProvider>
-              <ThemeProvider>
-                <AppContent />
-              </ThemeProvider>
-            </AuthProvider>
-          </SupabaseProvider>
-        </NavigationProvider>
+        <StoreProvider>
+          <ThemeProvider>
+            <RouterProvider router={router} />
+            <NavigationProgress />
+            <Toaster position="top-right" />
+          </ThemeProvider>
+        </StoreProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );

@@ -17,7 +17,7 @@ export function TradeRow({ trade, onDelete }: TradeRowProps) {
     <>
       <div 
         className="flex items-center justify-between p-3 bg-card dark:bg-dark-paper rounded-lg hover:bg-muted/50 dark:hover:bg-dark-muted/20 cursor-pointer"
-        onClick={() => navigate(`/journal/trades/${trade.id}`)}
+        onClick={() => navigate(`/app/journal/trades/${trade.id}`)}
       >
         {/* Expand/Collapse */}
         <button 

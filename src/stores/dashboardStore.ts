@@ -1,158 +1,251 @@
 import { create } from 'zustand';
-import { supabase } from '../lib/supabase';
-import type { DashboardState, DashboardProfile } from '../types/dashboard';
-import { DEFAULT_PROFILE } from '../config/dashboardProfiles';
+import { persist } from "zustand/middleware";
+import type { Layout } from "react-grid-layout";
+import type { DashboardProfile } from "../types/dashboard";
+import { supabase } from "../lib/supabase";
+import { config } from "../config";
+import {
+  DEFAULT_DASHBOARD_LAYOUT,
+  DEFAULT_ENABLED_CARDS,
+} from "../config/dashboardTheme";
 
-// Define the database row type to match the actual database schema
-interface DashboardProfileRow {
-  id: string;
-  user_id: string;
-  name: string;
-  is_default: boolean;
-  layout: any[];
-  enabled_cards: string[];
-  created_at: string;
-  updated_at: string;
+interface DashboardState {
+  currentProfileId: string;
+  currentProfile: DashboardProfile | null;
+  profiles: DashboardProfile[];
+  layouts: Layout[];
+  isEditing: boolean;
+  isLoading: boolean;
+  error: Error | null;
 }
 
-interface DashboardStore extends DashboardState {
+interface DashboardActions {
+  setIsEditing: (editing: boolean) => void;
   fetchProfiles: (userId: string) => Promise<void>;
-  createProfile: (profile: Omit<DashboardProfile, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
-  updateProfile: (profileId: string, updates: Partial<DashboardProfile>) => Promise<void>;
+  createProfile: (
+    profile: Omit<DashboardProfile, "id" | "createdAt" | "updatedAt">
+  ) => Promise<void>;
+  updateProfile: (
+    profileId: string,
+    updates: Partial<DashboardProfile>
+  ) => Promise<void>;
   deleteProfile: (profileId: string) => Promise<void>;
   setCurrentProfile: (profileId: string) => void;
+  updateLayouts: (newLayouts: Layout[]) => void;
 }
 
-export const useDashboardStore = create<DashboardStore>()((set, get) => ({
-  currentProfileId: '',
-  profiles: [],
-  isLoading: false,
-  error: null,
+export const useDashboardStore = create<DashboardState & DashboardActions>()(
+  persist(
+    (set, get) => ({
+      // Initial state
+      currentProfileId: "",
+      currentProfile: null,
+      profiles: [],
+      layouts: DEFAULT_DASHBOARD_LAYOUT,
+      isEditing: false,
+      isLoading: false,
+      error: null,
 
-  fetchProfiles: async (userId: string) => {
-    set({ isLoading: true, error: null });
-    try {
-      const { data, error } = await supabase
-        .from('dashboard_profiles')
-        .select('*')
-        .eq('user_id', userId);
+      // Actions
+      setIsEditing: (editing) => set({ isEditing: editing }),
 
-      if (error) throw error;
+      fetchProfiles: async (userId) => {
+        set({ isLoading: true, error: null });
+        try {
+          if (!config.isProduction && userId === "dev-123") {
+            // Mock data for development mode
+            const mockProfile: DashboardProfile = {
+              id: "dev-profile",
+              userId: "dev-123",
+              name: "Default Profile",
+              isDefault: true,
+              layout: DEFAULT_DASHBOARD_LAYOUT,
+              enabledCards: DEFAULT_ENABLED_CARDS,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
 
-      // Transform database rows to DashboardProfile type
-      const profiles = (data as DashboardProfileRow[])?.map(profile => ({
-        id: profile.id,
-        userId: profile.user_id,
-        name: profile.name,
-        isDefault: profile.is_default,
-        layout: profile.layout,
-        enabledCards: profile.enabled_cards,
-        createdAt: profile.created_at,
-        updatedAt: profile.updated_at
-      })) || [];
+            set({
+              profiles: [mockProfile],
+              currentProfileId: mockProfile.id,
+              currentProfile: mockProfile,
+              layouts: mockProfile.layout,
+              isLoading: false,
+            });
+            return;
+          }
 
-      if (!data || data.length === 0) {
-        const defaultProfile = {
-          ...DEFAULT_PROFILE,
-          userId,
-        };
-        await get().createProfile(defaultProfile);
-        return;
-      }
+          const { data, error } = await supabase
+            .from("dashboard_profiles")
+            .select("*")
+            .eq("user_id", userId)
+            .order("created_at", { ascending: true });
 
-      set({ profiles, currentProfileId: profiles[0].id });
-    } catch (error) {
-      set({ error: error as Error });
-    } finally {
-      set({ isLoading: false });
+          if (error) throw error;
+
+          const profiles = data || [];
+          set({ profiles });
+
+          if (profiles.length > 0) {
+            const defaultProfile =
+              profiles.find((p) => p.is_default) || profiles[0];
+            set({
+              currentProfileId: defaultProfile.id,
+              currentProfile: defaultProfile,
+              layouts: defaultProfile.layout || DEFAULT_DASHBOARD_LAYOUT,
+            });
+          }
+
+          // Save layouts to localStorage
+          if (userId) {
+            localStorage.setItem(
+              `dashboard-layout-${userId}`,
+              JSON.stringify(get().layouts)
+            );
+          }
+        } catch (error) {
+          console.error("Error fetching profiles:", error);
+          set({ error: error as Error });
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+
+      createProfile: async (profile) => {
+        set({ isLoading: true, error: null });
+        try {
+          const { data, error } = await supabase
+            .from("dashboard_profiles")
+            .insert([
+              {
+                user_id: profile.userId,
+                name: profile.name,
+                is_default: profile.isDefault,
+                layout: profile.layout || DEFAULT_DASHBOARD_LAYOUT,
+                enabled_cards: profile.enabledCards || DEFAULT_ENABLED_CARDS,
+              },
+            ])
+            .select()
+            .single();
+
+          if (error) throw error;
+
+          const profiles = get().profiles;
+          set({
+            profiles: [...profiles, data],
+            isLoading: false,
+          });
+
+          if (data.is_default) {
+            set({
+              currentProfileId: data.id,
+              currentProfile: data,
+              layouts: data.layout || DEFAULT_DASHBOARD_LAYOUT,
+            });
+          }
+        } catch (error) {
+          console.error("Error creating profile:", error);
+          set({ error: error as Error, isLoading: false });
+          throw error;
+        }
+      },
+
+      updateProfile: async (profileId, updates) => {
+        set({ isLoading: true, error: null });
+        try {
+          const { data, error } = await supabase
+            .from("dashboard_profiles")
+            .update(updates)
+            .eq("id", profileId)
+            .select()
+            .single();
+
+          if (error) throw error;
+
+          const profiles = get().profiles.map((p) =>
+            p.id === profileId ? { ...p, ...data } : p
+          );
+
+          set({ profiles, isLoading: false });
+
+          if (get().currentProfileId === profileId) {
+            set({
+              currentProfile: data,
+              layouts: data.layout || DEFAULT_DASHBOARD_LAYOUT,
+            });
+          }
+        } catch (error) {
+          console.error("Error updating profile:", error);
+          set({ error: error as Error, isLoading: false });
+          throw error;
+        }
+      },
+
+      deleteProfile: async (profileId) => {
+        set({ isLoading: true, error: null });
+        try {
+          const { error } = await supabase
+            .from("dashboard_profiles")
+            .delete()
+            .eq("id", profileId);
+
+          if (error) throw error;
+
+          const profiles = get().profiles.filter((p) => p.id !== profileId);
+          set({ profiles });
+
+          if (get().currentProfileId === profileId) {
+            const nextProfile = profiles[0];
+            if (nextProfile) {
+              set({
+                currentProfileId: nextProfile.id,
+                currentProfile: nextProfile,
+                layouts: nextProfile.layout || DEFAULT_DASHBOARD_LAYOUT,
+              });
+            } else {
+              set({
+                currentProfileId: "",
+                currentProfile: null,
+                layouts: DEFAULT_DASHBOARD_LAYOUT,
+              });
+            }
+          }
+        } catch (error) {
+          console.error("Error deleting profile:", error);
+          set({ error: error as Error });
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+
+      setCurrentProfile: (profileId) => {
+        const profile = get().profiles.find((p) => p.id === profileId);
+        if (profile) {
+          set({
+            currentProfileId: profileId,
+            currentProfile: profile,
+            layouts: profile.layout || DEFAULT_DASHBOARD_LAYOUT,
+          });
+        }
+      },
+
+      updateLayouts: (newLayouts) => {
+        set({ layouts: newLayouts });
+        const userId = get().profiles[0]?.userId;
+        if (userId) {
+          localStorage.setItem(
+            `dashboard-layout-${userId}`,
+            JSON.stringify(newLayouts)
+          );
+        }
+      },
+    }),
+    {
+      name: "dashboard-storage",
+      partialize: (state) => ({
+        currentProfileId: state.currentProfileId,
+        layouts: state.layouts,
+      }),
     }
-  },
-
-  createProfile: async (profile) => {
-    try {
-      const { data, error } = await supabase
-        .from('dashboard_profiles')
-        .insert([{
-          user_id: profile.userId,
-          name: profile.name,
-          is_default: profile.isDefault,
-          layout: profile.layout,
-          enabled_cards: profile.enabledCards
-        }])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Transform database row to DashboardProfile type
-      const newProfile = {
-        id: data.id,
-        userId: data.user_id,
-        name: data.name,
-        isDefault: data.is_default,
-        layout: data.layout,
-        enabledCards: data.enabled_cards,
-        createdAt: data.created_at,
-        updatedAt: data.updated_at
-      };
-
-      const profiles = get().profiles;
-      set({ profiles: [...profiles, newProfile] });
-    } catch (error) {
-      console.error('Error creating profile:', error);
-      throw error;
-    }
-  },
-
-  updateProfile: async (profileId, updates) => {
-    try {
-      const updateData: any = {};
-      if (updates.name) updateData.name = updates.name;
-      if (updates.isDefault !== undefined) updateData.is_default = updates.isDefault;
-      if (updates.layout) updateData.layout = updates.layout;
-      if (updates.enabledCards) updateData.enabled_cards = updates.enabledCards;
-
-      const { error } = await supabase
-        .from('dashboard_profiles')
-        .update(updateData)
-        .eq('id', profileId);
-
-      if (error) throw error;
-
-      const profiles = get().profiles.map(p => 
-        p.id === profileId ? { ...p, ...updates } : p
-      );
-      set({ profiles });
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      throw error;
-    }
-  },
-
-  deleteProfile: async (profileId: string) => {
-    set({ isLoading: true, error: null });
-    try {
-      const { error } = await supabase
-        .from('dashboard_profiles')
-        .delete()
-        .eq('id', profileId);
-
-      if (error) throw error;
-
-      set((state: DashboardState) => ({
-        profiles: state.profiles.filter(p => p.id !== profileId),
-        currentProfileId: state.currentProfileId === profileId
-          ? state.profiles[0]?.id || ''
-          : state.currentProfileId
-      }));
-    } catch (error) {
-      set({ error: error as Error });
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-
-  setCurrentProfile: (profileId: string) => {
-    set({ currentProfileId: profileId });
-  },
-})); 
+  )
+); 

@@ -1,6 +1,26 @@
--- Drop existing tables if they exist
+-- Drop existing tables and types
 DROP TABLE IF EXISTS public.transaction_orders CASCADE;
 DROP TABLE IF EXISTS public.transactions CASCADE;
+DROP TYPE IF EXISTS public.transaction_type CASCADE;
+DROP TYPE IF EXISTS public.transaction_side CASCADE;
+DROP TYPE IF EXISTS public.option_type CASCADE;
+DROP TYPE IF EXISTS public.option_details CASCADE;
+
+-- Create transaction_type enum
+CREATE TYPE public.transaction_type AS ENUM ('stock', 'option');
+
+-- Create transaction_side enum
+CREATE TYPE public.transaction_side AS ENUM ('Long', 'Short');
+
+-- Create option_type enum
+CREATE TYPE public.option_type AS ENUM ('call', 'put');
+
+-- Create option_details type
+CREATE TYPE public.option_details AS (
+  strike decimal,
+  expiration date,
+  type option_type
+);
 
 -- Create transactions table
 CREATE TABLE IF NOT EXISTS public.transactions (
@@ -126,51 +146,42 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Create function to calculate transaction averages
 CREATE OR REPLACE FUNCTION calculate_transaction_averages()
 RETURNS TRIGGER AS $$
-DECLARE
-  total_entry_quantity decimal := 0;
-  total_entry_value decimal := 0;
-  total_exit_quantity decimal := 0;
-  total_exit_value decimal := 0;
-  order_record record;
 BEGIN
-  -- Calculate entry and exit averages from orders
-  FOR order_record IN SELECT * FROM jsonb_array_elements(NEW.orders)
-  LOOP
-    IF (NEW.side = 'Long' AND (order_record.value->>'action')::text = 'buy') OR
-       (NEW.side = 'Short' AND (order_record.value->>'action')::text = 'sell') THEN
-      total_entry_quantity := total_entry_quantity + ((order_record.value->>'quantity')::decimal);
-      total_entry_value := total_entry_value + ((order_record.value->>'quantity')::decimal * (order_record.value->>'price')::decimal);
-    ELSE
-      total_exit_quantity := total_exit_quantity + ((order_record.value->>'quantity')::decimal);
-      total_exit_value := total_exit_value + ((order_record.value->>'quantity')::decimal * (order_record.value->>'price')::decimal);
-    END IF;
-  END LOOP;
-
-  -- Calculate averages
-  NEW.avg_entry_price := CASE 
-    WHEN total_entry_quantity > 0 THEN total_entry_value / total_entry_quantity
-    ELSE NULL
-  END;
+  -- Calculate entry and exit averages
+  WITH entry_orders AS (
+    SELECT 
+      COALESCE(SUM((value->>'quantity')::integer * (value->>'price')::decimal), 0) as total_entry_amount,
+      COALESCE(SUM((value->>'quantity')::integer), 0) as total_entry_quantity
+    FROM unnest(NEW.orders) as value
+    WHERE value->>'type' = 'entry'
+  ),
+  exit_orders AS (
+    SELECT 
+      COALESCE(SUM((value->>'quantity')::integer * (value->>'price')::decimal), 0) as total_exit_amount,
+      COALESCE(SUM((value->>'quantity')::integer), 0) as total_exit_quantity
+    FROM unnest(NEW.orders) as value
+    WHERE value->>'type' = 'exit'
+  )
+  SELECT
+    CASE
+      WHEN total_entry_quantity > 0 THEN total_entry_amount / total_entry_quantity
+      ELSE NULL
+    END,
+    CASE
+      WHEN total_exit_quantity > 0 THEN total_exit_amount / total_exit_quantity
+      ELSE NULL
+    END
+  INTO NEW.avg_entry_price, NEW.avg_exit_price
+  FROM entry_orders, exit_orders;
   
-  NEW.avg_exit_price := CASE 
-    WHEN total_exit_quantity > 0 THEN total_exit_value / total_exit_quantity
-    ELSE NULL
-  END;
-
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
--- Create indexes
-CREATE INDEX transactions_user_id_idx ON public.transactions(user_id);
-CREATE INDEX transactions_symbol_idx ON public.transactions(symbol);
-CREATE INDEX transactions_date_idx ON public.transactions(date);
-CREATE INDEX transaction_orders_transaction_id_idx ON public.transaction_orders(transaction_id);
-CREATE INDEX transaction_orders_date_idx ON public.transaction_orders(date);
-
--- Create triggers for status and average calculations
+-- Create triggers
 CREATE TRIGGER update_transaction_status
   BEFORE INSERT OR UPDATE OF orders, quantity ON public.transactions
   FOR EACH ROW
@@ -180,3 +191,29 @@ CREATE TRIGGER update_transaction_averages
   BEFORE INSERT OR UPDATE OF orders ON public.transactions
   FOR EACH ROW
   EXECUTE FUNCTION calculate_transaction_averages();
+
+-- Create trigger for updated_at timestamp
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_transactions_updated_at
+  BEFORE UPDATE ON public.transactions
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_transaction_orders_updated_at
+  BEFORE UPDATE ON public.transaction_orders
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- Create indexes
+CREATE INDEX transactions_user_id_idx ON public.transactions(user_id);
+CREATE INDEX transactions_symbol_idx ON public.transactions(symbol);
+CREATE INDEX transactions_date_idx ON public.transactions(date);
+CREATE INDEX transaction_orders_transaction_id_idx ON public.transaction_orders(transaction_id);
+CREATE INDEX transaction_orders_date_idx ON public.transaction_orders(date);

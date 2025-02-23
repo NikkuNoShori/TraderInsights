@@ -11,25 +11,25 @@ export interface RouteConfig {
 
 export const ROUTES: Record<string, RouteConfig> = {
   dashboard: {
-    path: '/dashboard',
-    label: 'Dashboard',
+    path: "/dashboard",
+    label: "Dashboard",
     requiresAuth: true,
-    defaultCards: ['total_pnl', 'win_rate', 'profit_factor', 'total_trades']
+    defaultCards: ["total_pnl", "win_rate", "profit_factor", "total_trades"],
   },
   journal: {
-    path: '/journal',
-    label: 'Trading Journal',
-    requiresAuth: true
+    path: "/app/journal",
+    label: "Trading Journal",
+    requiresAuth: true,
   },
   performance: {
-    path: '/performance',
-    label: 'Performance',
+    path: "/performance",
+    label: "Performance",
     requiresAuth: true,
-    defaultCards: ['win_rate', 'profit_factor', 'average_win', 'average_loss']
+    defaultCards: ["win_rate", "profit_factor", "average_win", "average_loss"],
   },
   watchlist: {
-    path: '/watchlist',
-    label: 'Watchlist',
-    requiresAuth: true
-  }
+    path: "/watchlist",
+    label: "Watchlist",
+    requiresAuth: true,
+  },
 }; 

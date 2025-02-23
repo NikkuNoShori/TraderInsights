@@ -16,6 +16,9 @@ export const env = {
   get appName() {
     return import.meta.env.VITE_APP_NAME;
   },
+  get appUrl() {
+    return import.meta.env.VITE_APP_URL;
+  },
   get appEnv() {
     return import.meta.env.VITE_APP_ENV;
   },

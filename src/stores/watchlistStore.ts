@@ -28,40 +28,50 @@ export const useWatchlistStore = create<WatchlistState>()(
       initialized: false,
 
       initializeWatchlist: async (userId: string) => {
+        // Prevent recursive initialization
+        if (get().initialized) {
+          console.log("Watchlist already initialized, skipping");
+          return;
+        }
+
         set({ isLoading: true, error: null });
         try {
-          if (!userId || typeof userId !== 'string' || userId.length < 32) {
-            throw new Error('Invalid user ID');
+          if (!userId || typeof userId !== "string" || userId.length < 32) {
+            throw new Error("Invalid user ID");
           }
 
-          console.log('Initializing watchlist for user:', userId);
+          console.log("Initializing watchlist for user:", userId);
           const { data: watchlistSymbols, error } = await supabase
-            .from('symbols_watched')
-            .select('symbol')
-            .eq('user_id', userId);
+            .from("symbols_watched")
+            .select("symbol")
+            .eq("user_id", userId);
 
           if (error) {
-            console.error('Supabase error initializing watchlist:', error);
+            console.error("Supabase error initializing watchlist:", error);
             throw error;
           }
 
-          console.log('Fetched watchlist symbols:', watchlistSymbols);
-          const symbols = (watchlistSymbols || []).map(ws => ws.symbol);
+          console.log("Fetched watchlist symbols:", watchlistSymbols);
+          const symbols = (watchlistSymbols || []).map((ws) => ws.symbol);
           set({ symbols, initialized: true });
-          
+
           if (symbols.length > 0) {
-            console.log('Refreshing quotes for symbols:', symbols);
+            console.log("Refreshing quotes for symbols:", symbols);
             await get().refreshQuotes();
           }
         } catch (error) {
-          console.error('Failed to initialize watchlist:', {
+          console.error("Failed to initialize watchlist:", {
             error,
             userId,
-            errorMessage: error instanceof Error ? error.message : 'Unknown error'
+            errorMessage:
+              error instanceof Error ? error.message : "Unknown error",
           });
-          set({ 
-            error: error instanceof Error ? error.message : 'Failed to load watchlist',
-            initialized: true // Set initialized even on error to prevent infinite loading
+          set({
+            error:
+              error instanceof Error
+                ? error.message
+                : "Failed to load watchlist",
+            initialized: true, // Set initialized even on error to prevent infinite loading
           });
         } finally {
           set({ isLoading: false });

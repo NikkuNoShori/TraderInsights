@@ -1,21 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useSupabase } from '../contexts/SupabaseContext';
-
-interface StockData {
-  timestamp: string;
-  price: number;
-  volume: number;
-}
-
-interface StockQuote {
-  symbol: string;
-  companyName: string;
-  currentPrice: number;
-  change: number;
-  changePercent: number;
-  volume: number;
-  marketCap: number;
-}
+import type { StockData, StockQuote } from "../types/stock";
 
 export function useStockData() {
   const [stockData, setStockData] = useState<StockData[]>([]);
