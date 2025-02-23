@@ -14,7 +14,7 @@ export const validateToken = async (token: string): Promise<boolean> => {
 };
 
 // Profile Management
-export const fetchProfile = async (userId: string): Promise<Profile | null> => {
+export async function fetchProfile(userId: string): Promise<Profile | null> {
   try {
     const { data, error } = await supabase
       .from("profiles")
@@ -28,16 +28,18 @@ export const fetchProfile = async (userId: string): Promise<Profile | null> => {
     console.error("Error fetching profile:", error);
     return null;
   }
-};
+}
 
 // Permissions Management
-export async function fetchPermissions(_userId: string): Promise<UserPermissions> {
+export async function fetchPermissions(
+  _userId: string
+): Promise<UserPermissions> {
   try {
     // TODO: Implement actual permissions fetching from database
     return {
       "dashboard.access": true,
       "journal.access": true,
-      "screener.access": true
+      "screener.access": true,
     };
   } catch (error) {
     console.error("Error fetching permissions:", error);
@@ -47,18 +49,30 @@ export async function fetchPermissions(_userId: string): Promise<UserPermissions
 
 // Session Management
 export const clearDeveloperMode = () => {
+  // Clear developer mode flags
   localStorage.removeItem("developer-mode");
+  localStorage.removeItem("dev_mode_hash");
+  sessionStorage.removeItem("dev_mode_hash");
   sessionStorage.removeItem("dev-session");
-  sessionStorage.clear();
+
   // Clear all auth-related data
-  Object.keys(localStorage).forEach(key => {
-    if (key.startsWith("sb-") || key.includes("supabase")) {
+  Object.keys(localStorage).forEach((key) => {
+    if (
+      key.startsWith("sb-") ||
+      key.includes("supabase") ||
+      key.includes("auth")
+    ) {
       localStorage.removeItem(key);
     }
   });
+
   // Clear session storage
-  Object.keys(sessionStorage).forEach(key => {
-    if (key.startsWith("sb-") || key.includes("supabase")) {
+  Object.keys(sessionStorage).forEach((key) => {
+    if (
+      key.startsWith("sb-") ||
+      key.includes("supabase") ||
+      key.includes("auth")
+    ) {
       sessionStorage.removeItem(key);
     }
   });
@@ -68,9 +82,9 @@ export const handleSignOut = async (signOut: () => Promise<void>) => {
   try {
     clearDeveloperMode();
     await signOut();
-    window.location.href = "/login";
+    window.location.href = "/auth/login";
   } catch (error) {
     console.error("Error during sign out:", error);
-    window.location.href = "/login";
+    window.location.href = "/auth/login";
   }
 };

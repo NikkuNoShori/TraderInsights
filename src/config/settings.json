@@ -1,6 +1,6 @@
 {
   "developerMode": {
-    "enabled": true,
-    "showLoginButton": true
+    "enabled": false,
+    "showLoginButton": false
   }
 } 

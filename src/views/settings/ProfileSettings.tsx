@@ -9,7 +9,7 @@ import { clsx } from 'clsx';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
-export function ProfileSettings() {
+export default function ProfileSettings() {
   const navigate = useNavigate();
   const { user, profile: userProfile } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);

@@ -36,7 +36,7 @@ const notificationSettings: NotificationSetting[] = [
   },
 ];
 
-export function NotificationSettings() {
+export default function NotificationSettings() {
   const { user } = useAuthStore();
   const [settings, setSettings] = useState<Record<string, boolean>>(() => {
     const savedSettings = localStorage.getItem(`notification_settings_${user?.id}`);

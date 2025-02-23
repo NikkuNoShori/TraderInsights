@@ -1,9 +1,16 @@
 import { useNavigate } from 'react-router-dom';
 import { LineChart, TrendingUp, BarChart2, BookOpen } from 'lucide-react';
 import { Button } from '../components/ui/button';
+import { useEffect } from 'react';
+import { clearDeveloperMode } from '../lib/utils/auth';
 
 export default function LandingPage() {
   const navigate = useNavigate();
+
+  // Clear any developer mode state when component mounts
+  useEffect(() => {
+    clearDeveloperMode();
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">

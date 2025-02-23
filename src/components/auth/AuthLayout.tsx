@@ -1,4 +1,4 @@
-import { LineChart } from 'lucide-react';
+import { AuthLogo } from './AuthLogo';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -8,12 +8,12 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <LineChart className="mx-auto h-12 w-12 text-indigo-600" />
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">{title}</h2>
-          <p className="mt-2 text-sm text-gray-600">{subtitle}</p>
+          <AuthLogo />
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">{title}</h2>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{subtitle}</p>
         </div>
         {children}
       </div>
