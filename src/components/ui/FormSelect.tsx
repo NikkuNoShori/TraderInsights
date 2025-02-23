@@ -1,53 +1,49 @@
-import * as React from "react"
+import { forwardRef } from 'react';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./select"
-
-interface Option {
-  value: string;
-  label: string;
-}
+} from './select';
+import { cn } from '@/utils/cn';
 
 interface FormSelectProps {
-  options: Option[];
   value: string;
-  onChange: (value: string) => void;
+  onValueChange: (value: string) => void;
   label?: string;
-  placeholder?: string;
+  error?: string;
+  helperText?: string;
   className?: string;
+  placeholder?: string;
+  children?: React.ReactNode;
 }
 
-export function FormSelect({
-  options,
-  value,
-  onChange,
-  label,
-  placeholder,
-  className,
-}: FormSelectProps) {
-  return (
-    <div className="w-full">
-      {label && (
-        <label className="block text-sm font-medium text-light-text dark:text-dark-text mb-1">
-          {label}
-        </label>
-      )}
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className={className}>
-          <SelectValue placeholder={placeholder} />
-        </SelectTrigger>
-        <SelectContent>
-          {options.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  );
-}
+export const FormSelect = forwardRef<HTMLButtonElement, FormSelectProps>(
+  ({ className, label, error, helperText, children, placeholder, value, onValueChange, ...props }, ref) => {
+    return (
+      <div className="space-y-2">
+        {label && (
+          <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            {label}
+          </label>
+        )}
+        <Select value={value} onValueChange={onValueChange}>
+          <SelectTrigger ref={ref} className={cn('w-full', error && 'border-red-500 focus:ring-red-500', className)}>
+            <SelectValue placeholder={placeholder} />
+          </SelectTrigger>
+          <SelectContent>
+            {children}
+          </SelectContent>
+        </Select>
+        {(error || helperText) && (
+          <p className={cn('text-sm', error ? 'text-red-500' : 'text-gray-500')}>
+            {error || helperText}
+          </p>
+        )}
+      </div>
+    );
+  }
+);
+
+FormSelect.displayName = 'FormSelect';

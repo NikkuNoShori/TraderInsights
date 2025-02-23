@@ -1,4 +1,3 @@
-import React from 'react';
 import { Eye, TrendingUp, TrendingDown, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cardHoverEffect } from '@/lib/styles';

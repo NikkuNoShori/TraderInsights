@@ -1,4 +1,3 @@
-import React from 'react';
 import { useResizeDetector } from 'react-resize-detector';
 import { cn } from '../../lib/utils';
 import { DASHBOARD_THEME } from '../../config/dashboardTheme';

@@ -1,44 +1,17 @@
-import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { FileSpreadsheet, Upload, AlertCircle } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useToast } from '../../hooks/useToast';
 import { useAuthStore } from '../../stores/authStore';
 import { supabase } from '../../lib/supabase';
-import * as XLSX from 'xlsx';
-import { z } from 'zod';
 import { Progress } from '../ui/progress';
 import { cn } from '../../lib/utils';
+import { processFile } from '../../utils/fileProcessing';
+import type { ProcessedTradeData } from '../../utils/fileProcessing';
 
 interface ImportTradeFormProps {
   onSuccess: () => void;
 }
-
-// Validation schemas
-const baseTradeSchema = z.object({
-  symbol: z.string().min(1, 'Symbol is required').toUpperCase(),
-  entry_date: z.string().datetime({ message: 'Invalid entry date format' }),
-  entry_price: z.number().positive('Entry price must be positive'),
-  quantity: z.number().positive('Quantity must be positive'),
-  direction: z.enum(['long', 'short']),
-  portfolio_id: z.string().uuid('Invalid portfolio ID'),
-  notes: z.string().optional(),
-  exit_date: z.string().datetime().optional(),
-  exit_price: z.number().positive().optional(),
-});
-
-const optionTradeSchema = baseTradeSchema.extend({
-  type: z.literal('option'),
-  strike_price: z.number().positive('Strike price must be positive'),
-  expiration_date: z.string().datetime('Invalid expiration date'),
-  option_type: z.enum(['call', 'put']),
-});
-
-const stockTradeSchema = baseTradeSchema.extend({
-  type: z.literal('stock'),
-});
-
-const tradeSchema = z.discriminatedUnion('type', [stockTradeSchema, optionTradeSchema]);
 
 export const ImportTradeForm: React.FC<ImportTradeFormProps> = ({ onSuccess }) => {
   const { user } = useAuthStore();
@@ -47,63 +20,26 @@ export const ImportTradeForm: React.FC<ImportTradeFormProps> = ({ onSuccess }) =
   const [progress, setProgress] = useState(0);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
-  const validateTradeData = (data: unknown[]): z.infer<typeof tradeSchema>[] => {
-    const errors: string[] = [];
-    const validTrades = data.map((row, index) => {
-      try {
-        // Sanitize and transform data
-        const sanitizedRow = {
-          ...row,
-          symbol: String(row.symbol).toUpperCase(),
-          entry_price: Number(row.entry_price),
-          quantity: Number(row.quantity),
-          strike_price: row.strike_price ? Number(row.strike_price) : undefined,
-        };
-        return tradeSchema.parse(sanitizedRow);
-      } catch (error) {
-        if (error instanceof z.ZodError) {
-          errors.push(`Row ${index + 1}: ${error.errors.map(e => e.message).join(', ')}`);
-        }
-        return null;
-      }
-    }).filter((trade): trade is z.infer<typeof tradeSchema> => trade !== null);
-
-    setValidationErrors(errors);
-    return validTrades;
-  };
-
-  const processFile = async (buffer: ArrayBuffer) => {
-    try {
-      const workbook = XLSX.read(buffer, { type: 'array' });
-      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(firstSheet);
-      
-      // Validate data
-      const validTrades = validateTradeData(jsonData);
-      
-      if (validationErrors.length > 0) {
-        throw new Error('Validation failed. Please check the errors below.');
-      }
-
-      // Process trades in batches
-      const batchSize = 100;
-      const batches = Math.ceil(validTrades.length / batchSize);
-      
-      for (let i = 0; i < batches; i++) {
-        const batch = validTrades.slice(i * batchSize, (i + 1) * batchSize);
-        const { error } = await supabase.from('trades').insert(batch);
-        
-        if (error) throw error;
-        
-        setProgress(((i + 1) / batches) * 100);
-      }
-
-      toast.success(`Successfully imported ${validTrades.length} trades`);
-      onSuccess();
-    } catch (error) {
-      console.error('Import error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to import trades');
+  const handleProcessedData = async (data: ProcessedTradeData) => {
+    if (data.errors.length > 0) {
+      setValidationErrors(data.errors);
+      throw new Error('Validation failed. Please check the errors below.');
     }
+
+    const batchSize = 100;
+    const batches = Math.ceil(data.trades.length / batchSize);
+    
+    for (let i = 0; i < batches; i++) {
+      const batch = data.trades.slice(i * batchSize, (i + 1) * batchSize);
+      const { error } = await supabase.from('trades').insert(batch);
+      
+      if (error) throw error;
+      
+      setProgress(((i + 1) / batches) * 100);
+    }
+
+    toast.success(`Successfully imported ${data.trades.length} trades`);
+    onSuccess();
   };
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -114,19 +50,15 @@ export const ImportTradeForm: React.FC<ImportTradeFormProps> = ({ onSuccess }) =
     setProgress(0);
     setValidationErrors([]);
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const buffer = e.target?.result as ArrayBuffer;
-        await processFile(buffer);
-      } catch (error) {
-        console.error('File reading error:', error);
-        toast.error('Failed to read file');
-      } finally {
-        setIsProcessing(false);
-      }
-    };
-    reader.readAsArrayBuffer(file);
+    try {
+      const processedData = await processFile(file);
+      await handleProcessedData(processedData);
+    } catch (error) {
+      console.error('Import error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to import trades');
+    } finally {
+      setIsProcessing(false);
+    }
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({

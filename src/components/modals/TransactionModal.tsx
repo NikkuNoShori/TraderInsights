@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { journalService } from '../../lib/services/journalService';

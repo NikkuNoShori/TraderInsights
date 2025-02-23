@@ -1,4 +1,3 @@
-import React from 'react';
 import { TradeReport } from '../components/reporting/TradeReport';
 
 export const ReportingPage = () => {

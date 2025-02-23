@@ -1,4 +1,3 @@
-import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { DollarSign, PieChart as PieIcon, Percent, AlertTriangle } from 'lucide-react';
 import type { Trade } from '../../types/portfolio';

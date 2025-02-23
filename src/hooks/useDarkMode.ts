@@ -1,25 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "@/lib/hooks";
 
 export function useDarkMode() {
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    const saved = localStorage.getItem('darkMode');
+    const saved = localStorage.getItem("darkMode");
     if (saved !== null) {
       return JSON.parse(saved);
     }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
 
-  const [systemPreference, setSystemPreference] = useState<'dark' | 'light'>(
-    window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  const [systemPreference, setSystemPreference] = useState<"dark" | "light">(
+    window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
   );
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const handleChange = (e: MediaQueryListEvent) => {
-      const newPreference = e.matches ? 'dark' : 'light';
+      const newPreference = e.matches ? "dark" : "light";
       setSystemPreference(newPreference);
       // Update dark mode if following system preference
-      const saved = localStorage.getItem('darkMode');
+      const saved = localStorage.getItem("darkMode");
       if (saved === null) {
         setIsDarkMode(e.matches);
       }
@@ -27,20 +27,20 @@ export function useDarkMode() {
     // Initial check
     handleChange({ matches: mediaQuery.matches } as MediaQueryListEvent);
 
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
   useEffect(() => {
     if (isDarkMode) {
-      document.documentElement.classList.add('dark');
+      document.documentElement.classList.add("dark");
     } else {
-      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.remove("dark");
     }
-    localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
+    localStorage.setItem("darkMode", JSON.stringify(isDarkMode));
   }, [isDarkMode]);
 
-  const toggleDarkMode = () => setIsDarkMode(prev => !prev);
+  const toggleDarkMode = () => setIsDarkMode((prev: boolean) => !prev);
 
   return { isDarkMode, toggleDarkMode, systemPreference };
 }

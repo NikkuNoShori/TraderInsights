@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { FilterBuilder } from './FilterBuilder';
 
 interface Filter {

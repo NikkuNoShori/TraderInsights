@@ -1,60 +1,62 @@
-import React from 'react';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
+import { formatCurrency, formatNumber, formatPercent } from '@/utils/formatters';
+import type { StockQuote } from '@/types/stock';
 
-interface StockQuote {
-  symbol: string;
-  companyName: string;
-  currentPrice: number;
-  change: number;
-  changePercent: number;
-  volume: number;
-  marketCap: number;
+export interface StockInfoProps {
+  data: StockQuote;
+  onRefresh: () => void;
 }
 
-interface StockInfoProps {
-  quote: StockQuote;
-}
-
-export function StockInfo({ quote }: StockInfoProps) {
-  const formatNumber = (num: number) => 
-    new Intl.NumberFormat('en-US', { 
-      style: 'currency', 
-      currency: 'USD' 
-    }).format(num);
-
-  const isPositive = quote.changePercent >= 0;
-
+export function StockInfo({ data, onRefresh }: StockInfoProps) {
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex justify-between items-baseline">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
+      <div className="flex justify-between items-start mb-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">
-            {quote.symbol}
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {data.symbol}
           </h2>
-          <p className="text-sm text-gray-500">{quote.companyName}</p>
-        </div>
-        <div className="text-right">
-          <div className="text-2xl font-bold">
-            {formatNumber(quote.currentPrice)}
+          <div className="flex items-center mt-1">
+            <span className="text-3xl font-semibold text-gray-900 dark:text-white">
+              {formatCurrency(data.currentPrice)}
+            </span>
+            <span className={`ml-2 text-lg font-medium ${
+              data.changePercent >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+            }`}>
+              {data.changePercent >= 0 ? '+' : ''}{formatPercent(data.changePercent / 100)}
+            </span>
           </div>
-          <div className={`flex items-center ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-            {isPositive ? <TrendingUp className="h-4 w-4 mr-1" /> : <TrendingDown className="h-4 w-4 mr-1" />}
-            <span>{isPositive ? '+' : ''}{quote.changePercent.toFixed(2)}%</span>
-          </div>
         </div>
+        <button
+          onClick={onRefresh}
+          className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
+        >
+          <RefreshCw className="w-5 h-5" />
+        </button>
       </div>
-      
-      <div className="mt-6 grid grid-cols-2 gap-4">
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <p className="text-sm text-gray-500">Volume</p>
-          <p className="text-lg font-semibold">
-            {quote.volume.toLocaleString()}
+          <p className="text-sm text-gray-500 dark:text-gray-400">Volume</p>
+          <p className="text-lg font-medium text-gray-900 dark:text-white">
+            {formatNumber(data.volume)}
           </p>
         </div>
         <div>
-          <p className="text-sm text-gray-500">Market Cap</p>
-          <p className="text-lg font-semibold">
-            {formatNumber(quote.marketCap)}
+          <p className="text-sm text-gray-500 dark:text-gray-400">Avg Volume</p>
+          <p className="text-lg font-medium text-gray-900 dark:text-white">
+            {formatNumber(data.avgVolume)}
+          </p>
+        </div>
+        <div>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Market Cap</p>
+          <p className="text-lg font-medium text-gray-900 dark:text-white">
+            {formatCurrency(data.marketCap)}
+          </p>
+        </div>
+        <div>
+          <p className="text-sm text-gray-500 dark:text-gray-400">P/E Ratio</p>
+          <p className="text-lg font-medium text-gray-900 dark:text-white">
+            {data.peRatio ? formatNumber(data.peRatio) : 'N/A'}
           </p>
         </div>
       </div>

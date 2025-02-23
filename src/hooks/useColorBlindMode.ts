@@ -15,7 +15,8 @@ export function useColorBlindMode() {
     localStorage.setItem('colorBlindMode', JSON.stringify(isColorBlindMode));
   }, [isColorBlindMode]);
 
-  const toggleColorBlindMode = () => setIsColorBlindMode(prev => !prev);
+  const toggleColorBlindMode = () =>
+    setIsColorBlindMode((prev: boolean) => !prev);
 
   return { isColorBlindMode, toggleColorBlindMode };
 }

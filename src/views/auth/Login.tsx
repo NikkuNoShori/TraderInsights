@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from '@/lib/hooks';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { validatePassword } from '../../utils/validation';
-import { FormInput } from '../../components/ui/FormInput';
-import { LoadingButton } from '../../components/LoadingButton';
-import { useAuthStore } from '../../stores/authStore';
+import { validatePassword } from '@/utils/validation';
+import { FormInput } from '@/components/ui/FormInput';
+import { LoadingButton } from '@/components/LoadingButton';
+import { useAuthStore } from '@/stores/authStore';
 
 export default function Login() {
   const navigate = useNavigate();

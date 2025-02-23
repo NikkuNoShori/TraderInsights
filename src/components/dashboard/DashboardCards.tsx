@@ -1,4 +1,3 @@
-import React from 'react';
 import type { Trade } from '../../types/trade';
 
 interface DashboardCardsProps {

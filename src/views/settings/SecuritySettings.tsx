@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from '@/lib/hooks';
+import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { validatePassword } from '../../utils/validation';
-import { FormInput } from '../../components/ui/FormInput';
-import { LoadingButton } from '../../components/LoadingButton';
+import { FormInput } from '@/components/ui/FormInput';
+import { LoadingButton } from '@/components/LoadingButton';
 
 export function SecuritySettings() {
   const [currentPassword, setCurrentPassword] = useState('');

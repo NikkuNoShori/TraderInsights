@@ -1,5 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useEffect, useCallback, useState, useRef } from '@/lib/hooks';
+import type { MouseEvent as ReactMouseEvent } from 'react';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   LineChart, 
@@ -16,9 +17,10 @@ import {
 import { motion } from 'framer-motion';
 import { clsx } from 'clsx';
 import { Tooltip } from '../ui/Tooltip';
-import { useAuthStore } from '../../stores/authStore';
+import { useAuthStore } from '@/stores/authStore';
 import { DarkModeToggle } from '../DarkModeToggle';
 import { Badge } from '../ui/Badge';
+import { cn } from '@/utils/cn';
 
 type NavCategory = {
   label: string;
@@ -43,6 +45,11 @@ const navCategories: NavCategory[] = [
         href: '/app/dashboard'
       },
       {
+        label: 'Journal',
+        icon: BookOpen,
+        href: '/app/journal'
+      },
+      {
         label: 'Performance',
         icon: LineChart,
         href: '/app/analysis/performance'
@@ -52,11 +59,6 @@ const navCategories: NavCategory[] = [
   {
     label: 'Trading',
     items: [
-      {
-        label: 'Journal',
-        icon: BookOpen,
-        href: '/app/journal'
-      },
       {
         label: 'Watchlist',
         icon: List,
@@ -76,62 +78,67 @@ interface MainNavProps {
 }
 
 export function MainNav({ defaultCollapsed = true }: MainNavProps) {
-  const [isCollapsed, setIsCollapsed] = React.useState(() => {
+  const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem('nav-collapsed');
-    return saved ? JSON.parse(saved) : true;
+    return saved ? JSON.parse(saved) : defaultCollapsed;
   });
 
-  const [openCategories, setOpenCategories] = React.useState<string[]>(() => {
+  const [openCategories, setOpenCategories] = useState<string[]>(() => {
     const saved = localStorage.getItem('nav-open-categories');
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuthStore();
   const navigate = useNavigate();
-
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-
-  const userMenuRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+    if (!user) {
+      navigate('/auth/login');
+    }
+  }, [user, navigate]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: globalThis.MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setIsUserMenuOpen(false);
       }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    setIsUserMenuOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
     localStorage.setItem('nav-collapsed', JSON.stringify(isCollapsed));
   }, [isCollapsed]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     localStorage.setItem('nav-open-categories', JSON.stringify(openCategories));
   }, [openCategories]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     console.log('MainNav mounted');
     return () => console.log('MainNav unmounted');
   }, []);
+
   const toggleCollapse = () => {
     setIsCollapsed((prev: boolean) => !prev);
   };
 
-  const toggleCategory = React.useCallback((category: string, e: React.MouseEvent) => {
+  const toggleCategory = useCallback((category: string, e: ReactMouseEvent) => {
     e.preventDefault();
-    e.stopPropagation();
-    
-    if (!isCollapsed) {
-      setOpenCategories(prev => 
-        prev.includes(category) 
-          ? prev.filter(c => c !== category)
-          : [...prev, category]
-      );
-    }
-  }, [isCollapsed]);
+    setOpenCategories(prev => 
+      prev.includes(category) 
+        ? prev.filter(c => c !== category)
+        : [...prev, category]
+    );
+  }, []);
 
   const handleSettingsClick = () => {
     navigate('/settings/profile');
@@ -163,11 +170,11 @@ export function MainNav({ defaultCollapsed = true }: MainNavProps) {
             {!isCollapsed && (
               <div className="flex items-center">
                 <span className="font-semibold text-foreground dark:text-dark-text">
-                  Trading Journal
+                  Trading Insights
                 </span>
                 <Badge 
                   type="beta" 
-                  tooltipContent="Trading Journal is currently in beta. We're actively adding new features!"
+                  tooltipContent="Trading Insights is currently in beta. We're actively adding new features!"
                 />
               </div>
             )}
@@ -179,7 +186,7 @@ export function MainNav({ defaultCollapsed = true }: MainNavProps) {
             <div key={category.label} className="relative">
               {!isCollapsed && (
                 <div
-                  onClick={(e) => toggleCategory(category.label, e)}
+                  onClick={(e) => toggleCategory(category.label, e as ReactMouseEvent)}
                   className="flex items-center justify-between w-full text-sm font-semibold 
                            text-muted-foreground dark:text-gray-300 
                            hover:text-foreground dark:hover:text-white 

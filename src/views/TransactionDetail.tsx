@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from '@/lib/react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { journalService } from '../lib/services/journalService';
-import { ArrowLeft, Clock, Tag, DollarSign, FileText, Image as ImageIcon, Pencil, Trash2, TrendingUp, TrendingDown, CheckCircle, AlertCircle } from 'lucide-react';
-import { formatCurrency, formatDate } from '../utils/formatters';
-import { OrdersList } from '../components/transactions/OrdersList';
-import type { Transaction } from '../types/database';
-import { TransactionModal } from '../components/modals/TransactionModal';
-import { LoadingScreen } from '../components/ui/LoadingScreen';
+import { ArrowLeft, Clock, Tag, DollarSign, FileText, Image as ImageIcon, Pencil, Trash2, CheckCircle, AlertCircle } from 'lucide-react';
+import { formatCurrency, formatDate } from '@/utils/formatters';
+import { OrdersList } from '@/components/transactions/OrdersList';
+import type { Transaction } from '@/types/database';
+import { TransactionModal } from '@/components/modals/TransactionModal';
+import { LoadingScreen } from '@/components/ui/LoadingScreen';
+import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'react-hot-toast';
 
 export function TransactionDetail() {
   const { id } = useParams();
@@ -22,7 +24,12 @@ export function TransactionDetail() {
     const fetchTransaction = async () => {
       if (!id) return;
       try {
-        const { data, error } = await journalService.getTransaction(id);
+        const { data, error } = await supabase
+          .from('transactions')
+          .select('*')
+          .eq('id', id)
+          .single();
+
         if (error) throw error;
         setTransaction(data);
       } catch (err) {
@@ -34,12 +41,17 @@ export function TransactionDetail() {
     };
 
     fetchTransaction();
-  }, [id]);
+  }, [id, supabase]);
 
   const handleDelete = async () => {
     if (!id) return;
     try {
-      await journalService.deleteTransaction(id);
+      const { error } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
       navigate('/app/journal');
     } catch (err) {
       console.error('Error deleting transaction:', err);
@@ -47,10 +59,15 @@ export function TransactionDetail() {
     }
   };
 
-  const handleDeleteImage = async (imageUrl: string) => {
-    if (!id) return;
+  const handleDeleteImage = async () => {
+    if (!id || !transaction) return;
     try {
-      await journalService.updateTransaction(id, { chart_image: undefined });
+      const { error } = await supabase
+        .from('transactions')
+        .update({ chart_image: null })
+        .eq('id', id);
+
+      if (error) throw error;
       setTransaction(prev => prev ? { ...prev, chart_image: undefined } : null);
     } catch (err) {
       console.error('Error deleting image:', err);
@@ -218,7 +235,7 @@ export function TransactionDetail() {
                 <ImageIcon className="h-4 w-4 mr-2" />
                 Chart
                 <button
-                  onClick={() => handleDeleteImage(transaction.chart_image!)}
+                  onClick={handleDeleteImage}
                   className="ml-2 text-sm text-red-600 hover:text-red-500"
                 >
                   <Trash2 className="h-4 w-4" />

@@ -1,4 +1,3 @@
-import React from 'react';
 import { TrendingUp, TrendingDown, DollarSign, Clock, Activity, Percent } from 'lucide-react';
 import type { PortfolioMetrics } from '../../types/portfolio';
 

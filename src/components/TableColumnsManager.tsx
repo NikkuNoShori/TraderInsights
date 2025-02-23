@@ -1,4 +1,3 @@
-import React from 'react';
 import { Filter, Check } from 'lucide-react';
 import { clsx } from 'clsx';
 

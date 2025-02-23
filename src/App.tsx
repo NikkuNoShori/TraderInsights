@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useEffect } from '@/lib/react';
 import { createBrowserRouter, RouterProvider, Navigate, Outlet, useNavigation as useRouterNavigation, useNavigate } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
 import { AuthLayout } from './components/auth/AuthLayout';
@@ -35,7 +35,7 @@ function RouteWrapper({ children }: { children: React.ReactNode }) {
   const navigation = useRouterNavigation();
   const setIsNavigating = useNavigationStore(state => state.setIsNavigating);
   
-  React.useEffect(() => {
+  useEffect(() => {
     setIsNavigating(navigation.state === "loading");
   }, [navigation.state, setIsNavigating]);
   

@@ -1,4 +1,4 @@
-import React from 'react';
+import React from '@/lib/react';
 import { AlertTriangle } from 'lucide-react';
 import { withErrorBoundary } from './hoc/withErrorBoundary';
 import {

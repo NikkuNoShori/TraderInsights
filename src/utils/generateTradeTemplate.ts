@@ -1,60 +1,104 @@
-import * as XLSX from 'xlsx';
+import type { Workbook, Cell } from "exceljs";
 
 const stockExample = {
-  type: 'stock',
-  symbol: 'AAPL',
-  direction: 'long',
-  entry_date: '2024-01-01T10:30:00Z',
-  entry_price: 190.50,
+  type: "stock",
+  symbol: "AAPL",
+  direction: "long",
+  entry_date: "2024-01-01T10:30:00Z",
+  entry_price: 190.5,
   quantity: 100,
-  exit_date: '2024-01-02T15:45:00Z',
+  exit_date: "2024-01-02T15:45:00Z",
   exit_price: 195.75,
-  portfolio_id: 'your-portfolio-id',
-  notes: 'Earnings play',
+  portfolio_id: "your-portfolio-id",
+  notes: "Earnings play",
 };
 
 const optionExample = {
-  type: 'option',
-  symbol: 'TSLA',
-  direction: 'long',
-  entry_date: '2024-01-01T10:30:00Z',
-  entry_price: 5.50,
+  type: "option",
+  symbol: "TSLA",
+  direction: "long",
+  entry_date: "2024-01-01T10:30:00Z",
+  entry_price: 5.5,
   quantity: 10,
-  exit_date: '2024-01-02T15:45:00Z',
+  exit_date: "2024-01-02T15:45:00Z",
   exit_price: 7.25,
-  portfolio_id: 'your-portfolio-id',
-  strike_price: 250.00,
-  expiration_date: '2024-02-16T21:00:00Z',
-  option_type: 'call',
-  notes: 'Weekly options trade',
+  portfolio_id: "your-portfolio-id",
+  strike_price: 250.0,
+  expiration_date: "2024-02-16T21:00:00Z",
+  option_type: "call",
+  notes: "Weekly options trade",
 };
 
-export function generateTradeTemplate(): Blob {
-  const worksheet = XLSX.utils.json_to_sheet([stockExample, optionExample]);
-  
-  // Add column widths
-  const colWidths = [
-    { wch: 8 },  // type
-    { wch: 6 },  // symbol
-    { wch: 10 }, // direction
-    { wch: 20 }, // entry_date
-    { wch: 12 }, // entry_price
-    { wch: 10 }, // quantity
-    { wch: 20 }, // exit_date
-    { wch: 12 }, // exit_price
-    { wch: 36 }, // portfolio_id
-    { wch: 12 }, // strike_price
-    { wch: 20 }, // expiration_date
-    { wch: 10 }, // option_type
-    { wch: 40 }, // notes
-  ];
-  worksheet['!cols'] = colWidths;
+export async function generateTradeTemplate(): Promise<Blob> {
+  const ExcelJS = await import("exceljs");
+  const workbook: Workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Trade Template");
 
-  // Create workbook
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Trade Template');
+  // Add column headers and set widths
+  const columns = [
+    { header: "type", width: 8 },
+    { header: "symbol", width: 6 },
+    { header: "direction", width: 10 },
+    { header: "entry_date", width: 20 },
+    { header: "entry_price", width: 12 },
+    { header: "quantity", width: 10 },
+    { header: "exit_date", width: 20 },
+    { header: "exit_price", width: 12 },
+    { header: "portfolio_id", width: 36 },
+    { header: "strike_price", width: 12 },
+    { header: "expiration_date", width: 20 },
+    { header: "option_type", width: 10 },
+    { header: "notes", width: 40 },
+  ];
+
+  worksheet.columns = columns;
+
+  // Style the header row
+  worksheet.getRow(1).font = { bold: true };
+  worksheet.getRow(1).fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: "FFE0E0E0" },
+  };
+
+  // Add example data
+  worksheet.addRow(Object.values(stockExample));
+  worksheet.addRow(Object.values(optionExample));
+
+  // Add data validation
+  worksheet
+    .getColumn("type")
+    .eachCell({ includeEmpty: false }, (cell: Cell) => {
+      cell.dataValidation = {
+        type: "list",
+        allowBlank: false,
+        formulae: ['"stock,option"'],
+      };
+    });
+
+  worksheet
+    .getColumn("direction")
+    .eachCell({ includeEmpty: false }, (cell: Cell) => {
+      cell.dataValidation = {
+        type: "list",
+        allowBlank: false,
+        formulae: ['"long,short"'],
+      };
+    });
+
+  worksheet
+    .getColumn("option_type")
+    .eachCell({ includeEmpty: false }, (cell: Cell) => {
+      cell.dataValidation = {
+        type: "list",
+        allowBlank: true,
+        formulae: ['"call,put"'],
+      };
+    });
 
   // Generate buffer
-  const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-  return new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-} 
+  const buffer = await workbook.xlsx.writeBuffer();
+  return new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+}

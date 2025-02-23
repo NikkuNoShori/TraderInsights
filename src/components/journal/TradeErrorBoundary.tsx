@@ -1,4 +1,3 @@
-import React, { Component, ErrorInfo } from 'react';
 import { XCircleIcon, RefreshCw } from 'lucide-react';
 
 interface Props {

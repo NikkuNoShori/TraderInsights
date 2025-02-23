@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LineChart, TrendingUp, BarChart2, BookOpen } from 'lucide-react';
 import { Button } from '../components/ui/button';

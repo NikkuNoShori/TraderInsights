@@ -1,41 +1,48 @@
-import React from 'react';
 import ReactDatePicker from 'react-datepicker';
-import { useTheme } from '@/providers/ThemeProvider';
-import { clsx } from 'clsx';
-import "react-datepicker/dist/react-datepicker.css";
+import 'react-datepicker/dist/react-datepicker.css';
+import { cn } from '@/utils/cn';
 
-type DatePickerProps = {
-  selected: Date | null;
+interface DatePickerProps {
+  value: Date | null;
   onChange: (date: Date | null) => void;
   className?: string;
-  placeholderText?: string;
+  placeholder?: string;
   isClearable?: boolean;
   showMonthDropdown?: boolean;
   showYearDropdown?: boolean;
-  dropdownMode?: string;
-};
+  dropdownMode?: 'scroll' | 'select';
+  dateFormat?: string;
+  minDate?: Date;
+  maxDate?: Date;
+}
 
-export function DatePicker({ selected, onChange, className, ...props }: DatePickerProps) {
-  const { theme } = useTheme();
-  const isDark = theme === 'dark';
-
+export function DatePicker({
+  value,
+  onChange,
+  className,
+  placeholder = 'Select date...',
+  isClearable = true,
+  showMonthDropdown = true,
+  showYearDropdown = true,
+  dropdownMode = 'select',
+  dateFormat = 'MM/dd/yyyy',
+  minDate,
+  maxDate,
+}: DatePickerProps) {
   return (
-    <div className="relative">
+    <div className={cn('relative', className)}>
       <ReactDatePicker
-        selected={selected}
+        selected={value}
         onChange={onChange}
-        className={clsx(
-          "input",
-          className
-        )}
-        wrapperClassName="w-full"
-        calendarClassName={clsx(
-          "react-datepicker",
-          isDark && "dark"
-        )}
-        showPopperArrow={false}
-        dateFormat="yyyy-MM-dd"
-        {...props}
+        placeholderText={placeholder}
+        isClearable={isClearable}
+        showMonthDropdown={showMonthDropdown}
+        showYearDropdown={showYearDropdown}
+        dropdownMode={dropdownMode}
+        dateFormat={dateFormat}
+        minDate={minDate}
+        maxDate={maxDate}
+        className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
       />
     </div>
   );

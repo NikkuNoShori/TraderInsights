@@ -1,4 +1,3 @@
-import React from 'react';
 import { Palette } from 'lucide-react';
 import { useTheme, type ThemeName } from '@/providers/ThemeProvider';
 import { clsx } from 'clsx';

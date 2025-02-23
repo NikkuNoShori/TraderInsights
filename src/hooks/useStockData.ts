@@ -1,51 +1,89 @@
-import { useState, useCallback } from 'react';
-import { useSupabase } from '../contexts/SupabaseContext';
-import type { StockData, StockQuote } from "../types/stock";
+import { useState, useEffect, useCallback } from "@/lib/hooks";
+import { supabase } from "@/lib/supabase";
+import type { StockData, StockQuote } from "@/types/stock";
 
-export function useStockData() {
-  const [stockData, setStockData] = useState<StockData[]>([]);
-  const [stockQuote, setStockQuote] = useState<StockQuote | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const supabase = useSupabase();
+export interface StockDataState {
+  data: StockData[];
+  quotes: StockQuote[];
+  loading: boolean;
+  error: Error | null;
+}
 
-  const fetchData = useCallback(async (symbol: string) => {
-    setIsLoading(true);
-    setError(null);
+export function useStockData(symbols: string[]) {
+  const [state, setState] = useState<StockDataState>({
+    data: [],
+    quotes: [],
+    loading: true,
+    error: null,
+  });
+
+  const fetchStockData = useCallback(async () => {
+    if (!symbols.length) {
+      setState((prev) => ({ ...prev, loading: false }));
+      return;
+    }
 
     try {
       const { data, error } = await supabase
-        .from('stock_data')
-        .select('*')
-        .eq('symbol', symbol.toUpperCase())
-        .order('timestamp', { ascending: true });
+        .from("stock_data")
+        .select("*")
+        .in("symbol", symbols);
 
       if (error) throw error;
 
-      setStockData(data || []);
-      
-      // Fetch latest quote
-      const { data: quoteData, error: quoteError } = await supabase
-        .from('stock_quotes')
-        .select('*')
-        .eq('symbol', symbol.toUpperCase())
-        .single();
-
-      if (quoteError) throw quoteError;
-      setStockQuote(quoteData);
-
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch stock data');
-    } finally {
-      setIsLoading(false);
+      setState((prev) => ({
+        ...prev,
+        data: data as StockData[],
+        loading: false,
+      }));
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        error: error as Error,
+        loading: false,
+      }));
     }
-  }, [supabase]);
+  }, [symbols]);
+
+  const fetchQuotes = useCallback(async () => {
+    if (!symbols.length) {
+      setState((prev) => ({ ...prev, loading: false }));
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("stock_quotes")
+        .select("*")
+        .in("symbol", symbols);
+
+      if (error) throw error;
+
+      setState((prev) => ({
+        ...prev,
+        quotes: data as StockQuote[],
+        loading: false,
+      }));
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        error: error as Error,
+        loading: false,
+      }));
+    }
+  }, [symbols]);
+
+  useEffect(() => {
+    fetchStockData();
+    fetchQuotes();
+  }, [symbols, fetchStockData, fetchQuotes]);
 
   return {
-    stockData,
-    stockQuote,
-    isLoading,
-    error,
-    fetchData
+    data: state.data,
+    quotes: state.quotes,
+    loading: state.loading,
+    error: state.error,
+    refetchData: fetchStockData,
+    refetchQuotes: fetchQuotes,
   };
 }

@@ -1,4 +1,3 @@
-import React from 'react';
 import { useAuthStore } from '../../stores/authStore';
 import { Search } from 'lucide-react';
 import { ErrorBoundary } from '../ErrorBoundary';

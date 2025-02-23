@@ -1,4 +1,3 @@
-import React from 'react';
 import { Activity } from 'lucide-react';
 import { useApiStore } from '../lib/services/polygonApi';
 import { useAuth } from '../contexts/AuthContext';

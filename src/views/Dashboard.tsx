@@ -1,4 +1,3 @@
-import React from 'react';
 import type { Trade } from '../types/trade';
 import { PageHeader } from '../components/ui/PageHeader';
 import { DashboardCards } from '../components/dashboard/DashboardCards';

@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { Trash2, Loader2 } from 'lucide-react';
 import { Trade, formatTradeValue } from '../../types/trade';
