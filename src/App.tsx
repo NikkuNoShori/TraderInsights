@@ -1,7 +1,8 @@
-import React, { useCallback } from 'react';
-import { createBrowserRouter, RouterProvider, Navigate, Outlet, useNavigation as useRouterNavigation, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { createBrowserRouter, RouterProvider, Navigate, Outlet, useNavigation as useRouterNavigation } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
 import { AuthLayout } from './components/auth/AuthLayout';
+import LandingPage from './views/LandingPage';
 import Login from './views/auth/Login';
 import Dashboard from './views/Dashboard';
 import TradingJournal from './views/TradingJournal/index';
@@ -16,20 +17,27 @@ import './config/fontawesome';
 import Settings from './views/settings/Settings';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/queryClient';
-import { NavigationProvider } from './contexts/NavigationContext';
 import Portfolios from './views/Portfolios';
 import { RouteErrorBoundary } from './components/routing/RouteErrorBoundary';
 import { RouteLoading } from './components/routing/RouteLoading';
 import RequestPasswordReset from './views/auth/RequestPasswordReset';
 import ResetPassword from './views/auth/ResetPassword';
-import { BarChart2 } from 'lucide-react';
+import { BarChart2, PieChart, Calendar } from 'lucide-react';
 import { StoreProvider } from './providers/StoreProvider';
+import { useNavigationStore } from './stores/navigationStore';
+import { PageHeader } from './components/ui/PageHeader';
+import { ReportingNav } from './components/navigation/ReportingNav';
 
 console.log('[App] Starting application initialization');  
 
 // Create a wrapper component that handles loading states
 function RouteWrapper({ children }: { children: React.ReactNode }) {
   const navigation = useRouterNavigation();
+  const setIsNavigating = useNavigationStore(state => state.setIsNavigating);
+  
+  React.useEffect(() => {
+    setIsNavigating(navigation.state === "loading");
+  }, [navigation.state, setIsNavigating]);
   
   if (navigation.state === "loading") {
     return <RouteLoading />;
@@ -38,53 +46,15 @@ function RouteWrapper({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// Create a wrapper component for auth changes
-function AuthStateHandler() {
-  const navigate = useNavigate();
-  const { setIsNavigating } = useNavigation();
-
-  const handleAuthStateChange = useCallback((event: string, session: any) => {
-    console.log('Auth state change:', event, session);
-    
-    switch (event) {
-      case 'SIGNED_IN':
-        navigate('/app/dashboard', { replace: true });
-        break;
-      case 'SIGNED_OUT':
-        navigate('/auth/login', { replace: true });
-        break;
-      case 'USER_UPDATED':
-        // Handle user update if needed
-        break;
-    }
-  }, [navigate]);
-
-  return (
-    <SupabaseProvider 
-      supabase={supabase} 
-      onAuthChange={handleAuthStateChange}
-    >
-      <AuthProvider>
-        <ThemeProvider>
-          <DashboardProvider>
-            <Outlet />
-            <Toaster position="top-right" />
-          </DashboardProvider>
-        </ThemeProvider>
-      </AuthProvider>
-    </SupabaseProvider>
-  );
-}
-
 // Update the router configuration
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/auth/login" replace />
+    element: <RouteWrapper><LandingPage /></RouteWrapper>
   },
   {
     path: '/auth',
-    element: <AuthLayout title="Login" subtitle="Welcome back"><Outlet /></AuthLayout>,
+    element: <RouteWrapper><AuthLayout title="Login" subtitle="Welcome back"><Outlet /></AuthLayout></RouteWrapper>,
     children: [
       {
         path: 'login',
@@ -102,7 +72,7 @@ const router = createBrowserRouter([
   },
   {
     path: '/app',
-    element: <AuthGuard><Layout /></AuthGuard>,
+    element: <AuthGuard><RouteWrapper><Layout /></RouteWrapper></AuthGuard>,
     errorElement: <RouteErrorBoundary />,
     children: [
       {
@@ -111,12 +81,8 @@ const router = createBrowserRouter([
       },
       {
         path: 'dashboard',
-        element: <RouteWrapper><Dashboard /></RouteWrapper>,
-        errorElement: <RouteErrorBoundary />,
-        loader: async () => {
-          await new Promise(r => setTimeout(r, 500));
-          return null;
-        }
+        element: <Dashboard />,
+        errorElement: <RouteErrorBoundary />
       },
       {
         path: 'journal',
@@ -128,25 +94,61 @@ const router = createBrowserRouter([
       },
       {
         path: 'portfolios',
-        element: <RouteWrapper><Portfolios /></RouteWrapper>,
-        errorElement: <RouteErrorBoundary />,
-        loader: async () => {
-          await new Promise(r => setTimeout(r, 500));
-          return null;
-        }
+        element: <Portfolios />,
+        errorElement: <RouteErrorBoundary />
       },
       {
         path: 'analysis/performance',
-        element: <RouteWrapper><Performance /></RouteWrapper>,
-        errorElement: <RouteErrorBoundary />,
-        loader: async () => {
-          await new Promise(r => setTimeout(r, 500));
-          return null;
-        }
+        element: <Performance />,
+        errorElement: <RouteErrorBoundary />
+      },
+      {
+        path: 'analysis/performance/allocation',
+        element: (
+          <div className="flex-grow p-4">
+            <PageHeader 
+              title="Portfolio Allocation"
+              subtitle="View your portfolio distribution and risk exposure"
+            />
+            <ReportingNav />
+            <div className="flex items-center justify-center h-[calc(100vh-300px)]">
+              <div className="text-center">
+                <PieChart className="w-12 h-12 mx-auto text-gray-400" />
+                <h2 className="mt-4 text-xl font-semibold">Coming Soon</h2>
+                <p className="mt-2 text-gray-600 dark:text-gray-400">
+                  Portfolio allocation analysis is currently in development.
+                </p>
+              </div>
+            </div>
+          </div>
+        ),
+        errorElement: <RouteErrorBoundary />
+      },
+      {
+        path: 'analysis/performance/calendar',
+        element: (
+          <div className="flex-grow p-4">
+            <PageHeader 
+              title="Trading Calendar"
+              subtitle="View your trading activity patterns and timing analysis"
+            />
+            <ReportingNav />
+            <div className="flex items-center justify-center h-[calc(100vh-300px)]">
+              <div className="text-center">
+                <Calendar className="w-12 h-12 mx-auto text-gray-400" />
+                <h2 className="mt-4 text-xl font-semibold">Coming Soon</h2>
+                <p className="mt-2 text-gray-600 dark:text-gray-400">
+                  Trading calendar and timing analysis is currently in development.
+                </p>
+              </div>
+            </div>
+          </div>
+        ),
+        errorElement: <RouteErrorBoundary />
       },
       {
         path: 'analysis/statistics',
-        element: <RouteWrapper>
+        element: (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <BarChart2 className="w-12 h-12 mx-auto text-gray-400" />
@@ -156,14 +158,14 @@ const router = createBrowserRouter([
               </p>
             </div>
           </div>
-        </RouteWrapper>,
+        ),
         errorElement: <RouteErrorBoundary />
       }
     ]
   },
   {
     path: '/settings',
-    element: <AuthGuard><Layout /></AuthGuard>,
+    element: <AuthGuard><RouteWrapper><Layout /></RouteWrapper></AuthGuard>,
     children: [
       {
         index: true,
@@ -195,6 +197,19 @@ const router = createBrowserRouter([
 
 console.log('[App] Router created successfully');
 
+// Create a navigation progress bar component
+function NavigationProgress() {
+  const isNavigating = useNavigationStore(state => state.isNavigating);
+  
+  if (!isNavigating) return null;
+  
+  return (
+    <div className="fixed top-0 left-0 w-full h-1">
+      <div className="h-full bg-primary animate-progress" />
+    </div>
+  );
+}
+
 // Main App component
 const App = () => {
   console.log('[App] Rendering App component');
@@ -204,10 +219,9 @@ const App = () => {
       <QueryClientProvider client={queryClient}>
         <StoreProvider>
           <ThemeProvider>
-            <NavigationProvider>
-              <RouterProvider router={router} />
-              <Toaster position="top-right" />
-            </NavigationProvider>
+            <RouterProvider router={router} />
+            <NavigationProgress />
+            <Toaster position="top-right" />
           </ThemeProvider>
         </StoreProvider>
       </QueryClientProvider>

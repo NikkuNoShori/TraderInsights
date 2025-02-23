@@ -22,6 +22,9 @@ export interface DashboardLayout {
   id: string;
   name: string;
   layouts: Layout[];
+  enabledCards: DashboardCardType[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface DashboardConfig {

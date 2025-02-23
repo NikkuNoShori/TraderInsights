@@ -3,10 +3,11 @@ import { persist } from "zustand/middleware";
 import type { Layout } from "react-grid-layout";
 import type { DashboardProfile } from "../types/dashboard";
 import { supabase } from "../lib/supabase";
+import { config } from "../config";
 import {
-  DEFAULT_LAYOUTS,
+  DEFAULT_DASHBOARD_LAYOUT,
   DEFAULT_ENABLED_CARDS,
-} from "../config/dashboardLayouts";
+} from "../config/dashboardTheme";
 
 interface DashboardState {
   currentProfileId: string;
@@ -40,7 +41,7 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
       currentProfileId: "",
       currentProfile: null,
       profiles: [],
-      layouts: DEFAULT_LAYOUTS,
+      layouts: DEFAULT_DASHBOARD_LAYOUT,
       isEditing: false,
       isLoading: false,
       error: null,
@@ -51,6 +52,29 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
       fetchProfiles: async (userId) => {
         set({ isLoading: true, error: null });
         try {
+          if (!config.isProduction && userId === "dev-123") {
+            // Mock data for development mode
+            const mockProfile: DashboardProfile = {
+              id: "dev-profile",
+              userId: "dev-123",
+              name: "Default Profile",
+              isDefault: true,
+              layout: DEFAULT_DASHBOARD_LAYOUT,
+              enabledCards: DEFAULT_ENABLED_CARDS,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
+
+            set({
+              profiles: [mockProfile],
+              currentProfileId: mockProfile.id,
+              currentProfile: mockProfile,
+              layouts: mockProfile.layout,
+              isLoading: false,
+            });
+            return;
+          }
+
           const { data, error } = await supabase
             .from("dashboard_profiles")
             .select("*")
@@ -68,7 +92,7 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
             set({
               currentProfileId: defaultProfile.id,
               currentProfile: defaultProfile,
-              layouts: defaultProfile.layout || DEFAULT_LAYOUTS,
+              layouts: defaultProfile.layout || DEFAULT_DASHBOARD_LAYOUT,
             });
           }
 
@@ -97,7 +121,7 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
                 user_id: profile.userId,
                 name: profile.name,
                 is_default: profile.isDefault,
-                layout: profile.layout || DEFAULT_LAYOUTS,
+                layout: profile.layout || DEFAULT_DASHBOARD_LAYOUT,
                 enabled_cards: profile.enabledCards || DEFAULT_ENABLED_CARDS,
               },
             ])
@@ -116,7 +140,7 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
             set({
               currentProfileId: data.id,
               currentProfile: data,
-              layouts: data.layout || DEFAULT_LAYOUTS,
+              layouts: data.layout || DEFAULT_DASHBOARD_LAYOUT,
             });
           }
         } catch (error) {
@@ -147,7 +171,7 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
           if (get().currentProfileId === profileId) {
             set({
               currentProfile: data,
-              layouts: data.layout || DEFAULT_LAYOUTS,
+              layouts: data.layout || DEFAULT_DASHBOARD_LAYOUT,
             });
           }
         } catch (error) {
@@ -176,13 +200,13 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
               set({
                 currentProfileId: nextProfile.id,
                 currentProfile: nextProfile,
-                layouts: nextProfile.layout || DEFAULT_LAYOUTS,
+                layouts: nextProfile.layout || DEFAULT_DASHBOARD_LAYOUT,
               });
             } else {
               set({
                 currentProfileId: "",
                 currentProfile: null,
-                layouts: DEFAULT_LAYOUTS,
+                layouts: DEFAULT_DASHBOARD_LAYOUT,
               });
             }
           }
@@ -200,7 +224,7 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
           set({
             currentProfileId: profileId,
             currentProfile: profile,
-            layouts: profile.layout || DEFAULT_LAYOUTS,
+            layouts: profile.layout || DEFAULT_DASHBOARD_LAYOUT,
           });
         }
       },

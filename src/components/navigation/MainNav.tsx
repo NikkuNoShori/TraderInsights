@@ -16,7 +16,7 @@ import {
 import { motion } from 'framer-motion';
 import { clsx } from 'clsx';
 import { Tooltip } from '../ui/Tooltip';
-import { useSupabase } from '../../contexts/SupabaseContext';
+import { useAuthStore } from '../../stores/authStore';
 import { DarkModeToggle } from '../DarkModeToggle';
 import { Badge } from '../ui/Badge';
 
@@ -41,6 +41,11 @@ const navCategories: NavCategory[] = [
         label: 'Dashboard',
         icon: LayoutDashboard,
         href: '/app/dashboard'
+      },
+      {
+        label: 'Performance',
+        icon: LineChart,
+        href: '/app/analysis/performance'
       }
     ]
   },
@@ -63,22 +68,6 @@ const navCategories: NavCategory[] = [
         href: '/app/portfolios'
       }
     ]
-  },
-  {
-    label: 'Analysis',
-    items: [
-      {
-        label: 'Performance',
-        icon: LineChart,
-        href: '/app/analysis/performance'
-      },
-      {
-        label: 'Statistics',
-        icon: BarChart2,
-        href: '/app/analysis/statistics',
-        isComingSoon: true
-      }
-    ]
   }
 ];
 
@@ -97,7 +86,7 @@ export function MainNav({ defaultCollapsed = true }: MainNavProps) {
     return saved ? JSON.parse(saved) : [];
   });
 
-  const { user, supabase } = useSupabase();
+  const { user, signOut } = useAuthStore();
   const navigate = useNavigate();
 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -150,7 +139,7 @@ export function MainNav({ defaultCollapsed = true }: MainNavProps) {
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      await signOut();
       navigate('/auth/login');
     } catch (error) {
       console.error('Error signing out:', error);

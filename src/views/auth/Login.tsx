@@ -15,7 +15,14 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const messageShownRef = useRef(false);
 
-  const { signIn, loading } = useAuthStore();
+  const { signIn, loading, user, initialized } = useAuthStore();
+
+  // Redirect if user is already authenticated
+  useEffect(() => {
+    if (initialized && user) {
+      navigate('/app/dashboard');
+    }
+  }, [user, initialized, navigate]);
 
   // Show any messages passed via navigation state
   useEffect(() => {
@@ -63,7 +70,7 @@ export default function Login() {
     try {
       await signIn(email, password);
       toast.success('Successfully logged in');
-      // Navigation will be handled by auth state change
+      // Navigation will be handled by the useEffect hook above
     } catch (error) {
       console.error('Authentication error:', error);
       // Handle specific error cases
@@ -109,11 +116,11 @@ export default function Login() {
           <div className="text-red-500 text-sm">{error}</div>
         )}
 
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col items-center gap-4">
           <LoadingButton
             type="submit"
             isLoading={loading}
-            className="w-full px-4 py-2 text-sm"
+            className="w-48 px-4 py-2 text-sm flex items-center justify-center"
           >
             {isSignUp ? 'Create Account' : 'Sign In'}
           </LoadingButton>

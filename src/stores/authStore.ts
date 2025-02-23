@@ -14,6 +14,7 @@ interface AuthState {
   permissions: UserPermissions;
   loading: boolean;
   error: Error | null;
+  initialized: boolean;
 }
 
 interface AuthActions {
@@ -22,6 +23,7 @@ interface AuthActions {
   loginAsDeveloper: () => Promise<void>;
   updateProfile: (data: Partial<Profile>) => Promise<void>;
   setError: (error: Error | null) => void;
+  setInitialized: (value: boolean) => void;
   handleAuthStateChange: (event: string, session: any) => Promise<void>;
 }
 
@@ -32,30 +34,56 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       user: null,
       profile: null,
       permissions: {},
-      loading: true,
+      loading: false,
       error: null,
+      initialized: false,
 
       // Actions
       setError: (error) => set({ error }),
+      setInitialized: (value) => set({ initialized: value, loading: false }),
 
       handleAuthStateChange: async (event, session) => {
         console.log("Auth state changed:", event, session?.user?.id);
 
-        switch (event) {
-          case "SIGNED_IN":
-          case "USER_UPDATED":
-            const user = session?.user;
-            if (user) {
-              const profile = await fetchProfile(user.id);
-              const permissions = await fetchPermissions(user.id);
-              set({ user, profile, permissions, loading: false });
-            }
-            break;
-          case "SIGNED_OUT":
-            set({ user: null, profile: null, permissions: {}, loading: false });
-            break;
-          default:
-            set({ loading: false });
+        // Don't set loading state for auth state changes
+        try {
+          switch (event) {
+            case "SIGNED_IN":
+            case "USER_UPDATED":
+              const user = session?.user;
+              if (user) {
+                const profile = await fetchProfile(user.id);
+                const permissions = await fetchPermissions(user.id);
+                set({
+                  user,
+                  profile,
+                  permissions,
+                  loading: false,
+                  initialized: true,
+                  error: null,
+                });
+              }
+              break;
+            case "SIGNED_OUT":
+              set({
+                user: null,
+                profile: null,
+                permissions: {},
+                loading: false,
+                initialized: true,
+                error: null,
+              });
+              break;
+            default:
+              set({ loading: false, initialized: true });
+          }
+        } catch (error) {
+          console.error("Error handling auth state change:", error);
+          set({
+            error: error as Error,
+            loading: false,
+            initialized: true,
+          });
         }
       },
 
@@ -71,15 +99,8 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             if (!response.user)
               throw new Error("No user returned from authentication");
 
-            const profile = await fetchProfile(response.user.id);
-            const userPermissions = await fetchPermissions(response.user.id);
-
-            set({
-              user: response.user,
-              profile,
-              permissions: userPermissions,
-              loading: false,
-            });
+            // Don't set state here - let the auth state change handler do it
+            return;
           } else {
             await get().loginAsDeveloper();
           }
@@ -96,7 +117,13 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           if (config.isProduction) {
             await apiClient.auth.signOut();
           }
-          set({ user: null, profile: null, permissions: {}, loading: false });
+          set({
+            user: null,
+            profile: null,
+            permissions: {},
+            loading: false,
+            initialized: true,
+          });
         } catch (error) {
           console.error("Sign out error:", error);
           set({ error: error as Error, loading: false });
@@ -139,6 +166,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
               "screener.access": true,
             },
             loading: false,
+            initialized: true,
           });
         } catch (error) {
           console.error("Developer login error:", error);

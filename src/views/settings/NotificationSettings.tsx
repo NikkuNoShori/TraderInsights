@@ -1,105 +1,96 @@
 import React from 'react';
-import { useSupabase } from '../../contexts/SupabaseContext';
-import { clsx } from 'clsx';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { FormField } from '../../components/ui/form-field';
+import { Button } from '../../components/ui/button';
+import { toast } from 'react-hot-toast';
+import { useSupabaseClient } from '../../hooks/useSupabaseClient';
 
-type NotificationSetting = {
-  id: string;
-  label: string;
-  description: string;
-  defaultEnabled: boolean;
-};
+const notificationSchema = z.object({
+  email_notifications: z.boolean(),
+  trade_alerts: z.boolean(),
+  performance_updates: z.boolean(),
+  market_news: z.boolean(),
+});
 
-const notificationSettings: NotificationSetting[] = [
-  {
-    id: 'trade_alerts',
-    label: 'Trade Alerts',
-    description: 'Get notified when your trade orders are executed',
-    defaultEnabled: true,
-  },
-  {
-    id: 'price_alerts',
-    label: 'Price Alerts',
-    description: 'Receive alerts when prices hit your targets',
-    defaultEnabled: true,
-  },
-  {
-    id: 'news_alerts',
-    label: 'News Alerts',
-    description: 'Stay informed about market news and events',
-    defaultEnabled: false,
-  },
-  {
-    id: 'portfolio_updates',
-    label: 'Portfolio Updates',
-    description: 'Daily summary of your portfolio performance',
-    defaultEnabled: true,
-  },
-];
+type NotificationFormData = z.infer<typeof notificationSchema>;
 
 export function NotificationSettings() {
-  const { user } = useSupabase();
-  const [settings, setSettings] = React.useState<Record<string, boolean>>(() => {
-    const savedSettings = localStorage.getItem(`notification_settings_${user?.id}`);
-    return savedSettings ? JSON.parse(savedSettings) : 
-      notificationSettings.reduce((acc, setting) => ({
-        ...acc,
-        [setting.id]: setting.defaultEnabled
-      }), {});
+  const { supabase, user } = useSupabaseClient();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting }
+  } = useForm<NotificationFormData>({
+    resolver: zodResolver(notificationSchema),
+    defaultValues: {
+      email_notifications: true,
+      trade_alerts: true,
+      performance_updates: true,
+      market_news: false,
+    }
   });
 
-  const toggleSetting = (id: string) => {
-    setSettings(prev => {
-      const newSettings = { ...prev, [id]: !prev[id] };
-      localStorage.setItem(`notification_settings_${user?.id}`, JSON.stringify(newSettings));
-      return newSettings;
-    });
+  const onSubmit = async (data: NotificationFormData) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('user_preferences')
+        .upsert({
+          user_id: user.id,
+          notification_settings: data
+        });
+
+      if (error) throw error;
+      toast.success('Notification settings updated');
+    } catch (error) {
+      console.error('Error updating notification settings:', error);
+      toast.error('Failed to update notification settings');
+    }
   };
 
   return (
-    <div className="p-6">
-      <h2 className="text-lg font-medium text-gray-900 dark:text-white">
-        Notification Preferences
-      </h2>
-      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-        Choose what updates you want to receive
-      </p>
+    <div className="max-w-2xl mx-auto">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <div className="space-y-4">
+          <FormField
+            type="checkbox"
+            label="Email Notifications"
+            {...register('email_notifications')}
+            error={errors.email_notifications?.message}
+          />
 
-      <div className="mt-6">
-        <div className="space-y-6">
-          {notificationSettings.map(({ id, label, description }) => (
-            <div key={id} className="flex items-start">
-              <div className="flex items-center h-6">
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={settings[id]}
-                  onClick={() => toggleSetting(id)}
-                  className={clsx(
-                    'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-                    settings[id] ? 'bg-primary-500' : 'bg-gray-200 dark:bg-gray-700'
-                  )}
-                >
-                  <span className="sr-only">{label}</span>
-                  <span
-                    className={clsx(
-                      'pointer-events-none relative inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-                      settings[id] ? 'translate-x-5' : 'translate-x-0'
-                    )}
-                  />
-                </button>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {label}
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {description}
-                </p>
-              </div>
-            </div>
-          ))}
+          <FormField
+            type="checkbox"
+            label="Trade Alerts"
+            {...register('trade_alerts')}
+            error={errors.trade_alerts?.message}
+          />
+
+          <FormField
+            type="checkbox"
+            label="Performance Updates"
+            {...register('performance_updates')}
+            error={errors.performance_updates?.message}
+          />
+
+          <FormField
+            type="checkbox"
+            label="Market News"
+            {...register('market_news')}
+            error={errors.market_news?.message}
+          />
         </div>
-      </div>
+
+        <div className="flex justify-end">
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 } 

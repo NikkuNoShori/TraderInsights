@@ -178,7 +178,7 @@ export function DashboardEditor({ isOpen, onClose }: DashboardEditorProps) {
           </div>
 
           <div className="space-y-2">
-            <Label>Available Widgets</Label>
+            <Label>Available Cards</Label>
             <div className="grid grid-cols-2 gap-4">
               {Object.entries(DASHBOARD_CARDS).map(([type, card]) => (
                 <Card 

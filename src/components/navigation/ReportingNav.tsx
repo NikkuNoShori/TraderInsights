@@ -2,25 +2,28 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { TrendingUp, PieChart, Calendar } from 'lucide-react';
 import { clsx } from 'clsx';
+import { Badge } from '../ui/Badge';
 
 const reportLinks = [
   {
-    to: '/reports/performance',
-    label: 'Performance',
+    to: '/app/analysis/performance',
+    label: 'Overview',
     icon: TrendingUp,
     description: 'Track your trading performance'
   },
   {
-    to: '/reports/allocation',
+    to: '/app/analysis/performance/allocation',
     label: 'Allocation',
     icon: PieChart,
-    description: 'View portfolio allocation'
+    description: 'View portfolio allocation',
+    isComingSoon: true
   },
   {
-    to: '/reports/calendar',
+    to: '/app/analysis/performance/calendar',
     label: 'Calendar',
     icon: Calendar,
-    description: 'Trading activity calendar'
+    description: 'Trading activity calendar',
+    isComingSoon: true
   }
 ];
 
@@ -29,7 +32,7 @@ export function ReportingNav() {
     <div className="bg-white dark:bg-dark-paper border-b border-gray-200 dark:border-gray-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex space-x-8 -mb-px">
-          {reportLinks.map(({ to, label, icon: Icon }) => (
+          {reportLinks.map(({ to, label, icon: Icon, isComingSoon }) => (
             <NavLink
               key={to}
               to={to}
@@ -43,7 +46,15 @@ export function ReportingNav() {
               }
             >
               <Icon className="h-4 w-4 mr-2" />
-              {label}
+              <div className="flex items-center gap-2">
+                {label}
+                {isComingSoon && (
+                  <Badge 
+                    type="soon" 
+                    tooltipContent="This feature is currently under development and will be available soon!"
+                  />
+                )}
+              </div>
             </NavLink>
           ))}
         </div>
