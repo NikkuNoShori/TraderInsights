@@ -7,7 +7,8 @@ import { Input } from '../ui/input';
 import { Select } from '../ui/select';
 import { Switch } from '../ui/switch';
 import { useToast } from '../../hooks/useToast';
-import { useSupabase } from '../../contexts/SupabaseContext';
+import { useAuthStore } from '../../stores/authStore';
+import { supabase } from '../../lib/supabase';
 
 const stockTradeSchema = z.object({
   type: z.enum(['stock', 'option']),
@@ -38,7 +39,7 @@ interface ManualTradeFormProps {
 
 export const ManualTradeForm: React.FC<ManualTradeFormProps> = ({ onSuccess }) => {
   const [isOption, setIsOption] = React.useState(false);
-  const { supabase } = useSupabase();
+  const { user } = useAuthStore();
   const toast = useToast();
 
   const {

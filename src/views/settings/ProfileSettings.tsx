@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuthStore } from '../../stores/authStore';
 import { profileService } from '../../lib/services/profileService';
 import { FormInput } from '../../components/ui/FormInput';
 import { LoadingButton } from '../../components/LoadingButton';
@@ -11,7 +11,7 @@ import { Button } from '../../components/ui/button';
 
 export function ProfileSettings() {
   const navigate = useNavigate();
-  const { profile: userProfile, user } = useAuth();
+  const { user, profile: userProfile } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({

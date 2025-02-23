@@ -1,5 +1,5 @@
 import React from 'react';
-import { useSupabase } from '../../contexts/SupabaseContext';
+import { useAuthStore } from '../../stores/authStore';
 import { clsx } from 'clsx';
 
 type NotificationSetting = {
@@ -37,7 +37,7 @@ const notificationSettings: NotificationSetting[] = [
 ];
 
 export function NotificationSettings() {
-  const { user } = useSupabase();
+  const { user } = useAuthStore();
   const [settings, setSettings] = React.useState<Record<string, boolean>>(() => {
     const savedSettings = localStorage.getItem(`notification_settings_${user?.id}`);
     return savedSettings ? JSON.parse(savedSettings) : 

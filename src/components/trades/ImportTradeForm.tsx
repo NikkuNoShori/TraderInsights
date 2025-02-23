@@ -3,10 +3,12 @@ import { useDropzone } from 'react-dropzone';
 import { FileSpreadsheet, Upload, AlertCircle } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useToast } from '../../hooks/useToast';
-import { useSupabase } from '../../contexts/SupabaseContext';
+import { useAuthStore } from '../../stores/authStore';
+import { supabase } from '../../lib/supabase';
 import * as XLSX from 'xlsx';
 import { z } from 'zod';
 import { Progress } from '../ui/progress';
+import { cn } from '../../lib/utils';
 
 interface ImportTradeFormProps {
   onSuccess: () => void;
@@ -39,7 +41,7 @@ const stockTradeSchema = baseTradeSchema.extend({
 const tradeSchema = z.discriminatedUnion('type', [stockTradeSchema, optionTradeSchema]);
 
 export const ImportTradeForm: React.FC<ImportTradeFormProps> = ({ onSuccess }) => {
-  const { supabase } = useSupabase();
+  const { user } = useAuthStore();
   const toast = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
