@@ -1,4 +1,3 @@
-import React from 'react';
 import { Portfolio } from '../../hooks/usePortfolios';
 
 interface PortfolioFormProps {

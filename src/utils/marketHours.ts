@@ -1,121 +1,94 @@
-import { isWithinInterval, set, parseISO } from 'date-fns';
-import { zonedTimeToUtc, utcToZonedTime } from 'date-fns-tz';
-import { marketConfig } from '../config/market';
+import { isWithinInterval, set } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
 
-export type MarketSession = 'premarket' | 'regular' | 'afterHours' | 'closed';
-export type Feature = 'screener' | 'watchlist' | 'quotes';
+type MarketSession = "premarket" | "regular" | "afterHours" | "closed";
 
-const DEBUG = false;
+interface MarketHours {
+  premarket: { start: string; end: string };
+  regular: { start: string; end: string };
+  afterHours: { start: string; end: string };
+}
 
-const parseTimeString = (timeStr: string): Date => {
-  const [hours, minutes] = timeStr.split(':').map(Number);
-  const today = new Date();
-  const marketTime = set(today, { hours, minutes, seconds: 0, milliseconds: 0 });
-  const zonedTime = zonedTimeToUtc(marketTime, marketConfig.timezone);
-  
-  if (DEBUG) {
-    console.log('Parsed time:', {
-      timeStr,
-      marketTime: zonedTime.toLocaleTimeString(),
-      timezone: marketConfig.timezone
-    });
-  }
-  
-  return zonedTime;
+interface MarketFeature {
+  enabled: boolean;
+  restrictions: boolean;
+  start?: string;
+  end?: string;
+}
+
+interface MarketConfig {
+  marketHours: MarketHours;
+  features: {
+    trading: MarketFeature;
+    orders: MarketFeature;
+    quotes: MarketFeature;
+  };
+}
+
+const marketConfig: MarketConfig = {
+  marketHours: {
+    premarket: { start: "04:00", end: "09:30" },
+    regular: { start: "09:30", end: "16:00" },
+    afterHours: { start: "16:00", end: "20:00" },
+  },
+  features: {
+    trading: {
+      enabled: true,
+      restrictions: true,
+      start: "09:30",
+      end: "16:00",
+    },
+    orders: {
+      enabled: true,
+      restrictions: false,
+      start: "04:00",
+      end: "20:00",
+    },
+    quotes: {
+      enabled: true,
+      restrictions: false,
+    },
+  },
 };
 
-const getCurrentMarketTime = (): Date => {
+function parseTimeString(timeStr: string): Date {
+  const [hours, minutes] = timeStr.split(":").map(Number);
+  return set(new Date(), { hours, minutes, seconds: 0, milliseconds: 0 });
+}
+
+export function getCurrentMarketSession(): MarketSession {
   const now = new Date();
-  const marketTime = utcToZonedTime(now, marketConfig.timezone);
-  
-  if (DEBUG) {
-    console.log('Current market time:', {
-      utc: now.toISOString(),
-      market: marketTime.toLocaleTimeString(),
-      timezone: marketConfig.timezone
-    });
-  }
-  
-  return marketTime;
-};
+  const nyTime = toZonedTime(now, "America/New_York");
 
-export const isMarketOpen = (session: MarketSession): boolean => {
-  const now = getCurrentMarketTime();
-  const sessionConfig = marketConfig.marketHours[session];
-  
-  if (!sessionConfig || !sessionConfig.start || !sessionConfig.end) {
-    if (DEBUG) console.log(`No config found for session: ${session}`);
-    return false;
-  }
+  for (const session of ["premarket", "regular", "afterHours"] as const) {
+    const { start, end } = marketConfig.marketHours[session];
+    const sessionStart = parseTimeString(start);
+    const sessionEnd = parseTimeString(end);
 
-  const sessionStart = parseTimeString(sessionConfig.start);
-  const sessionEnd = parseTimeString(sessionConfig.end);
-
-  const isOpen = isWithinInterval(now, { start: sessionStart, end: sessionEnd });
-  
-  if (DEBUG) {
-    console.log('Market session check:', {
-      session,
-      start: sessionStart.toLocaleTimeString(),
-      end: sessionEnd.toLocaleTimeString(),
-      current: now.toLocaleTimeString(),
-      isOpen
-    });
-  }
-  
-  return isOpen;
-};
-
-export const getCurrentSession = (): MarketSession => {
-  // Check if we should update (only on the hour)
-  const now = new Date();
-  if (now.getMinutes() !== 0) {
-    return isMarketOpen('regular') ? 'regular' :
-           isMarketOpen('premarket') ? 'premarket' :
-           isMarketOpen('afterHours') ? 'afterHours' : 'closed';
-  }
-
-  // Full check on the hour
-  console.log('Performing hourly market status check:', now.toLocaleTimeString());
-  if (isMarketOpen('regular')) return 'regular';
-  if (isMarketOpen('premarket')) return 'premarket';
-  if (isMarketOpen('afterHours')) return 'afterHours';
-  return 'closed';
-};
-
-export const isFeatureAccessible = (feature: Feature): boolean => {
-  const featureConfig = marketConfig.featureAccess[feature];
-
-  if (!featureConfig) {
-    console.error(`No configuration found for feature: ${feature}`);
-    return false;
-  }
-
-  // If feature has no restrictions or is explicitly enabled without time restrictions
-  if (!featureConfig.restrictions || featureConfig.enabled === true) {
-    if (DEBUG) {
-      console.log('Feature has no time restrictions:', {
-        feature,
-        config: featureConfig,
-        result: true
-      });
+    if (isWithinInterval(nyTime, { start: sessionStart, end: sessionEnd })) {
+      return session;
     }
-    return true;
   }
 
-  const now = getCurrentMarketTime();
-  const featureStart = parseTimeString(featureConfig.start);
-  const featureEnd = parseTimeString(featureConfig.end);
+  return "closed";
+}
 
-  const isAccessible = isWithinInterval(now, { start: featureStart, end: featureEnd });
+export function isFeatureAvailable(
+  feature: keyof MarketConfig["features"]
+): boolean {
+  const featureConfig = marketConfig.features[feature];
+  if (!featureConfig.enabled) return false;
 
-  if (DEBUG) {
-    console.log('Feature access check:', {
-      feature,
-      start: featureStart.toLocaleTimeString(),
-      end: featureEnd.toLocaleTimeString(),
-      result: isAccessible
-    });
+  if (!featureConfig.restrictions) return true;
+
+  if (featureConfig.start && featureConfig.end) {
+    const now = new Date();
+    const nyTime = toZonedTime(now, "America/New_York");
+    const featureStart = parseTimeString(featureConfig.start);
+    const featureEnd = parseTimeString(featureConfig.end);
+
+    return isWithinInterval(nyTime, { start: featureStart, end: featureEnd });
   }
-  return isAccessible;
+
+  return true;
 }

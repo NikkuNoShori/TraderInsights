@@ -1,4 +1,3 @@
-import React from 'react';
 import { Logo } from '../ui/Logo';
 import { MainNav } from '../navigation/MainNav';
 import { UserMenu } from './UserMenu';

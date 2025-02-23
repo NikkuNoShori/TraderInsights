@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from '@/lib/react';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Construction } from 'lucide-react';
 import { PageLoading } from '../components/ui/PageLoading';
@@ -29,6 +29,7 @@ export default function Portfolios() {
       <PagePlaceholder 
         title="Coming Soon"
         description="Portfolio management features are currently under development. Check back soon!"
+        icon={Construction}
       />
     </div>
   );

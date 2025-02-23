@@ -34,12 +34,12 @@ export function StatsCard({
       <Card 
         className={cn(
           'relative flex flex-col h-full w-full',
-          'bg-gradient-to-br from-card to-card/50',
+          'bg-white dark:bg-gray-800',
           'transition-all overflow-hidden',
-          style.border && 'border',
+          style.border && 'border border-gray-200 dark:border-gray-700',
           style.shadow,
           {
-            'hover:shadow-lg hover:border-primary/20': true,
+            'hover:shadow-lg hover:border-primary/20 dark:hover:border-primary/40': true,
           },
           className
         )} 
@@ -57,16 +57,16 @@ export function StatsCard({
           }}
         >
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-medium text-muted-foreground whitespace-nowrap">{title}</h3>
-            {Icon && <Icon className="h-5 w-5 text-muted-foreground flex-shrink-0" />}
+            <h3 className="text-base font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">{title}</h3>
+            {Icon && <Icon className="h-5 w-5 text-gray-400 dark:text-gray-500 flex-shrink-0" />}
           </div>
           
           <div className="flex-1 flex flex-col justify-center min-h-0">
-            <div className="text-3xl font-bold tracking-tight truncate">
+            <div className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white truncate">
               {value}
             </div>
             {subtitle && (
-              <p className="text-sm text-muted-foreground mt-1 truncate">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 truncate">
                 {subtitle}
               </p>
             )}
@@ -75,7 +75,7 @@ export function StatsCard({
           {trend && trendDirection && (
             <div className={cn(
               'flex items-center mt-2 text-sm font-medium gap-1',
-              trendDirection === 'up' ? 'text-green-500' : 'text-red-500'
+              trendDirection === 'up' ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'
             )}>
               {trendDirection === 'up' ? (
                 <ArrowUpIcon className="h-4 w-4 flex-shrink-0" />

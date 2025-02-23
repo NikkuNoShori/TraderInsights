@@ -1,4 +1,3 @@
-import React, { useEffect } from 'react';
 import { X, AlertCircle } from 'lucide-react';
 import { clsx } from 'clsx';
 

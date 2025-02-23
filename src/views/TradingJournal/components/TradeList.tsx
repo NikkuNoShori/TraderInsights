@@ -1,4 +1,3 @@
-import React from 'react';
 import { Trade } from '../../../types/trade';
 import { TradeListItem } from './TradeListItem';
 import { Button } from '../../../components/ui/button';

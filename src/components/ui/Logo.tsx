@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { LineChart } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ChangelogModal } from '../changelog/ChangelogModal';
+import { useState } from '@/lib/hooks';
 
 const VERSION = '1.0.0-beta';
 

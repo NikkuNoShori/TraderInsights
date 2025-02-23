@@ -1,4 +1,3 @@
-import React from 'react';
 import { TrendingUp, TrendingDown, AlertTriangle, CheckCircle } from 'lucide-react';
 import { clsx } from 'clsx';
 

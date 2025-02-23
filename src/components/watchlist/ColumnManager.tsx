@@ -1,4 +1,3 @@
-import React from 'react';
 import { X, GripVertical } from 'lucide-react';
 import { clsx } from 'clsx';
 import type { WatchlistColumn } from '../../types/watchlist';

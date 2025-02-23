@@ -1,4 +1,3 @@
-import React from 'react';
 import { format } from 'date-fns';
 import { Trade } from '../../../types/trade';
 import { Button } from '../../../components/ui/button';

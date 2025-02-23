@@ -1,5 +1,4 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import React from 'react';
 import type { DashboardCardType } from '../../types/dashboard';
 import { Button } from '../ui/button';
 import { DEFAULT_ENABLED_CARDS } from '../../config/dashboard';

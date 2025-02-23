@@ -1,5 +1,5 @@
-import { useSupabase } from '../../contexts/SupabaseContext';
-import { useTheme } from '@/providers/ThemeProvider';
+import { useAuthStore } from '../../stores/authStore';
+import { useTheme } from '../../providers/ThemeProvider';
 import { Link } from 'react-router-dom';
 import { User, LogOut, Sun, Moon, Settings } from 'lucide-react';
 import {
@@ -11,12 +11,10 @@ import {
 } from '../ui/dropdown-menu';
 
 export function UserMenu() {
-  const { user, supabase } = useSupabase();
+  const { user, signOut } = useAuthStore();
   const { theme, toggleTheme } = useTheme();
   
   if (!user) return null;
-
-  const signOut = () => supabase.auth.signOut();
 
   return (
     <DropdownMenu>

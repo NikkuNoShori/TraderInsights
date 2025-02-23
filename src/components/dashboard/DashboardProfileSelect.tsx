@@ -1,4 +1,3 @@
-import React from 'react';
 import { useDashboardStore } from '../../stores/dashboardStore';
 import { Select, SelectTrigger, SelectContent, SelectItem } from '../ui/select';
 

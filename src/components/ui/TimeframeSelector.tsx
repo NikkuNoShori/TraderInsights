@@ -1,12 +1,12 @@
-import React from 'react';
-import { Select } from './select';
-import type { SelectProps } from './select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
+import { cn } from '@/utils/cn';
 
 export type TimeframeOption = '1D' | '1W' | '1M' | '3M' | 'YTD' | '1Y' | 'ALL';
 
-interface TimeframeSelectorProps extends Omit<SelectProps, 'value' | 'onValueChange'> {
+interface TimeframeSelectorProps {
   value: TimeframeOption;
-  onChange: (value: TimeframeOption) => void;
+  onValueChange: (value: TimeframeOption) => void;
+  className?: string;
 }
 
 const OPTIONS: { value: TimeframeOption; label: string }[] = [
@@ -19,19 +19,19 @@ const OPTIONS: { value: TimeframeOption; label: string }[] = [
   { value: 'ALL', label: 'All Time' }
 ];
 
-export function TimeframeSelector({ value, onChange, className, ...props }: TimeframeSelectorProps) {
+export function TimeframeSelector({ value, onValueChange, className }: TimeframeSelectorProps) {
   return (
-    <Select
-      value={value}
-      onValueChange={(val: string) => onChange(val as TimeframeOption)}
-      className={className}
-      {...props}
-    >
-      {OPTIONS.map(option => (
-        <Select.Option key={option.value} value={option.value}>
-          {option.label}
-        </Select.Option>
-      ))}
+    <Select value={value} onValueChange={onValueChange}>
+      <SelectTrigger className={cn('w-[180px]', className)}>
+        <SelectValue placeholder="Select timeframe" />
+      </SelectTrigger>
+      <SelectContent>
+        {OPTIONS.map(option => (
+          <SelectItem key={option.value} value={option.value}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
     </Select>
   );
 } 

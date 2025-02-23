@@ -1,4 +1,3 @@
-import React from 'react';
 import { PortfolioList } from '../components/portfolio/PortfolioList';
 
 export const PortfoliosPage = () => {

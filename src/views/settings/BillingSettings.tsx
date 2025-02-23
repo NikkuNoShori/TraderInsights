@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { Eye, EyeOff, Download } from 'lucide-react';
 import { clsx } from 'clsx';
 

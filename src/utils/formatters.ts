@@ -9,13 +9,23 @@ export function formatCurrency(value: number): string {
   }).format(value);
 }
 
-export function formatPercentage(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'percent',
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1
+export function formatNumber(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
   }).format(value);
 }
+
+export function formatPercent(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "percent",
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(value);
+}
+
+// Alias for backward compatibility
+export const formatPercentage = formatPercent;
 
 export function formatDate(date: Date | string | null | undefined): string {
   if (!date) return '-';

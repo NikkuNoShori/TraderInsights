@@ -1,4 +1,3 @@
-import React from 'react';
 import { format } from 'date-fns';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import type { Trade } from '../../types/trade';

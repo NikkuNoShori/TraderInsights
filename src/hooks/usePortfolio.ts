@@ -1,91 +1,127 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { useSupabase } from "../contexts/SupabaseContext";
-import type { Portfolio, Trade } from "../types/portfolio";
+import { useState, useEffect, useCallback } from "@/lib/hooks";
+import { supabase } from "@/lib/supabase";
+import type { Portfolio, Trade } from "@/types/portfolio";
 
-export function usePortfolio(portfolioId?: string) {
-  const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
-  const [currentPortfolio, setCurrentPortfolio] = useState<Portfolio | null>(
-    null
-  );
-  const [trades, setTrades] = useState<Trade[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const supabase = useSupabase();
+export interface PortfolioState {
+  portfolios: Portfolio[];
+  trades: Trade[];
+  loading: boolean;
+  error: Error | null;
+}
+
+export function usePortfolio(userId: string) {
+  const [state, setState] = useState<PortfolioState>({
+    portfolios: [],
+    trades: [],
+    loading: true,
+    error: null,
+  });
 
   const fetchPortfolios = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("portfolios")
-      .select("*")
-      .order("created_at", { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from("portfolios")
+        .select("*")
+        .eq("user_id", userId);
 
-    if (!error && data) {
-      setPortfolios(data);
-      if (portfolioId) {
-        setCurrentPortfolio(data.find((p) => p.id === portfolioId) || null);
-      }
+      if (error) throw error;
+
+      setState((prev) => ({
+        ...prev,
+        portfolios: data as Portfolio[],
+        loading: false,
+      }));
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        error: error as Error,
+        loading: false,
+      }));
     }
-  }, [supabase, portfolioId]);
+  }, [userId]);
 
-  const fetchPortfolioTrades = useCallback(
-    async (id: string) => {
+  const fetchTrades = useCallback(async () => {
+    try {
       const { data, error } = await supabase
         .from("trades")
         .select("*")
-        .eq("portfolio_id", id)
-        .order("date", { ascending: false });
+        .eq("user_id", userId);
 
-      if (!error) {
-        setTrades(data || []);
-      }
-      setIsLoading(false);
-    },
-    [supabase]
-  );
+      if (error) throw error;
+
+      setState((prev) => ({
+        ...prev,
+        trades: data as Trade[],
+        loading: false,
+      }));
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        error: error as Error,
+        loading: false,
+      }));
+    }
+  }, [userId]);
+
+  const createPortfolio = async (
+    portfolio: Omit<Portfolio, "id" | "user_id">
+  ) => {
+    try {
+      const { data, error } = await supabase
+        .from("portfolios")
+        .insert([{ ...portfolio, user_id: userId }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setState((prev) => ({
+        ...prev,
+        portfolios: [...prev.portfolios, data as Portfolio],
+      }));
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        error: error as Error,
+      }));
+    }
+  };
+
+  const addTrade = async (trade: Omit<Trade, "id" | "user_id">) => {
+    try {
+      const { data, error } = await supabase
+        .from("trades")
+        .insert([{ ...trade, user_id: userId }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setState((prev) => ({
+        ...prev,
+        trades: [...prev.trades, data as Trade],
+      }));
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        error: error as Error,
+      }));
+    }
+  };
 
   useEffect(() => {
-    fetchPortfolios();
-    if (portfolioId) {
-      fetchPortfolioTrades(portfolioId);
+    if (userId) {
+      fetchPortfolios();
+      fetchTrades();
     }
-  }, [portfolioId, fetchPortfolios, fetchPortfolioTrades]);
-
-  // Add portfolio
-  const createPortfolio = async (name: string, description?: string) => {
-    const { data, error } = await supabase
-      .from("portfolios")
-      .insert([{ name, description }])
-      .select()
-      .single();
-
-    if (!error && data) {
-      setPortfolios([data, ...portfolios]);
-      return data;
-    }
-    throw error;
-  };
-
-  // Add trade to portfolio
-  const addTrade = async (trade: Omit<Trade, "id">) => {
-    const { data, error } = await supabase
-      .from("trades")
-      .insert([trade])
-      .select()
-      .single();
-
-    if (!error && data) {
-      setTrades([data, ...trades]);
-      return data;
-    }
-    throw error;
-  };
+  }, [userId, fetchPortfolios, fetchTrades]);
 
   return {
-    portfolios,
-    currentPortfolio,
-    trades,
-    isLoading,
+    portfolios: state.portfolios,
+    trades: state.trades,
+    loading: state.loading,
+    error: state.error,
     createPortfolio,
     addTrade,
-    refreshPortfolios: fetchPortfolios,
-    refreshTrades: fetchPortfolioTrades,
   };
 }

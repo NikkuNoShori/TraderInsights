@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { ArrowUpDown, Filter, Search } from 'lucide-react';
 import type { Trade } from '../../types/portfolio';

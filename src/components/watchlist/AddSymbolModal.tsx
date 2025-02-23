@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from '@/lib/hooks';
 import { X, Search } from 'lucide-react';
-import { clsx } from 'clsx';
 import { LoadingButton } from '../LoadingButton';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import type { WatchlistSymbol } from '@/types/stock';
 
 interface AddSymbolModalProps {
   isOpen: boolean;

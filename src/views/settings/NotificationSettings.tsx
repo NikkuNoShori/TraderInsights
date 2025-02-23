@@ -1,6 +1,6 @@
-import React from 'react';
 import { useAuthStore } from '../../stores/authStore';
 import { clsx } from 'clsx';
+import { useState } from '@/lib/hooks';
 
 type NotificationSetting = {
   id: string;
@@ -36,9 +36,9 @@ const notificationSettings: NotificationSetting[] = [
   },
 ];
 
-export default function NotificationSettings() {
+export function NotificationSettings() {
   const { user } = useAuthStore();
-  const [settings, setSettings] = React.useState<Record<string, boolean>>(() => {
+  const [settings, setSettings] = useState<Record<string, boolean>>(() => {
     const savedSettings = localStorage.getItem(`notification_settings_${user?.id}`);
     return savedSettings ? JSON.parse(savedSettings) : 
       notificationSettings.reduce((acc, setting) => ({

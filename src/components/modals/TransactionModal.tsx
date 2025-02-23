@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
 import { X } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuthStore } from '../../stores/authStore';
 import { journalService } from '../../lib/services/journalService';
 import type { Transaction, TransactionType, TransactionSide, OptionDetails } from '../../types/database';
 
@@ -12,7 +11,7 @@ interface TransactionModalProps {
 }
 
 export function TransactionModal({ isOpen, onClose, onSuccess, initialData }: TransactionModalProps) {
-  const { user } = useAuth();
+  const { user, profile } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

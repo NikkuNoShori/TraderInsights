@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { usePortfolios, Portfolio } from '../../hooks/usePortfolios';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { PortfolioForm } from './PortfolioForm';

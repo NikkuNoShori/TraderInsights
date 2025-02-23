@@ -1,4 +1,3 @@
-import React from 'react';
 import { Input, InputProps } from './input';
 import { Select, SelectTrigger, SelectContent, SelectItem } from './select';
 import { cn } from '../../lib/utils';

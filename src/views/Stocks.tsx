@@ -1,36 +1,38 @@
-import React, { useState } from 'react';
-import { SearchBar } from '../components/SearchBar';
-import { StockChart } from '../components/StockChart';
-import { StockInfo } from '../components/dashboard/StockInfo';
-import { EmptyState } from '../components/dashboard/EmptyState';
-import { InsightCard } from '../components/InsightCard';
-import { FeatureAccessError } from '../components/FeatureAccessError';
-import { isFeatureAccessible } from '../utils/marketHours';
-import config from '../../config.json';
-import { useStockData } from '../hooks/useStockData';
-import type { ChartType } from '../components/ChartTypeSelector';
+import { useState } from '@/lib/react';
+import { SearchBar } from '@/components/SearchBar';
+import { StockChart } from '@/components/StockChart';
+import { StockInfo } from '@/components/dashboard/StockInfo';
+import { EmptyState } from '@/components/dashboard/EmptyState';
+import { InsightCard } from '@/components/InsightCard';
+import { FeatureAccessError } from '@/components/FeatureAccessError';
+import { getCurrentMarketSession } from '@/utils/marketHours';
+import { useStockData } from '@/hooks/useStockData';
+import type { ChartType } from '@/components/ChartTypeSelector';
+import { useTheme } from '@/providers/ThemeProvider';
 
 export function Stocks() {
-  const isAccessible = isFeatureAccessible('quotes');
+  const marketSession = getCurrentMarketSession();
+  const isAccessible = marketSession !== 'closed';
   const [symbol, setSymbol] = useState('');
   const [searchedSymbol, setSearchedSymbol] = useState('');
   const [chartType, setChartType] = useState<ChartType>('area');
   
-  const { stockData, stockQuote, isLoading, error, fetchData } = useStockData();
+  const { data: stockData, quotes, loading, error, refetchData } = useStockData([symbol]);
+
+  const stockQuote = quotes[0];
 
   if (!isAccessible) {
     return (
       <FeatureAccessError
         feature="Stock Quotes"
-        startTime={config.featureAccess.quotes.start}
-        endTime={config.featureAccess.quotes.end}
+        message="Market is currently closed. Please try again during market hours."
       />
     );
   }
 
   const handleSearch = async () => {
     setSearchedSymbol(symbol);
-    await fetchData(symbol);
+    await refetchData();
   };
 
   return (
@@ -40,22 +42,21 @@ export function Stocks() {
           value={symbol}
           onChange={setSymbol}
           onSubmit={handleSearch}
-          isLoading={isLoading}
+          isLoading={loading}
         />
       </div>
 
       {error && (
         <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg">
-          {error}
+          {error.message}
         </div>
       )}
 
       {stockData?.length > 0 && stockQuote && (
         <>
           <StockInfo
-            quote={stockQuote}
-            chartType={chartType}
-            onChartTypeChange={setChartType}
+            data={stockQuote}
+            onRefresh={refetchData}
           />
 
           <div className="mb-8">
@@ -85,7 +86,7 @@ export function Stocks() {
         </>
       )}
 
-      {stockData?.length === 0 && searchedSymbol && !isLoading && (
+      {stockData?.length === 0 && searchedSymbol && !loading && (
         <EmptyState />
       )}
     </main>

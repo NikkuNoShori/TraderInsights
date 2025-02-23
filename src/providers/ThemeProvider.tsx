@@ -1,46 +1,30 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import { type ReactNode } from '@/lib/react';
+import { useEffect } from '@/lib/hooks';
+import { useThemeStore } from '@/stores/themeStore';
 
-type Theme = 'light' | 'dark' | 'system';
+export type Theme = 'light' | 'dark' | 'system';
 
-interface ThemeContextType {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
+interface ThemeProviderProps {
+  children: ReactNode;
 }
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window === 'undefined') return 'dark';
-    return (localStorage.getItem('theme') as Theme) || 'dark';
-  });
+export function ThemeProvider({ children }: ThemeProviderProps) {
+  const { theme } = useThemeStore();
 
   useEffect(() => {
     const root = window.document.documentElement;
     root.classList.remove('light', 'dark');
 
-    let effectiveTheme = theme;
     if (theme === 'system') {
-      effectiveTheme = window.matchMedia('(prefers-color-scheme: dark)').matches 
-        ? 'dark' 
-        : 'light';
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      root.classList.add(systemTheme);
+    } else {
+      root.classList.add(theme);
     }
-
-    root.classList.add(effectiveTheme);
-    localStorage.setItem('theme', theme);
   }, [theme]);
 
-  return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return children;
 }
 
-export function useTheme() {
-  const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error('useTheme must be used within a ThemeProvider');
-  }
-  return context;
-}
+// Re-export the store hook for convenience
+export const useTheme = useThemeStore;

@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
+import { useState } from '@/lib/hooks';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../../stores/authStore';
-import { profileService } from '../../lib/services/profileService';
-import { FormInput } from '../../components/ui/FormInput';
-import { LoadingButton } from '../../components/LoadingButton';
-import toast from 'react-hot-toast';
+import { useAuthStore } from '@/stores/authStore';
+import { profileService } from '@/lib/services/profileService';
+import { FormInput } from '@/components/ui/FormInput';
+import { LoadingButton } from '@/components/LoadingButton';
+import { toast } from 'react-hot-toast';
 import { clsx } from 'clsx';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
-import { Button } from '../../components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
-export default function ProfileSettings() {
+export function ProfileSettings() {
   const navigate = useNavigate();
-  const { profile: userProfile, user } = useAuthStore();
+  const { user, profile: userProfile } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from '@/lib/hooks';
+import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { validatePassword } from '../../utils/validation';
-import { FormInput } from '../../components/ui/FormInput';
-import { LoadingButton } from '../../components/LoadingButton';
+import { FormInput } from '@/components/ui/FormInput';
+import { LoadingButton } from '@/components/LoadingButton';
 
 export default function SecuritySettings() {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -96,6 +97,7 @@ export default function SecuritySettings() {
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               required
+              autoCompleteType="current-password"
             />
 
             <FormInput
@@ -104,6 +106,7 @@ export default function SecuritySettings() {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               required
+              autoCompleteType="new-password"
             />
 
             <FormInput
@@ -112,6 +115,7 @@ export default function SecuritySettings() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
+              autoCompleteType="new-password"
             />
 
             <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">

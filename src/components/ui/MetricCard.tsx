@@ -1,14 +1,21 @@
-import React from 'react';
+import { cn } from '../../lib/utils';
 
 interface MetricCardProps {
   title: string;
   value: string | number;
   subtitle: string;
+  className?: string;
 }
 
-export function MetricCard({ title, value, subtitle }: MetricCardProps) {
+export function MetricCard({ title, value, subtitle, className }: MetricCardProps) {
   return (
-    <div className="bg-white dark:bg-dark-paper rounded-lg shadow p-6">
+    <div className={cn(
+      "bg-white dark:bg-gray-800 rounded-lg shadow",
+      "border border-gray-200 dark:border-gray-700",
+      "hover:shadow-lg hover:border-primary/20 dark:hover:border-primary/40",
+      "transition-all p-6",
+      className
+    )}>
       <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
         {title}
       </h3>

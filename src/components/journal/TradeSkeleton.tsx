@@ -1,4 +1,3 @@
-import React from 'react';
 
 export const TradeSkeleton: React.FC = () => {
   return (

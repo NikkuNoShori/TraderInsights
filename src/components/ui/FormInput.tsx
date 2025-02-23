@@ -5,9 +5,29 @@ interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string | null;
   helperText?: string;
+  autoCompleteType?: string;
 }
 
-export function FormInput({ label, error, helperText, className, ...props }: FormInputProps) {
+export function FormInput({ label, error, helperText, className, autoCompleteType = "off", type, ...props }: FormInputProps) {
+  const getAutoComplete = () => {
+    if (autoCompleteType !== "off") return autoCompleteType;
+    
+    switch (type) {
+      case "email":
+        return "email";
+      case "password":
+        return "current-password";
+      case "tel":
+        return "tel";
+      case "url":
+        return "url";
+      case "search":
+        return "search";
+      default:
+        return "off";
+    }
+  };
+
   return (
     <div className="relative">
       {label && (
@@ -18,6 +38,8 @@ export function FormInput({ label, error, helperText, className, ...props }: For
       )}
       <div className="relative rounded-lg shadow-sm">
         <input
+          autoComplete={getAutoComplete()}
+          type={type}
           className={clsx(
             "block w-full rounded-lg text-sm transition-all duration-200",
             "min-h-[42px] px-3.5 py-2",

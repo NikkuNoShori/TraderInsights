@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useSupabase } from '../../contexts/SupabaseContext';
+import { useAuthStore } from '../../stores/authStore';
+import { supabase } from '../../lib/supabase';
 import { X } from 'lucide-react';
 import type { Trade } from '../../types/trade';
 import { useQueryClient } from '@tanstack/react-query';
@@ -13,7 +13,7 @@ interface TradeFormProps {
 type TradeType = 'stock' | 'option';
 
 export const TradeForm: React.FC<TradeFormProps> = ({ isOpen, onClose, onSuccess }) => {
-  const { supabase } = useSupabase();
+  const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +36,8 @@ export const TradeForm: React.FC<TradeFormProps> = ({ isOpen, onClose, onSuccess
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
+
     setError(null);
     setIsSubmitting(true);
 

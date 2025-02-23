@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useSupabase } from '../../contexts/SupabaseContext';
+import { useAuthStore } from '../../stores/authStore';
+import { supabase } from '../../lib/supabase';
 import { Button } from '../ui/button';
 import { 
   Dialog,
@@ -25,7 +26,7 @@ interface TradeImportProps {
 }
 
 export function TradeImport({ isOpen, onClose, onSuccess }: TradeImportProps) {
-  const { supabase, user } = useSupabase();
+  const { user } = useAuthStore();
   const [selectedBrokers, setSelectedBrokers] = useState<string[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);

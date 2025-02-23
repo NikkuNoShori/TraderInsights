@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
+import { useState } from '@/lib/react';
 import { MainNav } from '../navigation/MainNav';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { Sidebar } from './Sidebar';

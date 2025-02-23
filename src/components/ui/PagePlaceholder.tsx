@@ -1,15 +1,15 @@
-import React from 'react';
-import { Construction } from 'lucide-react';
+import { Construction, LucideIcon } from 'lucide-react';
 
 interface PagePlaceholderProps {
   title: string;
   description: string;
+  icon?: LucideIcon;
 }
 
-export function PagePlaceholder({ title, description }: PagePlaceholderProps) {
+export function PagePlaceholder({ title, description, icon: Icon = Construction }: PagePlaceholderProps) {
   return (
     <div className="mt-8 flex flex-col items-center justify-center text-center">
-      <Construction className="h-12 w-12 text-gray-400 mb-4" />
+      <Icon className="h-12 w-12 text-gray-400 mb-4" />
       <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
         {title}
       </h2>

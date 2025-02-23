@@ -1,4 +1,3 @@
-import React from 'react';
 import { formatCurrency } from '../../utils/formatters';
 import type { Trade } from '../../types/trade';
 

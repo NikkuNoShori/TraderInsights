@@ -1,4 +1,3 @@
-import React from 'react';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import type { TransactionOrder } from '../../types/database';
 

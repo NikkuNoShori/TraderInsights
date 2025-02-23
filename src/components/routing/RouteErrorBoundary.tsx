@@ -1,4 +1,3 @@
-import React from 'react';
 import { useRouteError, useNavigate } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
 
