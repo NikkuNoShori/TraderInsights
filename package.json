@@ -27,6 +27,7 @@
     "@radix-ui/react-tooltip": "^1.1.4",
     "@supabase/supabase-js": "^2.48.1",
     "@tanstack/react-query": "^5.62.7",
+    "@tremor/react": "^3.18.7",
     "@types/express": "^5.0.0",
     "@types/react-beautiful-dnd": "^13.1.8",
     "@types/react-datepicker": "^6.2.0",

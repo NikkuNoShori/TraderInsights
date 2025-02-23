@@ -57,17 +57,19 @@ const navCategories: NavCategory[] = [
     ]
   },
   {
-    label: 'Trading',
+    label: 'Future Features',
     items: [
       {
         label: 'Watchlist',
         icon: List,
-        href: '/app/watchlist'
+        href: '/app/watchlist',
+        isComingSoon: true
       },
       {
         label: 'Portfolios',
         icon: Briefcase,
-        href: '/app/portfolios'
+        href: '/app/portfolios',
+        isComingSoon: true
       }
     ]
   }

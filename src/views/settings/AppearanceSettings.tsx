@@ -2,7 +2,7 @@ import { useTheme } from '../../providers/ThemeProvider';
 import { Moon, Sun, Monitor } from 'lucide-react';
 import { clsx } from 'clsx';
 
-export function AppearanceSettings() {
+export default function AppearanceSettings() {
   const { theme, setTheme } = useTheme();
 
   const themeOptions = [

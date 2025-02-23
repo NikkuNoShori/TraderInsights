@@ -6,7 +6,7 @@ import { validatePassword } from '../../utils/validation';
 import { FormInput } from '@/components/ui/FormInput';
 import { LoadingButton } from '@/components/LoadingButton';
 
-export function SecuritySettings() {
+export default function SecuritySettings() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
