@@ -1,54 +1,29 @@
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem
-} from '../ui/select';
-import { Button } from '../ui/button';
-import { useDashboard } from '../../contexts/DashboardContext';
-import { Plus, Settings } from 'lucide-react';
+import React from 'react';
+import { useDashboardStore } from '../../stores/dashboardStore';
+import { Select, SelectTrigger, SelectContent, SelectItem } from '../ui/select';
 
 export function DashboardProfileSelect() {
-  const { 
-    currentProfile, 
-    profiles, 
-    switchProfile,
-    setIsEditing 
-  } = useDashboard();
+  const { profiles, currentProfileId, setCurrentProfile } = useDashboardStore();
+
+  if (profiles.length <= 1) return null;
 
   return (
-    <div className="flex items-center space-x-2">
-      <Select
-        value={currentProfile?.id || ''}
-        onValueChange={(id: string) => switchProfile(id)}
-      >
-        <SelectTrigger className="w-[200px]">
-          <SelectValue placeholder="Select dashboard" />
-        </SelectTrigger>
-        <SelectContent>
-          {profiles.map((profile) => (
-            <SelectItem key={profile.id} value={profile.id}>
-              {profile.name} {profile.isDefault && '(Default)'}
-            </SelectItem>
-          ))}
-          <SelectItem value="new">
-            <div className="flex items-center">
-              <Plus className="w-4 h-4 mr-2" />
-              Create New
-            </div>
+    <Select
+      value={currentProfileId}
+      onValueChange={(value) => setCurrentProfile(value)}
+    >
+      <SelectTrigger className="w-[200px]">
+        <span>
+          {profiles.find((p) => p.id === currentProfileId)?.name || 'Default Layout'}
+        </span>
+      </SelectTrigger>
+      <SelectContent>
+        {profiles.map((profile) => (
+          <SelectItem key={profile.id} value={profile.id}>
+            {profile.name}
           </SelectItem>
-        </SelectContent>
-      </Select>
-
-      <Button
-        variant="ghost"
-        size="sm"
-        className="p-2"
-        onClick={() => setIsEditing(true)}
-      >
-        <Settings className="w-4 h-4" />
-      </Button>
-    </div>
+        ))}
+      </SelectContent>
+    </Select>
   );
 } 

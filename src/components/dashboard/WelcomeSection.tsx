@@ -1,18 +1,23 @@
-import { useSupabase } from '../../contexts/SupabaseContext';
+import React from 'react';
+import { useAuthStore } from '../../stores/authStore';
 import { Search } from 'lucide-react';
 import { ErrorBoundary } from '../ErrorBoundary';
 
 export function WelcomeSection() {
-  const { user } = useSupabase();
-  
-  const userName = user?.email?.split('@')[0] || 'there';
+  const { user } = useAuthStore();
+  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Trader';
 
   return (
     <ErrorBoundary
       fallback={
-        <div className="py-6 px-6 bg-background border-b border-border">
-          <div className="max-w-[1400px] mx-auto">
-            <h1 className="text-2xl font-semibold text-foreground">Welcome</h1>
+        <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
+          <div className="container mx-auto px-6 py-8">
+            <h1 className="text-4xl font-bold text-foreground">
+              Welcome back, {userName}
+            </h1>
+            <p className="mt-2 text-lg text-muted-foreground">
+              Track your trades, analyze your performance, and improve your strategy.
+            </p>
           </div>
         </div>
       }

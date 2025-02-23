@@ -1,51 +1,92 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { IconDefinition } from '@fortawesome/free-solid-svg-icons';
-import { LucideIcon } from 'lucide-react';
-import { cn } from '../../utils/cn';
+import { Card } from '../ui/card';
+import { cn } from '../../lib/utils';
+import { ArrowDownIcon, ArrowUpIcon, LucideIcon } from 'lucide-react';
+import { DASHBOARD_THEME } from '../../config/dashboardTheme';
+import { useResizeDetector } from 'react-resize-detector';
 
 interface StatsCardProps {
   title: string;
-  value: string;
-  icon: IconDefinition | LucideIcon;
-  trend?: 'up' | 'down';
-  className?: string;
+  value: string | number;
+  icon?: LucideIcon;
+  trend?: string | number;
+  trendDirection?: 'up' | 'down';
   subtitle?: string;
+  className?: string;
 }
 
-export function StatsCard({ title, value, icon: Icon, trend, className, subtitle }: StatsCardProps) {
+export function StatsCard({
+  title,
+  value,
+  icon: Icon,
+  trend,
+  trendDirection,
+  subtitle,
+  className
+}: StatsCardProps) {
+  const { style, cards } = DASHBOARD_THEME;
+  const { ref, width, height } = useResizeDetector();
+  
+  // Calculate scale factor based on container size
+  const scale = width ? Math.min(width / 300, height ? height / 200 : 1) : 1;
+  
   return (
-    <div className={cn(
-      "relative overflow-hidden rounded-lg p-4",
-      className
-    )}>
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <p className="text-sm text-text-muted">{title}</p>
-          <p className="text-2xl font-semibold text-text-primary">{value}</p>
-          {subtitle && (
-            <p className="text-xs text-text-muted">{subtitle}</p>
+    <div ref={ref} className="h-full w-full">
+      <Card 
+        className={cn(
+          'relative flex flex-col h-full w-full',
+          'bg-gradient-to-br from-card to-card/50',
+          'transition-all overflow-hidden',
+          style.border && 'border',
+          style.shadow,
+          {
+            'hover:shadow-lg hover:border-primary/20': true,
+          },
+          className
+        )} 
+        style={{
+          borderRadius: style.borderRadius,
+          transition: style.transition,
+        }}
+      >
+        <div 
+          className="absolute inset-0 flex flex-col p-6"
+          style={{
+            transform: `scale(${scale})`,
+            transformOrigin: 'top left',
+            transition: 'transform 200ms ease'
+          }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-medium text-muted-foreground whitespace-nowrap">{title}</h3>
+            {Icon && <Icon className="h-5 w-5 text-muted-foreground flex-shrink-0" />}
+          </div>
+          
+          <div className="flex-1 flex flex-col justify-center min-h-0">
+            <div className="text-3xl font-bold tracking-tight truncate">
+              {value}
+            </div>
+            {subtitle && (
+              <p className="text-sm text-muted-foreground mt-1 truncate">
+                {subtitle}
+              </p>
+            )}
+          </div>
+
+          {trend && trendDirection && (
+            <div className={cn(
+              'flex items-center mt-2 text-sm font-medium gap-1',
+              trendDirection === 'up' ? 'text-green-500' : 'text-red-500'
+            )}>
+              {trendDirection === 'up' ? (
+                <ArrowUpIcon className="h-4 w-4 flex-shrink-0" />
+              ) : (
+                <ArrowDownIcon className="h-4 w-4 flex-shrink-0" />
+              )}
+              <span className="truncate">{trend}</span>
+            </div>
           )}
         </div>
-        <div className={cn(
-          "h-12 w-12 rounded-full flex items-center justify-center",
-          trend === 'up' ? 'text-green-500 bg-green-500/10' : 
-          trend === 'down' ? 'text-red-500 bg-red-500/10' : 
-          'text-primary bg-primary/10'
-        )}>
-          {typeof Icon === 'function' ? (
-            <Icon className="h-6 w-6" />
-          ) : (
-            <FontAwesomeIcon icon={Icon} className="h-6 w-6" />
-          )}
-        </div>
-      </div>
-      
-      {trend && (
-        <div className={cn(
-          "absolute bottom-0 left-0 right-0 h-1",
-          trend === 'up' ? 'bg-green-500' : 'bg-red-500'
-        )} />
-      )}
+      </Card>
     </div>
   );
 } 

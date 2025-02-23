@@ -1,162 +1,175 @@
-import { useState, useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { 
-  faChartBar,
-  faChartLine,
-  faDollarSign,
-  faArrowTrendUp
-} from '@fortawesome/free-solid-svg-icons';
-import { useSupabase } from '../../contexts/SupabaseContext';
-import { PageHeader } from '../../components/ui/PageHeader';
-import { StatsCard } from '../../components/dashboard/StatsCard';
-import { Button } from '../../components/ui/button';
-import { Spinner } from '../../components/ui/Spinner';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { ErrorBoundary } from '../../components/ErrorBoundary';
 import { TradeList } from './components/TradeList';
 import { TradeForm } from './components/TradeForm';
-import { useTradeMetrics } from './hooks/useTradeMetrics';
-import { useTrades } from './hooks/useTrades';
-import { formatCurrency } from '../../utils/formatters';
-import type { Trade } from '../../types/trade';
+import { Button } from '../../components/ui/button';
+import { Plus } from 'lucide-react';
+import { useSupabaseClient } from '../../hooks/useSupabaseClient';
+import { Trade } from '../../types/trade';
+import { config } from '../../config';
+
+// Mock trades for development mode
+const MOCK_TRADES: Trade[] = [
+  {
+    id: 'dev-trade-1',
+    user_id: 'dev-123',
+    date: new Date().toISOString().split('T')[0],
+    time: new Date().toISOString().split('T')[1].split('.')[0],
+    symbol: 'AAPL',
+    type: 'stock',
+    side: 'Long',
+    quantity: 100,
+    price: 150.00,
+    total: 15000.00,
+    entry_price: 150.00,
+    exit_price: 155.00,
+    pnl: 500.00,
+    status: 'closed',
+    notes: 'Mock trade for development',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: 'dev-trade-2',
+    user_id: 'dev-123',
+    date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    time: new Date(Date.now() - 86400000).toISOString().split('T')[1].split('.')[0],
+    symbol: 'TSLA',
+    type: 'stock',
+    side: 'Long',
+    quantity: 50,
+    price: 200.00,
+    total: 10000.00,
+    entry_price: 200.00,
+    exit_price: 210.00,
+    pnl: 500.00,
+    status: 'closed',
+    notes: 'Another mock trade',
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    updated_at: new Date(Date.now() - 86400000).toISOString()
+  }
+];
+
+const TRADES_PER_PAGE = 10;
 
 export default function TradingJournal() {
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [trades, setTrades] = useState<Trade[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isAddingTrade, setIsAddingTrade] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const { supabase, user } = useSupabase();
-  const queryClient = useQueryClient();
+  const { supabase, user } = useSupabaseClient();
+  const navigate = useNavigate();
 
-  // Use custom hooks for data fetching and metrics
-  const { data: tradeData, isLoading, error } = useTrades(currentPage);
-  const trades = tradeData?.trades || [];
-  const totalPages = tradeData?.totalPages || 1;
-  const metrics = useTradeMetrics(trades);
+  useEffect(() => {
+    if (!user) {
+      navigate('/auth/login');
+      return;
+    }
 
-  const handleDelete = useCallback(async (id: string) => {
+    const fetchTrades = async () => {
+      try {
+        // Return mock data in development mode
+        if (!config.isProduction && user.id === 'dev-123') {
+          setTrades(MOCK_TRADES);
+          setIsLoading(false);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('trades')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false });
+
+        if (error) throw error;
+        setTrades(data || []);
+      } catch (error) {
+        console.error('Error fetching trades:', error);
+        setError(error instanceof Error ? error.message : 'Failed to fetch trades');
+        toast.error('Failed to load trades');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTrades();
+  }, [user, supabase, navigate]);
+
+  const handleTradeAdded = (newTrade: Trade) => {
+    setTrades(prev => [newTrade, ...prev]);
+    setIsAddingTrade(false);
+    toast.success('Trade added successfully');
+  };
+
+  const handleDeleteTrade = async (id: string) => {
     try {
-      const { error: deleteError } = await supabase
+      if (!config.isProduction && user?.id === 'dev-123') {
+        setTrades(prev => prev.filter(trade => trade.id !== id));
+        toast.success('Trade deleted successfully');
+        return;
+      }
+
+      const { error } = await supabase
         .from('trades')
         .delete()
         .eq('id', id);
 
-      if (deleteError) throw deleteError;
-      
+      if (error) throw error;
+
+      setTrades(prev => prev.filter(trade => trade.id !== id));
       toast.success('Trade deleted successfully');
-      queryClient.invalidateQueries({ queryKey: ['trades', user?.id] });
-    } catch (err) {
-      console.error('Error deleting trade:', err);
+    } catch (error) {
+      console.error('Error deleting trade:', error);
       toast.error('Failed to delete trade');
     }
-  }, [queryClient, user?.id, supabase]);
-
-  const handleFormSuccess = useCallback(() => {
-    setIsFormOpen(false);
-    queryClient.invalidateQueries({ queryKey: ['trades', user?.id] });
-    toast.success('Trade added successfully');
-  }, [queryClient, user?.id]);
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex-grow bg-background p-6">
-        <div className="flex justify-center">
-          <Spinner className="text-primary" size="lg" />
-        </div>
-      </div>
-    );
-  }
+  const totalPages = Math.ceil(trades.length / TRADES_PER_PAGE);
+  const paginatedTrades = trades.slice(
+    (currentPage - 1) * TRADES_PER_PAGE,
+    currentPage * TRADES_PER_PAGE
+  );
 
   if (error) {
     return (
-      <div className="flex-grow bg-background p-6">
-        <div className="rounded-lg border border-border bg-card p-4">
-          <h3 className="text-lg font-medium text-text-primary mb-2">Error Loading Trades</h3>
-          <p className="text-text-muted">{error.message}</p>
+      <div className="p-4">
+        <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-lg">
+          <h3 className="text-lg font-medium">Error</h3>
+          <p>{error}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <ErrorBoundary>
-      <div className="flex-grow bg-background p-6 space-y-6">
-        <PageHeader 
-          title="Trading Journal"
-          subtitle="Track and analyze your trades"
-          actions={
-            <Button
-              onClick={() => setIsFormOpen(true)}
-              size="lg"
-              className="bg-primary text-primary-foreground hover:opacity-90 shadow-md shadow-primary/20"
-            >
-              Add Trade
-            </Button>
-          }
-        />
-
-        {/* Analytics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatsCard
-            title="Total Trades"
-            value={trades.length.toString()}
-            icon={faChartBar}
-            className="bg-gradient-to-br from-card to-card/80 border border-slate-700/50 shadow-lg shadow-slate-900/20 hover:shadow-xl hover:border-slate-600/50 transition-all duration-300"
-          />
-          <StatsCard
-            title="Win Rate"
-            value={`${(metrics.winRate * 100).toFixed(1)}%`}
-            icon={faArrowTrendUp}
-            trend={metrics.winRate >= 0.5 ? 'up' : 'down'}
-            className="bg-gradient-to-br from-card to-card/80 border border-slate-700/50 shadow-lg shadow-slate-900/20 hover:shadow-xl hover:border-slate-600/50 transition-all duration-300"
-          />
-          <StatsCard
-            title="Total P&L"
-            value={formatCurrency(metrics.totalPnL)}
-            icon={faDollarSign}
-            trend={metrics.totalPnL > 0 ? 'up' : 'down'}
-            className="bg-gradient-to-br from-card to-card/80 border border-slate-700/50 shadow-lg shadow-slate-900/20 hover:shadow-xl hover:border-slate-600/50 transition-all duration-300"
-          />
-          <StatsCard
-            title="Profit Factor"
-            value={metrics.profitFactor.toFixed(2)}
-            icon={faChartLine}
-            trend={metrics.profitFactor >= 1 ? 'up' : 'down'}
-            className="bg-gradient-to-br from-card to-card/80 border border-slate-700/50 shadow-lg shadow-slate-900/20 hover:shadow-xl hover:border-slate-600/50 transition-all duration-300"
-          />
-        </div>
-        
-        {/* Trade List */}
-        <div className="bg-gradient-to-br from-card to-card/90 rounded-xl shadow-xl shadow-slate-900/20 border border-slate-700/50 overflow-hidden">
-          <div className="p-6 flex justify-between items-center border-b border-slate-700/50 bg-card/50">
-            <div>
-              <h2 className="text-xl font-semibold text-text-primary">Trade History</h2>
-              <p className="text-sm text-text-muted mt-1">Manage and track your trading activity</p>
-            </div>
-            <Button 
-              onClick={() => setIsFormOpen(true)}
-              className="bg-primary text-primary-foreground hover:opacity-90 shadow-md shadow-primary/20"
-            >
-              Add Trade
-            </Button>
-          </div>
-          <TradeList 
-            trades={trades}
-            onDelete={handleDelete}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-          />
-        </div>
-
-        <TradeForm
-          isOpen={isFormOpen}
-          onClose={() => setIsFormOpen(false)}
-          onSuccess={handleFormSuccess}
-        />
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Trading Journal</h1>
+        <Button
+          onClick={() => setIsAddingTrade(true)}
+          className="flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          Add Trade
+        </Button>
       </div>
-    </ErrorBoundary>
+
+      {isAddingTrade && (
+        <div className="mb-8">
+          <TradeForm onTradeAdded={handleTradeAdded} onCancel={() => setIsAddingTrade(false)} />
+        </div>
+      )}
+
+      <TradeList 
+        trades={paginatedTrades}
+        isLoading={isLoading}
+        onDelete={handleDeleteTrade}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
+    </div>
   );
 } 

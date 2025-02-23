@@ -3,9 +3,8 @@ import type { Trade } from '../types/trade';
 import { PageHeader } from '../components/ui/PageHeader';
 import { DashboardCards } from '../components/dashboard/DashboardCards';
 import { WelcomeSection } from '../components/dashboard/WelcomeSection';
-import { PlaybookCard } from '../components/dashboard/PlaybookCard';
-import { RecentTradesCard } from '../components/dashboard/RecentTradesCard';
-import { useSupabase } from '../contexts/SupabaseContext';
+import { useAuthStore } from '../stores/authStore';
+import { useDashboardStore } from '../stores/dashboardStore';
 import { useTrades } from '../hooks/useTrades';
 import { Spinner } from '../components/ui/Spinner';
 
@@ -14,8 +13,12 @@ interface DashboardError extends Error {
 }
 
 export default function Dashboard() {
-  const { user } = useSupabase();
-  const { data: trades = [], isLoading, error } = useTrades(user?.id);  
+  const user = useAuthStore(state => state.user);
+  const { currentProfile, isLoading: isDashboardLoading, error: dashboardError } = useDashboardStore();
+  const { data: trades = [], isLoading: isTradesLoading, error: tradesError } = useTrades(user?.id);
+
+  const isLoading = isDashboardLoading || isTradesLoading;
+  const error = dashboardError || tradesError;
 
   if (isLoading) {
     return (
@@ -51,7 +54,10 @@ export default function Dashboard() {
       <div className="container mx-auto px-6 py-8">
         <div className="grid gap-8">
           <section className="grid gap-6">
-            <DashboardCards trades={trades} />
+            <DashboardCards 
+              trades={trades} 
+              layouts={currentProfile?.layout || []} 
+            />
           </section>
         </div>
       </div>

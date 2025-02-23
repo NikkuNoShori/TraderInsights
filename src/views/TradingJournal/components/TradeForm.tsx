@@ -1,255 +1,130 @@
 import React, { useState } from 'react';
-import { useSupabase } from '../../../contexts/SupabaseContext';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../../components/ui/Dialog';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { useSupabaseClient } from '../../../hooks/useSupabaseClient';
+import { FormField } from '../../../components/ui/form-field';
 import { Button } from '../../../components/ui/button';
-import { FormInput } from '../../../components/ui/FormInput';
-import { Select } from '../../../components/ui/Select';
-import { toast } from 'react-hot-toast';
-import type { Trade, OptionDetails } from '../../../types/trade';
+import { Trade } from '../../../types/trade';
+
+const tradeSchema = z.object({
+  symbol: z.string().min(1, 'Symbol is required'),
+  entry_price: z.number().min(0, 'Entry price must be positive'),
+  exit_price: z.number().min(0, 'Exit price must be positive'),
+  quantity: z.number().min(0, 'Quantity must be positive'),
+  date: z.string().min(1, 'Date is required'),
+  type: z.enum(['BUY', 'SELL']),
+  status: z.enum(['OPEN', 'CLOSED']),
+  notes: z.string().optional(),
+});
+
+type TradeFormData = z.infer<typeof tradeSchema>;
 
 interface TradeFormProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
-  trade?: Trade;
+  onTradeAdded: (trade: Trade) => void;
+  onCancel: () => void;
 }
 
-export function TradeForm({ isOpen, onClose, onSuccess, trade }: TradeFormProps) {
-  const { supabase, user } = useSupabase();
-  const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState<Partial<Trade>>({
-    symbol: trade?.symbol || '',
-    type: trade?.type || 'stock',
-    side: trade?.side || 'Long',
-    quantity: trade?.quantity || 0,
-    entry_price: trade?.entry_price || 0,
-    status: trade?.status || 'open',
-    option_details: trade?.option_details || null,
-    notes: trade?.notes || '',
-    date: trade?.date || new Date().toISOString().split('T')[0],
-    time: trade?.time || new Date().toTimeString().split(' ')[0],
+export function TradeForm({ onTradeAdded, onCancel }: TradeFormProps) {
+  const { supabase, user } = useSupabaseClient();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<TradeFormData>({
+    resolver: zodResolver(tradeSchema),
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleOptionDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      option_details: {
-        ...(prev.option_details || {}),
-        [name]: value
-      } as OptionDetails
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
+  const onSubmit = async (data: TradeFormData) => {
+    if (!user) return;
+    
     try {
-      const tradeData = {
-        ...formData,
-        user_id: user?.id,
-        total: (formData.quantity || 0) * (formData.entry_price || 0),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
+      const { data: trade, error } = await supabase
+        .from('trades')
+        .insert([{
+          ...data,
+          user_id: user.id,
+          pnl: (data.exit_price - data.entry_price) * data.quantity * (data.type === 'BUY' ? 1 : -1)
+        }])
+        .select()
+        .single();
 
-      if (trade?.id) {
-        // Update existing trade
-        const { error } = await supabase
-          .from('trades')
-          .update(tradeData)
-          .eq('id', trade.id);
-
-        if (error) throw error;
-        toast.success('Trade updated successfully');
-      } else {
-        // Insert new trade
-        const { error } = await supabase
-          .from('trades')
-          .insert([tradeData]);
-
-        if (error) throw error;
-        toast.success('Trade added successfully');
-      }
-
-      onSuccess();
-      onClose();
+      if (error) throw error;
+      onTradeAdded(trade);
     } catch (error) {
-      console.error('Error saving trade:', error);
-      toast.error('Failed to save trade');
-    } finally {
-      setIsLoading(false);
+      console.error('Error adding trade:', error);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>{trade ? 'Edit Trade' : 'Add New Trade'}</DialogTitle>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-            <FormInput
-              label="Symbol"
-              name="symbol"
-              value={formData.symbol}
-              onChange={handleInputChange}
-              required
-              placeholder="AAPL"
-              className="uppercase"
-            />
-
-            <Select
-              label="Type"
-              name="type"
-              value={formData.type}
-              onChange={handleInputChange}
-              required
-            >
-              <option value="stock">Stock</option>
-              <option value="option">Option</option>
-            </Select>
-
-            <Select
-              label="Side"
-              name="side"
-              value={formData.side}
-              onChange={handleInputChange}
-              required
-            >
-              <option value="Long">Long</option>
-              <option value="Short">Short</option>
-            </Select>
-
-            <FormInput
-              label="Quantity"
-              name="quantity"
-              type="number"
-              value={formData.quantity}
-              onChange={handleInputChange}
-              required
-              min={0}
-            />
-
-            <FormInput
-              label="Entry Price"
-              name="entry_price"
-              type="number"
-              value={formData.entry_price}
-              onChange={handleInputChange}
-              required
-              min={0}
-              step="0.01"
-            />
-
-            <Select
-              label="Status"
-              name="status"
-              value={formData.status}
-              onChange={handleInputChange}
-              required
-            >
-              <option value="open">Open</option>
-              <option value="closed">Closed</option>
-              <option value="pending">Pending</option>
-            </Select>
-
-            <FormInput
-              label="Date"
-              name="date"
-              type="date"
-              value={formData.date}
-              onChange={handleInputChange}
-              required
-            />
-
-            <FormInput
-              label="Time"
-              name="time"
-              type="time"
-              value={formData.time}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-
-          {formData.type === 'option' && (
-            <div className="grid grid-cols-3 gap-4 border-t border-border pt-4">
-              <FormInput
-                label="Strike Price"
-                name="strike"
-                type="number"
-                value={formData.option_details?.strike}
-                onChange={handleOptionDetailsChange}
-                required={formData.type === 'option'}
-                min={0}
-                step="0.01"
-              />
-
-              <FormInput
-                label="Expiration"
-                name="expiration"
-                type="date"
-                value={formData.option_details?.expiration}
-                onChange={handleOptionDetailsChange}
-                required={formData.type === 'option'}
-              />
-
-              <Select
-                label="Contract Type"
-                name="contract_type"
-                value={formData.option_details?.contract_type}
-                onChange={handleOptionDetailsChange}
-                required={formData.type === 'option'}
-              >
-                <option value="call">Call</option>
-                <option value="put">Put</option>
-              </Select>
-            </div>
-          )}
-
-          <div className="border-t border-border pt-4">
-            <FormInput
-              label="Notes"
-              name="notes"
-              value={formData.notes}
-              onChange={handleInputChange}
-              multiline
-              rows={3}
-              placeholder="Add any notes about this trade..."
-            />
-          </div>
-
-          <div className="flex justify-end space-x-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={isLoading}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="bg-primary text-primary-foreground"
-            >
-              {isLoading ? 'Saving...' : trade ? 'Update Trade' : 'Add Trade'}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 bg-card p-6 rounded-lg border border-border">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField
+          label="Symbol"
+          {...register('symbol')}
+          error={errors.symbol?.message}
+        />
+        <FormField
+          label="Date"
+          type="date"
+          {...register('date')}
+          error={errors.date?.message}
+        />
+        <FormField
+          label="Entry Price"
+          type="number"
+          step="0.01"
+          {...register('entry_price', { valueAsNumber: true })}
+          error={errors.entry_price?.message}
+        />
+        <FormField
+          label="Exit Price"
+          type="number"
+          step="0.01"
+          {...register('exit_price', { valueAsNumber: true })}
+          error={errors.exit_price?.message}
+        />
+        <FormField
+          label="Quantity"
+          type="number"
+          {...register('quantity', { valueAsNumber: true })}
+          error={errors.quantity?.message}
+        />
+        <FormField
+          label="Type"
+          type="select"
+          {...register('type')}
+          error={errors.type?.message}
+          options={[
+            { value: 'BUY', label: 'Buy' },
+            { value: 'SELL', label: 'Sell' },
+          ]}
+        />
+        <FormField
+          label="Status"
+          type="select"
+          {...register('status')}
+          error={errors.status?.message}
+          options={[
+            { value: 'OPEN', label: 'Open' },
+            { value: 'CLOSED', label: 'Closed' },
+          ]}
+        />
+      </div>
+      <FormField
+        label="Notes"
+        type="textarea"
+        {...register('notes')}
+        error={errors.notes?.message}
+      />
+      <div className="flex justify-end space-x-2">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Adding...' : 'Add Trade'}
+        </Button>
+      </div>
+    </form>
   );
 } 
