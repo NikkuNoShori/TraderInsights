@@ -90,20 +90,18 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       signIn: async (email, password) => {
         set({ loading: true, error: null });
         try {
-          if (config.isProduction) {
-            const { data: response, error } = await apiClient.auth.signIn(
+          const { data: response, error } =
+            await supabase.auth.signInWithPassword({
               email,
-              password
-            );
-            if (error) throw error;
-            if (!response.user)
-              throw new Error("No user returned from authentication");
+              password,
+            });
 
-            // Don't set state here - let the auth state change handler do it
-            return;
-          } else {
-            await get().loginAsDeveloper();
-          }
+          if (error) throw error;
+          if (!response.user)
+            throw new Error("No user returned from authentication");
+
+          // Don't set state here - let the auth state change handler do it
+          return;
         } catch (error) {
           console.error("Sign in error:", error);
           set({ error: error as Error, loading: false });

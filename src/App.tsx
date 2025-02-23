@@ -27,6 +27,7 @@ import { StoreProvider } from './providers/StoreProvider';
 import { useNavigationStore } from './stores/navigationStore';
 import { PageHeader } from './components/ui/PageHeader';
 import { ReportingNav } from './components/navigation/ReportingNav';
+import SecurityMonitoring from './views/admin/SecurityMonitoring';
 
 console.log('[App] Starting application initialization');  
 
@@ -186,6 +187,21 @@ const router = createBrowserRouter([
       {
         path: 'notifications',
         element: <Settings />
+      }
+    ]
+  },
+  {
+    path: '/admin',
+    element: <AuthGuard><RouteWrapper><Layout /></RouteWrapper></AuthGuard>,
+    children: [
+      {
+        index: true,
+        element: <Navigate to="/admin/security" replace />
+      },
+      {
+        path: 'security',
+        element: <SecurityMonitoring />,
+        errorElement: <RouteErrorBoundary />
       }
     ]
   }

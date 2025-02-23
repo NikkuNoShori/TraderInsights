@@ -3,7 +3,7 @@ import { useTheme } from '../../providers/ThemeProvider';
 import { Moon, Sun, Monitor } from 'lucide-react';
 import { clsx } from 'clsx';
 
-export function AppearanceSettings() {
+export default function AppearanceSettings() {
   const { theme, setTheme } = useTheme();
 
   const themeOptions = [
@@ -32,52 +32,54 @@ export function AppearanceSettings() {
   };
 
   return (
-    <div className="divide-y divide-border dark:divide-dark-border">
-      <div className="px-6 py-5">
-        <h2 className="text-lg font-medium text-foreground dark:text-dark-text">
-          Appearance
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground dark:text-dark-muted">
-          Customize how Trading Insights looks on your device
-        </p>
-      </div>
+    <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+      <div className="divide-y divide-gray-200 dark:divide-gray-700">
+        <div className="px-8 py-6">
+          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+            Appearance
+          </h2>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            Customize how Trading Insights looks on your device
+          </p>
+        </div>
 
-      <div className="px-6 py-5">
-        <div className="space-y-3">
-          {themeOptions.map(({ value, label, description, icon: Icon }) => (
-            <button
-              key={value}
-              onClick={() => handleThemeChange(value)}
-              className={clsx(
-                'w-full flex items-center px-3 py-2.5 rounded-lg',
-                'transition-colors duration-200',
-                theme === value 
-                  ? 'bg-primary/10 dark:bg-primary-900/20 text-primary dark:text-primary-400'
-                  : 'hover:bg-muted dark:hover:bg-dark-muted text-foreground dark:text-dark-text'
-              )}
-            >
-              <Icon className={clsx(
-                "h-5 w-5 mr-3 flex-shrink-0",
-                theme === value 
-                  ? 'text-primary dark:text-primary-400'
-                  : 'text-muted-foreground dark:text-dark-muted'
-              )} />
-              <div className="flex-1 text-left">
-                <div className="text-sm font-medium">{label}</div>
-                <div className={clsx(
-                  "text-xs",
+        <div className="px-8 py-6">
+          <div className="space-y-3">
+            {themeOptions.map(({ value, label, description, icon: Icon }) => (
+              <button
+                key={value}
+                onClick={() => handleThemeChange(value)}
+                className={clsx(
+                  'w-full flex items-center px-3 py-2.5 rounded-lg',
+                  'transition-colors duration-200',
                   theme === value 
-                    ? 'text-primary/70 dark:text-primary-400/70'
+                    ? 'bg-primary/10 dark:bg-primary-900/20 text-primary dark:text-primary-400'
+                    : 'hover:bg-muted dark:hover:bg-dark-muted text-foreground dark:text-dark-text'
+                )}
+              >
+                <Icon className={clsx(
+                  "h-5 w-5 mr-3 flex-shrink-0",
+                  theme === value 
+                    ? 'text-primary dark:text-primary-400'
                     : 'text-muted-foreground dark:text-dark-muted'
-                )}>
-                  {description}
+                )} />
+                <div className="flex-1 text-left">
+                  <div className="text-sm font-medium">{label}</div>
+                  <div className={clsx(
+                    "text-xs",
+                    theme === value 
+                      ? 'text-primary/70 dark:text-primary-400/70'
+                      : 'text-muted-foreground dark:text-dark-muted'
+                  )}>
+                    {description}
+                  </div>
                 </div>
-              </div>
-              {theme === value && (
-                <div className="w-2 h-2 rounded-full bg-primary dark:bg-primary-400 ml-3" />
-              )}
-            </button>
-          ))}
+                {theme === value && (
+                  <div className="w-2 h-2 rounded-full bg-primary dark:bg-primary-400 ml-3" />
+                )}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
