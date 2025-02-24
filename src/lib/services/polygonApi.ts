@@ -1,11 +1,19 @@
 import axios from "axios";
-import { restClient, websocketClient } from "@polygon.io/client-js";
+import {
+  restClient,
+  type IStocksClient,
+  type IAggsPreviousClose,
+  type IAggs,
+  type ITickerDetails,
+} from "@polygon.io/client-js";
 import { withRetry } from "../../utils/withRetry";
 import { create } from "zustand";
+import { env } from "../../config/env";
+import { wsManager } from "./websocketManager";
+import type { TradeMessage } from "../../types/polygon";
 
-const POLYGON_API_KEY = "FFEAlcuNOfPCBDK4hEsED_VrWvJlYxNO";
-const rest = restClient(POLYGON_API_KEY);
-const ws = websocketClient(POLYGON_API_KEY);
+// Initialize REST client
+const rest = restClient(env.POLYGON_API_KEY);
 
 interface ApiState {
   requestCount: number;
@@ -34,7 +42,7 @@ const checkRateLimit = () => {
 
   if (requestCount >= 5) {
     throw new Error(
-      "Rate limit exceeded. Please wait before making more requests.",
+      "Rate limit exceeded. Please wait before making more requests."
     );
   }
 
@@ -45,10 +53,11 @@ const checkRateLimit = () => {
 };
 
 export const polygonApi = {
-  subscribeToTicker: (symbol: string, callback: (data: any) => void) => {
-    ws.stocks.subscribe(symbol);
-    ws.on("T", (trade) => callback(trade));
-    return () => ws.stocks.unsubscribe(symbol);
+  subscribeToTicker: (
+    symbol: string,
+    callback: (data: TradeMessage) => void
+  ) => {
+    return wsManager.subscribe(symbol, callback);
   },
 
   getStockQuote: async (symbol: string) => {
@@ -86,8 +95,14 @@ export const polygonApi = {
   getSnapshots: async (symbols: string[]) => {
     checkRateLimit();
     return withRetry(async () => {
-      const response = await rest.stocks.snapshots(symbols);
+      const response = await Promise.all(
+        symbols.map((symbol) => rest.stocks.previousClose(symbol))
+      );
       return response;
     });
+  },
+
+  cleanup: () => {
+    wsManager.cleanup();
   },
 };

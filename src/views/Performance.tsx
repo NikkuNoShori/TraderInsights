@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback } from "@/lib/react";
 import { useSupabaseStore } from "@/stores/supabaseStore";
 import { useTrades } from "../hooks/useTrades";
 import { Spinner } from "../components/ui/Spinner";
@@ -17,8 +17,7 @@ interface PerformanceError extends Error {
 }
 
 export default function Performance() {
-  const { client: supabase } = useSupabaseStore();
-  const { data: trades = [], isLoading, error } = useTrades(supabase.user?.id);
+  const { data: trades = [], isLoading, error } = useTrades();
   const [timeframe, setTimeframe] = useState<TimeframeOption>("1M");
 
   // Memoize the timeframe change handler
@@ -85,9 +84,8 @@ export default function Performance() {
           </h2>
           <TimeframeSelector
             value={timeframe}
-            onChange={handleTimeframeChange}
+            onValueChange={handleTimeframeChange}
             className="text-text-muted"
-            children={undefined}
           />
         </div>
         <PerformanceMetrics trades={filteredTrades} timeframe={timeframe} />

@@ -32,6 +32,7 @@ export function PortfolioForm({
     type: initialData?.type || "personal",
     currency: initialData?.currency || "USD",
     is_public: initialData?.is_public || false,
+    initial_balance: initialData?.initial_balance || 0,
   });
 
   const handleSubmit = (e: FormEvent) => {
@@ -119,6 +120,21 @@ export function PortfolioForm({
             <SelectItem value="GBP">GBP</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      <div className="space-y-2">
+        <label htmlFor="initial_balance" className="text-sm font-medium">
+          Initial Balance
+        </label>
+        <Input
+          id="initial_balance"
+          type="number"
+          min="0"
+          step="0.01"
+          value={formData.initial_balance}
+          onChange={handleInputChange("initial_balance")}
+          required
+        />
       </div>
 
       <div className="flex items-center space-x-2">

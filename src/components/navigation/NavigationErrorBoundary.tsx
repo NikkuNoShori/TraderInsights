@@ -1,8 +1,10 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { AlertCircle } from "lucide-react";
+import { type ReactNode, type ErrorInfo } from "@/lib/react";
+import { Component } from "react";
 
 interface Props {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 interface State {
@@ -10,21 +12,27 @@ interface State {
   error?: Error;
 }
 
-export class NavigationErrorBoundary extends React.Component<Props, State> {
+interface NavigationError extends Error {
+  code?: string;
+  info?: ErrorInfo;
+}
+
+export class NavigationErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: NavigationError): State {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  componentDidCatch(error: NavigationError, errorInfo: ErrorInfo): void {
     console.error("Navigation error:", error, errorInfo);
+    error.info = errorInfo;
   }
 
-  render() {
+  render(): ReactNode {
     if (this.state.hasError) {
       return (
         <div className="flex flex-col items-center justify-center min-h-screen p-4">

@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import { Trash2, Loader2 } from "lucide-react";
+import { useState, type FC } from "@/lib/react";
 import { Trade, formatTradeValue } from "../../types/trade";
 
 interface TradeEntryProps {
@@ -8,7 +9,7 @@ interface TradeEntryProps {
   onRetry?: () => void;
 }
 
-export const TradeEntry: React.FC<TradeEntryProps> = ({
+export const TradeEntry: FC<TradeEntryProps> = ({
   trade,
   onDelete,
   onRetry,

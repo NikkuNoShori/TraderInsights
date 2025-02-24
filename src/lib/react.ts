@@ -13,10 +13,33 @@ import React, {
   ErrorInfo,
   Suspense,
   lazy,
+  Component,
+  memo,
   type PropsWithChildren,
   type ChangeEvent,
   type FormEvent,
+  type SetStateAction,
+  type RefAttributes,
+  type JSXElementConstructor,
 } from "react";
+
+// Re-export React
+export default React;
+
+// Export hooks
+export {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+  Suspense,
+  lazy,
+  Component,
+  memo,
+};
 
 // Export types
 export type {
@@ -28,18 +51,7 @@ export type {
   PropsWithChildren,
   ChangeEvent,
   FormEvent,
-};
-
-// Export hooks and utilities
-export {
-  React as default,
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo,
-  Suspense,
-  lazy,
+  SetStateAction,
+  RefAttributes,
+  JSXElementConstructor,
 };

@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import { useMemo } from "@/lib/react";
 import { format, subDays, isWithinInterval, startOfYear } from "date-fns";
 import { StatsCard } from "./StatsCard";
 import {
@@ -8,9 +8,8 @@ import {
   DollarSign,
   Target,
   Percent,
-  BarChart2,
 } from "lucide-react";
-import { Trade } from "../../types/trade";
+import type { Trade } from "../../types/trade";
 import {
   formatTradeValue,
   calculateWinRate,
@@ -25,12 +24,29 @@ interface TradeStatisticsProps {
   isLoading?: boolean;
 }
 
+interface TradeStats {
+  totalTrades: number;
+  winningTrades: number;
+  losingTrades: number;
+  winRate: number;
+  grossProfit: number;
+  grossLoss: number;
+  netProfit: number;
+  profitFactor: number;
+  avgTrade: number;
+  maxDrawdown: number;
+  avgWinningTrade: number;
+  avgLosingTrade: number;
+  riskRewardRatio: number;
+  expectancy: number;
+}
+
 export function TradeStatistics({
   trades,
   timeframe = "1M",
   isLoading,
 }: TradeStatisticsProps) {
-  const stats = useMemo(() => {
+  const stats = useMemo((): TradeStats => {
     const now = new Date();
     const filterDate = {
       "1W": subDays(now, 7),
@@ -49,22 +65,22 @@ export function TradeStatistics({
 
     // Basic Statistics
     const totalTrades = filteredTrades.length;
-    const winningTrades = filteredTrades.filter((trade) => trade.pnl > 0);
-    const losingTrades = filteredTrades.filter((trade) => trade.pnl < 0);
+    const winningTrades = filteredTrades.filter((trade) => (trade.pnl || 0) > 0);
+    const losingTrades = filteredTrades.filter((trade) => (trade.pnl || 0) < 0);
     const winRate = calculateWinRate(filteredTrades);
 
     // Profit/Loss Calculations
     const grossProfit = filteredTrades.reduce(
-      (sum, trade) => sum + (trade.pnl > 0 ? trade.pnl : 0),
+      (sum, trade) => sum + ((trade.pnl || 0) > 0 ? (trade.pnl || 0) : 0),
       0,
     );
     const grossLoss = Math.abs(
       filteredTrades.reduce(
-        (sum, trade) => sum + (trade.pnl < 0 ? trade.pnl : 0),
+        (sum, trade) => sum + ((trade.pnl || 0) < 0 ? (trade.pnl || 0) : 0),
         0,
       ),
     );
-    const netProfit = filteredTrades.reduce((sum, trade) => sum + trade.pnl, 0);
+    const netProfit = filteredTrades.reduce((sum, trade) => sum + (trade.pnl || 0), 0);
 
     // Advanced Metrics
     const profitFactor = calculateProfitFactor(filteredTrades);
@@ -72,12 +88,12 @@ export function TradeStatistics({
     const maxDrawdown = calculateMaxDrawdown(filteredTrades);
     const avgWinningTrade =
       winningTrades.length > 0
-        ? winningTrades.reduce((sum, trade) => sum + trade.pnl, 0) /
+        ? winningTrades.reduce((sum, trade) => sum + (trade.pnl || 0), 0) /
           winningTrades.length
         : 0;
     const avgLosingTrade =
       losingTrades.length > 0
-        ? Math.abs(losingTrades.reduce((sum, trade) => sum + trade.pnl, 0)) /
+        ? Math.abs(losingTrades.reduce((sum, trade) => sum + (trade.pnl || 0), 0)) /
           losingTrades.length
         : 0;
     const riskRewardRatio =
@@ -109,147 +125,58 @@ export function TradeStatistics({
         title="Net P&L"
         value={formatTradeValue(stats.netProfit)}
         icon={DollarSign}
-        trend={stats.netProfit >= 0 ? "up" : "down"}
+        trendDirection={stats.netProfit >= 0 ? "up" : "down"}
+        trend={formatTradeValue(Math.abs(stats.netProfit))}
+        subtitle="Total profit/loss across all trades"
         isLoading={isLoading}
-        tooltip="Total profit/loss across all trades"
-        hoverContent={
-          <div className="space-y-1 text-xs">
-            <div className="flex justify-between">
-              <span>Gross Profit:</span>
-              <span className="text-green-500">
-                {formatTradeValue(stats.grossProfit)}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>Gross Loss:</span>
-              <span className="text-red-500">
-                {formatTradeValue(stats.grossLoss)}
-              </span>
-            </div>
-            <div className="flex justify-between pt-1 border-t">
-              <span>Max Drawdown:</span>
-              <span className="text-red-500">
-                {formatTradeValue(stats.maxDrawdown)}
-              </span>
-            </div>
-          </div>
-        }
       />
 
       <StatsCard
         title="Win Rate"
         value={`${(stats.winRate * 100).toFixed(1)}%`}
         icon={TrendingUp}
-        trend={stats.winRate >= 0.5 ? "up" : "down"}
+        trendDirection={stats.winRate >= 0.5 ? "up" : "down"}
+        trend={`${stats.winningTrades} winning trades`}
+        subtitle="Percentage of profitable trades"
         isLoading={isLoading}
-        tooltip="Percentage of profitable trades"
-        hoverContent={
-          <div className="space-y-1 text-xs">
-            <div className="flex justify-between">
-              <span>Winning Trades:</span>
-              <span>{stats.winningTrades}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Losing Trades:</span>
-              <span>{stats.losingTrades}</span>
-            </div>
-            <div className="flex justify-between pt-1 border-t">
-              <span>Avg Win:</span>
-              <span className="text-green-500">
-                {formatTradeValue(stats.avgWinningTrade)}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>Avg Loss:</span>
-              <span className="text-red-500">
-                {formatTradeValue(stats.avgLosingTrade)}
-              </span>
-            </div>
-          </div>
-        }
       />
 
       <StatsCard
         title="Profit Factor"
         value={stats.profitFactor.toFixed(2)}
         icon={TrendingDown}
-        trend={stats.profitFactor >= 1.5 ? "up" : "down"}
+        trendDirection={stats.profitFactor >= 1.5 ? "up" : "down"}
+        trend={`${formatTradeValue(stats.grossProfit)} / ${formatTradeValue(stats.grossLoss)}`}
+        subtitle="Ratio of gross profit to gross loss"
         isLoading={isLoading}
-        tooltip="Ratio of gross profit to gross loss"
-        hoverContent={
-          <div className="space-y-1 text-xs">
-            <div className="flex justify-between">
-              <span>Gross Profit:</span>
-              <span>{formatTradeValue(stats.grossProfit)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Gross Loss:</span>
-              <span>{formatTradeValue(stats.grossLoss)}</span>
-            </div>
-          </div>
-        }
       />
 
       <StatsCard
         title="Risk/Reward"
         value={stats.riskRewardRatio.toFixed(2)}
         icon={Target}
-        trend={stats.riskRewardRatio >= 2 ? "up" : "down"}
+        trendDirection={stats.riskRewardRatio >= 2 ? "up" : "down"}
+        trend={`${formatTradeValue(stats.avgWinningTrade)} / ${formatTradeValue(stats.avgLosingTrade)}`}
+        subtitle="Ratio of average win to average loss"
         isLoading={isLoading}
-        tooltip="Ratio of average win to average loss"
-        hoverContent={
-          <div className="space-y-1 text-xs">
-            <div className="flex justify-between">
-              <span>Avg Win:</span>
-              <span>{formatTradeValue(stats.avgWinningTrade)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Avg Loss:</span>
-              <span>{formatTradeValue(stats.avgLosingTrade)}</span>
-            </div>
-          </div>
-        }
       />
 
       <StatsCard
         title="Expectancy"
         value={formatTradeValue(stats.expectancy)}
         icon={Percent}
-        trend={stats.expectancy > 0 ? "up" : "down"}
+        trendDirection={stats.expectancy > 0 ? "up" : "down"}
+        trend={`${(stats.winRate * 100).toFixed(1)}% win rate`}
+        subtitle="Expected value per trade"
         isLoading={isLoading}
-        tooltip="Expected value per trade"
-        hoverContent={
-          <div className="space-y-1 text-xs">
-            <div className="flex justify-between">
-              <span>Win Rate:</span>
-              <span>{(stats.winRate * 100).toFixed(1)}%</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Avg Trade:</span>
-              <span>{formatTradeValue(stats.avgTrade)}</span>
-            </div>
-          </div>
-        }
       />
 
       <StatsCard
         title="Total Trades"
         value={stats.totalTrades.toString()}
         icon={Activity}
+        subtitle={`${stats.winningTrades} winning / ${stats.losingTrades} losing`}
         isLoading={isLoading}
-        tooltip="Number of trades taken"
-        hoverContent={
-          <div className="space-y-1 text-xs">
-            <div className="flex justify-between">
-              <span>Winning:</span>
-              <span className="text-green-500">{stats.winningTrades}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Losing:</span>
-              <span className="text-red-500">{stats.losingTrades}</span>
-            </div>
-          </div>
-        }
       />
     </div>
   );

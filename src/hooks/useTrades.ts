@@ -15,6 +15,7 @@ const MOCK_TRADES: Trade[] = [
     quantity: 100,
     price: 150.0,
     total: 15000.0,
+    entry_date: new Date().toISOString(),
     entry_price: 150.0,
     exit_price: 155.0,
     pnl: 500.0,
@@ -37,6 +38,7 @@ const MOCK_TRADES: Trade[] = [
     quantity: 50,
     price: 200.0,
     total: 10000.0,
+    entry_date: new Date(Date.now() - 86400000).toISOString(),
     entry_price: 200.0,
     exit_price: 210.0,
     pnl: 500.0,
@@ -67,7 +69,15 @@ export function useTrades() {
         .order("date", { ascending: false });
 
       if (error) throw error;
-      return data as Trade[];
+
+      // Ensure all required fields are present
+      return (data || []).map(
+        (trade): Trade => ({
+          ...trade,
+          entry_date: trade.entry_date || trade.date,
+          entry_price: trade.entry_price || trade.price,
+        })
+      );
     },
     enabled: !!user,
   });

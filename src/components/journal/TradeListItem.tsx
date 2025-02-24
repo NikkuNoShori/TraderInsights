@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, type FC } from "@/lib/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChevronRight,
@@ -11,15 +11,23 @@ import { calculateTradeMetrics } from "../../utils/calculateTradeMetrics";
 
 interface TradeListItemProps {
   trade: Trade;
-  onDelete: (id: string) => void;
+  onDelete?: (id: string) => void;
   onEdit?: (trade: Trade) => void;
 }
 
-export function TradeListItem({ trade }: TradeListItemProps) {
+interface TradeMetrics {
+  quantity: number;
+  entryPrice: number;
+  exitPrice?: number;
+  pnl?: number;
+  profitRatio?: number;
+}
+
+export function TradeListItem({ trade, onDelete }: TradeListItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const metrics = useMemo(() => calculateTradeMetrics(trade), [trade]);
-  const returnPercent = metrics.pnl
+  const metrics = useMemo((): TradeMetrics => calculateTradeMetrics(trade), [trade]);
+  const returnPercent = metrics.pnl && metrics.entryPrice && metrics.quantity
     ? (metrics.pnl / (metrics.entryPrice * metrics.quantity)) * 100
     : 0;
 
@@ -103,8 +111,8 @@ export function TradeListItem({ trade }: TradeListItemProps) {
               </div>
             </>
           )}
-          {trade.setup_type && (
-            <div className="text-sm text-text-muted">{trade.setup_type}</div>
+          {trade.strategy && (
+            <div className="text-sm text-text-muted">{trade.strategy}</div>
           )}
         </div>
       </div>

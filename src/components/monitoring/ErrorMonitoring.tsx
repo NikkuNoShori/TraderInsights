@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, type FC } from "@/lib/react";
 import { Card, Title, BarChart, DonutChart } from "@tremor/react";
 import {
   Table,
