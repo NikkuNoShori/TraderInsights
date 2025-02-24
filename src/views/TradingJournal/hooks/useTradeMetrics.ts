@@ -34,18 +34,18 @@ export function useTradeMetrics(trades: Trade[] = []): TradeMetrics {
     }
 
     const completedTrades = trades.filter(
-      (trade) => trade.status === "closed" && trade.pnl !== null
+      (trade) => trade.status === "closed" && trade.pnl !== null,
     );
     const winningTrades = completedTrades.filter((t) => (t.pnl || 0) > 0);
     const losingTrades = completedTrades.filter((t) => (t.pnl || 0) <= 0);
 
     const totalPnL = completedTrades.reduce(
       (sum, trade) => sum + (trade.pnl || 0),
-      0
+      0,
     );
     const gains = winningTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
     const losses = Math.abs(
-      losingTrades.reduce((sum, t) => sum + (t.pnl || 0), 0)
+      losingTrades.reduce((sum, t) => sum + (t.pnl || 0), 0),
     );
 
     const averageWin = winningTrades.length ? gains / winningTrades.length : 0;
@@ -53,11 +53,11 @@ export function useTradeMetrics(trades: Trade[] = []): TradeMetrics {
 
     const largestWin = winningTrades.reduce(
       (max, t) => Math.max(max, t.pnl || 0),
-      0
+      0,
     );
     const largestLoss = losingTrades.reduce(
       (min, t) => Math.min(min, t.pnl || 0),
-      0
+      0,
     );
 
     // Calculate average holding time

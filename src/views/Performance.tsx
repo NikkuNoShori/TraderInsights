@@ -1,12 +1,15 @@
-import { useState, useMemo, useCallback } from 'react';
-import { useSupabase } from '../contexts/SupabaseContext';
-import { useTrades } from '../hooks/useTrades';
-import { Spinner } from '../components/ui/Spinner';
-import { TimeframeSelector, type TimeframeOption } from '../components/ui/TimeframeSelector';
-import { PerformanceMetrics } from '../components/dashboard/PerformanceMetrics';
-import { PnLChart } from '../components/dashboard/PnLChart';
-import { WinRateChart } from '../components/dashboard/WinRateChart';
-import { TradeDistributionChart } from '../components/dashboard/TradeDistributionChart';
+import { useState, useMemo, useCallback } from "react";
+import { useSupabase } from "../contexts/SupabaseContext";
+import { useTrades } from "../hooks/useTrades";
+import { Spinner } from "../components/ui/Spinner";
+import {
+  TimeframeSelector,
+  type TimeframeOption,
+} from "../components/ui/TimeframeSelector";
+import { PerformanceMetrics } from "../components/dashboard/PerformanceMetrics";
+import { PnLChart } from "../components/dashboard/PnLChart";
+import { WinRateChart } from "../components/dashboard/WinRateChart";
+import { TradeDistributionChart } from "../components/dashboard/TradeDistributionChart";
 
 interface PerformanceError extends Error {
   message: string;
@@ -16,7 +19,7 @@ interface PerformanceError extends Error {
 export default function Performance() {
   const { user } = useSupabase();
   const { data: trades = [], isLoading, error } = useTrades(user?.id);
-  const [timeframe, setTimeframe] = useState<TimeframeOption>('1M');
+  const [timeframe, setTimeframe] = useState<TimeframeOption>("1M");
 
   // Memoize the timeframe change handler
   const handleTimeframeChange = useCallback((newTimeframe: TimeframeOption) => {
@@ -28,23 +31,25 @@ export default function Performance() {
     if (!trades.length) return [];
     const now = new Date();
     const timeframeInDays = {
-      '1D': 1,
-      '1W': 7,
-      '1M': 30,
-      '3M': 90,
-      '1Y': 365,
-      'YTD': Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 1).getTime()) / (1000 * 60 * 60 * 24)),
-      'ALL': Infinity
+      "1D": 1,
+      "1W": 7,
+      "1M": 30,
+      "3M": 90,
+      "1Y": 365,
+      YTD: Math.floor(
+        (now.getTime() - new Date(now.getFullYear(), 0, 1).getTime()) /
+          (1000 * 60 * 60 * 24),
+      ),
+      ALL: Infinity,
     }[timeframe];
 
-    return trades.filter(trade => {
+    return trades.filter((trade) => {
       const tradeDate = new Date(trade.created_at);
       const diffTime = Math.abs(now.getTime() - tradeDate.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       return diffDays <= timeframeInDays;
     });
   }, [trades, timeframe]);
-
 
   if (isLoading) {
     return (
@@ -78,8 +83,8 @@ export default function Performance() {
           <h2 className="text-lg font-medium text-text-primary">
             Performance Overview
           </h2>
-          <TimeframeSelector 
-            value={timeframe} 
+          <TimeframeSelector
+            value={timeframe}
             onChange={handleTimeframeChange}
             className="text-text-muted"
             children={undefined}
@@ -114,4 +119,4 @@ export default function Performance() {
       </div>
     </div>
   );
-} 
+}

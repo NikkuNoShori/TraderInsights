@@ -1,6 +1,6 @@
-import { QueryClient } from '@tanstack/react-query'
+import { QueryClient } from "@tanstack/react-query";
 
-console.log('Creating QueryClient');
+console.log("Creating QueryClient");
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -9,6 +9,6 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
     },
   },
-}) 
+});
 
-console.log('QueryClient created'); 
+console.log("QueryClient created");

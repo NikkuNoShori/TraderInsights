@@ -1,6 +1,13 @@
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import type { Trade } from '../../types/trade';
-import type { TimeframeOption } from '../ui/TimeframeSelector';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import type { Trade } from "../../types/trade";
+import type { TimeframeOption } from "../ui/TimeframeSelector";
 
 interface WinRateChartProps {
   trades: Trade[];
@@ -21,4 +28,4 @@ export function WinRateChart({ trades, timeframe }: WinRateChartProps) {
       </ResponsiveContainer>
     </div>
   );
-} 
+}

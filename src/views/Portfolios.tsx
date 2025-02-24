@@ -1,8 +1,8 @@
-import { useState, useEffect } from '@/lib/react';
-import { PageHeader } from '../components/ui/PageHeader';
-import { Construction } from 'lucide-react';
-import { PageLoading } from '../components/ui/PageLoading';
-import { PagePlaceholder } from '../components/ui/PagePlaceholder';
+import { useState, useEffect } from "@/lib/react";
+import { PageHeader } from "../components/ui/PageHeader";
+import { Construction } from "lucide-react";
+import { PageLoading } from "../components/ui/PageLoading";
+import { PagePlaceholder } from "../components/ui/PagePlaceholder";
 
 export default function Portfolios() {
   const [isLoading, setIsLoading] = useState(true);
@@ -17,20 +17,25 @@ export default function Portfolios() {
   }, []);
 
   if (isLoading) {
-    return <PageLoading title="Portfolios" subtitle="Manage your trading portfolios" />;
+    return (
+      <PageLoading
+        title="Portfolios"
+        subtitle="Manage your trading portfolios"
+      />
+    );
   }
 
   return (
     <div className="flex-grow p-6">
-      <PageHeader 
+      <PageHeader
         title="Portfolios"
         subtitle="Manage your trading portfolios"
       />
-      <PagePlaceholder 
+      <PagePlaceholder
         title="Coming Soon"
         description="Portfolio management features are currently under development. Check back soon!"
         icon={Construction}
       />
     </div>
   );
-} 
+}

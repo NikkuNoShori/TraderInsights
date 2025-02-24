@@ -1,6 +1,11 @@
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { DollarSign, PieChart as PieIcon, Percent, AlertTriangle } from 'lucide-react';
-import type { Trade } from '../../types/portfolio';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import {
+  DollarSign,
+  PieChart as PieIcon,
+  Percent,
+  AlertTriangle,
+} from "lucide-react";
+import type { Trade } from "../../types/portfolio";
 
 interface AllocationData {
   symbol: string;
@@ -15,19 +20,27 @@ interface AllocationBreakdownProps {
 
 export function AllocationBreakdown({ trades }: AllocationBreakdownProps) {
   const calculateAllocations = (): AllocationData[] => {
-    const positions = trades.reduce((acc, trade) => {
-      if (!acc[trade.symbol]) {
-        acc[trade.symbol] = { shares: 0, value: 0 };
-      }
-      
-      const tradeValue = trade.price * trade.shares;
-      acc[trade.symbol].shares += trade.type === 'buy' ? trade.shares : -trade.shares;
-      acc[trade.symbol].value += trade.type === 'buy' ? tradeValue : -tradeValue;
-      
-      return acc;
-    }, {} as Record<string, { shares: number; value: number }>);
+    const positions = trades.reduce(
+      (acc, trade) => {
+        if (!acc[trade.symbol]) {
+          acc[trade.symbol] = { shares: 0, value: 0 };
+        }
 
-    const totalValue = Object.values(positions).reduce((sum, pos) => sum + Math.abs(pos.value), 0);
+        const tradeValue = trade.price * trade.shares;
+        acc[trade.symbol].shares +=
+          trade.type === "buy" ? trade.shares : -trade.shares;
+        acc[trade.symbol].value +=
+          trade.type === "buy" ? tradeValue : -tradeValue;
+
+        return acc;
+      },
+      {} as Record<string, { shares: number; value: number }>,
+    );
+
+    const totalValue = Object.values(positions).reduce(
+      (sum, pos) => sum + Math.abs(pos.value),
+      0,
+    );
 
     return Object.entries(positions)
       .map(([symbol, position]) => ({
@@ -40,12 +53,12 @@ export function AllocationBreakdown({ trades }: AllocationBreakdownProps) {
   };
 
   const allocations = calculateAllocations();
-  const COLORS = ['#0ea5e9', '#6366f1', '#8b5cf6', '#d946ef', '#f43f5e'];
+  const COLORS = ["#0ea5e9", "#6366f1", "#8b5cf6", "#d946ef", "#f43f5e"];
 
-  const formatCurrency = (value: number) => 
-    new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 0,
     }).format(value);
 
@@ -67,23 +80,28 @@ export function AllocationBreakdown({ trades }: AllocationBreakdownProps) {
                   cx="50%"
                   cy="50%"
                   outerRadius={100}
-                  label={({ symbol, percentage }) => `${symbol} (${formatPercent(percentage)})`}
+                  label={({ symbol, percentage }) =>
+                    `${symbol} (${formatPercent(percentage)})`
+                  }
                 >
                   {allocations.map((_, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={COLORS[index % COLORS.length]} 
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
                     />
                   ))}
                 </Pie>
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: 'rgb(30 41 59)',
-                    border: 'none',
-                    borderRadius: '0.375rem',
-                    color: '#f1f5f9'
+                    backgroundColor: "rgb(30 41 59)",
+                    border: "none",
+                    borderRadius: "0.375rem",
+                    color: "#f1f5f9",
                   }}
-                  formatter={(value: number) => [formatCurrency(value), 'Position Size']}
+                  formatter={(value: number) => [
+                    formatCurrency(value),
+                    "Position Size",
+                  ]}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -97,7 +115,9 @@ export function AllocationBreakdown({ trades }: AllocationBreakdownProps) {
             {allocations.map(({ symbol, value, percentage, risk }) => (
               <div key={symbol} className="flex items-center justify-between">
                 <div>
-                  <h4 className="font-medium text-gray-900 dark:text-dark-text">{symbol}</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-dark-text">
+                    {symbol}
+                  </h4>
                   <div className="flex items-center space-x-4 mt-1">
                     <span className="inline-flex items-center text-sm text-gray-500 dark:text-dark-muted">
                       <DollarSign className="h-4 w-4 mr-1" />
@@ -128,7 +148,9 @@ export function AllocationBreakdown({ trades }: AllocationBreakdownProps) {
           {allocations.length > 0 && (
             <>
               <div>
-                <p className="text-sm text-gray-500 dark:text-dark-muted">Largest Position</p>
+                <p className="text-sm text-gray-500 dark:text-dark-muted">
+                  Largest Position
+                </p>
                 <p className="mt-1 text-xl font-semibold text-gray-900 dark:text-dark-text">
                   {allocations[0].symbol}
                 </p>
@@ -137,19 +159,25 @@ export function AllocationBreakdown({ trades }: AllocationBreakdownProps) {
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-500 dark:text-dark-muted">Position Count</p>
+                <p className="text-sm text-gray-500 dark:text-dark-muted">
+                  Position Count
+                </p>
                 <p className="mt-1 text-xl font-semibold text-gray-900 dark:text-dark-text">
                   {allocations.length}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-500 dark:text-dark-muted">Risk Score</p>
-                <p className={`mt-1 text-xl font-semibold ${
-                  allocations[0].percentage > 20 
-                    ? 'text-amber-500 dark:text-amber-400'
-                    : 'text-emerald-500 dark:text-emerald-400'
-                }`}>
-                  {allocations[0].percentage > 20 ? 'High' : 'Moderate'}
+                <p className="text-sm text-gray-500 dark:text-dark-muted">
+                  Risk Score
+                </p>
+                <p
+                  className={`mt-1 text-xl font-semibold ${
+                    allocations[0].percentage > 20
+                      ? "text-amber-500 dark:text-amber-400"
+                      : "text-emerald-500 dark:text-emerald-400"
+                  }`}
+                >
+                  {allocations[0].percentage > 20 ? "High" : "Moderate"}
                 </p>
               </div>
             </>
@@ -158,4 +186,4 @@ export function AllocationBreakdown({ trades }: AllocationBreakdownProps) {
       </div>
     </div>
   );
-} 
+}

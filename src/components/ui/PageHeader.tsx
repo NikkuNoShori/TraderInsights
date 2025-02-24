@@ -1,4 +1,3 @@
-
 interface PageHeaderProps {
   title: string;
   subtitle?: string;
@@ -21,9 +20,7 @@ export function PageHeader({ title, subtitle, actions }: PageHeaderProps) {
           )}
         </div>
         {actions && (
-          <div className="flex items-center space-x-4">
-            {actions}
-          </div>
+          <div className="flex items-center space-x-4">{actions}</div>
         )}
       </div>
     </div>

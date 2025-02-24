@@ -1,6 +1,11 @@
-export type TimeInterval = 'intraday' | 'daily' | '3day' | '5day';
+export type TimeInterval = "intraday" | "daily" | "3day" | "5day";
 
-export type FilterOperator = 'equals' | 'greaterThan' | 'lessThan' | 'between' | 'contains';
+export type FilterOperator =
+  | "equals"
+  | "greaterThan"
+  | "lessThan"
+  | "between"
+  | "contains";
 
 export interface ScreenerFilter {
   id: string;

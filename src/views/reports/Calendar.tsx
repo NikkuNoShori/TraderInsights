@@ -1,10 +1,10 @@
-import { PageHeader } from '../../components/ui/PageHeader';
-import { ReportingNav } from '../../components/navigation/ReportingNav';
+import { PageHeader } from "../../components/ui/PageHeader";
+import { ReportingNav } from "../../components/navigation/ReportingNav";
 
 export default function Calendar() {
   return (
     <div className="flex-grow p-4">
-      <PageHeader 
+      <PageHeader
         title="Trading Calendar"
         subtitle="View your trading activity over time"
       />
@@ -20,4 +20,4 @@ export default function Calendar() {
       </div>
     </div>
   );
-} 
+}

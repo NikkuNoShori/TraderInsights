@@ -17,7 +17,7 @@ class AuthRateLimitService {
     const now = Date.now();
     const attempts = this.attempts.get(ip) || [];
     const recentAttempts = attempts.filter(
-      (attempt) => now - attempt.timestamp < ATTEMPT_WINDOW
+      (attempt) => now - attempt.timestamp < ATTEMPT_WINDOW,
     );
     this.attempts.set(ip, recentAttempts);
   }
@@ -29,7 +29,7 @@ class AuthRateLimitService {
 
     if (failedAttempts.length >= MAX_ATTEMPTS) {
       const mostRecentFailure = Math.max(
-        ...failedAttempts.map((a) => a.timestamp)
+        ...failedAttempts.map((a) => a.timestamp),
       );
       const timeSinceLastFailure = Date.now() - mostRecentFailure;
       return timeSinceLastFailure < LOCKOUT_DURATION;
@@ -51,7 +51,7 @@ class AuthRateLimitService {
 
     if (failedAttempts.length >= MAX_ATTEMPTS) {
       const mostRecentFailure = Math.max(
-        ...failedAttempts.map((a) => a.timestamp)
+        ...failedAttempts.map((a) => a.timestamp),
       );
       return Math.max(0, LOCKOUT_DURATION - (Date.now() - mostRecentFailure));
     }
@@ -106,7 +106,7 @@ class AuthRateLimitService {
   // For monitoring and analytics
   async getLoginAttempts(
     ip: string,
-    timeWindow: number = ATTEMPT_WINDOW
+    timeWindow: number = ATTEMPT_WINDOW,
   ): Promise<LoginAttempt[]> {
     this.cleanOldAttempts(ip);
     const attempts = this.attempts.get(ip) || [];

@@ -1,10 +1,10 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '../../lib/supabase';
-import { Card } from '../ui/card';
-import { StatsCard } from '../dashboard/StatsCard';
-import { Activity, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import React from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "../../lib/supabase";
+import { Card } from "../ui/card";
+import { StatsCard } from "../dashboard/StatsCard";
+import { Activity, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 
 interface AuthAttempt {
   id: string;
@@ -23,43 +23,47 @@ interface AuthStats {
 
 export function AuthMonitoring() {
   const { data: attempts = [], isLoading } = useQuery<AuthAttempt[]>({
-    queryKey: ['auth-attempts'],
+    queryKey: ["auth-attempts"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('auth_attempts')
-        .select('*')
-        .order('timestamp', { ascending: false })
+        .from("auth_attempts")
+        .select("*")
+        .order("timestamp", { ascending: false })
         .limit(100);
 
       if (error) throw error;
       return data || [];
     },
-    refetchInterval: 30000 // Refresh every 30 seconds
+    refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   const stats: AuthStats = React.useMemo(() => {
     const now = new Date();
     const recentAttempts = attempts.filter(
-      attempt => new Date(attempt.timestamp) > new Date(now.getTime() - 60 * 60 * 1000)
+      (attempt) =>
+        new Date(attempt.timestamp) > new Date(now.getTime() - 60 * 60 * 1000),
     );
 
-    const ipAttempts = recentAttempts.reduce((acc, attempt) => {
-      if (!acc[attempt.ip_address]) {
-        acc[attempt.ip_address] = [];
-      }
-      acc[attempt.ip_address].push(attempt);
-      return acc;
-    }, {} as Record<string, AuthAttempt[]>);
+    const ipAttempts = recentAttempts.reduce(
+      (acc, attempt) => {
+        if (!acc[attempt.ip_address]) {
+          acc[attempt.ip_address] = [];
+        }
+        acc[attempt.ip_address].push(attempt);
+        return acc;
+      },
+      {} as Record<string, AuthAttempt[]>,
+    );
 
     const lockedOutIPs = Object.values(ipAttempts).filter(
-      attempts => attempts.filter(a => !a.success).length >= 5
+      (attempts) => attempts.filter((a) => !a.success).length >= 5,
     ).length;
 
     return {
       totalAttempts: recentAttempts.length,
-      successfulAttempts: recentAttempts.filter(a => a.success).length,
-      failedAttempts: recentAttempts.filter(a => !a.success).length,
-      lockedOutIPs
+      successfulAttempts: recentAttempts.filter((a) => a.success).length,
+      failedAttempts: recentAttempts.filter((a) => !a.success).length,
+      lockedOutIPs,
     };
   }, [attempts]);
 
@@ -107,19 +111,23 @@ export function AuthMonitoring() {
               </tr>
             </thead>
             <tbody>
-              {attempts.map(attempt => (
+              {attempts.map((attempt) => (
                 <tr key={attempt.id} className="border-b">
                   <td className="py-2">
-                    {formatDistanceToNow(new Date(attempt.timestamp), { addSuffix: true })}
+                    {formatDistanceToNow(new Date(attempt.timestamp), {
+                      addSuffix: true,
+                    })}
                   </td>
                   <td className="py-2">{attempt.ip_address}</td>
                   <td className="py-2">
-                    <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                      attempt.success 
-                        ? 'bg-green-50 text-green-700' 
-                        : 'bg-red-50 text-red-700'
-                    }`}>
-                      {attempt.success ? 'Success' : 'Failed'}
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                        attempt.success
+                          ? "bg-green-50 text-green-700"
+                          : "bg-red-50 text-red-700"
+                      }`}
+                    >
+                      {attempt.success ? "Success" : "Failed"}
                     </span>
                   </td>
                 </tr>
@@ -130,4 +138,4 @@ export function AuthMonitoring() {
       </Card>
     </div>
   );
-} 
+}

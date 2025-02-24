@@ -5,16 +5,19 @@ This directory contains technical documentation for the TraderInsights applicati
 ## Available Documents (In Priority Order)
 
 1. **Critical Priority**
+
    - [Migration Guide](./MIGRATION.md) - Comprehensive guide for architectural improvements and migration steps
    - [State Management](./STATE_MANAGEMENT.md) (TODO) - Documentation for state management patterns
    - [Error Handling](./ERROR_HANDLING.md) (TODO) - Error handling patterns and implementation
 
 2. **High Priority**
+
    - [Component Guidelines](./COMPONENT_GUIDELINES.md) (TODO) - Guidelines for component development
    - [Architecture Overview](./ARCHITECTURE.md) (TODO) - Overview of the application architecture
    - [Testing Strategy](./TESTING.md) (TODO) - Testing guidelines and practices
 
 3. **Implementation Priority**
+
    - [API Documentation](./API.md) (TODO) - API integration and usage
    - [Performance Guide](./PERFORMANCE.md) (TODO) - Performance optimization guidelines
    - [Security Guidelines](./SECURITY.md) (TODO) - Security best practices
@@ -44,21 +47,25 @@ When adding new documentation:
 ## Documentation Timeline
 
 ### Days 1-3 (Critical Foundation)
+
 - Complete State Management documentation
 - Set up Error Handling guidelines
 - Initial Component Guidelines
 
 ### Days 4-6 (Core Documentation)
+
 - Architecture Overview
 - Testing Strategy
 - API Documentation
 
 ### Days 7-8 (Implementation Guides)
+
 - Performance Guide
 - Security Guidelines
 - Deployment Documentation
 
 ### Days 9-10 (Final Documentation)
+
 - Troubleshooting Guide
 - Documentation Review
-- Final Updates 
+- Final Updates

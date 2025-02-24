@@ -1,8 +1,8 @@
-import { useNavigate } from 'react-router-dom';
-import { LineChart, TrendingUp, BarChart2, BookOpen } from 'lucide-react';
-import { Button } from '../components/ui/button';
-import { useEffect } from 'react';
-import { clearDeveloperMode } from '../lib/utils/auth';
+import { useNavigate } from "react-router-dom";
+import { LineChart, TrendingUp, BarChart2, BookOpen } from "lucide-react";
+import { Button } from "../components/ui/button";
+import { useEffect } from "react";
+import { clearDeveloperMode } from "../lib/utils/auth";
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -23,11 +23,12 @@ export default function LandingPage() {
               Master Your Trading Journey
             </h1>
             <p className="mt-4 text-xl text-muted-foreground max-w-3xl mx-auto">
-              Track, analyze, and improve your trading performance with powerful analytics and insights.
+              Track, analyze, and improve your trading performance with powerful
+              analytics and insights.
             </p>
             <div className="mt-8">
               <Button
-                onClick={() => navigate('/auth/login')}
+                onClick={() => navigate("/auth/login")}
                 className="text-lg px-8 py-4 rounded-full"
               >
                 Get Started
@@ -59,7 +60,8 @@ export default function LandingPage() {
                 Performance Tracking
               </h3>
               <p className="text-muted-foreground">
-                Monitor your trading performance with detailed metrics and analytics.
+                Monitor your trading performance with detailed metrics and
+                analytics.
               </p>
             </div>
 
@@ -112,7 +114,7 @@ export default function LandingPage() {
             Ready to Take Control of Your Trading?
           </h2>
           <Button
-            onClick={() => navigate('/auth/login')}
+            onClick={() => navigate("/auth/login")}
             className="text-lg px-8 py-4 rounded-full"
           >
             Start Trading Smarter
@@ -126,7 +128,9 @@ export default function LandingPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <LineChart className="h-6 w-6 text-primary" />
-              <span className="font-semibold text-foreground">TraderInsights</span>
+              <span className="font-semibold text-foreground">
+                TraderInsights
+              </span>
             </div>
             <p className="text-sm text-muted-foreground">
               © {new Date().getFullYear()} TraderInsights. All rights reserved.
@@ -136,4 +140,4 @@ export default function LandingPage() {
       </footer>
     </div>
   );
-} 
+}

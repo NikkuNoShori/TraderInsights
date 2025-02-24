@@ -101,7 +101,7 @@ export function validateEnv(): void {
 
   if (missing.length > 0) {
     throw new Error(
-      `Missing required environment variables: ${missing.join(", ")}`
+      `Missing required environment variables: ${missing.join(", ")}`,
     );
   }
 
@@ -109,7 +109,7 @@ export function validateEnv(): void {
   const validEnvs = ["development", "production"];
   if (!validEnvs.includes(env.appEnv)) {
     throw new Error(
-      `Invalid VITE_APP_ENV value. Must be one of: ${validEnvs.join(", ")}`
+      `Invalid VITE_APP_ENV value. Must be one of: ${validEnvs.join(", ")}`,
     );
   }
 
@@ -117,8 +117,8 @@ export function validateEnv(): void {
   if (!validLogLevels.includes(env.logLevel)) {
     throw new Error(
       `Invalid VITE_LOG_LEVEL value. Must be one of: ${validLogLevels.join(
-        ", "
-      )}`
+        ", ",
+      )}`,
     );
   }
 }

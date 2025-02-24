@@ -1,10 +1,10 @@
-import { useEffect, useCallback, useState, useRef } from '@/lib/hooks';
-import type { MouseEvent as ReactMouseEvent } from 'react';
-import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  LineChart, 
-  BookOpen, 
+import { useEffect, useCallback, useState, useRef } from "@/lib/hooks";
+import type { MouseEvent as ReactMouseEvent } from "react";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
+import {
+  LayoutDashboard,
+  LineChart,
+  BookOpen,
   List,
   Briefcase,
   ChevronLeft,
@@ -12,15 +12,15 @@ import {
   ChevronRight,
   User,
   Settings,
-  LogOut
-} from 'lucide-react';
-import { motion } from 'framer-motion';
-import { clsx } from 'clsx';
-import { Tooltip } from '../ui/Tooltip';
-import { useAuthStore } from '@/stores/authStore';
-import { DarkModeToggle } from '../DarkModeToggle';
-import { Badge } from '../ui/Badge';
-import { cn } from '@/utils/cn';
+  LogOut,
+} from "lucide-react";
+import { motion } from "framer-motion";
+import { clsx } from "clsx";
+import { Tooltip } from "../ui/Tooltip";
+import { useAuthStore } from "@/stores/authStore";
+import { DarkModeToggle } from "../DarkModeToggle";
+import { Badge } from "../ui/Badge";
+import { cn } from "@/utils/cn";
 
 type NavCategory = {
   label: string;
@@ -37,42 +37,42 @@ type NavCategory = {
 
 const navCategories: NavCategory[] = [
   {
-    label: 'Overview',
+    label: "Overview",
     items: [
       {
-        label: 'Dashboard',
+        label: "Dashboard",
         icon: LayoutDashboard,
-        href: '/app/dashboard'
+        href: "/app/dashboard",
       },
       {
-        label: 'Journal',
+        label: "Journal",
         icon: BookOpen,
-        href: '/app/journal'
+        href: "/app/journal",
       },
       {
-        label: 'Performance',
+        label: "Performance",
         icon: LineChart,
-        href: '/app/analysis/performance'
-      }
-    ]
+        href: "/app/analysis/performance",
+      },
+    ],
   },
   {
-    label: 'Future Features',
+    label: "Future Features",
     items: [
       {
-        label: 'Watchlist',
+        label: "Watchlist",
         icon: List,
-        href: '/app/watchlist',
-        isComingSoon: true
+        href: "/app/watchlist",
+        isComingSoon: true,
       },
       {
-        label: 'Portfolios',
+        label: "Portfolios",
         icon: Briefcase,
-        href: '/app/portfolios',
-        isComingSoon: true
-      }
-    ]
-  }
+        href: "/app/portfolios",
+        isComingSoon: true,
+      },
+    ],
+  },
 ];
 
 interface MainNavProps {
@@ -81,12 +81,12 @@ interface MainNavProps {
 
 export function MainNav({ defaultCollapsed = true }: MainNavProps) {
   const [isCollapsed, setIsCollapsed] = useState(() => {
-    const saved = localStorage.getItem('nav-collapsed');
+    const saved = localStorage.getItem("nav-collapsed");
     return saved ? JSON.parse(saved) : defaultCollapsed;
   });
 
   const [openCategories, setOpenCategories] = useState<string[]>(() => {
-    const saved = localStorage.getItem('nav-open-categories');
+    const saved = localStorage.getItem("nav-open-categories");
     return saved ? JSON.parse(saved) : [];
   });
 
@@ -98,18 +98,21 @@ export function MainNav({ defaultCollapsed = true }: MainNavProps) {
 
   useEffect(() => {
     if (!user) {
-      navigate('/auth/login');
+      navigate("/auth/login");
     }
   }, [user, navigate]);
 
   useEffect(() => {
     const handleClickOutside = (event: globalThis.MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      ) {
         setIsUserMenuOpen(false);
       }
     };
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
   useEffect(() => {
@@ -117,16 +120,16 @@ export function MainNav({ defaultCollapsed = true }: MainNavProps) {
   }, [location.pathname]);
 
   useEffect(() => {
-    localStorage.setItem('nav-collapsed', JSON.stringify(isCollapsed));
+    localStorage.setItem("nav-collapsed", JSON.stringify(isCollapsed));
   }, [isCollapsed]);
 
   useEffect(() => {
-    localStorage.setItem('nav-open-categories', JSON.stringify(openCategories));
+    localStorage.setItem("nav-open-categories", JSON.stringify(openCategories));
   }, [openCategories]);
 
   useEffect(() => {
-    console.log('MainNav mounted');
-    return () => console.log('MainNav unmounted');
+    console.log("MainNav mounted");
+    return () => console.log("MainNav unmounted");
   }, []);
 
   const toggleCollapse = () => {
@@ -135,23 +138,23 @@ export function MainNav({ defaultCollapsed = true }: MainNavProps) {
 
   const toggleCategory = useCallback((category: string, e: ReactMouseEvent) => {
     e.preventDefault();
-    setOpenCategories(prev => 
-      prev.includes(category) 
-        ? prev.filter(c => c !== category)
-        : [...prev, category]
+    setOpenCategories((prev) =>
+      prev.includes(category)
+        ? prev.filter((c) => c !== category)
+        : [...prev, category],
     );
   }, []);
 
   const handleSettingsClick = () => {
-    navigate('/settings/profile');
+    navigate("/settings/profile");
   };
 
   const handleLogout = async () => {
     try {
       await signOut();
-      navigate('/auth/login');
+      navigate("/auth/login");
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error("Error signing out:", error);
     }
   };
 
@@ -163,7 +166,7 @@ export function MainNav({ defaultCollapsed = true }: MainNavProps) {
         className={clsx(
           "h-full border-r border-border transition-all duration-300 ease-in-out",
           "bg-card dark:bg-dark-paper",
-          isCollapsed ? "w-[80px]" : "w-[250px]"
+          isCollapsed ? "w-[80px]" : "w-[250px]",
         )}
       >
         <div className="p-4 border-b border-border dark:border-dark-border">
@@ -174,8 +177,8 @@ export function MainNav({ defaultCollapsed = true }: MainNavProps) {
                 <span className="font-semibold text-foreground dark:text-dark-text">
                   Trading Insights
                 </span>
-                <Badge 
-                  type="beta" 
+                <Badge
+                  type="beta"
                   tooltipContent="Trading Insights is currently in beta. We're actively adding new features!"
                 />
               </div>
@@ -188,18 +191,20 @@ export function MainNav({ defaultCollapsed = true }: MainNavProps) {
             <div key={category.label} className="relative">
               {!isCollapsed && (
                 <div
-                  onClick={(e) => toggleCategory(category.label, e as ReactMouseEvent)}
+                  onClick={(e) =>
+                    toggleCategory(category.label, e as ReactMouseEvent)
+                  }
                   className="flex items-center justify-between w-full text-sm font-semibold 
                            text-muted-foreground dark:text-gray-300 
                            hover:text-foreground dark:hover:text-white 
                            transition-colors cursor-pointer mb-2"
                 >
                   {category.label}
-                  <ChevronLeft 
+                  <ChevronLeft
                     className={clsx(
                       "h-4 w-4 text-muted-foreground dark:text-gray-300 transition-transform",
-                      openCategories.includes(category.label) && "-rotate-90"
-                    )} 
+                      openCategories.includes(category.label) && "-rotate-90",
+                    )}
                   />
                 </div>
               )}
@@ -207,73 +212,86 @@ export function MainNav({ defaultCollapsed = true }: MainNavProps) {
               <motion.div
                 className={clsx(
                   "space-y-1 overflow-hidden",
-                  !isCollapsed && "ml-3"
+                  !isCollapsed && "ml-3",
                 )}
                 initial={false}
                 animate={{
-                  height: isCollapsed || openCategories.includes(category.label) ? "auto" : 0,
-                  opacity: isCollapsed || openCategories.includes(category.label) ? 1 : 0
+                  height:
+                    isCollapsed || openCategories.includes(category.label)
+                      ? "auto"
+                      : 0,
+                  opacity:
+                    isCollapsed || openCategories.includes(category.label)
+                      ? 1
+                      : 0,
                 }}
                 transition={{
                   duration: 0.2,
-                  ease: "easeInOut"
+                  ease: "easeInOut",
                 }}
               >
-                {category.items.map(({ label, icon: Icon, href, isComingSoon, isBeta }) => (
-                  <Tooltip
-                    key={href}
-                    content={isCollapsed ? label : null}
-                    side="right"
-                    delayDuration={0}
-                  >
-                    <NavLink
-                      to={href}
-                      className={({ isActive }) =>
-                        clsx(
-                          'flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors',
-                          isCollapsed ? 'justify-center' : 'justify-start',
-                          isActive 
-                            ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
-                            : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground dark:text-gray-300 dark:hover:text-white'
-                        )
-                      }
+                {category.items.map(
+                  ({ label, icon: Icon, href, isComingSoon, isBeta }) => (
+                    <Tooltip
+                      key={href}
+                      content={isCollapsed ? label : null}
+                      side="right"
+                      delayDuration={0}
                     >
-                      {({ isActive }) => (
-                        <>
-                          <Icon className={clsx(
-                            "h-5 w-5", 
-                            !isCollapsed && "mr-3",
+                      <NavLink
+                        to={href}
+                        className={({ isActive }) =>
+                          clsx(
+                            "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                            isCollapsed ? "justify-center" : "justify-start",
                             isActive
-                              ? "text-primary-600 dark:text-primary-400"
-                              : "text-muted-foreground dark:text-gray-300"
-                          )} />
-                          {!isCollapsed && (
-                            <div className="flex items-center justify-between flex-1">
-                              <span className={isActive 
-                                ? "text-primary-600 dark:text-primary-400"
-                                : "text-muted-foreground dark:text-gray-300"
-                              }>
-                                {label}
-                              </span>
-                              {isComingSoon && (
-                                <Badge 
-                                  type="soon" 
-                                  tooltipContent="This feature is currently under development and will be available soon!"
-                                />
+                              ? "bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400"
+                              : "text-muted-foreground hover:bg-muted/50 hover:text-foreground dark:text-gray-300 dark:hover:text-white",
+                          )
+                        }
+                      >
+                        {({ isActive }) => (
+                          <>
+                            <Icon
+                              className={clsx(
+                                "h-5 w-5",
+                                !isCollapsed && "mr-3",
+                                isActive
+                                  ? "text-primary-600 dark:text-primary-400"
+                                  : "text-muted-foreground dark:text-gray-300",
                               )}
-                              {isBeta && (
-                                <Badge 
-                                  type="beta" 
-                                  tooltipContent="This feature is in beta testing. Your feedback is welcome!"
-                                />
-                              )}
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </NavLink>
-                  </Tooltip>
-                ))}
+                            />
+                            {!isCollapsed && (
+                              <div className="flex items-center justify-between flex-1">
+                                <span
+                                  className={
+                                    isActive
+                                      ? "text-primary-600 dark:text-primary-400"
+                                      : "text-muted-foreground dark:text-gray-300"
+                                  }
+                                >
+                                  {label}
+                                </span>
+                                {isComingSoon && (
+                                  <Badge
+                                    type="soon"
+                                    tooltipContent="This feature is currently under development and will be available soon!"
+                                  />
+                                )}
+                                {isBeta && (
+                                  <Badge
+                                    type="beta"
+                                    tooltipContent="This feature is in beta testing. Your feedback is welcome!"
+                                  />
+                                )}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </NavLink>
+                    </Tooltip>
+                  ),
+                )}
               </motion.div>
             </div>
           ))}
@@ -286,47 +304,55 @@ export function MainNav({ defaultCollapsed = true }: MainNavProps) {
                 "flex items-center space-x-3 w-full p-2 rounded-lg",
                 "hover:bg-primary-50 dark:hover:bg-primary-900/10",
                 "transition-all duration-200 ease-in-out",
-                "group-hover:bg-primary-50 dark:group-hover:bg-primary-900/10"
+                "group-hover:bg-primary-50 dark:group-hover:bg-primary-900/10",
               )}
             >
-              <div className={clsx(
-                "w-8 h-8 rounded-full",
-                "bg-gradient-to-br from-primary/20 to-primary/10",
-                "flex items-center justify-center",
-                "ring-1 ring-primary/20",
-                "transition-all duration-200 ease-in-out",
-                "group-hover:scale-105",
-                "group-hover:ring-primary/30",
-                "group-hover:from-primary/30 group-hover:to-primary/20"
-              )}>
-                <User className={clsx(
-                  "h-4 w-4 text-primary-600 dark:text-primary-400",
-                  "transition-transform duration-200 ease-in-out",
-                  "group-hover:scale-110"
-                )} />
+              <div
+                className={clsx(
+                  "w-8 h-8 rounded-full",
+                  "bg-gradient-to-br from-primary/20 to-primary/10",
+                  "flex items-center justify-center",
+                  "ring-1 ring-primary/20",
+                  "transition-all duration-200 ease-in-out",
+                  "group-hover:scale-105",
+                  "group-hover:ring-primary/30",
+                  "group-hover:from-primary/30 group-hover:to-primary/20",
+                )}
+              >
+                <User
+                  className={clsx(
+                    "h-4 w-4 text-primary-600 dark:text-primary-400",
+                    "transition-transform duration-200 ease-in-out",
+                    "group-hover:scale-110",
+                  )}
+                />
               </div>
               {!isCollapsed && (
-                <span className={clsx(
-                  "text-sm font-medium text-foreground dark:text-dark-text",
-                  "transition-colors duration-200",
-                  "group-hover:text-primary-700 dark:group-hover:text-primary-300"
-                )}>
-                  {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Profile'}
+                <span
+                  className={clsx(
+                    "text-sm font-medium text-foreground dark:text-dark-text",
+                    "transition-colors duration-200",
+                    "group-hover:text-primary-700 dark:group-hover:text-primary-300",
+                  )}
+                >
+                  {user?.user_metadata?.full_name ||
+                    user?.email?.split("@")[0] ||
+                    "Profile"}
                 </span>
               )}
             </button>
 
             <motion.div
               initial={false}
-              animate={{ 
+              animate={{
                 opacity: 1,
                 height: "auto",
                 y: 0,
                 scale: 1,
               }}
-              transition={{ 
+              transition={{
                 duration: 0.2,
-                ease: [0.4, 0, 0.2, 1]
+                ease: [0.4, 0, 0.2, 1],
               }}
               className={clsx(
                 "absolute bottom-full mb-2 w-full",
@@ -338,7 +364,7 @@ export function MainNav({ defaultCollapsed = true }: MainNavProps) {
                 "opacity-0 scale-95 -translate-y-2",
                 "transition-all duration-200 ease-in-out",
                 "group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0",
-                "invisible group-hover:visible"
+                "invisible group-hover:visible",
               )}
             >
               <div className="p-1.5 space-y-0.5">
@@ -351,11 +377,13 @@ export function MainNav({ defaultCollapsed = true }: MainNavProps) {
                     <span className="text-xs text-muted-foreground dark:text-dark-muted">
                       Advanced Trader
                     </span>
-                    <span className={clsx(
-                      "inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium",
-                      "bg-primary-50 dark:bg-primary-900/20",
-                      "text-primary-700 dark:text-primary-300"
-                    )}>
+                    <span
+                      className={clsx(
+                        "inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium",
+                        "bg-primary-50 dark:bg-primary-900/20",
+                        "text-primary-700 dark:text-primary-300",
+                      )}
+                    >
                       Level 3
                     </span>
                   </div>
@@ -375,12 +403,12 @@ export function MainNav({ defaultCollapsed = true }: MainNavProps) {
                   <Settings className="h-4 w-4" />
                   <span>Settings</span>
                 </button>
-                
-                <DarkModeToggle 
+
+                <DarkModeToggle
                   showLabel
                   className="w-full justify-start hover:bg-primary-50 dark:hover:bg-primary-900/10 rounded-md"
                 />
-                
+
                 <button
                   onClick={handleLogout}
                   className="flex items-center space-x-2 w-full p-2 text-sm rounded-md
@@ -398,11 +426,11 @@ export function MainNav({ defaultCollapsed = true }: MainNavProps) {
         </div>
       </motion.nav>
 
-      <div 
+      <div
         className={clsx(
           "fixed top-1/2 transform -translate-y-1/2",
           isCollapsed ? "left-[68px]" : "left-[238px]",
-          "transition-all duration-300 ease-in-out"
+          "transition-all duration-300 ease-in-out",
         )}
       >
         <button
@@ -412,7 +440,7 @@ export function MainNav({ defaultCollapsed = true }: MainNavProps) {
             "flex items-center justify-center",
             "bg-background text-muted-foreground hover:text-foreground",
             "transition-colors duration-200",
-            "shadow-sm hover:shadow-md z-50"
+            "shadow-sm hover:shadow-md z-50",
           )}
         >
           {isCollapsed ? (
@@ -424,4 +452,4 @@ export function MainNav({ defaultCollapsed = true }: MainNavProps) {
       </div>
     </div>
   );
-} 
+}

@@ -1,7 +1,7 @@
-import type { Layout } from 'react-grid-layout';
-import type { DashboardCardType } from './dashboard';
+import type { Layout } from "react-grid-layout";
+import type { DashboardCardType } from "./dashboard";
 
-export type UserRole = 'developer' | 'admin' | 'user';
+export type UserRole = "developer" | "admin" | "user";
 
 export interface Profile {
   id: string;
@@ -23,7 +23,7 @@ export interface Trade {
   entry_price: number;
   exit_price: number | null;
   quantity: number;
-  side: 'long' | 'short';
+  side: "long" | "short";
   entry_date: string;
   exit_date: string | null;
   pnl: number | null;
@@ -101,18 +101,22 @@ export interface Database {
     Tables: {
       profiles: {
         Row: Profile;
-        Insert: Omit<Profile, 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Profile, 'id' | 'created_at' | 'updated_at'>>;
+        Insert: Omit<Profile, "created_at" | "updated_at">;
+        Update: Partial<Omit<Profile, "id" | "created_at" | "updated_at">>;
       };
       trades: {
         Row: Trade;
-        Insert: Omit<Trade, 'created_at' | 'updated_at' | 'pnl'>;
-        Update: Partial<Omit<Trade, 'id' | 'user_id' | 'created_at' | 'updated_at'>>;
+        Insert: Omit<Trade, "created_at" | "updated_at" | "pnl">;
+        Update: Partial<
+          Omit<Trade, "id" | "user_id" | "created_at" | "updated_at">
+        >;
       };
       dashboards: {
         Row: Dashboard;
-        Insert: Omit<Dashboard, 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Dashboard, 'id' | 'user_id' | 'created_at' | 'updated_at'>>;
+        Insert: Omit<Dashboard, "created_at" | "updated_at">;
+        Update: Partial<
+          Omit<Dashboard, "id" | "user_id" | "created_at" | "updated_at">
+        >;
       };
     };
     Views: {

@@ -1,5 +1,5 @@
-import { TradeListItem } from './TradeListItem';
-import type { Trade } from '../../types/trade';
+import { TradeListItem } from "./TradeListItem";
+import type { Trade } from "../../types/trade";
 
 interface TradeListProps {
   trades: Trade[];
@@ -18,12 +18,8 @@ export function TradeList({ trades, onDelete }: TradeListProps) {
   return (
     <div className="divide-y divide-border rounded-lg border border-border overflow-hidden">
       {trades.map((trade) => (
-        <TradeListItem 
-          key={trade.id} 
-          trade={trade} 
-          onDelete={onDelete}
-        />
+        <TradeListItem key={trade.id} trade={trade} onDelete={onDelete} />
       ))}
     </div>
   );
-} 
+}

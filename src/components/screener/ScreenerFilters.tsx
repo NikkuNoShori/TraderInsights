@@ -1,4 +1,4 @@
-import { FilterBuilder } from './FilterBuilder';
+import { FilterBuilder } from "./FilterBuilder";
 
 interface Filter {
   metric: string;

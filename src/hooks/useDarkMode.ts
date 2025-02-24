@@ -10,7 +10,9 @@ export function useDarkMode() {
   });
 
   const [systemPreference, setSystemPreference] = useState<"dark" | "light">(
-    window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light",
   );
 
   useEffect(() => {

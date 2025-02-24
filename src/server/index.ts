@@ -16,7 +16,7 @@ app.use(
       ? "http://localhost:5173"
       : serverEnv.appUrl,
     credentials: true,
-  })
+  }),
 );
 app.use(express.json());
 
@@ -36,11 +36,11 @@ app.use(
     err: Error,
     req: express.Request,
     res: express.Response,
-    next: express.NextFunction
+    next: express.NextFunction,
   ) => {
     console.error(err.stack);
     res.status(500).json({ error: "Internal Server Error" });
-  }
+  },
 );
 
 app.listen(serverEnv.port, () => {

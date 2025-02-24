@@ -4,7 +4,11 @@ import type { User } from "@supabase/supabase-js";
 import type { Profile } from "../types/database";
 import type { UserPermissions } from "../types/auth";
 import { config } from "../config/index";
-import { fetchProfile, fetchPermissions } from "../lib/utils/auth";
+import {
+  fetchProfile,
+  fetchPermissions,
+  clearDeveloperMode,
+} from "../lib/utils/auth";
 import { apiClient } from "../lib/services/apiClient";
 import { supabase } from "../lib/supabase";
 
@@ -19,6 +23,7 @@ interface AuthState {
 
 interface AuthActions {
   signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   loginAsDeveloper: () => Promise<void>;
   updateProfile: (data: Partial<Profile>) => Promise<void>;
@@ -45,17 +50,21 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       handleAuthStateChange: async (event, session) => {
         console.log("Auth state changed:", event, session?.user?.id);
 
-        // Don't set loading state for auth state changes
         try {
           switch (event) {
             case "SIGNED_IN":
             case "USER_UPDATED":
-              const user = session?.user;
-              if (user) {
-                const profile = await fetchProfile(user.id);
-                const permissions = await fetchPermissions(user.id);
+              if (session?.user) {
+                // Set loading state while fetching profile and permissions
+                set({ loading: true, error: null });
+
+                const [profile, permissions] = await Promise.all([
+                  fetchProfile(session.user.id),
+                  fetchPermissions(session.user.id),
+                ]);
+
                 set({
-                  user,
+                  user: session.user,
                   profile,
                   permissions,
                   loading: false,
@@ -74,8 +83,13 @@ export const useAuthStore = create<AuthState & AuthActions>()(
                 error: null,
               });
               break;
+            case "TOKEN_REFRESHED":
+              if (session?.user) {
+                set({ user: session.user });
+              }
+              break;
             default:
-              set({ loading: false, initialized: true });
+              set((state) => ({ ...state, loading: false, initialized: true }));
           }
         } catch (error) {
           console.error("Error handling auth state change:", error);
@@ -90,20 +104,32 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       signIn: async (email, password) => {
         set({ loading: true, error: null });
         try {
-          const { data: response, error } =
-            await supabase.auth.signInWithPassword({
-              email,
-              password,
-            });
-
+          const { error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
           if (error) throw error;
-          if (!response.user)
-            throw new Error("No user returned from authentication");
 
-          // Don't set state here - let the auth state change handler do it
-          return;
+          // Auth state change handler will handle the rest
         } catch (error) {
           console.error("Sign in error:", error);
+          set({ error: error as Error, loading: false });
+          throw error;
+        }
+      },
+
+      signUp: async (email, password) => {
+        set({ loading: true, error: null });
+        try {
+          const { error } = await supabase.auth.signUp({
+            email,
+            password,
+          });
+          if (error) throw error;
+
+          // Auth state change handler will handle the rest
+        } catch (error) {
+          console.error("Sign up error:", error);
           set({ error: error as Error, loading: false });
           throw error;
         }
@@ -112,6 +138,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       signOut: async () => {
         set({ loading: true, error: null });
         try {
+          clearDeveloperMode();
           if (config.isProduction) {
             await apiClient.auth.signOut();
           }
@@ -126,10 +153,13 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           console.error("Sign out error:", error);
           set({ error: error as Error, loading: false });
           throw error;
+        } finally {
+          set({ loading: false });
         }
       },
 
       loginAsDeveloper: async () => {
+        set({ loading: true, error: null });
         try {
           const mockUser = {
             id: "dev-123",
@@ -177,6 +207,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         const { user } = get();
         if (!user) throw new Error("No user logged in");
 
+        set({ loading: true, error: null });
         try {
           if (config.isProduction) {
             await apiClient.auth.updateMetadata({
@@ -191,6 +222,8 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           console.error("Profile update error:", error);
           set({ error: error as Error });
           throw error;
+        } finally {
+          set({ loading: false });
         }
       },
     }),
@@ -201,6 +234,6 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         profile: state.profile,
         permissions: state.permissions,
       }),
-    }
-  )
+    },
+  ),
 );

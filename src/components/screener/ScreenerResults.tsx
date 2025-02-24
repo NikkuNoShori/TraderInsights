@@ -1,4 +1,4 @@
-import { ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowUp, ArrowDown } from "lucide-react";
 
 interface Stock {
   symbol: string;
@@ -14,11 +14,14 @@ interface ScreenerResultsProps {
   isLoading?: boolean;
 }
 
-export function ScreenerResults({ results, isLoading = false }: ScreenerResultsProps) {
-  const formatNumber = (num: number) => 
-    new Intl.NumberFormat('en-US', { 
-      style: 'currency', 
-      currency: 'USD' 
+export function ScreenerResults({
+  results,
+  isLoading = false,
+}: ScreenerResultsProps) {
+  const formatNumber = (num: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
     }).format(num);
 
   if (isLoading) {
@@ -78,9 +81,11 @@ export function ScreenerResults({ results, isLoading = false }: ScreenerResultsP
                   {formatNumber(stock.price)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className={`flex items-center text-sm ${
-                    stock.change >= 0 ? 'text-green-600' : 'text-red-600'
-                  }`}>
+                  <div
+                    className={`flex items-center text-sm ${
+                      stock.change >= 0 ? "text-green-600" : "text-red-600"
+                    }`}
+                  >
                     {stock.change >= 0 ? (
                       <ArrowUp className="h-4 w-4 mr-1" />
                     ) : (

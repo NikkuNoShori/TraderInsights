@@ -1,40 +1,43 @@
-import { format } from 'date-fns';
-import { ArrowUpDown, Filter, Search } from 'lucide-react';
-import type { Trade } from '../../types/portfolio';
+import { format } from "date-fns";
+import { ArrowUpDown, Filter, Search } from "lucide-react";
+import type { Trade } from "../../types/portfolio";
 
 interface TradeHistoryProps {
   trades: Trade[];
   onDelete?: (id: string) => void;
 }
 
-type SortField = 'date' | 'symbol' | 'type' | 'price' | 'shares' | 'value';
-type SortOrder = 'asc' | 'desc';
+type SortField = "date" | "symbol" | "type" | "price" | "shares" | "value";
+type SortOrder = "asc" | "desc";
 
 export function TradeHistory({ trades, onDelete }: TradeHistoryProps) {
-  const [search, setSearch] = useState('');
-  const [sortField, setSortField] = useState<SortField>('date');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
-  const [typeFilter, setTypeFilter] = useState<'all' | 'buy' | 'sell'>('all');
+  const [search, setSearch] = useState("");
+  const [sortField, setSortField] = useState<SortField>("date");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+  const [typeFilter, setTypeFilter] = useState<"all" | "buy" | "sell">("all");
 
   const filteredTrades = trades
-    .filter(trade => {
-      const matchesSearch = trade.symbol.toLowerCase().includes(search.toLowerCase()) ||
+    .filter((trade) => {
+      const matchesSearch =
+        trade.symbol.toLowerCase().includes(search.toLowerCase()) ||
         trade.notes?.toLowerCase().includes(search.toLowerCase());
-      const matchesType = typeFilter === 'all' || trade.type === typeFilter;
+      const matchesType = typeFilter === "all" || trade.type === typeFilter;
       return matchesSearch && matchesType;
     })
     .sort((a, b) => {
-      const order = sortOrder === 'asc' ? 1 : -1;
+      const order = sortOrder === "asc" ? 1 : -1;
       switch (sortField) {
-        case 'date':
-          return (new Date(a.date).getTime() - new Date(b.date).getTime()) * order;
-        case 'symbol':
+        case "date":
+          return (
+            (new Date(a.date).getTime() - new Date(b.date).getTime()) * order
+          );
+        case "symbol":
           return a.symbol.localeCompare(b.symbol) * order;
-        case 'price':
+        case "price":
           return (a.price - b.price) * order;
-        case 'shares':
+        case "shares":
           return (a.shares - b.shares) * order;
-        case 'value':
+        case "value":
           return (a.price * a.shares - b.price * b.shares) * order;
         default:
           return 0;
@@ -43,10 +46,10 @@ export function TradeHistory({ trades, onDelete }: TradeHistoryProps) {
 
   const handleSort = (field: SortField) => {
     if (field === sortField) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
       setSortField(field);
-      setSortOrder('desc');
+      setSortOrder("desc");
     }
   };
 
@@ -66,7 +69,9 @@ export function TradeHistory({ trades, onDelete }: TradeHistoryProps) {
         <div className="flex gap-4">
           <select
             value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value as 'all' | 'buy' | 'sell')}
+            onChange={(e) =>
+              setTypeFilter(e.target.value as "all" | "buy" | "sell")
+            }
             className="input"
           >
             <option value="all">All Types</option>
@@ -81,12 +86,12 @@ export function TradeHistory({ trades, onDelete }: TradeHistoryProps) {
           <thead className="bg-gray-50 dark:bg-dark-paper">
             <tr>
               {[
-                { field: 'date', label: 'Date' },
-                { field: 'symbol', label: 'Symbol' },
-                { field: 'type', label: 'Type' },
-                { field: 'price', label: 'Price' },
-                { field: 'shares', label: 'Shares' },
-                { field: 'value', label: 'Value' },
+                { field: "date", label: "Date" },
+                { field: "symbol", label: "Symbol" },
+                { field: "type", label: "Type" },
+                { field: "price", label: "Price" },
+                { field: "shares", label: "Shares" },
+                { field: "value", label: "Value" },
               ].map(({ field, label }) => (
                 <th
                   key={field}
@@ -106,19 +111,24 @@ export function TradeHistory({ trades, onDelete }: TradeHistoryProps) {
           </thead>
           <tbody className="bg-white dark:bg-dark-paper divide-y divide-gray-200 dark:divide-dark-border">
             {filteredTrades.map((trade) => (
-              <tr key={trade.id} className="hover:bg-gray-50 dark:hover:bg-dark-border/50">
+              <tr
+                key={trade.id}
+                className="hover:bg-gray-50 dark:hover:bg-dark-border/50"
+              >
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-dark-text">
-                  {format(new Date(trade.date), 'MMM d, yyyy')}
+                  {format(new Date(trade.date), "MMM d, yyyy")}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-dark-text">
                   {trade.symbol}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    trade.type === 'buy' 
-                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400'
-                      : 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400'
-                  }`}>
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      trade.type === "buy"
+                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400"
+                        : "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400"
+                    }`}
+                  >
                     {trade.type.toUpperCase()}
                   </span>
                 </td>
@@ -148,4 +158,4 @@ export function TradeHistory({ trades, onDelete }: TradeHistoryProps) {
       </div>
     </div>
   );
-} 
+}

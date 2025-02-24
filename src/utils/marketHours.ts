@@ -1,7 +1,7 @@
 import { isWithinInterval, set } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 
-type MarketSession = "premarket" | "regular" | "afterHours" | "closed";
+export type MarketSession = "premarket" | "regular" | "afterHours" | "closed";
 
 interface MarketHours {
   premarket: { start: string; end: string };
@@ -56,7 +56,7 @@ function parseTimeString(timeStr: string): Date {
   return set(new Date(), { hours, minutes, seconds: 0, milliseconds: 0 });
 }
 
-export function getCurrentMarketSession(): MarketSession {
+export function getCurrentSession(): MarketSession {
   const now = new Date();
   const nyTime = toZonedTime(now, "America/New_York");
 
@@ -73,8 +73,8 @@ export function getCurrentMarketSession(): MarketSession {
   return "closed";
 }
 
-export function isFeatureAvailable(
-  feature: keyof MarketConfig["features"]
+export function isFeatureAccessible(
+  feature: keyof MarketConfig["features"],
 ): boolean {
   const featureConfig = marketConfig.features[feature];
   if (!featureConfig.enabled) return false;

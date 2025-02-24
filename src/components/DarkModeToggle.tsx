@@ -1,6 +1,6 @@
-import { Moon, Sun } from 'lucide-react';
-import { useTheme } from '../providers/ThemeProvider';
-import { clsx } from 'clsx';
+import { Moon, Sun } from "lucide-react";
+import { useTheme } from "../providers/ThemeProvider";
+import { clsx } from "clsx";
 
 export interface DarkModeToggleProps {
   showLabel?: boolean;
@@ -12,22 +12,22 @@ export function DarkModeToggle({ showLabel, className }: DarkModeToggleProps) {
 
   return (
     <button
-      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       className={clsx(
-        'flex items-center space-x-2 p-2 text-sm',
-        'text-muted-foreground hover:text-foreground',
-        'transition-colors duration-150',
-        className
+        "flex items-center space-x-2 p-2 text-sm",
+        "text-muted-foreground hover:text-foreground",
+        "transition-colors duration-150",
+        className,
       )}
     >
-      {theme === 'dark' ? (
+      {theme === "dark" ? (
         <Moon className="h-4 w-4" />
       ) : (
         <Sun className="h-4 w-4" />
       )}
       {showLabel && (
-        <span>{theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</span>
+        <span>{theme === "dark" ? "Dark Mode" : "Light Mode"}</span>
       )}
     </button>
   );
-} 
+}

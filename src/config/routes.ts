@@ -1,4 +1,4 @@
-import type { DashboardCardType } from '../types/dashboard';
+import type { DashboardCardType } from "../types/dashboard";
 
 export interface RouteConfig {
   path: string;
@@ -32,4 +32,4 @@ export const ROUTES: Record<string, RouteConfig> = {
     label: "Watchlist",
     requiresAuth: true,
   },
-}; 
+};

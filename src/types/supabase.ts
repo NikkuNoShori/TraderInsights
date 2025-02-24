@@ -3,14 +3,14 @@ export interface Database {
     Tables: {
       profiles: {
         Row: {
-          id: string
-          first_name: string | null
-          last_name: string | null
-          role: string | null
-          created_at: string
-          updated_at: string
-        }
-      }
-    }
-  }
-} 
+          id: string;
+          first_name: string | null;
+          last_name: string | null;
+          role: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+      };
+    };
+  };
+}

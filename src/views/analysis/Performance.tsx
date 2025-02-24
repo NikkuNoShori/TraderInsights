@@ -1,48 +1,56 @@
-import { PageHeader } from '../../components/ui/PageHeader';
-import { ReportingNav } from '../../components/navigation/ReportingNav';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '../../lib/supabase';
-import { MetricCard } from '../../components/ui/MetricCard';
-import { StatsCard } from '../../components/dashboard/StatsCard';
-import { 
-  calculateWinRate, 
-  calculateProfitFactor, 
+import { PageHeader } from "../../components/ui/PageHeader";
+import { ReportingNav } from "../../components/navigation/ReportingNav";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "../../lib/supabase";
+import { MetricCard } from "../../components/ui/MetricCard";
+import { StatsCard } from "../../components/dashboard/StatsCard";
+import {
+  calculateWinRate,
+  calculateProfitFactor,
   calculateAverageTrade,
-  calculateMaxDrawdown 
-} from '../../utils/tradeCalculations';
-import { formatCurrency, formatPercentage } from '../../utils/formatters';
-import { PerformanceCharts } from '../../components/portfolio/PerformanceCharts';
-import { Activity, TrendingUp, DollarSign } from 'lucide-react';
-import type { Trade } from '../../types/trade';
-import type { Trade as PortfolioTrade } from '../../types/portfolio';
+  calculateMaxDrawdown,
+} from "../../utils/tradeCalculations";
+import { formatCurrency, formatPercentage } from "../../utils/formatters";
+import { PerformanceCharts } from "../../components/portfolio/PerformanceCharts";
+import { Activity, TrendingUp, DollarSign } from "lucide-react";
+import type { Trade } from "../../types/trade";
+import type { Trade as PortfolioTrade } from "../../types/portfolio";
 
 export default function Performance() {
-  console.log('Rendering Performance component');
-  
-  const { data: trades = [], error, isLoading } = useQuery<Trade[]>({
-    queryKey: ['trades'],
+  console.log("Rendering Performance component");
+
+  const {
+    data: trades = [],
+    error,
+    isLoading,
+  } = useQuery<Trade[]>({
+    queryKey: ["trades"],
     queryFn: async () => {
-      console.log('Fetching trades...');
+      console.log("Fetching trades...");
       const { data, error } = await supabase
-        .from('trades')
-        .select('*')
-        .order('date', { ascending: true });
-      
+        .from("trades")
+        .select("*")
+        .order("date", { ascending: true });
+
       if (error) {
-        console.error('Error fetching trades:', error);
+        console.error("Error fetching trades:", error);
         throw error;
       }
-      console.log('Trades fetched:', data);
+      console.log("Trades fetched:", data);
       return data || [];
-    }
+    },
   });
 
-  console.log('Component state:', { isLoading, error, tradesCount: trades.length });
+  console.log("Component state:", {
+    isLoading,
+    error,
+    tradesCount: trades.length,
+  });
 
   if (isLoading) {
     return (
       <div className="flex-grow p-4">
-        <PageHeader 
+        <PageHeader
           title="Performance"
           subtitle="Track your trading performance and analytics"
         />
@@ -56,7 +64,7 @@ export default function Performance() {
   if (error) {
     return (
       <div className="flex-grow p-4">
-        <PageHeader 
+        <PageHeader
           title="Performance"
           subtitle="Track your trading performance and analytics"
         />
@@ -68,16 +76,16 @@ export default function Performance() {
   }
 
   // Transform trades for charts
-  const portfolioTrades: PortfolioTrade[] = trades.map(trade => ({
+  const portfolioTrades: PortfolioTrade[] = trades.map((trade) => ({
     id: trade.id,
     portfolio_id: trade.user_id, // Using user_id as portfolio_id since we don't have portfolios yet
     symbol: trade.symbol,
-    type: trade.side === 'Long' ? 'buy' : 'sell',
+    type: trade.side === "Long" ? "buy" : "sell",
     price: trade.price,
     shares: trade.quantity,
     date: trade.date,
     fees: trade.fees,
-    notes: trade.notes || undefined
+    notes: trade.notes || undefined,
   }));
 
   // Calculate metrics using utility functions
@@ -86,17 +94,19 @@ export default function Performance() {
   const averageTrade = calculateAverageTrade(trades);
   const maxDrawdown = calculateMaxDrawdown(trades);
   const totalPnL = trades.reduce((sum, trade) => sum + (trade.pnl || 0), 0);
-  const profitableTrades = trades.filter(trade => (trade.pnl || 0) > 0).length;
+  const profitableTrades = trades.filter(
+    (trade) => (trade.pnl || 0) > 0,
+  ).length;
   const totalTrades = trades.length;
 
   return (
     <div className="flex-grow p-4">
-      <PageHeader 
+      <PageHeader
         title="Performance"
         subtitle="Track your trading performance and analytics"
       />
       <ReportingNav />
-      
+
       {/* Quick Stats Cards */}
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
@@ -108,19 +118,19 @@ export default function Performance() {
           title="Win Rate"
           value={formatPercentage(winRate)}
           icon={TrendingUp}
-          trend={winRate >= 0.5 ? 'up' : 'down'}
+          trend={winRate >= 0.5 ? "up" : "down"}
         />
         <StatsCard
           title="Total P&L"
           value={formatCurrency(totalPnL)}
           icon={DollarSign}
-          trend={totalPnL > 0 ? 'up' : 'down'}
+          trend={totalPnL > 0 ? "up" : "down"}
         />
         <StatsCard
           title="Profit Factor"
           value={profitFactor.toFixed(2)}
           icon={TrendingUp}
-          trend={profitFactor >= 1 ? 'up' : 'down'}
+          trend={profitFactor >= 1 ? "up" : "down"}
         />
       </div>
 
@@ -164,4 +174,4 @@ export default function Performance() {
       </div>
     </div>
   );
-} 
+}

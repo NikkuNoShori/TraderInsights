@@ -3,7 +3,7 @@
   --responsive-text: clamp(0.7rem, 1.5vw, 0.8rem);
   --responsive-value: clamp(1rem, 2.5vw, 1.25rem);
   --responsive-icon: clamp(0.875rem, 2vw, 1rem);
-  
+
   /* Spacing */
   --card-padding: clamp(0.5rem, 1.5vw, 0.75rem);
   --card-gap: clamp(0.375rem, 1vw, 0.5rem);
@@ -30,4 +30,4 @@
 
 .gap-responsive {
   gap: var(--card-gap);
-} 
+}

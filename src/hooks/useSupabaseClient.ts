@@ -1,7 +1,9 @@
-import { supabase } from "../lib/supabase";
-import { useAuthStore } from "../stores/authStore";
+import { useSupabaseStore } from "@/stores/supabaseStore";
+import { useAuthStore } from "@/stores/authStore";
 
 export function useSupabaseClient() {
-  const { user } = useAuthStore();
-  return { supabase, user };
+  const client = useSupabaseStore((state) => state.client);
+  const user = useAuthStore((state) => state.user);
+
+  return { supabase: client, user };
 }

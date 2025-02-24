@@ -1,6 +1,10 @@
-import { RefreshCw } from 'lucide-react';
-import { formatCurrency, formatNumber, formatPercent } from '@/utils/formatters';
-import type { StockQuote } from '@/types/stock';
+import { RefreshCw } from "lucide-react";
+import {
+  formatCurrency,
+  formatNumber,
+  formatPercent,
+} from "@/utils/formatters";
+import type { StockQuote } from "@/types/stock";
 
 export interface StockInfoProps {
   data: StockQuote;
@@ -19,10 +23,15 @@ export function StockInfo({ data, onRefresh }: StockInfoProps) {
             <span className="text-3xl font-semibold text-gray-900 dark:text-white">
               {formatCurrency(data.currentPrice)}
             </span>
-            <span className={`ml-2 text-lg font-medium ${
-              data.changePercent >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-            }`}>
-              {data.changePercent >= 0 ? '+' : ''}{formatPercent(data.changePercent / 100)}
+            <span
+              className={`ml-2 text-lg font-medium ${
+                data.changePercent >= 0
+                  ? "text-green-600 dark:text-green-400"
+                  : "text-red-600 dark:text-red-400"
+              }`}
+            >
+              {data.changePercent >= 0 ? "+" : ""}
+              {formatPercent(data.changePercent / 100)}
             </span>
           </div>
         </div>
@@ -56,7 +65,7 @@ export function StockInfo({ data, onRefresh }: StockInfoProps) {
         <div>
           <p className="text-sm text-gray-500 dark:text-gray-400">P/E Ratio</p>
           <p className="text-lg font-medium text-gray-900 dark:text-white">
-            {data.peRatio ? formatNumber(data.peRatio) : 'N/A'}
+            {data.peRatio ? formatNumber(data.peRatio) : "N/A"}
           </p>
         </div>
       </div>

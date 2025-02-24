@@ -1,15 +1,18 @@
-import type { Trade } from '../types/trade';
+import type { Trade } from "../types/trade";
 
 export function calculateTradeMetrics(trade: Trade) {
-  const isComplete = trade.status === 'closed';
+  const isComplete = trade.status === "closed";
   const hasExit = trade.exit_price != null;
-  
+
   const entryPrice = trade.avg_entry_price || trade.entry_price || trade.price;
   const exitPrice = trade.avg_exit_price || trade.exit_price;
-  
-  const pnl = hasExit && exitPrice ? 
-    (exitPrice - entryPrice) * trade.quantity * (trade.side === 'Long' ? 1 : -1) : 
-    0;
+
+  const pnl =
+    hasExit && exitPrice
+      ? (exitPrice - entryPrice) *
+        trade.quantity *
+        (trade.side === "Long" ? 1 : -1)
+      : 0;
 
   return {
     entryPrice,
@@ -19,8 +22,9 @@ export function calculateTradeMetrics(trade: Trade) {
     isComplete,
     riskAmount: trade.risk_amount,
     fees: trade.fees || 0,
-    profitRatio: trade.take_profit && trade.stop_loss ? 
-      (trade.take_profit - entryPrice) / (entryPrice - trade.stop_loss) : 
-      undefined
+    profitRatio:
+      trade.take_profit && trade.stop_loss
+        ? (trade.take_profit - entryPrice) / (entryPrice - trade.stop_loss)
+        : undefined,
   };
-} 
+}

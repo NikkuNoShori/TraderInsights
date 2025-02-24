@@ -1,6 +1,6 @@
-import type { User as SupabaseUser } from '@supabase/supabase-js';
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
-export type UserRole = 'admin' | 'user' | 'manager';
+export type UserRole = "admin" | "user" | "manager";
 
 export interface User extends SupabaseUser {
   role: UserRole;
@@ -19,12 +19,12 @@ export interface UserProfile {
   updated_at: string;
 }
 
-export type Permission = 
-  | 'dashboard.access'
-  | 'journal.access'
-  | 'screener.access'
-  | 'settings.access'
-  | 'settings';
+export type Permission =
+  | "dashboard.access"
+  | "journal.access"
+  | "screener.access"
+  | "settings.access"
+  | "settings";
 
 export interface UserPermissions {
   [key: string]: boolean;

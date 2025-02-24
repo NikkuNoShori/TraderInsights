@@ -1,6 +1,6 @@
-import { X, GripVertical } from 'lucide-react';
-import { clsx } from 'clsx';
-import type { WatchlistColumn } from '../../types/watchlist';
+import { X, GripVertical } from "lucide-react";
+import { clsx } from "clsx";
+import type { WatchlistColumn } from "../../types/watchlist";
 
 interface ColumnManagerProps {
   isOpen: boolean;
@@ -9,12 +9,17 @@ interface ColumnManagerProps {
   onChange: (columns: WatchlistColumn[]) => void;
 }
 
-export function ColumnManager({ isOpen, onClose, columns, onChange }: ColumnManagerProps) {
+export function ColumnManager({
+  isOpen,
+  onClose,
+  columns,
+  onChange,
+}: ColumnManagerProps) {
   const toggleColumn = (columnId: string) => {
     onChange(
-      columns.map(col =>
-        col.id === columnId ? { ...col, visible: !col.visible } : col
-      )
+      columns.map((col) =>
+        col.id === columnId ? { ...col, visible: !col.visible } : col,
+      ),
     );
   };
 
@@ -63,7 +68,9 @@ export function ColumnManager({ isOpen, onClose, columns, onChange }: ColumnMana
                         onChange={() => toggleColumn(column.id)}
                         className="rounded text-indigo-600 focus:ring-indigo-500"
                       />
-                      <span className="text-sm text-gray-700">{column.label}</span>
+                      <span className="text-sm text-gray-700">
+                        {column.label}
+                      </span>
                     </label>
                   </div>
                 </div>

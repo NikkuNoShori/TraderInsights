@@ -1,15 +1,15 @@
-import { useState, useEffect } from '@/lib/hooks';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
-import { supabase } from '../../lib/supabase';
-import { validatePassword } from '../../utils/validation';
-import { FormInput } from '../../components/ui/FormInput';
-import { LoadingButton } from '../../components/LoadingButton';
-import { useAuthStore } from '../../stores/authStore';
+import { useState, useEffect } from "@/lib/hooks";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { toast } from "react-hot-toast";
+import { supabase } from "../../lib/supabase";
+import { validatePassword } from "../../utils/validation";
+import { FormInput } from "../../components/ui/FormInput";
+import { LoadingButton } from "../../components/LoadingButton";
+import { useAuthStore } from "../../stores/authStore";
 
 export default function ResetPassword() {
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isTokenValid, setIsTokenValid] = useState(false);
@@ -21,25 +21,28 @@ export default function ResetPassword() {
     const verifyToken = async () => {
       try {
         // Get the current session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession();
+
         if (sessionError) {
-          console.error('Session error:', sessionError);
-          setError('Failed to verify reset link');
+          console.error("Session error:", sessionError);
+          setError("Failed to verify reset link");
           return;
         }
 
         if (!session) {
-          setError('Invalid or expired reset link');
+          setError("Invalid or expired reset link");
           return;
         }
 
         // If we have a valid session, the token was already verified by Supabase
         setIsTokenValid(true);
       } catch (error) {
-        console.error('Error verifying token:', error);
-        setError('Failed to verify reset link');
-        toast.error('Failed to verify reset link');
+        console.error("Error verifying token:", error);
+        setError("Failed to verify reset link");
+        toast.error("Failed to verify reset link");
       }
     };
 
@@ -51,7 +54,7 @@ export default function ResetPassword() {
     setError(null);
 
     if (!isTokenValid) {
-      setError('Invalid or expired reset link');
+      setError("Invalid or expired reset link");
       return;
     }
 
@@ -70,7 +73,7 @@ export default function ResetPassword() {
 
     try {
       const { error: updateError } = await supabase.auth.updateUser({
-        password: password
+        password: password,
       });
 
       if (updateError) throw updateError;
@@ -78,15 +81,19 @@ export default function ResetPassword() {
       // Clear any stored auth state after password reset
       await supabase.auth.signOut();
 
-      toast.success('Password updated successfully');
-      navigate('/auth/login', { 
-        state: { message: 'Your password has been reset. Please log in with your new password.' }
+      toast.success("Password updated successfully");
+      navigate("/auth/login", {
+        state: {
+          message:
+            "Your password has been reset. Please log in with your new password.",
+        },
       });
     } catch (error) {
-      console.error('Failed to reset password:', error);
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : 'Failed to reset password. Please request a new reset link.';
+      console.error("Failed to reset password:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to reset password. Please request a new reset link.";
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -148,7 +155,7 @@ export default function ResetPassword() {
         <div className="flex items-center justify-between">
           <button
             type="button"
-            onClick={() => navigate('/auth/login')}
+            onClick={() => navigate("/auth/login")}
             className="text-sm text-primary-600 hover:text-primary-500"
           >
             Back to login
@@ -156,13 +163,18 @@ export default function ResetPassword() {
           <LoadingButton
             type="submit"
             isLoading={isLoading}
-            disabled={!isTokenValid || !!error || !password || password !== confirmPassword}
+            disabled={
+              !isTokenValid ||
+              !!error ||
+              !password ||
+              password !== confirmPassword
+            }
             className="flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
           >
-            {isLoading ? 'Updating...' : 'Reset Password'}
+            {isLoading ? "Updating..." : "Reset Password"}
           </LoadingButton>
         </div>
       </form>
     </div>
   );
-} 
+}

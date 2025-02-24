@@ -1,6 +1,6 @@
-import ReactDatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
-import { cn } from '@/utils/cn';
+import ReactDatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { cn } from "@/utils/cn";
 
 interface DatePickerProps {
   value: Date | null;
@@ -10,7 +10,7 @@ interface DatePickerProps {
   isClearable?: boolean;
   showMonthDropdown?: boolean;
   showYearDropdown?: boolean;
-  dropdownMode?: 'scroll' | 'select';
+  dropdownMode?: "scroll" | "select";
   dateFormat?: string;
   minDate?: Date;
   maxDate?: Date;
@@ -20,17 +20,17 @@ export function DatePicker({
   value,
   onChange,
   className,
-  placeholder = 'Select date...',
+  placeholder = "Select date...",
   isClearable = true,
   showMonthDropdown = true,
   showYearDropdown = true,
-  dropdownMode = 'select',
-  dateFormat = 'MM/dd/yyyy',
+  dropdownMode = "select",
+  dateFormat = "MM/dd/yyyy",
   minDate,
   maxDate,
 }: DatePickerProps) {
   return (
-    <div className={cn('relative', className)}>
+    <div className={cn("relative", className)}>
       <ReactDatePicker
         selected={value}
         onChange={onChange}
@@ -46,4 +46,4 @@ export function DatePicker({
       />
     </div>
   );
-} 
+}

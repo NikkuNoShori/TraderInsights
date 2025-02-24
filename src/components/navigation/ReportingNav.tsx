@@ -1,29 +1,29 @@
-import { NavLink } from 'react-router-dom';
-import { TrendingUp, PieChart, Calendar } from 'lucide-react';
-import { clsx } from 'clsx';
-import { Badge } from '../ui/Badge';
+import { NavLink } from "react-router-dom";
+import { TrendingUp, PieChart, Calendar } from "lucide-react";
+import { clsx } from "clsx";
+import { Badge } from "../ui/Badge";
 
 const reportLinks = [
   {
-    to: '/app/analysis/performance',
-    label: 'Overview',
+    to: "/app/analysis/performance",
+    label: "Overview",
     icon: TrendingUp,
-    description: 'Track your trading performance'
+    description: "Track your trading performance",
   },
   {
-    to: '/app/analysis/performance/allocation',
-    label: 'Allocation',
+    to: "/app/analysis/performance/allocation",
+    label: "Allocation",
     icon: PieChart,
-    description: 'View portfolio allocation',
-    isComingSoon: true
+    description: "View portfolio allocation",
+    isComingSoon: true,
   },
   {
-    to: '/app/analysis/performance/calendar',
-    label: 'Calendar',
+    to: "/app/analysis/performance/calendar",
+    label: "Calendar",
     icon: Calendar,
-    description: 'Trading activity calendar',
-    isComingSoon: true
-  }
+    description: "Trading activity calendar",
+    isComingSoon: true,
+  },
 ];
 
 export function ReportingNav() {
@@ -37,23 +37,25 @@ export function ReportingNav() {
               to={to}
               className={({ isActive }) =>
                 clsx(
-                  'group inline-flex items-center px-1 py-4 border-b-2 text-sm font-medium',
+                  "group inline-flex items-center px-1 py-4 border-b-2 text-sm font-medium",
                   isActive
-                    ? 'border-primary-500 text-primary-600 dark:text-primary-400 dark:border-primary-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-600'
+                    ? "border-primary-500 text-primary-600 dark:text-primary-400 dark:border-primary-400"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-600",
                 )
               }
             >
-              <Icon className={clsx(
-                "h-4 w-4 mr-2",
-                "text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-400",
-                "transition-colors duration-200"
-              )} />
+              <Icon
+                className={clsx(
+                  "h-4 w-4 mr-2",
+                  "text-gray-400 group-hover:text-gray-500 dark:text-gray-500 dark:group-hover:text-gray-400",
+                  "transition-colors duration-200",
+                )}
+              />
               <div className="flex items-center gap-2">
                 {label}
                 {isComingSoon && (
-                  <Badge 
-                    type="soon" 
+                  <Badge
+                    type="soon"
                     tooltipContent="This feature is currently under development and will be available soon!"
                   />
                 )}
@@ -64,4 +66,4 @@ export function ReportingNav() {
       </div>
     </div>
   );
-} 
+}

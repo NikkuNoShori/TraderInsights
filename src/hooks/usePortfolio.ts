@@ -64,7 +64,7 @@ export function usePortfolio(userId: string) {
   }, [userId]);
 
   const createPortfolio = async (
-    portfolio: Omit<Portfolio, "id" | "user_id">
+    portfolio: Omit<Portfolio, "id" | "user_id">,
   ) => {
     try {
       const { data, error } = await supabase

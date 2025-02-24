@@ -1,11 +1,14 @@
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, RefreshCw } from "lucide-react";
 
 interface ErrorStateProps {
   onRetry: () => void;
   message?: string;
 }
 
-export function ErrorState({ onRetry, message = "Failed to load content" }: ErrorStateProps) {
+export function ErrorState({
+  onRetry,
+  message = "Failed to load content",
+}: ErrorStateProps) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[400px]">
       <AlertCircle className="h-8 w-8 text-red-500 mb-4" />
@@ -19,4 +22,4 @@ export function ErrorState({ onRetry, message = "Failed to load content" }: Erro
       </button>
     </div>
   );
-} 
+}

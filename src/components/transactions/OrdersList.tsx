@@ -1,5 +1,5 @@
-import { formatCurrency, formatDate } from '../../utils/formatters';
-import type { TransactionOrder } from '../../types/database';
+import { formatCurrency, formatDate } from "../../utils/formatters";
+import type { TransactionOrder } from "../../types/database";
 
 interface OrdersListProps {
   orders: TransactionOrder[];
@@ -43,9 +43,13 @@ export function OrdersList({ orders }: OrdersListProps) {
                   {order.time}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    order.type === 'entry' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}>
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      order.type === "entry"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
                     {order.type}
                   </span>
                 </td>

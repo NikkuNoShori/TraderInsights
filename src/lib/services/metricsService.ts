@@ -1,4 +1,4 @@
-import type { Trade } from '../../types/trade';
+import type { Trade } from "../../types/trade";
 
 interface TradeMetrics {
   winRate: number;
@@ -26,19 +26,24 @@ export const calculateMetrics = (trades: Trade[]): TradeMetrics => {
     profitableTrades: 0,
     lossTrades: 0,
     totalProfitLoss: 0,
-    expectancy: 0
+    expectancy: 0,
   };
 
   if (!trades.length) return defaultMetrics;
 
-  const completedTrades = trades.filter(trade => trade.pnl !== undefined);
+  const completedTrades = trades.filter((trade) => trade.pnl !== undefined);
   if (!completedTrades.length) return defaultMetrics;
 
-  const winningTrades = completedTrades.filter(trade => (trade.pnl ?? 0) > 0);
-  const losingTrades = completedTrades.filter(trade => (trade.pnl ?? 0) < 0);
+  const winningTrades = completedTrades.filter((trade) => (trade.pnl ?? 0) > 0);
+  const losingTrades = completedTrades.filter((trade) => (trade.pnl ?? 0) < 0);
 
-  const totalProfit = winningTrades.reduce((sum, trade) => sum + (trade.pnl ?? 0), 0);
-  const totalLoss = Math.abs(losingTrades.reduce((sum, trade) => sum + (trade.pnl ?? 0), 0));
+  const totalProfit = winningTrades.reduce(
+    (sum, trade) => sum + (trade.pnl ?? 0),
+    0,
+  );
+  const totalLoss = Math.abs(
+    losingTrades.reduce((sum, trade) => sum + (trade.pnl ?? 0), 0),
+  );
 
   const metrics = {
     totalTrades: completedTrades.length,
@@ -51,11 +56,14 @@ export const calculateMetrics = (trades: Trade[]): TradeMetrics => {
     totalProfitLoss: totalProfit - totalLoss,
     maxDrawdown: calculateMaxDrawdown(completedTrades),
     riskRewardRatio: 0,
-    expectancy: 0
+    expectancy: 0,
   };
 
-  metrics.riskRewardRatio = metrics.averageLoss === 0 ? 0 : metrics.averageWin / metrics.averageLoss;
-  metrics.expectancy = (metrics.winRate / 100 * metrics.averageWin) - ((1 - metrics.winRate / 100) * metrics.averageLoss);
+  metrics.riskRewardRatio =
+    metrics.averageLoss === 0 ? 0 : metrics.averageWin / metrics.averageLoss;
+  metrics.expectancy =
+    (metrics.winRate / 100) * metrics.averageWin -
+    (1 - metrics.winRate / 100) * metrics.averageLoss;
 
   return metrics;
 };
@@ -65,11 +73,11 @@ const calculateMaxDrawdown = (trades: Trade[]): number => {
   let maxDrawdown = 0;
   let runningPnL = 0;
 
-  trades.forEach(trade => {
+  trades.forEach((trade) => {
     runningPnL += trade.pnl ?? 0;
     peak = Math.max(peak, runningPnL);
     maxDrawdown = Math.max(maxDrawdown, peak - runningPnL);
   });
 
   return maxDrawdown;
-}; 
+};

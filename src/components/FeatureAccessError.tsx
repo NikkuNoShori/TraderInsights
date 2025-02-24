@@ -1,17 +1,20 @@
-import { useEffect } from '@/lib/hooks';
-import { AlertTriangle } from 'lucide-react';
+import { useEffect } from "@/lib/hooks";
+import { AlertTriangle } from "lucide-react";
 
 export interface FeatureAccessErrorProps {
   feature: string;
   message: string;
 }
 
-export function FeatureAccessError({ feature, message }: FeatureAccessErrorProps) {
+export function FeatureAccessError({
+  feature,
+  message,
+}: FeatureAccessErrorProps) {
   useEffect(() => {
-    console.log('Feature access denied:', {
+    console.log("Feature access denied:", {
       feature,
       message,
-      currentTime: new Date().toLocaleTimeString()
+      currentTime: new Date().toLocaleTimeString(),
     });
   }, [feature, message]);
 

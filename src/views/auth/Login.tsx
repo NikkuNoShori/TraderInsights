@@ -1,34 +1,35 @@
-import { useState, useEffect, useRef } from '@/lib/hooks';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
-import { validatePassword } from '@/utils/validation';
-import { FormInput } from '@/components/ui/FormInput';
-import { LoadingButton } from '@/components/LoadingButton';
-import { useAuthStore } from '@/stores/authStore';
-import { clearDeveloperMode } from '@/lib/utils/auth';
+import { useState, useEffect, useRef } from "@/lib/hooks";
+import { useNavigate, useLocation } from "react-router-dom";
+import { toast } from "react-hot-toast";
+import { validatePassword } from "@/utils/validation";
+import { FormInput } from "@/components/ui/FormInput";
+import { LoadingButton } from "@/components/LoadingButton";
+import { useAuthStore } from "@/stores/authStore";
+import { clearDeveloperMode } from "@/lib/utils/auth";
 
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
   const messageShownRef = useRef(false);
+  const { user, loading, initialized, signIn, signUp } = useAuthStore();
+  const from = location.state?.from?.pathname || "/app/dashboard";
 
-  const { signIn, loading, user, initialized } = useAuthStore();
-
-  // Clear any developer mode state when component mounts
+  // Clear developer mode on mount
   useEffect(() => {
     clearDeveloperMode();
   }, []);
 
-  // Redirect if user is already authenticated
+  // Handle navigation after successful login
   useEffect(() => {
-    if (initialized && user) {
-      navigate('/app/dashboard');
+    if (initialized && user && !loading) {
+      console.log("Navigating to:", from);
+      navigate(from, { replace: true });
     }
-  }, [user, initialized, navigate]);
+  }, [initialized, user, loading, navigate, from]);
 
   // Show any messages passed via navigation state
   useEffect(() => {
@@ -43,21 +44,21 @@ export default function Login() {
 
   // Reset state when switching modes
   const resetState = () => {
-    setEmail('');
-    setPassword('');
+    setEmail("");
+    setPassword("");
     setError(null);
   };
 
   const validateForm = () => {
     if (!email || !password) {
-      setError('Please enter both email and password');
+      setError(new Error("Please enter both email and password"));
       return false;
     }
 
     if (isSignUp) {
       const passwordValidation = validatePassword(password);
       if (!passwordValidation.isValid) {
-        setError(passwordValidation.errors[0]);
+        setError(new Error(passwordValidation.errors[0]));
         return false;
       }
     }
@@ -68,30 +69,22 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     try {
-      await signIn(email, password);
-      toast.success('Successfully logged in');
-      // Navigation will be handled by the useEffect hook above
-    } catch (error) {
-      console.error('Authentication error:', error);
-      // Handle specific error cases
-      const errorMessage = error instanceof Error ? error.message : 'Authentication failed';
-      if (errorMessage.includes('already exists')) {
-        setIsSignUp(false);
-        setError('Account already exists. Please sign in instead.');
-      } else if (errorMessage.includes('not found')) {
-        setIsSignUp(true);
-        setError('No account found. Please sign up first.');
-      } else if (errorMessage.includes('Invalid login credentials')) {
-        setError('Invalid email or password. Please try again.');
+      if (isSignUp) {
+        await signUp(email, password);
+        toast.success("Account created successfully");
       } else {
-        setError(errorMessage);
+        await signIn(email, password);
+        toast.success("Successfully logged in");
       }
+      // Navigation will be handled by the useEffect hook above
+    } catch (err) {
+      setError(err as Error);
     }
   };
 
@@ -103,7 +96,7 @@ export default function Login() {
             type="email"
             label="Email"
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
             required
             autoComplete="email"
@@ -113,14 +106,16 @@ export default function Login() {
             type="password"
             label="Password"
             value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder={isSignUp ? 'Create a password' : 'Enter your password'}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder={isSignUp ? "Create a password" : "Enter your password"}
             required
-            autoComplete={isSignUp ? 'new-password' : 'current-password'}
+            autoComplete={isSignUp ? "new-password" : "current-password"}
           />
 
           {error && (
-            <div className="text-sm text-red-600 dark:text-red-400">{error}</div>
+            <div className="text-sm text-red-600 dark:text-red-400">
+              {error.message}
+            </div>
           )}
 
           <div className="flex flex-col items-center gap-4">
@@ -129,7 +124,7 @@ export default function Login() {
               isLoading={loading}
               className="w-full px-4 py-2 text-sm flex items-center justify-center"
             >
-              {isSignUp ? 'Create Account' : 'Sign In'}
+              {isSignUp ? "Create Account" : "Sign In"}
             </LoadingButton>
 
             <button
@@ -141,14 +136,14 @@ export default function Login() {
               className="text-sm text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
             >
               {isSignUp
-                ? 'Already have an account? Sign in'
+                ? "Already have an account? Sign in"
                 : "Don't have an account? Sign up"}
             </button>
 
             {!isSignUp && (
               <button
                 type="button"
-                onClick={() => navigate('/auth/request-reset')}
+                onClick={() => navigate("/auth/request-reset")}
                 className="text-sm text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
               >
                 Forgot your password?

@@ -1,10 +1,15 @@
-import { useState } from '@/lib/hooks';
-import { X, Search } from 'lucide-react';
-import { LoadingButton } from '../LoadingButton';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import type { WatchlistSymbol } from '@/types/stock';
+import { useState } from "@/lib/hooks";
+import { X, Search } from "lucide-react";
+import { LoadingButton } from "../LoadingButton";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import type { WatchlistSymbol } from "@/types/stock";
 
 interface AddSymbolModalProps {
   isOpen: boolean;
@@ -12,8 +17,12 @@ interface AddSymbolModalProps {
   onAdd: (symbol: string) => Promise<void>;
 }
 
-export function AddSymbolModal({ isOpen, onClose, onAdd }: AddSymbolModalProps) {
-  const [symbol, setSymbol] = useState('');
+export function AddSymbolModal({
+  isOpen,
+  onClose,
+  onAdd,
+}: AddSymbolModalProps) {
+  const [symbol, setSymbol] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -23,7 +32,7 @@ export function AddSymbolModal({ isOpen, onClose, onAdd }: AddSymbolModalProps) 
     setIsLoading(true);
     try {
       await onAdd(symbol.toUpperCase());
-      setSymbol('');
+      setSymbol("");
     } finally {
       setIsLoading(false);
     }

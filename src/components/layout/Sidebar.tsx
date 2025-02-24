@@ -1,7 +1,7 @@
-import { Logo } from '../ui/Logo';
-import { MainNav } from '../navigation/MainNav';
-import { UserMenu } from './UserMenu';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { Logo } from "../ui/Logo";
+import { MainNav } from "../navigation/MainNav";
+import { UserMenu } from "./UserMenu";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -14,7 +14,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Header */}
       <div className="h-16 px-4 border-b dark:border-gray-700 flex items-center justify-between">
         <Logo />
-        <button 
+        <button
           onClick={onClose}
           className="lg:hidden p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
         >
@@ -33,4 +33,4 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       </div>
     </aside>
   );
-} 
+}

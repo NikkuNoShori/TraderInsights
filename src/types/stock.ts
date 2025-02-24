@@ -2,9 +2,9 @@ export interface QuoteDataPoint {
   id: string;
   key: keyof StockQuote;
   label: string;
-  category: 'price' | 'trading' | 'company' | 'technical';
+  category: "price" | "trading" | "company" | "technical";
   visible: boolean;
-  format: 'currency' | 'number' | 'percent' | 'date' | 'text';
+  format: "currency" | "number" | "percent" | "date" | "text";
 }
 
 export interface OHLC {

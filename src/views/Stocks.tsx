@@ -1,23 +1,29 @@
-import { useState } from '@/lib/react';
-import { SearchBar } from '@/components/SearchBar';
-import { StockChart } from '@/components/StockChart';
-import { StockInfo } from '@/components/dashboard/StockInfo';
-import { EmptyState } from '@/components/dashboard/EmptyState';
-import { InsightCard } from '@/components/InsightCard';
-import { FeatureAccessError } from '@/components/FeatureAccessError';
-import { getCurrentMarketSession } from '@/utils/marketHours';
-import { useStockData } from '@/hooks/useStockData';
-import type { ChartType } from '@/components/ChartTypeSelector';
-import { useTheme } from '@/providers/ThemeProvider';
+import { useState } from "@/lib/react";
+import { SearchBar } from "@/components/SearchBar";
+import { StockChart } from "@/components/StockChart";
+import { StockInfo } from "@/components/dashboard/StockInfo";
+import { EmptyState } from "@/components/dashboard/EmptyState";
+import { InsightCard } from "@/components/InsightCard";
+import { FeatureAccessError } from "@/components/FeatureAccessError";
+import { getCurrentMarketSession } from "@/utils/marketHours";
+import { useStockData } from "@/hooks/useStockData";
+import type { ChartType } from "@/components/ChartTypeSelector";
+import { useTheme } from "@/providers/ThemeProvider";
 
 export function Stocks() {
   const marketSession = getCurrentMarketSession();
-  const isAccessible = marketSession !== 'closed';
-  const [symbol, setSymbol] = useState('');
-  const [searchedSymbol, setSearchedSymbol] = useState('');
-  const [chartType, setChartType] = useState<ChartType>('area');
-  
-  const { data: stockData, quotes, loading, error, refetchData } = useStockData([symbol]);
+  const isAccessible = marketSession !== "closed";
+  const [symbol, setSymbol] = useState("");
+  const [searchedSymbol, setSearchedSymbol] = useState("");
+  const [chartType, setChartType] = useState<ChartType>("area");
+
+  const {
+    data: stockData,
+    quotes,
+    loading,
+    error,
+    refetchData,
+  } = useStockData([symbol]);
 
   const stockQuote = quotes[0];
 
@@ -54,23 +60,17 @@ export function Stocks() {
 
       {stockData?.length > 0 && stockQuote && (
         <>
-          <StockInfo
-            data={stockQuote}
-            onRefresh={refetchData}
-          />
+          <StockInfo data={stockQuote} onRefresh={refetchData} />
 
           <div className="mb-8">
-            <StockChart
-              data={stockData}
-              type={chartType}
-            />
+            <StockChart data={stockData} type={chartType} />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <InsightCard
-              type={stockQuote.changePercent >= 0 ? 'positive' : 'negative'}
-              title={`${Math.abs(stockQuote.changePercent).toFixed(2)}% ${stockQuote.changePercent >= 0 ? 'Gain' : 'Loss'}`}
-              description={`${stockQuote.symbol} has ${stockQuote.changePercent >= 0 ? 'gained' : 'lost'} ${Math.abs(stockQuote.changePercent).toFixed(2)}% today.`}
+              type={stockQuote.changePercent >= 0 ? "positive" : "negative"}
+              title={`${Math.abs(stockQuote.changePercent).toFixed(2)}% ${stockQuote.changePercent >= 0 ? "Gain" : "Loss"}`}
+              description={`${stockQuote.symbol} has ${stockQuote.changePercent >= 0 ? "gained" : "lost"} ${Math.abs(stockQuote.changePercent).toFixed(2)}% today.`}
             />
             <InsightCard
               type="info"
@@ -80,15 +80,13 @@ export function Stocks() {
             <InsightCard
               type="warning"
               title="52 Week Range"
-              description={`Trading at ${((stockQuote.currentPrice - stockQuote.weekLow52) / (stockQuote.weekHigh52 - stockQuote.weekLow52) * 100).toFixed(1)}% of 52-week range.`}
+              description={`Trading at ${(((stockQuote.currentPrice - stockQuote.weekLow52) / (stockQuote.weekHigh52 - stockQuote.weekLow52)) * 100).toFixed(1)}% of 52-week range.`}
             />
           </div>
         </>
       )}
 
-      {stockData?.length === 0 && searchedSymbol && !loading && (
-        <EmptyState />
-      )}
+      {stockData?.length === 0 && searchedSymbol && !loading && <EmptyState />}
     </main>
   );
 }

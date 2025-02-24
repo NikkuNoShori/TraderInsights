@@ -1,4 +1,4 @@
-import { ThemeGuard } from '../lib/theme/ThemeGuard';
+import { ThemeGuard } from "../lib/theme/ThemeGuard";
 
 export function useThemeChange() {
   const themeGuard = ThemeGuard.getInstance();
@@ -6,13 +6,13 @@ export function useThemeChange() {
   const requestThemeChange = (
     component: string,
     oldTheme: Record<string, string>,
-    newTheme: Record<string, string>
+    newTheme: Record<string, string>,
   ) => {
     return themeGuard.requestThemeChange({
       component,
       oldTheme,
       newTheme,
-      requestedBy: 'developer', // Could be dynamic based on user role
+      requestedBy: "developer", // Could be dynamic based on user role
     });
   };
 
@@ -20,4 +20,4 @@ export function useThemeChange() {
     requestThemeChange,
     authorize: themeGuard.authorize.bind(themeGuard),
   };
-} 
+}
