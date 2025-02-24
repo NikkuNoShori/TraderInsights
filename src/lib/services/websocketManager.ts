@@ -1,10 +1,4 @@
-import { env } from "../../config/env";
-import {
-  websocketClient,
-  WebSocketClient,
-  WebSocketClientEvent,
-  WebSocketMessage,
-} from "@polygon.io/client-js";
+import { websocketClient, type WebSocketClient } from "@polygon.io/client-js";
 import { create } from "zustand";
 
 interface WebSocketState {
@@ -22,7 +16,7 @@ interface WebSocketStore extends WebSocketState {
   resetReconnectAttempts: () => void;
 }
 
-const useWebSocketStore = create<WebSocketStore>((set) => ({
+export const useWebSocketStore = create<WebSocketStore>((set) => ({
   isConnected: false,
   isConnecting: false,
   lastError: null,
@@ -38,16 +32,14 @@ const useWebSocketStore = create<WebSocketStore>((set) => ({
 class WebSocketManager {
   private static instance: WebSocketManager;
   private client: WebSocketClient;
-  private socket: WebSocketClient | null = null;
   private subscriptions: Set<string> = new Set();
-  private messageHandlers: Map<string, Set<(data: WebSocketMessage) => void>> =
-    new Map();
+  private messageHandlers: Map<string, Set<(data: any) => void>> = new Map();
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private readonly MAX_RECONNECT_ATTEMPTS = 5;
   private readonly RECONNECT_INTERVAL = 3000; // 3 seconds
 
   private constructor() {
-    this.client = websocketClient(env.POLYGON_API_KEY);
+    this.client = websocketClient(process.env.VITE_POLYGON_API_KEY || "");
     this.initialize();
   }
 
@@ -61,116 +53,89 @@ class WebSocketManager {
   private initialize() {
     try {
       useWebSocketStore.getState().setConnecting(true);
-      this.socket = this.client.stocks();
 
-      this.socket.onopen = this.handleOpen;
-      this.socket.onclose = this.handleClose;
-      this.socket.onerror = this.handleError;
-      this.socket.onmessage = this.handleMessage;
+      this.client.connect();
+
+      this.client.on("open", this.handleOpen);
+      this.client.on("close", this.handleClose);
+      this.client.on("error", this.handleError);
+      this.client.on("message", this.handleMessage);
 
       useWebSocketStore.getState().setConnected(true);
     } catch (error) {
-      this.handleError(
-        error instanceof Error ? error : new Error(String(error))
-      );
-    } finally {
-      useWebSocketStore.getState().setConnecting(false);
+      this.handleError(error as Error);
     }
   }
 
   private handleOpen = () => {
-    const store = useWebSocketStore.getState();
-    store.setConnected(true);
-    store.resetReconnectAttempts();
-    store.setError(null);
+    useWebSocketStore.getState().setConnected(true);
+    useWebSocketStore.getState().setConnecting(false);
+    useWebSocketStore.getState().resetReconnectAttempts();
 
-    // Resubscribe to all symbols
-    if (this.socket && this.subscriptions.size > 0) {
-      this.socket.subscribe(Array.from(this.subscriptions));
+    // Resubscribe to all previous subscriptions
+    if (this.subscriptions.size > 0) {
+      this.client.subscribe(Array.from(this.subscriptions));
     }
   };
 
   private handleClose = () => {
-    const store = useWebSocketStore.getState();
-    store.setConnected(false);
+    useWebSocketStore.getState().setConnected(false);
     this.attemptReconnect();
   };
 
   private handleError = (error: Error | Event) => {
-    const store = useWebSocketStore.getState();
-    const errorObj =
-      error instanceof Error ? error : new Error("WebSocket error occurred");
-    store.setError(errorObj);
-    store.setConnected(false);
-    console.error("WebSocket error:", errorObj);
+    const err = error instanceof Error ? error : new Error("WebSocket error");
+    useWebSocketStore.getState().setError(err);
+    useWebSocketStore.getState().setConnected(false);
     this.attemptReconnect();
   };
 
-  private handleMessage = (event: MessageEvent) => {
-    try {
-      const data = JSON.parse(event.data) as WebSocketMessage;
+  private handleMessage = (data: any) => {
+    if (data.ev && this.messageHandlers.has(data.sym)) {
       const handlers = this.messageHandlers.get(data.sym);
-      if (handlers) {
-        handlers.forEach((handler) => handler(data));
-      }
-    } catch (error) {
-      console.error("Error processing message:", error);
+      handlers?.forEach((handler) => handler(data));
     }
   };
 
   private attemptReconnect = () => {
-    const store = useWebSocketStore.getState();
-    if (store.reconnectAttempts >= this.MAX_RECONNECT_ATTEMPTS) {
-      store.setError(new Error("Max reconnection attempts reached"));
-      return;
-    }
-
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
     }
 
-    this.reconnectTimeout = setTimeout(() => {
-      store.incrementReconnectAttempts();
-      this.initialize();
-    }, this.RECONNECT_INTERVAL);
+    const { reconnectAttempts } = useWebSocketStore.getState();
+    if (reconnectAttempts < this.MAX_RECONNECT_ATTEMPTS) {
+      useWebSocketStore.getState().incrementReconnectAttempts();
+      this.reconnectTimeout = setTimeout(() => {
+        this.initialize();
+      }, this.RECONNECT_INTERVAL);
+    }
   };
 
-  subscribe(
-    symbol: string,
-    callback: (data: WebSocketMessage) => void
-  ): () => void {
-    const formattedSymbol = `T.${symbol}`;
-    this.subscriptions.add(formattedSymbol);
-
+  subscribe(symbol: string, callback: (data: any) => void): () => void {
     if (!this.messageHandlers.has(symbol)) {
       this.messageHandlers.set(symbol, new Set());
-    }
-    this.messageHandlers.get(symbol)?.add(callback);
+      this.subscriptions.add(symbol);
 
-    if (this.socket && useWebSocketStore.getState().isConnected) {
-      this.socket.subscribe([formattedSymbol]);
+      if (useWebSocketStore.getState().isConnected) {
+        this.client.subscribe([symbol]);
+      }
     }
 
-    return () => {
-      this.unsubscribe(symbol, callback);
-    };
+    const handlers = this.messageHandlers.get(symbol)!;
+    handlers.add(callback);
+
+    return () => this.unsubscribe(symbol, callback);
   }
 
-  private unsubscribe(
-    symbol: string,
-    callback: (data: WebSocketMessage) => void
-  ) {
-    const formattedSymbol = `T.${symbol}`;
+  private unsubscribe(symbol: string, callback: (data: any) => void) {
     const handlers = this.messageHandlers.get(symbol);
-
     if (handlers) {
       handlers.delete(callback);
+
       if (handlers.size === 0) {
         this.messageHandlers.delete(symbol);
-        this.subscriptions.delete(formattedSymbol);
-        if (this.socket) {
-          this.socket.unsubscribe([formattedSymbol]);
-        }
+        this.subscriptions.delete(symbol);
+        this.client.unsubscribe([symbol]);
       }
     }
   }
@@ -179,14 +144,12 @@ class WebSocketManager {
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
     }
-    this.subscriptions.clear();
+    this.client.close();
     this.messageHandlers.clear();
-    if (this.socket) {
-      this.socket.close();
-      this.socket = null;
-    }
+    this.subscriptions.clear();
+    useWebSocketStore.getState().setConnected(false);
+    useWebSocketStore.getState().resetReconnectAttempts();
   }
 }
 
 export const wsManager = WebSocketManager.getInstance();
-export { useWebSocketStore };

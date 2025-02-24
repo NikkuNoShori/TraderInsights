@@ -114,27 +114,19 @@ export async function fetchStockQuote(symbol: string): Promise<StockQuote> {
 
     return {
       symbol: validSymbol,
-      companyName: overviewResponse.data.Name || validSymbol,
       currentPrice: Number(quote["05. price"]) || 0,
       change: Number(quote["09. change"]) || 0,
-      changePercent: Number(quote["10. change percent"]?.replace("%", "")) || 0,
-      marketCap: Number(overviewResponse.data.MarketCapitalization) || 0,
+      changePercent: Number(quote["10. change percent"].replace("%", "")) || 0,
       volume: Number(quote["06. volume"]) || 0,
-      avgVolume3Month:
-        Number(overviewResponse.data["3MonthAverageVolume"]) || 0,
-      float: Number(overviewResponse.data.SharesFloat) || 0,
+      avgVolume: Number(quote["06. volume"]) || 0,
+      avgVolume3Month: Number(quote["06. volume"]) || 0,
+      marketCap: Number(overviewResponse.data.MarketCapitalization) || 0,
       weekHigh52: Number(overviewResponse.data["52WeekHigh"]) || 0,
       weekLow52: Number(overviewResponse.data["52WeekLow"]) || 0,
-      nextEarningsDate: overviewResponse.data.NextEarningsDate || "N/A",
-      sector: overviewResponse.data.Sector || "N/A",
-      index: overviewResponse.data.Index || "N/A",
-      open: Number(quote["02. open"]) || 0,
-      high: Number(quote["03. high"]) || 0,
-      low: Number(quote["04. low"]) || 0,
-      afterHoursPrice: 0,
-      afterHoursChange: 0,
-      afterHoursChangePercent: 0,
-      sharesOutstanding: Number(overviewResponse.data.SharesOutstanding) || 0,
+      peRatio: Number(overviewResponse.data.PERatio) || undefined,
+      dividend: Number(overviewResponse.data.DividendPerShare) || undefined,
+      dividendYield: Number(overviewResponse.data.DividendYield) || undefined,
+      lastUpdated: new Date().toISOString(),
     };
   } catch (error) {
     if (error instanceof Error) {

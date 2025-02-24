@@ -12,7 +12,7 @@ interface DashboardError extends Error {
 }
 
 export default function Dashboard() {
-  const user = useAuthStore((state) => state.user);
+  const { user } = useAuthStore();
   const {
     currentProfile,
     isLoading: isDashboardLoading,
@@ -22,7 +22,7 @@ export default function Dashboard() {
     data: trades = [],
     isLoading: isTradesLoading,
     error: tradesError,
-  } = useTrades(user?.id);
+  } = useTrades();
 
   const isLoading = isDashboardLoading || isTradesLoading;
   const error = dashboardError || tradesError;

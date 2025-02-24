@@ -1,44 +1,50 @@
-import { useState } from '@/lib/react';
+import { useState } from "@/lib/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { Switch } from "../ui/switch";
-import { useToast } from "../../hooks/useToast";
-import { useAuthStore } from "../../stores/authStore";
-import { supabase } from "../../lib/supabase";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { useToast } from "@/hooks/useToast";
+import { useAuthStore } from "@/stores/authStore";
+import { supabase } from "@/lib/supabase";
+import type { Trade, CreateTradeData } from "@/types/trade";
 
-const stockTradeSchema = z.object({
-  type: z.enum(["stock", "option"]),
+const tradeSchema = z.object({
   symbol: z.string().min(1, "Symbol is required"),
+  type: z.enum(["stock", "option", "crypto", "forex"]),
+  side: z.enum(["Long", "Short"]),
+  quantity: z.number().positive("Quantity must be positive"),
+  price: z.number().positive("Price must be positive"),
   entry_date: z.string(),
+  entry_price: z.number().positive("Entry price must be positive"),
+  exit_price: z.number().positive("Exit price must be positive").optional(),
   exit_date: z.string().optional(),
-  entry_price: z.number().positive(),
-  exit_price: z.number().positive().optional(),
-  quantity: z.number().positive(),
-  direction: z.enum(["long", "short"]),
-  portfolio_id: z.string().uuid(),
   notes: z.string().optional(),
+  status: z.enum(["open", "closed", "pending"]).default("open"),
+  option_details: z.object({
+    strike: z.number().positive("Strike price must be positive"),
+    expiration: z.string(),
+    option_type: z.enum(["call", "put"]),
+    contract_type: z.enum(["call", "put"]),
+  }).optional(),
 });
 
-const optionTradeSchema = stockTradeSchema.extend({
-  strike_price: z.number().positive(),
-  expiration_date: z.string(),
-  option_type: z.enum(["call", "put"]),
-  contract_size: z.number().default(100),
-});
-
-type StockTrade = z.infer<typeof stockTradeSchema>;
-type OptionTrade = z.infer<typeof optionTradeSchema>;
+type TradeFormData = z.infer<typeof tradeSchema>;
 
 interface ManualTradeFormProps {
-  onSuccess: () => void;
+  onSuccess: (trade: CreateTradeData) => void;
+  initialData?: Partial<Trade>;
 }
 
-export const ManualTradeForm = ({ onSuccess }: ManualTradeFormProps) => {
-  const [isOption, setIsOption] = useState(false);
+export function ManualTradeForm({ onSuccess, initialData }: ManualTradeFormProps) {
+  const [isOption, setIsOption] = useState(initialData?.type === "option");
   const { user } = useAuthStore();
   const toast = useToast();
 
@@ -48,117 +54,147 @@ export const ManualTradeForm = ({ onSuccess }: ManualTradeFormProps) => {
     formState: { errors, isSubmitting },
     reset,
     setValue,
-  } = useForm<StockTrade | OptionTrade>({
-    resolver: zodResolver(isOption ? optionTradeSchema : stockTradeSchema),
+    watch,
+  } = useForm<TradeFormData>({
+    resolver: zodResolver(tradeSchema),
     defaultValues: {
-      direction: "long",
-      type: "stock",
+      symbol: initialData?.symbol || "",
+      type: initialData?.type || "stock",
+      side: initialData?.side || "Long",
+      quantity: initialData?.quantity || undefined,
+      price: initialData?.price || undefined,
+      entry_date: initialData?.entry_date || new Date().toISOString().split("T")[0],
+      entry_price: initialData?.entry_price || undefined,
+      exit_price: initialData?.exit_price,
+      exit_date: initialData?.exit_date,
+      notes: initialData?.notes || "",
+      status: initialData?.status || "open",
+      ...(initialData?.type === "option" && {
+        option_details: initialData.option_details,
+      }),
     },
   });
 
-  const onSubmit = async (data: StockTrade | OptionTrade) => {
+  const onSubmit = async (data: TradeFormData) => {
+    if (!user) {
+      toast.error("You must be logged in to add trades");
+      return;
+    }
+
     try {
-      const { error } = await supabase.from("trades").insert([{
+      const tradeData: CreateTradeData = {
+        direction: data.side,
+        total: data.quantity * data.price,
+        date: data.entry_date,
+        time: new Date().toISOString().split('T')[1],
         ...data,
-        entry_date: data.entry_date || new Date().toISOString(),
-        total: data.quantity * data.entry_price,
-      }]);
+        status: data.status || 'open',
+        option_details: data.type === 'option' && data.option_details ? {
+          strike: data.option_details.strike,
+          expiration: data.option_details.expiration,
+          option_type: data.option_details.option_type,
+          contract_type: data.option_details.contract_type
+        } : undefined
+      };
 
-      if (error) throw error;
-
-      toast.success("Trade added successfully");
+      onSuccess(tradeData);
       reset();
-      onSuccess();
     } catch (error) {
-      console.error("Error adding trade:", error);
-      toast.error("Failed to add trade");
+      console.error("Error submitting trade:", error);
+      toast.error("Failed to submit trade");
     }
   };
 
-  return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="space-y-2 bg-card p-4 rounded-lg border border-border"
-    >
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <h3 className="text-sm font-medium text-light-text dark:text-dark-text">
-            Trade Type
-          </h3>
-          <p className="text-xs text-light-muted dark:text-dark-muted">
-            Select between stock or options trade
-          </p>
-        </div>
-        <Switch checked={isOption} onCheckedChange={setIsOption} />
-      </div>
+  const handleTypeChange = (value: string) => {
+    setValue("type", value as "stock" | "option" | "crypto" | "forex");
+    setIsOption(value === "option");
+  };
 
-      <div className="grid grid-cols-3 gap-3">
-        <div className="col-span-2">
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
           <Input
             {...register("symbol")}
             placeholder="Symbol"
-            className="uppercase h-8"
+            className="uppercase"
           />
           {errors.symbol && (
-            <p className="text-xs text-red-500 mt-0.5">
-              {errors.symbol.message}
-            </p>
+            <span className="text-xs text-red-500">{errors.symbol.message}</span>
           )}
         </div>
 
-        <Select onValueChange={(value) => setValue("direction", value as "long" | "short")} defaultValue="long">
-          <SelectTrigger className="h-8">
-            <SelectValue placeholder="Direction" />
+        <Select
+          value={watch("type")}
+          onValueChange={handleTypeChange}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="long">Long</SelectItem>
-            <SelectItem value="short">Short</SelectItem>
+            <SelectItem value="stock">Stock</SelectItem>
+            <SelectItem value="option">Option</SelectItem>
+            <SelectItem value="crypto">Crypto</SelectItem>
+            <SelectItem value="forex">Forex</SelectItem>
           </SelectContent>
         </Select>
 
-        {/* Common fields */}
-        <Input
-          {...register("entry_price", { valueAsNumber: true })}
-          type="number"
-          step="0.01"
-          placeholder="Entry Price"
-          className="h-8"
-        />
+        <Select
+          value={watch("side")}
+          onValueChange={(value) => setValue("side", value as "Long" | "Short")}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Side" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Long">Long</SelectItem>
+            <SelectItem value="Short">Short</SelectItem>
+          </SelectContent>
+        </Select>
+
         <Input
           {...register("quantity", { valueAsNumber: true })}
           type="number"
           placeholder="Quantity"
-          className="h-8"
         />
+        {errors.quantity && (
+          <span className="text-xs text-red-500">{errors.quantity.message}</span>
+        )}
+
+        <Input
+          {...register("price", { valueAsNumber: true })}
+          type="number"
+          step="0.01"
+          placeholder="Price"
+        />
+        {errors.price && (
+          <span className="text-xs text-red-500">{errors.price.message}</span>
+        )}
+
         <Input
           {...register("entry_date")}
-          type="datetime-local"
-          className="h-8"
-        />
-        <Input
-          {...register("exit_date")}
-          type="datetime-local"
-          className="h-8"
+          type="date"
+          placeholder="Entry Date"
         />
 
-        {/* Option-specific fields */}
         {isOption && (
           <>
             <Input
-              {...register("strike_price", { valueAsNumber: true })}
+              {...register("option_details.strike", { valueAsNumber: true })}
               type="number"
               step="0.01"
               placeholder="Strike Price"
-              className="h-8"
             />
             <Input
-              {...register("expiration_date")}
+              {...register("option_details.expiration")}
               type="date"
               placeholder="Expiration Date"
-              className="h-8"
             />
-            <Select onValueChange={(value) => setValue("option_type", value as "call" | "put")} defaultValue="call">
-              <SelectTrigger className="h-8">
+            <Select
+              value={watch("option_details.option_type")}
+              onValueChange={(value) => setValue("option_details.option_type", value as "call" | "put")}
+            >
+              <SelectTrigger>
                 <SelectValue placeholder="Option Type" />
               </SelectTrigger>
               <SelectContent>
@@ -170,27 +206,27 @@ export const ManualTradeForm = ({ onSuccess }: ManualTradeFormProps) => {
         )}
       </div>
 
-      <div className="mt-2">
+      <div>
         <textarea
           {...register("notes")}
-          className="w-full h-16 p-2 text-sm rounded border border-light-border dark:border-dark-border bg-white dark:bg-dark-bg text-light-text dark:text-dark-text"
+          className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           placeholder="Add notes about your trade..."
         />
       </div>
 
-      <div className="flex justify-end mt-3 space-x-2">
+      <div className="flex justify-end space-x-2">
         <Button
-          variant="outline"
           type="button"
-          size="sm"
+          variant="outline"
           onClick={() => reset()}
+          disabled={isSubmitting}
         >
-          Cancel
+          Reset
         </Button>
-        <Button type="submit" size="sm" isLoading={isSubmitting}>
-          Add Trade
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Submitting..." : initialData ? "Update Trade" : "Add Trade"}
         </Button>
       </div>
     </form>
   );
-};
+}

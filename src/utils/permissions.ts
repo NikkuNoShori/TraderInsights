@@ -1,16 +1,6 @@
 import type { UserRole, UserPermissions } from "../types/auth";
 
 const rolePermissions: Record<UserRole, UserPermissions> = {
-  developer: {
-    canAccessDashboard: true,
-    canAccessJournal: true,
-    canAccessScreener: true,
-    canAccessAnalytics: true,
-    canManageUsers: true,
-    canManageRoles: true,
-    canViewAuditLogs: true,
-    canModifySystemSettings: true,
-  },
   admin: {
     canAccessDashboard: true,
     canAccessJournal: true,
@@ -18,6 +8,16 @@ const rolePermissions: Record<UserRole, UserPermissions> = {
     canAccessAnalytics: true,
     canManageUsers: true,
     canManageRoles: true,
+    canViewAuditLogs: true,
+    canModifySystemSettings: false,
+  },
+  manager: {
+    canAccessDashboard: true,
+    canAccessJournal: true,
+    canAccessScreener: true,
+    canAccessAnalytics: true,
+    canManageUsers: true,
+    canManageRoles: false,
     canViewAuditLogs: true,
     canModifySystemSettings: false,
   },

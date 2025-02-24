@@ -89,7 +89,6 @@ export function getDefaultDashboardConfig(): DashboardConfig {
       {
         id: "default",
         name: "Default Dashboard",
-        isDefault: true,
         layouts: defaultLayouts,
         enabledCards: DEFAULT_ENABLED_CARDS,
         createdAt: now,
