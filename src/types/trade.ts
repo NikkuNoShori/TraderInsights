@@ -12,34 +12,62 @@ export interface OptionDetails {
 export interface Trade {
   id: string;
   user_id: string;
-  portfolio_id?: string;
+  date: string;
+  time: string;
   symbol: string;
   type: TradeType;
   side: TradeSide;
+  direction: TradeSide; // Alias for side for backward compatibility
   quantity: number;
   price: number;
   total: number;
-  date: string;
-  time: string;
   entry_date: string;
   entry_price: number;
+  exit_date?: string;
   exit_price?: number;
+  pnl?: number;
   status: TradeStatus;
   notes?: string;
+  setup_type?: string;
+  strategy?: string;
+  risk_reward?: number;
+  stop_loss?: number;
+  take_profit?: number;
+  risk_amount?: number;
+  fees?: number;
+  tags?: string[];
   option_details?: OptionDetails;
   created_at: string;
   updated_at: string;
-  pnl?: number;
-  fees?: number;
-  risk_amount?: number;
-  stop_loss?: number;
-  take_profit?: number;
-  remaining_quantity?: number;
-  strategy?: string;
-  risk_reward?: number;
-  tags?: string[];
-  avg_entry_price?: number;
-  avg_exit_price?: number;
+}
+
+export interface TradeFilters {
+  dateRange?: [Date, Date];
+  symbols?: string[];
+  types?: string[];
+  sides?: ("Long" | "Short")[];
+  status?: ("pending" | "open" | "closed")[];
+  minPnl?: number;
+  maxPnl?: number;
+  setupTypes?: string[];
+  strategies?: string[];
+}
+
+export interface TradeStats {
+  totalTrades: number;
+  winningTrades: number;
+  losingTrades: number;
+  winRate: number;
+  averagePnl: number;
+  totalPnl: number;
+  largestWin: number;
+  largestLoss: number;
+  averageWin: number;
+  averageLoss: number;
+  profitFactor: number;
+  expectancy: number;
+  sharpeRatio?: number;
+  maxDrawdown: number;
 }
 
 export type CreateTradeData = Omit<

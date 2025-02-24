@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect } from "@/lib/react";
 import { useLocation } from "react-router-dom";
 
 const APP_NAME = "Trading Insights";

@@ -12,14 +12,31 @@ import {
 import { formatCurrency } from "../utils/formatters";
 import type { ChartType } from "./ChartTypeSelector";
 import type { OHLC } from "../types/stock";
+import type { ReactElement } from "@/lib/react";
 
 interface StockChartProps {
   data: OHLC[];
   type: ChartType;
 }
 
-const CandlestickBar = (props: any) => {
-  const { x, y, width, height, open, close, high, low } = props;
+interface CandlestickBarProps {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  payload: OHLC;
+  fill?: string;
+  stroke?: string;
+}
+
+const CandlestickBar = ({
+  x,
+  y,
+  width,
+  height,
+  payload,
+}: CandlestickBarProps) => {
+  const { open, close, high, low } = payload;
   const isGreen = close > open;
   const color = isGreen ? "#22c55e" : "#ef4444";
   const barWidth = Math.max(1, width - 2);
@@ -48,7 +65,7 @@ const CandlestickBar = (props: any) => {
 };
 
 export function StockChart({ data, type }: StockChartProps) {
-  const renderChart = () => {
+  const renderChart = (): ReactElement => {
     const commonProps = {
       data,
       margin: { top: 10, right: 30, left: 0, bottom: 0 },
@@ -147,12 +164,19 @@ export function StockChart({ data, type }: StockChartProps) {
                 );
               }}
             />
-            <Bar dataKey="high" shape={<CandlestickBar />} />
+            <Bar
+              dataKey="high"
+              shape={(props: unknown) => <CandlestickBar {...props as CandlestickBarProps} />}
+            />
           </ComposedChart>
         );
 
       default:
-        return null;
+        return (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-gray-500">No chart available</p>
+          </div>
+        );
     }
   };
 

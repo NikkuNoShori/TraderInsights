@@ -1,6 +1,8 @@
 import { format } from "date-fns";
 import { ArrowUpDown, Filter, Search } from "lucide-react";
 import type { Trade } from "../../types/portfolio";
+import { useState } from "@/lib/react";
+import { cn } from "@/utils/cn";
 
 interface TradeHistoryProps {
   trades: Trade[];
@@ -9,6 +11,20 @@ interface TradeHistoryProps {
 
 type SortField = "date" | "symbol" | "type" | "price" | "shares" | "value";
 type SortOrder = "asc" | "desc";
+
+interface SortConfig {
+  field: SortField;
+  label: string;
+}
+
+const sortConfigs: SortConfig[] = [
+  { field: "date", label: "Date" },
+  { field: "symbol", label: "Symbol" },
+  { field: "type", label: "Type" },
+  { field: "price", label: "Price" },
+  { field: "shares", label: "Shares" },
+  { field: "value", label: "Value" },
+];
 
 export function TradeHistory({ trades, onDelete }: TradeHistoryProps) {
   const [search, setSearch] = useState("");
@@ -85,18 +101,11 @@ export function TradeHistory({ trades, onDelete }: TradeHistoryProps) {
         <table className="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
           <thead className="bg-gray-50 dark:bg-dark-paper">
             <tr>
-              {[
-                { field: "date", label: "Date" },
-                { field: "symbol", label: "Symbol" },
-                { field: "type", label: "Type" },
-                { field: "price", label: "Price" },
-                { field: "shares", label: "Shares" },
-                { field: "value", label: "Value" },
-              ].map(({ field, label }) => (
+              {sortConfigs.map(({ field, label }) => (
                 <th
                   key={field}
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-dark-muted uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-dark-text"
-                  onClick={() => handleSort(field as SortField)}
+                  onClick={() => handleSort(field)}
                 >
                   <div className="flex items-center space-x-1">
                     <span>{label}</span>
@@ -123,11 +132,12 @@ export function TradeHistory({ trades, onDelete }: TradeHistoryProps) {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    className={cn(
+                      "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
                       trade.type === "buy"
                         ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400"
                         : "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400"
-                    }`}
+                    )}
                   >
                     {trade.type.toUpperCase()}
                   </span>

@@ -1,8 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "@/lib/react";
 import { useAuthStore } from "@/stores/authStore";
 import { supabase } from "@/lib/supabase";
 
-export function StoreProvider({ children }: { children: React.ReactNode }) {
+export function StoreProvider({ children }: { children: ReactNode }) {
   const { handleAuthStateChange, setInitialized } = useAuthStore();
 
   useEffect(() => {

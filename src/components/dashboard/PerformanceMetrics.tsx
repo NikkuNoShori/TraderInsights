@@ -1,6 +1,6 @@
-import { memo } from "react";
+import { memo, type FC } from "@/lib/react";
 import { StatsCard } from "./StatsCard";
-import { faDollarSign } from "@fortawesome/free-solid-svg-icons";
+import { DollarSign } from "lucide-react";
 import type { Trade } from "../../types/trade";
 import { formatCurrency } from "../../utils/formatters";
 import type { TimeframeOption } from "../ui/TimeframeSelector";
@@ -66,7 +66,7 @@ export const PerformanceMetrics = memo(
         <StatsCard
           title="Total P&L"
           value={formatCurrency(metrics.totalPnL)}
-          icon={faDollarSign}
+          icon={DollarSign}
           trend={metrics.totalPnL > 0 ? "up" : "down"}
           className="bg-card border border-border shadow-sm"
         />

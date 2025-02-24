@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { FormInput } from "../ui/FormInput";
+import { useState, type FormEvent, type ChangeEvent } from "@/lib/react";
 
-export default function RegisterForm() {
+export function RegisterForm() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -9,7 +10,7 @@ export default function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
@@ -40,8 +41,8 @@ export default function RegisterForm() {
         label="Email"
         required
         value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        autoCompleteType="email"
+        onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+        autoComplete="email"
         className="mt-1"
       />
 
@@ -51,8 +52,8 @@ export default function RegisterForm() {
         label="Password"
         required
         value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        autoCompleteType="new-password"
+        onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+        autoComplete="new-password"
         className="mt-1"
       />
 
@@ -62,8 +63,8 @@ export default function RegisterForm() {
         label="Confirm Password"
         required
         value={confirmPassword}
-        onChange={(e) => setConfirmPassword(e.target.value)}
-        autoCompleteType="new-password"
+        onChange={(e: ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
+        autoComplete="new-password"
         className="mt-1"
       />
 

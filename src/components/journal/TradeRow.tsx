@@ -9,22 +9,43 @@ interface TradeRowProps {
   onDelete?: (id: string) => void;
 }
 
+interface TradeTag {
+  id: string;
+  name: string;
+  color?: string;
+}
+
 export function TradeRow({ trade, onDelete }: TradeRowProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();
+
+  const handleDelete = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    if (onDelete && trade.id) {
+      onDelete(trade.id);
+    }
+  };
+
+  const handleExpand = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    setIsExpanded(!isExpanded);
+  };
+
+  const handleRowClick = () => {
+    if (trade.id) {
+      navigate(`/app/journal/trades/${trade.id}`);
+    }
+  };
 
   return (
     <>
       <div
         className="flex items-center justify-between p-3 bg-card dark:bg-dark-paper rounded-lg hover:bg-muted/50 dark:hover:bg-dark-muted/20 cursor-pointer"
-        onClick={() => navigate(`/app/journal/trades/${trade.id}`)}
+        onClick={handleRowClick}
       >
         {/* Expand/Collapse */}
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsExpanded(!isExpanded);
-          }}
+          onClick={handleExpand}
           className="p-1 hover:bg-muted dark:hover:bg-dark-muted rounded"
         >
           {isExpanded ? (
@@ -38,12 +59,12 @@ export function TradeRow({ trade, onDelete }: TradeRowProps) {
         <div className="flex items-center space-x-3">
           <span
             className={`px-2 py-1 text-xs rounded ${
-              trade.direction === "long"
+              trade.side === "Long"
                 ? "bg-emerald-100 text-emerald-800"
                 : "bg-rose-100 text-rose-800"
             }`}
           >
-            {trade.direction === "long" ? "Long" : "Short"}
+            {trade.side}
           </span>
           <span className="font-medium">{trade.symbol}</span>
         </div>
@@ -63,7 +84,7 @@ export function TradeRow({ trade, onDelete }: TradeRowProps) {
               {formatCurrency(trade.exit_price)}
             </div>
           )}
-          {trade.pnl !== null && (
+          {trade.pnl !== undefined && (
             <div
               className={`text-sm font-medium ${
                 trade.pnl >= 0 ? "text-emerald-600" : "text-rose-600"
@@ -77,14 +98,11 @@ export function TradeRow({ trade, onDelete }: TradeRowProps) {
         {/* Date and Actions */}
         <div className="flex items-center space-x-4">
           <span className="text-sm text-muted-foreground">
-            {formatDate(new Date(trade.entry_date))}
+            {formatDate(trade.entry_date)}
           </span>
           {onDelete && (
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(trade.id);
-              }}
+              onClick={handleDelete}
               className="text-muted-foreground hover:text-rose-500 transition-colors"
             >
               <Trash2 className="h-4 w-4" />
@@ -115,13 +133,13 @@ export function TradeRow({ trade, onDelete }: TradeRowProps) {
               </div>
               <div className="mt-1 text-sm">{trade.notes || "No notes"}</div>
             </div>
-            {trade.tags && (
+            {Array.isArray(trade.tags) && (
               <div>
                 <div className="text-sm font-medium text-muted-foreground">
                   Tags
                 </div>
                 <div className="mt-1 flex flex-wrap gap-1">
-                  {trade.tags.map((tag) => (
+                  {trade.tags.map((tag: string) => (
                     <span
                       key={tag}
                       className="px-2 py-0.5 text-xs rounded bg-muted dark:bg-dark-muted"

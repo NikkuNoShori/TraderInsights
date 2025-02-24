@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type FC } from "@/lib/react";
 import { supabase } from "../lib/supabase";
 
 const testUsers = [

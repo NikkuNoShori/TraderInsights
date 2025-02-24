@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ChangeEvent } from "@/lib/react";
 import { useAuthStore } from "../../stores/authStore";
 import { supabase } from "../../lib/supabase";
 import { Button } from "../ui/button";

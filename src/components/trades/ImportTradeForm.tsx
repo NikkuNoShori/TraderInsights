@@ -11,7 +11,12 @@ import { processTradeFile } from "@/lib/services/fileProcessing";
 import type { Trade } from "@/types/trade";
 
 interface ImportTradeFormProps {
-  onImportComplete: (trades: Trade[]) => void;
+  onImportComplete: (trades: Partial<Trade>[]) => void;
+}
+
+interface FileProcessingResult {
+  trades: Partial<Trade>[];
+  errors: string[];
 }
 
 export function ImportTradeForm({ onImportComplete }: ImportTradeFormProps) {
@@ -31,7 +36,7 @@ export function ImportTradeForm({ onImportComplete }: ImportTradeFormProps) {
 
       try {
         const file = acceptedFiles[0];
-        const data = await processTradeFile(file, (progress) => {
+        const data: FileProcessingResult = await processTradeFile(file, (progress: number) => {
           setProgress(Math.round(progress * 100));
         });
 
@@ -71,11 +76,10 @@ export function ImportTradeForm({ onImportComplete }: ImportTradeFormProps) {
     <div className="space-y-4">
       <div
         {...getRootProps()}
-        className={`
-          border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
-          transition-colors duration-200
-          ${isDragActive ? "border-primary bg-primary/10" : "border-border"}
-        `}
+        className={cn(
+          "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors duration-200",
+          isDragActive ? "border-primary bg-primary/10" : "border-border"
+        )}
       >
         <input {...getInputProps()} />
         {isProcessing ? (
@@ -132,7 +136,7 @@ export function ImportTradeForm({ onImportComplete }: ImportTradeFormProps) {
           <li>File must be .xlsx, .xls, or .csv format</li>
           <li>First row must contain column headers</li>
           <li>
-            Required columns: symbol, type, direction, entry_date, entry_price,
+            Required columns: symbol, type, side, entry_date, entry_price,
             quantity
           </li>
           <li>Optional columns: exit_date, exit_price, notes</li>

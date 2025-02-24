@@ -15,6 +15,8 @@ import {
 } from "recharts";
 import { format, subDays, subMonths } from "date-fns";
 import type { Trade } from "../../types/portfolio";
+import { useState } from "@/lib/react";
+import type { ReactElement } from "@/lib/react";
 
 interface ChartData {
   date: string;
@@ -30,6 +32,14 @@ interface AdvancedChartsProps {
   timeframe?: "1M" | "3M" | "6M" | "1Y" | "ALL";
 }
 
+interface TooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    value: number;
+    payload: ChartData;
+  }>;
+}
+
 export function AdvancedCharts({
   trades,
   timeframe = "1Y",
@@ -38,7 +48,7 @@ export function AdvancedCharts({
     "returns" | "drawdown" | "volatility"
   >("returns");
 
-  const calculateVolatility = (returns: number[]) => {
+  const calculateVolatility = (returns: number[]): number => {
     const mean = returns.reduce((sum, r) => sum + r, 0) / returns.length;
     const squaredDiffs = returns.map((r) => Math.pow(r - mean, 2));
     return Math.sqrt(
@@ -87,16 +97,16 @@ export function AdvancedCharts({
 
   const chartData = processData();
 
-  const formatCurrency = (value: number) =>
+  const formatCurrency = (value: number): string =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
       minimumFractionDigits: 0,
     }).format(value);
 
-  const formatPercent = (value: number) => `${Math.abs(value).toFixed(1)}%`;
+  const formatPercent = (value: number): string => `${Math.abs(value).toFixed(1)}%`;
 
-  const renderChart = () => {
+  const renderChart = (): ReactElement => {
     switch (selectedMetric) {
       case "returns":
         return (
@@ -187,6 +197,13 @@ export function AdvancedCharts({
               strokeWidth={2}
             />
           </LineChart>
+        );
+
+      default:
+        return (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-gray-500">No chart available</p>
+          </div>
         );
     }
   };

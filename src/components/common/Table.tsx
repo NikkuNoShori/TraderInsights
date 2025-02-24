@@ -1,7 +1,9 @@
+import { type ReactNode } from "@/lib/react";
+
 interface Column<T> {
   header: string;
   accessor: keyof T;
-  render?: (value: T[keyof T], item: T) => React.ReactNode;
+  render?: (value: T[keyof T], item: T) => ReactNode;
 }
 
 interface TableProps<T> {
@@ -50,16 +52,17 @@ export function Table<T extends { id: string | number }>({
               key={item.id}
               className="hover:bg-gray-50 dark:hover:bg-dark-border/50"
             >
-              {columns.map((column, i) => (
-                <td
-                  key={i}
-                  className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-dark-text"
-                >
-                  {column.render
-                    ? column.render(item[column.accessor], item)
-                    : item[column.accessor]}
-                </td>
-              ))}
+              {columns.map((column, i) => {
+                const value = item[column.accessor];
+                return (
+                  <td
+                    key={i}
+                    className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-dark-text"
+                  >
+                    {column.render ? column.render(value, item) : String(value)}
+                  </td>
+                );
+              })}
             </tr>
           ))}
         </tbody>

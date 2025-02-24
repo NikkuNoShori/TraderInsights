@@ -1,7 +1,9 @@
 import { XCircleIcon, RefreshCw } from "lucide-react";
+import { type ErrorInfo, type ReactNode } from "@/lib/react";
+import { Component } from "react";
 
 interface Props {
-  children: React.ReactNode;
+  children: ReactNode;
   onRetry?: () => void;
 }
 

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, type FC, type ReactNode } from "@/lib/react";
 import { useThemeStore } from "@/stores/themeStore";
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {

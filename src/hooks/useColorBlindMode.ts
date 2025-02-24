@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect } from "@/lib/react";
 
 export function useColorBlindMode() {
   const [isColorBlindMode, setIsColorBlindMode] = useState(() => {

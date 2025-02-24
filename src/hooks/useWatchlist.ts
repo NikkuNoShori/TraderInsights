@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "@/lib/react";
 import { useSupabaseStore } from "@/stores/supabaseStore";
 import type { WatchlistSymbol } from "../types/stock";
 

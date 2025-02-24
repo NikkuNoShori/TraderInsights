@@ -1,5 +1,5 @@
 import { Plus, Save } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, type FC } from "@/lib/react";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Card } from "../ui/card";
