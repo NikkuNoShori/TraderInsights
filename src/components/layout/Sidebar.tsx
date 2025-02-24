@@ -24,7 +24,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto">
-        <MainNav isCollapsed={false} />
+        <MainNav defaultCollapsed={false} />
       </div>
 
       {/* User Menu */}

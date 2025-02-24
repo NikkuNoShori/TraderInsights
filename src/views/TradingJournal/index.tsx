@@ -5,13 +5,13 @@ import { TradeList } from "./components/TradeList";
 import { Button } from "../../components/ui/button";
 import { Plus } from "lucide-react";
 import { useSupabaseClient } from "../../hooks/useSupabaseClient";
-import { Trade } from "../../types/trade";
+import { Trade, createTrade } from "../../types/trade";
 import { config } from "../../config";
 import { AddTradeModal } from "../../components/trades/AddTradeModal";
 
 // Mock trades for development mode
 const MOCK_TRADES: Trade[] = [
-  {
+  createTrade({
     id: "dev-trade-1",
     user_id: "dev-123",
     symbol: "AAPL",
@@ -24,14 +24,14 @@ const MOCK_TRADES: Trade[] = [
     time: new Date().toISOString().split("T")[1].split(".")[0],
     entry_date: new Date().toISOString(),
     status: "closed",
-    notes: "Mock trade for development",
+    notes: "Example trade",
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     entry_price: 150.0,
     exit_price: 155.0,
     pnl: 500.0,
-  },
-  {
+  }),
+  createTrade({
     id: "dev-trade-2",
     user_id: "dev-123",
     symbol: "TSLA",
@@ -44,13 +44,13 @@ const MOCK_TRADES: Trade[] = [
     time: new Date(Date.now() - 86400000).toISOString().split("T")[1].split(".")[0],
     entry_date: new Date(Date.now() - 86400000).toISOString(),
     status: "closed",
-    notes: "Another mock trade",
+    notes: "Another example trade",
     created_at: new Date(Date.now() - 86400000).toISOString(),
     updated_at: new Date(Date.now() - 86400000).toISOString(),
     entry_price: 200.0,
     exit_price: 210.0,
     pnl: 500.0,
-  },
+  }),
 ];
 
 const TRADES_PER_PAGE = 10;

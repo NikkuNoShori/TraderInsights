@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useSupabaseClient } from "./useSupabaseClient";
-import { Trade } from "../types/trade";
+import { Trade, createTrade } from "../types/trade";
 import { config } from "../config";
 
 const MOCK_TRADES: Trade[] = [
-  {
+  createTrade({
     id: "dev-trade-1",
     user_id: "dev-123",
     date: new Date().toISOString().split("T")[0],
@@ -23,8 +23,8 @@ const MOCK_TRADES: Trade[] = [
     notes: "Mock trade for development",
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-  },
-  {
+  }),
+  createTrade({
     id: "dev-trade-2",
     user_id: "dev-123",
     date: new Date(Date.now() - 86400000).toISOString().split("T")[0],
@@ -46,7 +46,7 @@ const MOCK_TRADES: Trade[] = [
     notes: "Another mock trade",
     created_at: new Date(Date.now() - 86400000).toISOString(),
     updated_at: new Date(Date.now() - 86400000).toISOString(),
-  },
+  }),
 ];
 
 export function useTrades() {
@@ -70,13 +70,14 @@ export function useTrades() {
 
       if (error) throw error;
 
-      // Ensure all required fields are present
+      // Ensure all required fields are present and properly formatted
       return (data || []).map(
-        (trade): Trade => ({
-          ...trade,
-          entry_date: trade.entry_date || trade.date,
-          entry_price: trade.entry_price || trade.price,
-        })
+        (trade): Trade =>
+          createTrade({
+            ...trade,
+            entry_date: trade.entry_date || trade.date,
+            entry_price: trade.entry_price || trade.price,
+          })
       );
     },
     enabled: !!user,

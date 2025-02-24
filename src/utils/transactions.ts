@@ -1,47 +1,42 @@
 import type { Transaction } from "../types/transaction";
 
+export interface TransactionOrder {
+  action: "buy" | "sell";
+  quantity: number;
+  price: number;
+}
+
 export const calculateTransactionStatus = (
   transaction: Transaction,
+  order: TransactionOrder
 ): Transaction => {
-  const orders = [...(transaction.orders || []), order];
+  // Since Transaction interface doesn't have orders array, we'll calculate based on current order
+  const isEntryOrder =
+    (transaction.side === "Long" && order.action === "buy") ||
+    (transaction.side === "Short" && order.action === "sell");
 
-  // Calculate total quantities and average prices
-  const entryOrders = orders.filter(
-    (o) =>
-      (transaction.side === "Long" && o.action === "buy") ||
-      (transaction.side === "Short" && o.action === "sell"),
-  );
+  const isExitOrder =
+    (transaction.side === "Long" && order.action === "sell") ||
+    (transaction.side === "Short" && order.action === "buy");
 
-  const exitOrders = orders.filter(
-    (o) =>
-      (transaction.side === "Long" && o.action === "sell") ||
-      (transaction.side === "Short" && o.action === "buy"),
-  );
+  // Calculate remaining quantity based on the new order
+  const remainingQuantity = isEntryOrder
+    ? transaction.quantity + order.quantity
+    : Math.max(transaction.quantity - order.quantity, 0);
 
-  const totalEntryQuantity = entryOrders.reduce(
-    (sum, o) => sum + o.quantity,
-    0,
-  );
-
-  const totalExitQuantity = exitOrders.reduce((sum, o) => sum + o.quantity, 0);
-
-  const avgEntryPrice =
-    entryOrders.length > 0
-      ? entryOrders.reduce((sum, o) => sum + o.price * o.quantity, 0) /
-        totalEntryQuantity
-      : 0;
-
-  const avgExitPrice =
-    exitOrders.length > 0
-      ? exitOrders.reduce((sum, o) => sum + o.price * o.quantity, 0) /
-        totalExitQuantity
-      : 0;
+  // Update transaction status
+  const status = remainingQuantity === 0 ? "closed" : "open";
 
   return {
     ...transaction,
-    avgEntryPrice,
-    avgExitPrice,
-    status: totalExitQuantity >= transaction.quantity ? "closed" : "open",
-    remainingQuantity: Math.max(transaction.quantity - totalExitQuantity, 0),
+    quantity: isEntryOrder
+      ? transaction.quantity + order.quantity
+      : transaction.quantity,
+    price: isEntryOrder
+      ? (transaction.price * transaction.quantity +
+          order.price * order.quantity) /
+        (transaction.quantity + order.quantity)
+      : transaction.price,
+    status,
   };
 };

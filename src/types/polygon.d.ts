@@ -1,35 +1,40 @@
 declare module "@polygon.io/client-js" {
-  import { w3cwebsocket } from "websocket";
-
-  export interface TradeMessage {
-    ev: string;
-    sym: string;
-    p: number; // price
-    s: number; // size
-    t: number; // timestamp
-    c: number[]; // conditions
+  export interface PolygonClient {
+    stocks: {
+      previousClose(params: { ticker: string }): Promise<any>;
+      aggregates(
+        ticker: string,
+        multiplier: number,
+        timespan: string,
+        from: string,
+        to: string
+      ): Promise<any>;
+    };
+    reference: {
+      tickerDetails(symbol: string): Promise<any>;
+      marketStatus(): Promise<any>;
+    };
   }
 
-  export interface PolygonWebSocket extends w3cwebsocket {
-    subscribe(symbols: string[]): void;
-    unsubscribe(symbols: string[]): void;
-    onopen: (() => void) | null;
-    onclose: (() => void) | null;
-    onerror: ((error: Error | Event) => void) | null;
-    onmessage: ((event: MessageEvent) => void) | null;
+  export interface WebSocketClient {
+    connect(): void;
+    subscribe(channels: string[]): void;
+    unsubscribe(channels: string[]): void;
+    on(event: string, callback: (data: any) => void): void;
     close(): void;
   }
 
-  export interface IWebsocketClient {
-    stocks: () => PolygonWebSocket;
-    forex: () => PolygonWebSocket;
-    crypto: () => PolygonWebSocket;
-  }
+  export function restClient(apiKey: string): PolygonClient;
+  export function websocketClient(apiKey: string): WebSocketClient;
+}
 
-  export function websocketClient(
-    apiKey: string,
-    options?: Record<string, unknown>
-  ): IWebsocketClient;
-
-  // ... rest of the existing types for REST client ...
+export interface TradeMessage {
+  ev: string; // Event type
+  sym: string; // Symbol
+  p: number; // Price
+  s: number; // Size
+  t: number; // Timestamp
+  c: number[]; // Conditions
+  x: number; // Exchange
+  i: string; // Trade ID
 }

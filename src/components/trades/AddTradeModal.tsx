@@ -56,7 +56,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
           </TabsContent>
 
           <TabsContent value="import">
-            <ImportTradeForm onSuccess={onTradeAdded} />
+            <ImportTradeForm onImportComplete={onTradeAdded} />
           </TabsContent>
         </Tabs>
       </DialogContent>
