@@ -1,15 +1,9 @@
-import type { Trade } from "../types/trade";
-import { PageHeader } from "../components/ui/PageHeader";
-import { DashboardCards } from "../components/dashboard/DashboardCards";
-import { WelcomeSection } from "../components/dashboard/WelcomeSection";
-import { useAuthStore } from "../stores/authStore";
-import { useDashboardStore } from "../stores/dashboardStore";
-import { useTrades } from "../hooks/useTrades";
-import { Spinner } from "../components/ui/Spinner";
-
-interface DashboardError extends Error {
-  message: string;
-}
+import { DashboardCards } from "@/components/dashboard/DashboardCards";
+import { WelcomeSection } from "@/components/dashboard/WelcomeSection";
+import { useAuthStore } from "@/stores/authStore";
+import { useDashboardStore } from "@/stores/dashboardStore";
+import { useTrades } from "@/hooks/useTrades";
+import { Spinner } from "@/components/ui/Spinner";
 
 export default function Dashboard() {
   const { user } = useAuthStore();
@@ -63,10 +57,7 @@ export default function Dashboard() {
       <div className="container mx-auto px-6 py-8">
         <div className="grid gap-8">
           <section className="grid gap-6">
-            <DashboardCards
-              trades={trades}
-              layouts={currentProfile?.layout || []}
-            />
+            <DashboardCards trades={trades} />
           </section>
         </div>
       </div>

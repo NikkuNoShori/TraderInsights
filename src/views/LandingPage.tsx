@@ -1,8 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { LineChart, TrendingUp, BarChart2, BookOpen } from "lucide-react";
-import { Button } from "../components/ui/button";
+import { Button } from "@/components/ui/button";
 import { useEffect } from "@/lib/react";
-import { clearDeveloperMode } from "../lib/utils/auth";
+import { clearDeveloperMode } from "@/lib/utils/auth";
 
 export default function LandingPage() {
   const navigate = useNavigate();

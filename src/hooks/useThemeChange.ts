@@ -1,4 +1,4 @@
-import { ThemeGuard } from "../lib/theme/ThemeGuard";
+import { ThemeGuard } from "@/lib/theme/ThemeGuard";
 
 export function useThemeChange() {
   const themeGuard = ThemeGuard.getInstance();

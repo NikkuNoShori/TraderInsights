@@ -1,4 +1,4 @@
-import { supabase } from "../supabase";
+import { supabase } from "@/lib/supabase";
 import type { AuthResponse, AuthSession } from "@supabase/supabase-js";
 
 export const authService = {

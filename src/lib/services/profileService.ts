@@ -1,5 +1,5 @@
-import { supabase } from "../supabase";
-import type { Profile } from "../../types/database";
+import { supabase } from "@/lib/supabase";
+import type { Profile } from "@/types/database";
 
 interface ProfileResponse {
   data: Profile | null;

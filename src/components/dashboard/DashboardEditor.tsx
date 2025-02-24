@@ -1,8 +1,8 @@
 import { Plus, Save } from "lucide-react";
-import { useState, useEffect, type FC } from "@/lib/react";
-import { Button } from "../ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
-import { Card } from "../ui/card";
+import { useState, useEffect } from "@/lib/react";
+import { Button } from "@/components/ui";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui";
+import { Card } from "@/components/ui";
 import {
   Select,
   SelectContent,
@@ -10,13 +10,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { Input } from "../ui/input";
+import { Input } from "@/components/ui";
 import { toast } from "react-hot-toast";
-import { DASHBOARD_CARDS } from "../../config/dashboardCards";
-import { useDashboardStore } from "../../stores/dashboardStore";
-import type { DashboardCardType } from "../../types/dashboard";
-import { useAuthStore } from "../../stores/authStore";
-import { DEFAULT_DASHBOARD_LAYOUT } from "../../config/dashboardTheme";
+import { DASHBOARD_CARDS } from "@/config/dashboardCards";
+import { useDashboardStore } from "@/stores/dashboardStore";
+import type { DashboardCardType, DashboardProfile } from "@/types/dashboard";
+import { useAuthStore } from "@/stores/authStore";
+import { DEFAULT_DASHBOARD_LAYOUT } from "@/config/dashboardTheme";
 
 interface DashboardEditorProps {
   isOpen: boolean;

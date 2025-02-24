@@ -1,20 +1,20 @@
-import { PageHeader } from "../../components/ui/PageHeader";
-import { ReportingNav } from "../../components/navigation/ReportingNav";
+import { PageHeader } from "@/components/ui";
+import { ReportingNav } from "@/components/navigation/ReportingNav";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../../lib/supabase";
-import { MetricCard } from "../../components/ui/MetricCard";
-import { StatsCard } from "../../components/dashboard/StatsCard";
+import { supabase } from "@/lib/supabase";
+import { MetricCard } from "@/components/ui";
+import { StatsCard } from "@/components/dashboard/StatsCard";
 import {
   calculateWinRate,
   calculateProfitFactor,
   calculateAverageTrade,
   calculateMaxDrawdown,
 } from "../../utils/tradeCalculations";
-import { formatCurrency, formatPercentage } from "../../utils/formatters";
-import { PerformanceCharts } from "../../components/portfolio/PerformanceCharts";
+import { formatCurrency, formatPercentage } from "@/utils/formatters";
+import { PerformanceCharts } from "@/components/portfolio/PerformanceCharts";
 import { Activity, TrendingUp, DollarSign } from "lucide-react";
-import type { Trade } from "../../types/trade";
-import type { Trade as PortfolioTrade } from "../../types/portfolio";
+import type { Trade } from "@/types/trade";
+import type { Trade as PortfolioTrade } from "@/types/portfolio";
 
 export default function Performance() {
   console.log("Rendering Performance component");

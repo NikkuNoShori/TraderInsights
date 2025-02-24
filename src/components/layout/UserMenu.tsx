@@ -1,4 +1,4 @@
-import { useAuthStore } from "../../stores/authStore";
+import { useAuthStore } from "@/stores/authStore";
 import { useThemeStore } from "@/stores/themeStore";
 import { Link } from "react-router-dom";
 import { User, LogOut, Sun, Moon, Settings } from "lucide-react";

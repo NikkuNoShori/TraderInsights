@@ -9,8 +9,8 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import type { Trade as PortfolioTrade } from "../../types/portfolio";
-import type { Trade } from "../../types/trade";
+import type { Trade as PortfolioTrade } from "@/types/portfolio";
+import type { Trade } from "@/types/trade";
 
 // Common interface for chart data
 interface ChartData {

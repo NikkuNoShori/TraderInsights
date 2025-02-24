@@ -8,7 +8,7 @@ import {
   TableRow,
   TableCell,
 } from "@tremor/react";
-import { ErrorTrackingService, type ErrorStats } from "../../lib/services/errorTracking";
+import { ErrorTrackingService, type ErrorStats } from "@/lib/services/errorTracking";
 import { format } from "date-fns";
 
 interface ErrorLog {

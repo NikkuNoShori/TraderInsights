@@ -1,4 +1,4 @@
-import { useDeveloperStore } from "../stores/developerStore";
+import { useDeveloperStore } from "@/stores/developerStore";
 import { Switch } from "./ui/switch";
 import { Label } from "./ui/label";
 

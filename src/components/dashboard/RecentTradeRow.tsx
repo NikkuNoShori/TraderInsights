@@ -1,6 +1,6 @@
-import { formatCurrency } from "../../utils/formatters";
-import type { Trade } from "../../types/trade";
-import { cn } from "../../utils/cn";
+import { formatCurrency } from "@/utils/formatters";
+import type { Trade } from "@/types/trade";
+import { cn } from "@/utils/cn";
 
 interface RecentTradeRowProps {
   trade: Trade;

@@ -1,9 +1,9 @@
 import { restClient } from "@polygon.io/client-js";
-import { withRetry } from "../../utils/withRetry";
+import { withRetry } from "@/utils/withRetry";
 import { create } from "zustand";
-import { env } from "../../config/env";
+import { env } from "@/config/env";
 import { wsManager } from "./websocketManager";
-import type { TradeMessage } from "../../types/polygon";
+import type { TradeMessage } from "@/types/polygon";
 
 // Initialize REST client
 const rest = restClient(env.POLYGON_API_KEY);

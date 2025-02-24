@@ -4,7 +4,7 @@ import * as React from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faChevronDown } from "@fortawesome/free-solid-svg-icons";
-import { cn } from "../../utils/cn";
+import { cn } from "@/utils/cn";
 
 export interface SelectProps
   extends React.ComponentPropsWithoutRef<typeof SelectPrimitive.Root> {

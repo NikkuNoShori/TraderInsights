@@ -1,13 +1,13 @@
-import { Outlet } from "react-router-dom";
-import { useState } from "@/lib/react";
-import { MainNav } from "../navigation/MainNav";
-import { ErrorBoundary } from "../ErrorBoundary";
-import { Sidebar } from "./Sidebar";
+import { type ReactNode } from "@/lib/react";
+import { MainNav } from "@/components/navigation/MainNav";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import clsx from "clsx";
 
-export function Layout() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+interface LayoutProps {
+  children: ReactNode;
+}
 
+export function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen bg-background dark:bg-dark-bg flex">
       <MainNav />
@@ -19,7 +19,7 @@ export function Layout() {
         )}
       >
         <ErrorBoundary>
-          <Outlet />
+          {children}
         </ErrorBoundary>
       </main>
     </div>

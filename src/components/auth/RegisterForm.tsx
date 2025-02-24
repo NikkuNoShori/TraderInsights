@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { FormInput } from "../ui/FormInput";
+import { FormInput } from "@/components/ui";
 import { useState, type FormEvent, type ChangeEvent } from "@/lib/react";
 
 export function RegisterForm() {

@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import type { UserRole } from "@/types/auth";
 
 export default function ProfileSettings() {
   const navigate = useNavigate();
@@ -198,17 +199,17 @@ export default function ProfileSettings() {
                     "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium",
                     {
                       "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200":
-                        userProfile?.role === "admin",
+                        userProfile?.role === ("admin" as UserRole),
                       "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200":
-                        userProfile?.role === "developer",
+                        userProfile?.role === ("developer" as UserRole),
                       "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200":
-                        userProfile?.role === "user",
+                        userProfile?.role === ("user" as UserRole),
                     },
                   )}
                 >
-                  {userProfile?.role === "developer"
+                  {userProfile?.role === ("developer" as UserRole)
                     ? "Developer"
-                    : userProfile?.role === "admin"
+                    : userProfile?.role === ("admin" as UserRole)
                       ? "Administrator"
                       : "Standard User"}
                 </span>

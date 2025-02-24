@@ -1,13 +1,28 @@
-import { Input, InputProps } from "./input";
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectProps } from "./select";
-import { cn } from "../../lib/utils";
+import { Input, type InputProps } from "./input";
+import { Select, SelectTrigger, SelectContent, SelectItem } from "./select";
+import { cn } from "@/lib/utils";
+import { type ChangeEvent } from "react";
 
-interface FormFieldProps extends Omit<InputProps, 'type'> {
+type FormFieldBaseProps = Omit<InputProps, 'type' | 'onChange' | 'value'>;
+
+interface FormFieldSelectProps extends FormFieldBaseProps {
+  type: 'select';
+  options: { value: string; label: string }[];
+  value?: string;
+  onChange?: (value: string) => void;
+}
+
+interface FormFieldInputProps extends FormFieldBaseProps {
+  type?: Exclude<string, 'select'>;
+  options?: never;
+  value?: string | number;
+  onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
+}
+
+type FormFieldProps = (FormFieldSelectProps | FormFieldInputProps) & {
   label: string;
   error?: string;
-  type?: 'text' | 'select' | string;
-  options?: { value: string; label: string }[];
-}
+};
 
 export const FormField: React.FC<FormFieldProps> = ({
   label,
@@ -16,6 +31,7 @@ export const FormField: React.FC<FormFieldProps> = ({
   options,
   className,
   value,
+  onChange,
   ...props
 }) => {
   const inputClasses = cn(
@@ -23,13 +39,13 @@ export const FormField: React.FC<FormFieldProps> = ({
     error && "border-red-500 focus:ring-red-500",
   );
 
-  return (
-    <div className="mb-4">
-      <label className="block text-sm font-medium mb-1">{label}</label>
-      {type === "select" && options ? (
+  if (type === "select" && options) {
+    return (
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-1">{label}</label>
         <Select 
-          value={typeof value === 'string' ? value : value?.toString()} 
-          {...(props as Omit<SelectProps, 'value'>)}
+          value={value?.toString()} 
+          onValueChange={(val) => onChange?.(val)}
         >
           <SelectTrigger className={inputClasses}>
             <span>
@@ -45,9 +61,21 @@ export const FormField: React.FC<FormFieldProps> = ({
             ))}
           </SelectContent>
         </Select>
-      ) : (
-        <Input type={type} className={inputClasses} value={value} {...props} />
-      )}
+        {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-4">
+      <label className="block text-sm font-medium mb-1">{label}</label>
+      <Input 
+        type={type} 
+        className={inputClasses} 
+        value={value} 
+        onChange={onChange as FormFieldInputProps['onChange']}
+        {...props} 
+      />
       {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
     </div>
   );

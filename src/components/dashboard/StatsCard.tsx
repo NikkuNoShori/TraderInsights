@@ -2,7 +2,6 @@ import { type LucideIcon } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { Tooltip } from "@/components/ui/Tooltip";
 
 export interface StatsCardProps {
   title: string;

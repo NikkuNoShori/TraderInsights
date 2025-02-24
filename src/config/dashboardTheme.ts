@@ -1,5 +1,5 @@
 import type { Layout } from "react-grid-layout";
-import type { DashboardCardType } from "../types/dashboard";
+import type { DashboardCardType } from "@/types/dashboard";
 
 // Default enabled cards
 export const DEFAULT_ENABLED_CARDS: DashboardCardType[] = [

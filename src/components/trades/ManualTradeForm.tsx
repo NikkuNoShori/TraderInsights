@@ -2,8 +2,8 @@ import { useState } from "@/lib/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
+import { Button } from "@/components/ui";
+import { Input } from "@/components/ui";
 import {
   Select,
   SelectContent,
@@ -13,13 +13,19 @@ import {
 } from "../ui/select";
 import { useToast } from "@/hooks/useToast";
 import { useAuthStore } from "@/stores/authStore";
-import { supabase } from "@/lib/supabase";
-import type { Trade, CreateTradeData } from "@/types/trade";
+import type { Trade, CreateTradeData, TradeType, TradeSide, TradeStatus } from "@/types/trade";
+
+const optionDetailsSchema = z.object({
+  strike: z.number().positive("Strike price must be positive"),
+  expiration: z.string(),
+  option_type: z.enum(["call", "put"]),
+  contract_type: z.enum(["call", "put"]),
+});
 
 const tradeSchema = z.object({
-  symbol: z.string().min(1, "Symbol is required"),
-  type: z.enum(["stock", "option", "crypto", "forex"]),
-  side: z.enum(["Long", "Short"]),
+  symbol: z.string().min(1, "Symbol is required").toUpperCase(),
+  type: z.enum(["stock", "option", "crypto", "forex"] as const),
+  side: z.enum(["Long", "Short"] as const),
   quantity: z.number().positive("Quantity must be positive"),
   price: z.number().positive("Price must be positive"),
   entry_date: z.string(),
@@ -27,13 +33,8 @@ const tradeSchema = z.object({
   exit_price: z.number().positive("Exit price must be positive").optional(),
   exit_date: z.string().optional(),
   notes: z.string().optional(),
-  status: z.enum(["open", "closed", "pending"]).default("open"),
-  option_details: z.object({
-    strike: z.number().positive("Strike price must be positive"),
-    expiration: z.string(),
-    option_type: z.enum(["call", "put"]),
-    contract_type: z.enum(["call", "put"]),
-  }).optional(),
+  status: z.enum(["open", "closed", "pending"] as const).default("open"),
+  option_details: optionDetailsSchema.optional(),
 });
 
 type TradeFormData = z.infer<typeof tradeSchema>;
@@ -58,9 +59,9 @@ export function ManualTradeForm({ onSuccess, initialData }: ManualTradeFormProps
   } = useForm<TradeFormData>({
     resolver: zodResolver(tradeSchema),
     defaultValues: {
-      symbol: initialData?.symbol || "",
-      type: initialData?.type || "stock",
-      side: initialData?.side || "Long",
+      symbol: initialData?.symbol?.toUpperCase() || "",
+      type: (initialData?.type as TradeType) || "stock",
+      side: (initialData?.side as TradeSide) || "Long",
       quantity: initialData?.quantity || undefined,
       price: initialData?.price || undefined,
       entry_date: initialData?.entry_date || new Date().toISOString().split("T")[0],
@@ -68,10 +69,8 @@ export function ManualTradeForm({ onSuccess, initialData }: ManualTradeFormProps
       exit_price: initialData?.exit_price,
       exit_date: initialData?.exit_date,
       notes: initialData?.notes || "",
-      status: initialData?.status || "open",
-      ...(initialData?.type === "option" && {
-        option_details: initialData.option_details,
-      }),
+      status: (initialData?.status as TradeStatus) || "open",
+      option_details: initialData?.option_details,
     },
   });
 
@@ -83,18 +82,13 @@ export function ManualTradeForm({ onSuccess, initialData }: ManualTradeFormProps
 
     try {
       const tradeData: CreateTradeData = {
+        ...data,
         direction: data.side,
         total: data.quantity * data.price,
         date: data.entry_date,
         time: new Date().toISOString().split('T')[1],
-        ...data,
-        status: data.status || 'open',
-        option_details: data.type === 'option' && data.option_details ? {
-          strike: data.option_details.strike,
-          expiration: data.option_details.expiration,
-          option_type: data.option_details.option_type,
-          contract_type: data.option_details.contract_type
-        } : undefined
+        status: data.status,
+        option_details: isOption ? data.option_details : undefined,
       };
 
       onSuccess(tradeData);
@@ -105,9 +99,12 @@ export function ManualTradeForm({ onSuccess, initialData }: ManualTradeFormProps
     }
   };
 
-  const handleTypeChange = (value: string) => {
-    setValue("type", value as "stock" | "option" | "crypto" | "forex");
+  const handleTypeChange = (value: TradeType) => {
+    setValue("type", value);
     setIsOption(value === "option");
+    if (value !== "option") {
+      setValue("option_details", undefined);
+    }
   };
 
   return (
@@ -141,7 +138,7 @@ export function ManualTradeForm({ onSuccess, initialData }: ManualTradeFormProps
 
         <Select
           value={watch("side")}
-          onValueChange={(value) => setValue("side", value as "Long" | "Short")}
+          onValueChange={(value: TradeSide) => setValue("side", value)}
         >
           <SelectTrigger>
             <SelectValue placeholder="Side" />
@@ -192,7 +189,7 @@ export function ManualTradeForm({ onSuccess, initialData }: ManualTradeFormProps
             />
             <Select
               value={watch("option_details.option_type")}
-              onValueChange={(value) => setValue("option_details.option_type", value as "call" | "put")}
+              onValueChange={(value: "call" | "put") => setValue("option_details.option_type", value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Option Type" />

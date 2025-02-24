@@ -15,7 +15,7 @@ export default function Login() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const messageShownRef = useRef(false);
-  const { user, loading, initialized, signIn, signUp } = useAuthStore();
+  const { user, isLoading, isInitialized, signIn, signUp } = useAuthStore();
   const from = location.state?.from?.pathname || "/app/dashboard";
 
   // Clear developer mode on mount
@@ -25,11 +25,11 @@ export default function Login() {
 
   // Handle navigation after successful login
   useEffect(() => {
-    if (initialized && user && !loading) {
+    if (isInitialized && user && !isLoading) {
       console.log("Navigating to:", from);
       navigate(from, { replace: true });
     }
-  }, [initialized, user, loading, navigate, from]);
+  }, [isInitialized, user, isLoading, navigate, from]);
 
   // Show any messages passed via navigation state
   useEffect(() => {
@@ -121,7 +121,7 @@ export default function Login() {
           <div className="flex flex-col items-center gap-4">
             <LoadingButton
               type="submit"
-              isLoading={loading}
+              isLoading={isLoading}
               className="w-full px-4 py-2 text-sm flex items-center justify-center"
             >
               {isSignUp ? "Create Account" : "Sign In"}

@@ -1,5 +1,5 @@
-import { useState, type FC } from "@/lib/react";
-import { supabase } from "../lib/supabase";
+import { useState } from "@/lib/react";
+import { supabase } from "@/lib/supabase";
 
 const testUsers = [
   { email: "admin@test.com", password: "admin123", role: "Admin" },

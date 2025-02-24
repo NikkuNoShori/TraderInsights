@@ -1,5 +1,5 @@
 import { useSupabaseStore } from "@/stores/supabaseStore";
-import type { Trade } from "../../../types/trade";
+import type { Trade } from "@/types/trade";
 import { useQuery } from "@tanstack/react-query";
 
 const ITEMS_PER_PAGE = 10;

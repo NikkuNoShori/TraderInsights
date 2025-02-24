@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../lib/supabase";
-import type { Trade } from "../types/trade";
+import { supabase } from "@/lib/supabase";
+import type { Trade } from "@/types/trade";
 
 export function useTrade(id?: string) {
   return useQuery({

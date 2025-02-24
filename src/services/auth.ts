@@ -1,7 +1,7 @@
-import { supabase } from "../lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { AuthError, AuthResponse, User } from "@supabase/supabase-js";
-import { validateEmail, validatePassword } from "../utils/validation";
-import { authRateLimit } from "../lib/services/authRateLimit";
+import { validateEmail, validatePassword } from "@/utils/validation";
+import { authRateLimit } from "@/lib/services/authRateLimit";
 
 export interface UserMetadata {
   created_at: string;

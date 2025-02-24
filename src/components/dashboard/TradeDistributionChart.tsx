@@ -1,6 +1,6 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import type { Trade } from "../../types/trade";
-import type { TimeframeOption } from "../ui/TimeframeSelector";
+import type { Trade } from "@/types/trade";
+import type { TimeframeOption } from "@/components/ui/TimeframeSelector";
 
 interface TradeDistributionChartProps {
   trades: Trade[];
@@ -9,7 +9,6 @@ interface TradeDistributionChartProps {
 
 export function TradeDistributionChart({
   trades,
-  timeframe,
 }: TradeDistributionChartProps) {
   // Chart implementation here
   return (

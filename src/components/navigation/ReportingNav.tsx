@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { TrendingUp, PieChart, Calendar } from "lucide-react";
 import { clsx } from "clsx";
-import { Badge } from "../ui/Badge";
+import { Badge } from "@/components/ui";
 
 const reportLinks = [
   {

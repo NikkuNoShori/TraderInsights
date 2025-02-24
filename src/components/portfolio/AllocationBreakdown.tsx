@@ -5,7 +5,7 @@ import {
   Percent,
   AlertTriangle,
 } from "lucide-react";
-import type { Trade } from "../../types/portfolio";
+import type { Trade } from "@/types/portfolio";
 
 interface AllocationData {
   symbol: string;

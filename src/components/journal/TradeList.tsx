@@ -1,5 +1,5 @@
 import { TradeListItem } from "./TradeListItem";
-import type { Trade } from "../../types/trade";
+import type { Trade } from "@/types/trade";
 
 interface TradeListProps {
   trades: Trade[];

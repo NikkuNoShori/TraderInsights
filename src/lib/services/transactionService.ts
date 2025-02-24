@@ -1,5 +1,5 @@
-import { supabase } from "../supabase";
-import type { Transaction } from "../../types/database";
+import { supabase } from "@/lib/supabase";
+import type { Transaction } from "@/types/database";
 
 export const transactionService = {
   getTransactions: async (userId: string) => {

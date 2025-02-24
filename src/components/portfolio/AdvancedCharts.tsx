@@ -14,7 +14,7 @@ import {
   Scatter,
 } from "recharts";
 import { format, subDays, subMonths } from "date-fns";
-import type { Trade } from "../../types/portfolio";
+import type { Trade } from "@/types/portfolio";
 import { useState } from "@/lib/react";
 import type { ReactElement } from "@/lib/react";
 

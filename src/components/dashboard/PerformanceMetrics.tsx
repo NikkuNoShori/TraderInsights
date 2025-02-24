@@ -1,9 +1,9 @@
-import { memo, type FC } from "@/lib/react";
+import { memo } from "@/lib/react";
 import { StatsCard } from "./StatsCard";
 import { DollarSign } from "lucide-react";
-import type { Trade } from "../../types/trade";
-import { formatCurrency } from "../../utils/formatters";
-import type { TimeframeOption } from "../ui/TimeframeSelector";
+import type { Trade } from "@/types/trade";
+import { formatCurrency } from "@/utils/formatters";
+import type { TimeframeOption } from "@/components/ui/TimeframeSelector";
 
 interface PerformanceMetricsProps {
   trades: Trade[];

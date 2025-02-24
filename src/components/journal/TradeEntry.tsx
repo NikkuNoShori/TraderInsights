@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import { Trash2, Loader2 } from "lucide-react";
 import { useState, type FC } from "@/lib/react";
-import { Trade, formatTradeValue } from "../../types/trade";
+import { Trade, formatTradeValue } from "@/types/trade";
 
 interface TradeEntryProps {
   trade: Trade;

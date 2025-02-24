@@ -4,9 +4,9 @@ import { FileSpreadsheet, Upload, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/useToast";
 import { useAuthStore } from "@/stores/authStore";
-import { supabase } from "../../lib/supabase";
-import { Progress } from "../ui/progress";
-import { cn } from "../../lib/utils";
+import { supabase } from "@/lib/supabase";
+import { Progress } from "@/components/ui";
+import { cn } from "@/lib/utils";
 import { processTradeFile } from "@/lib/services/fileProcessing";
 import type { Trade } from "@/types/trade";
 

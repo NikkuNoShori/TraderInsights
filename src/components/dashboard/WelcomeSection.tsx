@@ -1,6 +1,6 @@
-import { useAuthStore } from "../../stores/authStore";
+import { useAuthStore } from "@/stores/authStore";
 import { Search } from "lucide-react";
-import { ErrorBoundary } from "../ErrorBoundary";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export function WelcomeSection() {
   const { user } = useAuthStore();

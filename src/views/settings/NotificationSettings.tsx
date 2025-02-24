@@ -1,4 +1,4 @@
-import { useAuthStore } from "../../stores/authStore";
+import { useAuthStore } from "@/stores/authStore";
 import { clsx } from "clsx";
 import { useState } from "@/lib/hooks";
 

@@ -1,7 +1,7 @@
-import { Router, Request, Response } from "express";
-import { authService } from "../../services/auth";
-import { getClientIp } from "../../utils/request";
-import { validateEmail, validatePassword } from "../../utils/validation";
+import { Router } from "express";
+import { authService } from "@/services/auth";
+import { getClientIp } from "@/utils/request";
+import { validateEmail, validatePassword } from "@/utils/validation";
 import { RequestHandler } from "express-serve-static-core";
 
 export const authRouter = Router();
@@ -30,7 +30,7 @@ interface EmailRequest {
 // Login route
 const loginHandler: RequestHandler<{}, any, LoginRequest> = async (
   req,
-  res,
+  res
 ) => {
   const { email, password } = req.body;
 
@@ -57,7 +57,7 @@ const loginHandler: RequestHandler<{}, any, LoginRequest> = async (
 // Sign up route
 const signupHandler: RequestHandler<{}, any, LoginRequest> = async (
   req,
-  res,
+  res
 ) => {
   const { email, password } = req.body;
 
@@ -111,7 +111,7 @@ const signoutHandler: RequestHandler = async (_req, res) => {
 // Reset password route
 const resetPasswordHandler: RequestHandler<{}, any, EmailRequest> = async (
   req,
-  res,
+  res
 ) => {
   const { email } = req.body;
 
@@ -143,7 +143,7 @@ const resetPasswordHandler: RequestHandler<{}, any, EmailRequest> = async (
 // Verify email route
 const verifyEmailHandler: RequestHandler<{}, any, TokenRequest> = async (
   req,
-  res,
+  res
 ) => {
   const { token } = req.body;
 
@@ -185,7 +185,7 @@ const getCurrentUserHandler: RequestHandler = async (_req, res) => {
 // Update user metadata route
 const updateMetadataHandler: RequestHandler<{}, any, MetadataRequest> = async (
   req,
-  res,
+  res
 ) => {
   const { metadata } = req.body;
 

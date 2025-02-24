@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "@/lib/react";
-import { getCurrentSession, type MarketSession } from "../utils/marketHours";
+import { getCurrentSession, type MarketSession } from "@/utils/marketHours";
 
 interface MarketHoursIndicatorProps {
   className?: string;

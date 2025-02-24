@@ -1,5 +1,5 @@
 import { DEFAULT_DASHBOARD_LAYOUT } from "./dashboardTheme";
-import type { DashboardProfile } from "../types/dashboard";
+import type { DashboardProfile } from "@/types/dashboard";
 
 export const DEFAULT_PROFILE: Omit<
   DashboardProfile,

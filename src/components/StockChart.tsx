@@ -9,9 +9,9 @@ import {
   Bar,
   Area,
 } from "recharts";
-import { formatCurrency } from "../utils/formatters";
+import { formatCurrency } from "@/utils/formatters";
 import type { ChartType } from "./ChartTypeSelector";
-import type { OHLC } from "../types/stock";
+import type { OHLC } from "@/types/stock";
 import type { ReactElement } from "@/lib/react";
 
 interface StockChartProps {

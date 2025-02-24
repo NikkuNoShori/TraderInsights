@@ -1,5 +1,5 @@
 import { useMemo } from "@/lib/react";
-import type { Trade } from "../../../types/trade";
+import type { Trade } from "@/types/trade";
 
 interface TradeMetrics {
   totalTrades: number;

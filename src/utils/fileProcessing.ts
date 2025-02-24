@@ -1,4 +1,4 @@
-import type { Trade } from "../types/trade";
+import type { Trade } from "@/types/trade";
 import { TradeImportError } from "./errorHandler";
 import { sanitizeTradeData } from "./fileValidation";
 import type { Row, Workbook, Worksheet } from "exceljs";
