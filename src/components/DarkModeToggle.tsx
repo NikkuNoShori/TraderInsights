@@ -1,5 +1,5 @@
 import { Moon, Sun } from "lucide-react";
-import { useTheme } from "../providers/ThemeProvider";
+import { useThemeStore } from "@/stores/themeStore";
 import { clsx } from "clsx";
 
 export interface DarkModeToggleProps {
@@ -8,7 +8,7 @@ export interface DarkModeToggleProps {
 }
 
 export function DarkModeToggle({ showLabel, className }: DarkModeToggleProps) {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme } = useThemeStore();
 
   return (
     <button

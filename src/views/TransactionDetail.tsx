@@ -17,7 +17,7 @@ import { OrdersList } from "@/components/transactions/OrdersList";
 import type { Transaction } from "@/types/database";
 import { TransactionModal } from "@/components/modals/TransactionModal";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthStore } from "@/stores/authStore";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { toast } from "react-hot-toast";
@@ -25,7 +25,7 @@ import { toast } from "react-hot-toast";
 export function TransactionDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user } = useAuthStore();
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

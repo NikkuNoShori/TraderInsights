@@ -1,5 +1,5 @@
 import { X, Loader2 } from "lucide-react";
-import { useTheme } from "@/providers/ThemeProvider";
+import { useThemeStore } from "@/stores/themeStore";
 import { cn } from "@/utils/cn";
 import type { WatchlistSymbol } from "@/types/stock";
 
@@ -14,7 +14,7 @@ export function WatchlistTable({
   onRemove,
   isLoading,
 }: WatchlistTableProps) {
-  const { theme } = useTheme();
+  const { theme } = useThemeStore();
 
   if (isLoading) {
     return (

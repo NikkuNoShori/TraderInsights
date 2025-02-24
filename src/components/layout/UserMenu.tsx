@@ -1,5 +1,5 @@
 import { useAuthStore } from "../../stores/authStore";
-import { useTheme } from "../../providers/ThemeProvider";
+import { useThemeStore } from "@/stores/themeStore";
 import { Link } from "react-router-dom";
 import { User, LogOut, Sun, Moon, Settings } from "lucide-react";
 import {
@@ -12,7 +12,11 @@ import {
 
 export function UserMenu() {
   const { user, signOut } = useAuthStore();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useThemeStore();
+
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
+  };
 
   if (!user) return null;
 

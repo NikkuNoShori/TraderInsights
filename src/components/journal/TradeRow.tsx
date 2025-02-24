@@ -1,7 +1,8 @@
-import { useNavigate } from "react-router-dom";
+import { useState } from "@/lib/react";
 import { ChevronDown, ChevronRight, Trash2 } from "lucide-react";
-import { formatCurrency, formatDate } from "../../utils/formatters";
-import type { Trade } from "../../types/trade";
+import { formatCurrency, formatDate } from "@/utils/formatters";
+import type { Trade } from "@/types/trade";
+import { useNavigate } from "react-router-dom";
 
 interface TradeRowProps {
   trade: Trade;

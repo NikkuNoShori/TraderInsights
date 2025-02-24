@@ -79,13 +79,17 @@ export function TransactionModal({
         price: Number(price),
         date,
         time,
+        entry_date: date,
         notes,
         status: "open",
+        total: Number(quantity) * Number(price),
+        entry_price: Number(price),
         ...(type === "option" && {
           option_details: {
             strike: Number(strike),
             expiration,
             option_type: optionType,
+            contract_type: optionType,
           },
         }),
       };

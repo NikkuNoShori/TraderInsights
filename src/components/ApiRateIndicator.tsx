@@ -1,13 +1,13 @@
 import { Activity } from "lucide-react";
 import { useApiStore } from "../lib/services/polygonApi";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuthStore } from "@/stores/authStore";
 import { clsx } from "clsx";
 
 export function ApiRateIndicator() {
-  const { role } = useAuth();
+  const { user } = useAuthStore();
   const { remainingCalls } = useApiStore();
 
-  if (role !== "developer") {
+  if (!user || user.role !== "developer") {
     return null;
   }
 

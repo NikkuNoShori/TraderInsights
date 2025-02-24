@@ -1,10 +1,10 @@
 import { useNavigate } from "react-router-dom";
-import { useTheme } from "@/providers/ThemeProvider";
+import { useThemeStore } from "@/stores/themeStore";
 import { AuthGuard } from "../components/AuthGuard";
 
 export function Screener() {
   const navigate = useNavigate();
-  const { theme } = useTheme();
+  const { theme } = useThemeStore();
 
   return (
     <AuthGuard>
