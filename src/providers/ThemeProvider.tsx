@@ -1,10 +1,8 @@
 import { useEffect } from "react";
 import { useThemeStore } from "@/stores/themeStore";
-import { ThemeContext } from "@/contexts/ThemeContext";
-import type { Theme } from "@/stores/themeStore";
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const { theme, setTheme } = useThemeStore();
+  const { theme } = useThemeStore();
 
   // Handle system theme changes
   useEffect(() => {
@@ -23,18 +21,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [theme]);
 
-  const getThemeClass = () => {
-    if (theme === "system") {
-      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    }
-    return theme;
-  };
-
-  return (
-    <ThemeContext.Provider value={{ theme, setTheme, getThemeClass }}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <>{children}</>;
 }
 
 // Re-export the hook for convenience

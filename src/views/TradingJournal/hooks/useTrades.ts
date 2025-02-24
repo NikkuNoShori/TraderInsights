@@ -1,29 +1,29 @@
-import { useQuery } from "@tanstack/react-query";
-import { useSupabase } from "../../../contexts/SupabaseContext";
+import { useSupabaseStore } from "@/stores/supabaseStore";
 import type { Trade } from "../../../types/trade";
+import { useQuery } from "@tanstack/react-query";
 
 const ITEMS_PER_PAGE = 10;
 
 interface TradesResponse {
   trades: Trade[];
-  totalPages: number;
+  totalCount: number;
 }
 
-export function useTrades(page: number = 1) {
-  const { supabase, user } = useSupabase();
+export function useTrades(userId?: string, page: number = 1) {
+  const { client: supabase } = useSupabaseStore();
 
   return useQuery<TradesResponse, Error>({
-    queryKey: ["trades", user?.id, page],
+    queryKey: ["trades", userId, page],
     queryFn: async () => {
-      if (!user) {
-        throw new Error("User not authenticated");
+      if (!userId) {
+        throw new Error("User ID is required");
       }
 
       // First get total count
       const { count, error: countError } = await supabase
         .from("trades")
         .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id);
+        .eq("user_id", userId);
 
       if (countError) throw countError;
 
@@ -31,18 +31,18 @@ export function useTrades(page: number = 1) {
       const { data, error } = await supabase
         .from("trades")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .range((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE - 1);
 
       if (error) throw error;
 
       return {
-        trades: (data || []) as Trade[],
-        totalPages: Math.ceil((count || 0) / ITEMS_PER_PAGE),
+        trades: data || [],
+        totalCount: count || 0,
       };
     },
-    enabled: !!user,
+    enabled: !!userId,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 }

@@ -1,7 +1,8 @@
 import { Plus, Save } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
-import { Card, CardHeader, CardTitle, CardDescription } from "../ui/card";
+import { Card } from "../ui/card";
 import {
   Select,
   SelectContent,
@@ -10,41 +11,57 @@ import {
   SelectValue,
 } from "../ui/select";
 import { Input } from "../ui/input";
-import { Label } from "../ui/label";
+import { toast } from "react-hot-toast";
 import { DASHBOARD_CARDS } from "../../config/dashboardCards";
-import { useDashboard } from "../../contexts/DashboardContext";
+import { useDashboardStore } from "../../stores/dashboardStore";
 import type { DashboardCardType } from "../../types/dashboard";
-import { toast } from "../ui/use-toast";
+import { useAuthStore } from "../../stores/authStore";
+import { DEFAULT_DASHBOARD_LAYOUT } from "../../config/dashboardTheme";
 
 interface DashboardEditorProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export function DashboardEditor({ isOpen, onClose }: DashboardEditorProps) {
-  const { config, createDashboard, switchDashboard, updateDashboard } =
-    useDashboard();
-  const [selectedDashboard, setSelectedDashboard] = React.useState(
-    config.currentLayout,
+// Simple Label component
+function Label({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) {
+  return (
+    <label
+      htmlFor={htmlFor}
+      className="text-sm font-medium text-gray-700 dark:text-gray-300"
+    >
+      {children}
+    </label>
   );
-  const [isCreatingNew, setIsCreatingNew] = React.useState(false);
-  const [dashboardName, setDashboardName] = React.useState("");
-  const [selectedCards, setSelectedCards] = React.useState<
-    Set<DashboardCardType>
-  >(new Set(config.enabledCards));
+}
+
+export function DashboardEditor({ isOpen, onClose }: DashboardEditorProps) {
+  const user = useAuthStore((state) => state.user);
+  const {
+    currentProfile,
+    currentProfileId,
+    profiles,
+    createProfile,
+    setCurrentProfile,
+    updateProfile,
+  } = useDashboardStore();
+
+  const [selectedProfileId, setSelectedProfileId] = useState(currentProfileId);
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
+  const [profileName, setProfileName] = useState("");
+  const [selectedCards, setSelectedCards] = useState<Set<DashboardCardType>>(
+    new Set(currentProfile?.enabledCards || [])
+  );
 
   // Reset state when dialog opens
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
-      const currentDashboard = config.layouts.find(
-        (l) => l.id === config.currentLayout,
-      );
-      setSelectedDashboard(config.currentLayout);
-      setDashboardName(currentDashboard?.name || "");
-      setSelectedCards(new Set(config.enabledCards));
+      setSelectedProfileId(currentProfileId);
+      setProfileName(currentProfile?.name || "");
+      setSelectedCards(new Set(currentProfile?.enabledCards || []));
       setIsCreatingNew(false);
     }
-  }, [isOpen, config]);
+  }, [isOpen, currentProfile, currentProfileId]);
 
   const handleToggleCard = (cardType: DashboardCardType) => {
     const newSelected = new Set(selectedCards);
@@ -56,76 +73,65 @@ export function DashboardEditor({ isOpen, onClose }: DashboardEditorProps) {
     setSelectedCards(newSelected);
   };
 
-  const handleDashboardChange = (dashboardId: string) => {
-    if (dashboardId === "new") {
+  const handleProfileChange = (profileId: string) => {
+    if (profileId === "new") {
       setIsCreatingNew(true);
-      setDashboardName("");
-      setSelectedCards(new Set(config.enabledCards));
+      setProfileName("");
+      setSelectedCards(new Set(currentProfile?.enabledCards || []));
     } else {
       setIsCreatingNew(false);
-      const dashboard = config.layouts.find((l) => l.id === dashboardId);
-      if (dashboard) {
-        setSelectedDashboard(dashboardId);
-        setDashboardName(dashboard.name);
-        setSelectedCards(new Set(dashboard.enabledCards));
+      const profile = profiles.find((p) => p.id === profileId);
+      if (profile) {
+        setSelectedProfileId(profileId);
+        setProfileName(profile.name);
+        setSelectedCards(new Set(profile.enabledCards));
       }
     }
   };
 
   const handleSave = async () => {
     try {
-      if (!dashboardName.trim()) {
-        toast({
-          title: "Error",
-          description: "Please enter a dashboard name",
-          variant: "destructive",
-        });
+      if (!profileName.trim()) {
+        toast.error("Please enter a dashboard name");
         return;
       }
 
       if (selectedCards.size === 0) {
-        toast({
-          title: "Error",
-          description: "Please select at least one card",
-          variant: "destructive",
-        });
+        toast.error("Please select at least one card");
+        return;
+      }
+
+      if (!user) {
+        toast.error("You must be logged in to save a dashboard");
         return;
       }
 
       if (isCreatingNew) {
-        await createDashboard({
-          name: dashboardName.trim(),
+        await createProfile({
+          userId: user.id,
+          name: profileName.trim(),
+          isDefault: profiles.length === 0,
           enabledCards: Array.from(selectedCards),
+          layout: DEFAULT_DASHBOARD_LAYOUT,
         });
-        toast({
-          title: "Success",
-          description: "Dashboard created successfully",
-        });
+        toast.success("Dashboard created successfully");
       } else {
-        await updateDashboard(selectedDashboard, {
-          name: dashboardName.trim(),
+        await updateProfile(selectedProfileId, {
+          name: profileName.trim(),
           enabledCards: Array.from(selectedCards),
         });
-        toast({
-          title: "Success",
-          description: "Dashboard updated successfully",
-        });
+        toast.success("Dashboard updated successfully");
       }
 
       // Switch to the dashboard if it's not currently selected
-      if (selectedDashboard !== config.currentLayout) {
-        switchDashboard(selectedDashboard);
+      if (selectedProfileId !== currentProfileId) {
+        setCurrentProfile(selectedProfileId);
       }
 
       onClose();
     } catch (error) {
       console.error("Error saving dashboard:", error);
-      toast({
-        title: "Error",
-        description:
-          error instanceof Error ? error.message : "Failed to save dashboard",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : "Failed to save dashboard");
     }
   };
 
@@ -140,16 +146,16 @@ export function DashboardEditor({ isOpen, onClose }: DashboardEditorProps) {
           <div className="space-y-2">
             <Label>Select Dashboard</Label>
             <Select
-              value={isCreatingNew ? "new" : selectedDashboard}
-              onValueChange={handleDashboardChange}
+              value={isCreatingNew ? "new" : selectedProfileId}
+              onValueChange={handleProfileChange}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select a dashboard" />
               </SelectTrigger>
               <SelectContent>
-                {config.layouts.map((layout) => (
-                  <SelectItem key={layout.id} value={layout.id}>
-                    {layout.name} {layout.isDefault && "(Default)"}
+                {profiles.map((profile) => (
+                  <SelectItem key={profile.id} value={profile.id}>
+                    {profile.name} {profile.isDefault && "(Default)"}
                   </SelectItem>
                 ))}
                 <SelectItem value="new">
@@ -166,8 +172,8 @@ export function DashboardEditor({ isOpen, onClose }: DashboardEditorProps) {
             <Label htmlFor="name">Dashboard Name</Label>
             <Input
               id="name"
-              value={dashboardName}
-              onChange={(e) => setDashboardName(e.target.value)}
+              value={profileName}
+              onChange={(e) => setProfileName(e.target.value)}
               placeholder="Enter dashboard name"
             />
           </div>
@@ -185,14 +191,12 @@ export function DashboardEditor({ isOpen, onClose }: DashboardEditorProps) {
                   }`}
                   onClick={() => handleToggleCard(type as DashboardCardType)}
                 >
-                  <CardHeader className="p-4">
-                    <CardTitle className="text-sm font-medium">
-                      {card.label}
-                    </CardTitle>
-                    <CardDescription className="text-xs">
+                  <div className="p-4">
+                    <h3 className="text-sm font-medium">{card.label}</h3>
+                    <p className="text-xs text-muted-foreground">
                       {card.description}
-                    </CardDescription>
-                  </CardHeader>
+                    </p>
+                  </div>
                 </Card>
               ))}
             </div>
@@ -205,7 +209,7 @@ export function DashboardEditor({ isOpen, onClose }: DashboardEditorProps) {
           </Button>
           <Button
             onClick={handleSave}
-            disabled={!dashboardName.trim() || selectedCards.size === 0}
+            disabled={!profileName.trim() || selectedCards.size === 0}
           >
             <Save className="h-4 w-4 mr-2" />
             {isCreatingNew ? "Create Dashboard" : "Save Changes"}
