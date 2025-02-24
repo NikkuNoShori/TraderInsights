@@ -1,17 +1,22 @@
-import type { PropsWithChildren } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "../lib/queryClient";
+import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "./ThemeProvider";
-import { AuthProvider } from "../contexts/AuthContext";
-import { QueryClient } from "@tanstack/react-query";
+import { ErrorBoundary } from "../components/ErrorBoundary";
 
-const queryClient = new QueryClient();
+interface AppProviderProps {
+  children: React.ReactNode;
+}
 
-export function AppProvider({ children }: PropsWithChildren) {
+export function AppProvider({ children }: AppProviderProps) {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <AuthProvider>{children}</AuthProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          {children}
+          <Toaster position="bottom-right" />
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }

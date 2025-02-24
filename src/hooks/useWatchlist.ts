@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { useSupabase } from "../contexts/SupabaseContext";
+import { useSupabaseStore } from "@/stores/supabaseStore";
+import type { WatchlistSymbol } from "../types/stock";
 
 interface WatchlistItem {
   id: string;
@@ -9,10 +10,10 @@ interface WatchlistItem {
 }
 
 export function useWatchlist() {
+  const { client: supabase } = useSupabaseStore();
   const [items, setItems] = useState<WatchlistItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const supabase = useSupabase();
 
   const fetchWatchlist = useCallback(async () => {
     try {
@@ -25,7 +26,7 @@ export function useWatchlist() {
       setItems(data || []);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to fetch watchlist",
+        err instanceof Error ? err.message : "Failed to fetch watchlist"
       );
     } finally {
       setIsLoading(false);
@@ -36,43 +37,36 @@ export function useWatchlist() {
     fetchWatchlist();
   }, [fetchWatchlist]);
 
-  const addToWatchlist = async (symbol: string, notes?: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("watchlist")
-        .insert([{ symbol: symbol.toUpperCase(), notes }])
-        .select()
-        .single();
-
-      if (error) throw error;
-      setItems([data, ...items]);
-      return data;
-    } catch (err) {
-      throw err instanceof Error
-        ? err
-        : new Error("Failed to add to watchlist");
-    }
+  const addSymbol = async (symbol: string, userId: string) => {
+    const { error } = await supabase
+      .from("watchlist")
+      .insert([{ symbol, user_id: userId }]);
+    return { error };
   };
 
-  const removeFromWatchlist = async (id: string) => {
-    try {
-      const { error } = await supabase.from("watchlist").delete().eq("id", id);
+  const removeSymbol = async (symbol: string, userId: string) => {
+    const { error } = await supabase
+      .from("watchlist")
+      .delete()
+      .match({ symbol, user_id: userId });
+    return { error };
+  };
 
-      if (error) throw error;
-      setItems(items.filter((item) => item.id !== id));
-    } catch (err) {
-      throw err instanceof Error
-        ? err
-        : new Error("Failed to remove from watchlist");
-    }
+  const getWatchlist = async (userId: string) => {
+    const { data, error } = await supabase
+      .from("watchlist")
+      .select("*")
+      .eq("user_id", userId);
+    return { data: data as WatchlistSymbol[], error };
   };
 
   return {
     items,
     isLoading,
     error,
-    addToWatchlist,
-    removeFromWatchlist,
+    addSymbol,
+    removeSymbol,
+    getWatchlist,
     refresh: fetchWatchlist,
   };
 }
