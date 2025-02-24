@@ -1,4 +1,4 @@
-import type { UserRole, UserPermissions } from "../types/auth";
+import type { UserRole, UserPermissions } from "@/types/auth";
 
 const rolePermissions: Record<UserRole, UserPermissions> = {
   admin: {

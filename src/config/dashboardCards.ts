@@ -3,8 +3,8 @@ import type {
   DashboardCardType,
   DashboardConfig,
 } from "../types/dashboard";
-import { PlaybookCard } from "../components/dashboard/PlaybookCard";
-import { RecentTradesCard } from "../components/dashboard/RecentTradesCard";
+import { PlaybookCard } from "@/components/dashboard/PlaybookCard";
+import { RecentTradesCard } from "@/components/dashboard/RecentTradesCard";
 import type { Layout } from "react-grid-layout";
 import {
   DEFAULT_DASHBOARD_LAYOUT,

@@ -1,6 +1,6 @@
 import { useLocation } from "react-router-dom";
-import { PageHeader } from "../../components/ui/PageHeader";
-import { SettingsNav } from "../../components/navigation/SettingsNav";
+import { PageHeader } from "@/components/ui";
+import { SettingsNav } from "@/components/navigation/SettingsNav";
 import ProfileSettings from "./ProfileSettings";
 import SecuritySettings from "./SecuritySettings";
 import { AppearanceSettings } from "./AppearanceSettings";

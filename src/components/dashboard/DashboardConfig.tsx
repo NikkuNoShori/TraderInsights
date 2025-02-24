@@ -1,7 +1,7 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import type { DashboardCardType } from "../../types/dashboard";
-import { Button } from "../ui/button";
-import { DEFAULT_ENABLED_CARDS } from "../../config/dashboard";
+import { useEffect } from "@/lib/react";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import type { DashboardCardType } from "@/types/dashboard";
+import { Button } from "@/components/ui";
 
 interface DashboardConfigProps {
   enabledCards: DashboardCardType[];

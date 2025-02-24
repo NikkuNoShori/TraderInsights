@@ -3,8 +3,8 @@ import type { MouseEvent as ReactMouseEvent } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
-  LineChart,
   BookOpen,
+  LineChart,
   List,
   Briefcase,
   ChevronLeft,
@@ -13,13 +13,14 @@ import {
   User,
   Settings,
   LogOut,
+  Menu,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { clsx } from "clsx";
-import { Tooltip } from "../ui/Tooltip";
+import { Tooltip } from "@/components/ui";
 import { useAuthStore } from "@/stores/authStore";
-import { DarkModeToggle } from "../DarkModeToggle";
-import { Badge } from "../ui/Badge";
+import { DarkModeToggle } from "@/components/ui/DarkModeToggle";
+import { Badge } from "@/components/ui";
 import { cn } from "@/utils/cn";
 
 type NavCategory = {

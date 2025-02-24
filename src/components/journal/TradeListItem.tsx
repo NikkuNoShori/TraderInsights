@@ -1,18 +1,17 @@
-import { useState, useMemo, type FC } from "@/lib/react";
+import { useState, useMemo } from "@/lib/react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChevronRight,
   faChevronDown,
 } from "@fortawesome/free-solid-svg-icons";
-import { cn } from "../../utils/cn";
-import { formatCurrency } from "../../utils/formatters";
-import type { Trade } from "../../types/trade";
-import { calculateTradeMetrics } from "../../utils/calculateTradeMetrics";
+import { cn } from "@/utils/cn";
+import { formatCurrency } from "@/utils/formatters";
+import type { Trade } from "@/types/trade";
+import { calculateTradeMetrics } from "@/utils/calculateTradeMetrics";
 
 interface TradeListItemProps {
   trade: Trade;
   onDelete?: (id: string) => void;
-  onEdit?: (trade: Trade) => void;
 }
 
 interface TradeMetrics {
@@ -23,7 +22,7 @@ interface TradeMetrics {
   profitRatio?: number;
 }
 
-export function TradeListItem({ trade, onDelete }: TradeListItemProps) {
+export function TradeListItem({ trade }: TradeListItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const metrics = useMemo((): TradeMetrics => calculateTradeMetrics(trade), [trade]);

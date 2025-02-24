@@ -1,5 +1,5 @@
-import { useThemeChange } from "../hooks/useThemeChange";
-import { themePresets } from "../lib/theme/constants";
+import { useThemeChange } from "@/hooks/useThemeChange";
+import { themePresets } from "@/lib/theme/constants";
 
 export function Example() {
   const { requestThemeChange } = useThemeChange();

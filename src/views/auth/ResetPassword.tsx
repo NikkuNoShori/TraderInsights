@@ -1,11 +1,11 @@
 import { useState, useEffect } from "@/lib/hooks";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-hot-toast";
-import { supabase } from "../../lib/supabase";
-import { validatePassword } from "../../utils/validation";
-import { FormInput } from "../../components/ui/FormInput";
-import { LoadingButton } from "../../components/LoadingButton";
-import { useAuthStore } from "../../stores/authStore";
+import { supabase } from "@/lib/supabase";
+import { validatePassword } from "@/utils/validation";
+import { FormInput } from "@/components/ui";
+import { LoadingButton } from "@/components/LoadingButton";
+import { useAuthStore } from "@/stores/authStore";
 
 export default function ResetPassword() {
   const [password, setPassword] = useState("");

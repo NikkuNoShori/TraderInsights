@@ -1,4 +1,4 @@
-import type { DashboardCardType } from "../types/dashboard";
+import type { DashboardCardType } from "@/types/dashboard";
 
 export interface RouteConfig {
   path: string;

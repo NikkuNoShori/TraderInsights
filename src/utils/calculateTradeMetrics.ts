@@ -1,4 +1,4 @@
-import type { Trade } from "../types/trade";
+import type { Trade } from "@/types/trade";
 
 export function calculateTradeMetrics(trade: Trade) {
   const isComplete = trade.status === "closed";

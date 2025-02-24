@@ -1,8 +1,8 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "../../lib/supabase";
-import { Card } from "../ui/card";
-import { StatsCard } from "../dashboard/StatsCard";
+import { supabase } from "@/lib/supabase";
+import { Card } from "@/components/ui";
+import { StatsCard } from "@/components/dashboard/StatsCard";
 import { Activity, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 

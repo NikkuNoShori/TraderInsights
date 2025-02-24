@@ -1,4 +1,4 @@
-import { Trade } from "../types/trade";
+import { Trade } from "@/types/trade";
 
 export const calculateWinRate = (trades: Trade[]): number => {
   if (!trades.length) return 0;

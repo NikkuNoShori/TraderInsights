@@ -1,6 +1,6 @@
 import React from "react";
-import { PageHeader } from "../../components/ui/PageHeader";
-import { AuthMonitoring } from "../../components/admin/AuthMonitoring";
+import { PageHeader } from "@/components/ui";
+import { AuthMonitoring } from "@/components/admin/AuthMonitoring";
 import { Shield } from "lucide-react";
 
 export default function SecurityMonitoring() {

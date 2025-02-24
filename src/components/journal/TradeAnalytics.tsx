@@ -7,7 +7,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import type { Trade } from "../../types/trade";
+import type { Trade } from "@/types/trade";
 
 interface TradeAnalyticsProps {
   trades: Trade[];

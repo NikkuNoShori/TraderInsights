@@ -1,6 +1,6 @@
 import axios from "axios";
 import { parseISO, format } from "date-fns";
-import type { OHLC, StockQuote } from "../types/stock";
+import type { OHLC, StockQuote } from "@/types/stock";
 
 const API_KEY =
   import.meta.env.VITE_ALPHA_VANTAGE_API_KEY || "2WZT5WFVQM1I5R14";

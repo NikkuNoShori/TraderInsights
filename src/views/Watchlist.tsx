@@ -1,7 +1,7 @@
 import { useState, useEffect } from "@/lib/react";
-import { PageHeader } from "../components/ui/PageHeader";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Construction } from "lucide-react";
-import { PageLoading } from "../components/ui/PageLoading";
+import { PageLoading } from "@/components/ui/PageLoading";
 
 export default function Watchlist() {
   const [isLoading, setIsLoading] = useState(true);

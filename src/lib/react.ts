@@ -1,32 +1,5 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo,
-  ReactNode,
-  ReactElement,
-  FC,
-  ComponentType,
-  ErrorInfo,
-  Suspense,
-  lazy,
-  Component,
-  memo,
-  type PropsWithChildren,
-  type ChangeEvent,
-  type FormEvent,
-  type SetStateAction,
-  type RefAttributes,
-  type JSXElementConstructor,
-} from "react";
+import * as React from "react";
 
-// Re-export React
-export default React;
-
-// Export hooks
 export {
   createContext,
   useContext,
@@ -39,19 +12,17 @@ export {
   lazy,
   Component,
   memo,
-};
+  type ReactNode,
+  type ReactElement,
+  type FC,
+  type ComponentType,
+  type ErrorInfo,
+  type PropsWithChildren,
+  type ChangeEvent,
+  type FormEvent,
+  type SetStateAction,
+  type RefAttributes,
+  type JSXElementConstructor,
+} from "react";
 
-// Export types
-export type {
-  ReactNode,
-  ReactElement,
-  FC,
-  ComponentType,
-  ErrorInfo,
-  PropsWithChildren,
-  ChangeEvent,
-  FormEvent,
-  SetStateAction,
-  RefAttributes,
-  JSXElementConstructor,
-};
+export default React;

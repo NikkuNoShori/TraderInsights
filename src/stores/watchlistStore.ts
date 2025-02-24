@@ -1,10 +1,10 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { supabase } from "../lib/supabase";
-import type { StockQuote, WatchlistSymbol } from "../types/stock";
-import { fetchStockQuote } from "../services/alphaVantage";
-import { withRetry } from "../utils/withRetry";
-import { isFeatureAccessible } from "../utils/marketHours";
+import { supabase } from "@/lib/supabase";
+import type { StockQuote, WatchlistSymbol } from "@/types/stock";
+import { fetchStockQuote } from "@/services/alphaVantage";
+import { withRetry } from "@/utils/withRetry";
+import { isFeatureAccessible } from "@/utils/marketHours";
 
 interface WatchlistState {
   symbols: string[];

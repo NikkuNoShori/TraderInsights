@@ -1,9 +1,9 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Layout } from "react-grid-layout";
-import type { DashboardProfile } from "../types/dashboard";
-import { supabase } from "../lib/supabase";
-import { config } from "../config";
+import type { DashboardProfile } from "@/types/dashboard";
+import { supabase } from "@/lib/supabase";
+import { config } from "@/config";
 import {
   DEFAULT_DASHBOARD_LAYOUT,
   DEFAULT_ENABLED_CARDS,

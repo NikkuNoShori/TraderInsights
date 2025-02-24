@@ -1,5 +1,5 @@
-import { formatCurrency, formatDate } from "../../utils/formatters";
-import type { TransactionOrder } from "../../types/database";
+import { formatCurrency, formatDate } from "@/utils/formatters";
+import type { TransactionOrder } from "@/types/database";
 
 interface OrdersListProps {
   orders: TransactionOrder[];

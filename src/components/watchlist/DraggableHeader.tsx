@@ -1,6 +1,6 @@
 import { GripVertical } from "lucide-react";
 import { clsx } from "clsx";
-import type { WatchlistColumn } from "../../types/watchlist";
+import type { WatchlistColumn } from "@/types/watchlist";
 
 interface DraggableHeaderProps {
   column: WatchlistColumn;

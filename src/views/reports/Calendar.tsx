@@ -1,5 +1,5 @@
-import { PageHeader } from "../../components/ui/PageHeader";
-import { ReportingNav } from "../../components/navigation/ReportingNav";
+import { PageHeader } from "@/components/ui";
+import { ReportingNav } from "@/components/navigation/ReportingNav";
 
 export default function Calendar() {
   return (

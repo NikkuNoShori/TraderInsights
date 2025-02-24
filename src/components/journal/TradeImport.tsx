@@ -1,8 +1,8 @@
 import { useState, type ChangeEvent } from "@/lib/react";
-import { useAuthStore } from "../../stores/authStore";
-import { supabase } from "../../lib/supabase";
-import { Button } from "../ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import { useAuthStore } from "@/stores/authStore";
+import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui";
 import {
   Select,
   SelectContent,
@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "../ui/select";
 import Papa from "papaparse";
-import type { SchwabTradeImport } from "../../types/broker";
+import type { SchwabTradeImport } from "@/types/broker";
 import type { ParseResult } from "papaparse";
 
 interface TradeImportProps {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "@/lib/react";
 import { useSupabaseStore } from "@/stores/supabaseStore";
-import type { WatchlistSymbol } from "../types/stock";
+import type { WatchlistSymbol } from "@/types/stock";
 
 interface WatchlistItem {
   id: string;

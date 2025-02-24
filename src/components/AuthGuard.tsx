@@ -1,30 +1,27 @@
+import { type ReactNode } from "@/lib/react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuthStore } from "../stores/authStore";
-import { LoadingScreen } from "./ui/LoadingScreen";
+import { useAuthStore } from "@/stores/authStore";
+import { Spinner } from "./ui/Spinner";
 
-export function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, loading, error, initialized } = useAuthStore();
+interface AuthGuardProps {
+  children: ReactNode;
+}
+
+export function AuthGuard({ children }: AuthGuardProps) {
+  const { user, isInitialized } = useAuthStore();
   const location = useLocation();
 
-  // Show loading screen while checking auth or not initialized
-  if (loading || !initialized) {
-    return <LoadingScreen />;
-  }
-
-  // Redirect to login if not authenticated
-  if (!user || error) {
+  if (!isInitialized) {
     return (
-      <Navigate
-        to="/auth/login"
-        state={{
-          from: location.pathname,
-          message: error ? error.message : "Please log in to continue.",
-        }}
-        replace
-      />
+      <div className="flex items-center justify-center min-h-screen">
+        <Spinner size="lg" className="text-primary" />
+      </div>
     );
   }
 
-  // User is authenticated, render children
+  if (!user) {
+    return <Navigate to="/auth/login" state={{ from: location }} replace />;
+  }
+
   return <>{children}</>;
 }

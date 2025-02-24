@@ -1,4 +1,4 @@
-import { Trade } from "../types/trade";
+import { Trade } from "@/types/trade";
 
 export const formatTradeValue = (value: number): string => {
   if (isNaN(value)) return "$0.00";

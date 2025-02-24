@@ -1,6 +1,6 @@
-import { supabase } from "../supabase";
-import { calculateTransactionStatus } from "../../utils/transactions";
-import type { Transaction } from "../../types/database";
+import { supabase } from "@/lib/supabase";
+import { calculateTransactionStatus } from "@/utils/transactions";
+import type { Transaction } from "@/types/database";
 
 export const journalService = {
   getTransactions: async (userId: string) => {

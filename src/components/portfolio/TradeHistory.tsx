@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { ArrowUpDown, Filter, Search } from "lucide-react";
-import type { Trade } from "../../types/portfolio";
+import type { Trade } from "@/types/portfolio";
 import { useState } from "@/lib/react";
 import { cn } from "@/utils/cn";
 

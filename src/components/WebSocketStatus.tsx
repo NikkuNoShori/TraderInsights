@@ -1,6 +1,6 @@
-import { useWebSocketStore } from "../lib/services/websocketManager";
+import { useWebSocketStore } from "@/lib/services/websocketManager";
 import { Wifi, WifiOff } from "lucide-react";
-import { cn } from "../utils/cn";
+import { cn } from "@/utils/cn";
 
 export function WebSocketStatus() {
   const { isConnected, isConnecting, lastError, reconnectAttempts } = useWebSocketStore();

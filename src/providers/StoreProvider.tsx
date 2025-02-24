@@ -2,7 +2,11 @@ import { useEffect, type ReactNode } from "@/lib/react";
 import { useAuthStore } from "@/stores/authStore";
 import { supabase } from "@/lib/supabase";
 
-export function StoreProvider({ children }: { children: ReactNode }) {
+interface StoreProviderProps {
+  children: ReactNode;
+}
+
+export function StoreProvider({ children }: StoreProviderProps) {
   const { handleAuthStateChange, setInitialized } = useAuthStore();
 
   useEffect(() => {
@@ -26,7 +30,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event);
       handleAuthStateChange(event, session);
     });
 

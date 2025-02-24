@@ -6,7 +6,7 @@ import {
   Activity,
   Percent,
 } from "lucide-react";
-import type { PortfolioMetrics } from "../../types/portfolio";
+import type { PortfolioMetrics } from "@/types/portfolio";
 
 interface MetricCardProps {
   title: string;

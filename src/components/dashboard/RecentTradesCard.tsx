@@ -1,6 +1,6 @@
-import { cn } from "../../utils/cn";
-import { formatCurrency } from "../../utils/formatters";
-import type { Trade } from "../../types/trade";
+import { cn } from "@/utils/cn";
+import { formatCurrency } from "@/utils/formatters";
+import type { Trade } from "@/types/trade";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowUp, faArrowDown } from "@fortawesome/free-solid-svg-icons";
 

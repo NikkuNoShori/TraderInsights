@@ -1,4 +1,4 @@
-import { Trade, TradeMetrics, PortfolioMetrics } from "../types/portfolio";
+import { Trade, TradeMetrics, PortfolioMetrics } from "@/types/portfolio";
 
 export function calculateTradeMetrics(trades: Trade[]): TradeMetrics[] {
   // Group trades by symbol

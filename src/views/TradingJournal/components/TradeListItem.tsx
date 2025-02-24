@@ -1,8 +1,8 @@
 import { format } from "date-fns";
-import { Trade } from "../../../types/trade";
-import { Button } from "../../../components/ui/button";
+import { Trade } from "@/types/trade";
+import { Button } from "@/components/ui";
 import { Pencil, Trash2 } from "lucide-react";
-import { formatCurrency } from "../../../utils/formatters";
+import { formatCurrency } from "@/utils/formatters";
 import { StatusBadge } from "./StatusBadge";
 
 interface TradeListItemProps {

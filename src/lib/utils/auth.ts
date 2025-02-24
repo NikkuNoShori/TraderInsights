@@ -1,6 +1,6 @@
-import { supabase } from "../supabase";
-import type { Profile } from "../../types/database";
-import type { UserPermissions } from "../../types/auth";
+import { supabase } from "@/lib/supabase";
+import type { Profile } from "@/types/database";
+import type { UserPermissions } from "@/types/auth";
 
 // Token Management
 export const getAuthToken = async (): Promise<string | null> => {

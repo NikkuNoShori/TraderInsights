@@ -1,10 +1,10 @@
-import { Trade } from "../../../types/trade";
+import { Trade } from "@/types/trade";
+import { TradeRow } from "@/components/journal/TradeRow";
+import { Pagination } from "@/components/ui";
+import { LoadingSpinner } from "@/components/ui";
 import { TradeListItem } from "./TradeListItem";
-import { Button } from "../../../components/ui/button";
+import { Button } from "@/components/ui";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { TradeRow } from "../../../components/journal/TradeRow";
-import { Pagination } from "../../../components/ui/Pagination";
-import { LoadingSpinner } from "../../../components/ui/LoadingSpinner";
 
 interface TradeListProps {
   trades: Trade[];

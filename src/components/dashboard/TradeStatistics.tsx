@@ -9,7 +9,7 @@ import {
   Target,
   Percent,
 } from "lucide-react";
-import type { Trade } from "../../types/trade";
+import type { Trade } from "@/types/trade";
 import {
   formatTradeValue,
   calculateWinRate,

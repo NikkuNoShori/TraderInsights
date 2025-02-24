@@ -26,7 +26,21 @@
       "@/contexts/*": ["src/contexts/*"],
       "@/providers/*": ["src/providers/*"],
       "@/lib/*": ["src/lib/*"],
-      "@/utils/*": ["src/utils/*"]
+      "@/utils/*": ["src/utils/*"],
+      "@/stores/*": ["src/stores/*"],
+      "@/types/*": ["src/types/*"],
+      "@/hooks/*": ["src/hooks/*"],
+      "@/config/*": ["src/config/*"],
+      "@/services/*": ["src/services/*"],
+      "@/../*": ["src/*"],
+      "@/../components/*": ["src/components/*"],
+      "@/../lib/*": ["src/lib/*"],
+      "@/../utils/*": ["src/utils/*"],
+      "@/../types/*": ["src/types/*"],
+      "@/../stores/*": ["src/stores/*"],
+      "@/../config/*": ["src/config/*"],
+      "@/../services/*": ["src/services/*"],
+      "@/../hooks/*": ["src/hooks/*"]
     }
   },
   "include": ["src"],

@@ -6,9 +6,9 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import type { Trade } from "../../types/trade";
-import type { TimeframeOption } from "../ui/TimeframeSelector";
-import { formatCurrency } from "../../utils/formatters";
+import type { Trade } from "@/types/trade";
+import type { TimeframeOption } from "@/components/ui/TimeframeSelector";
+import { formatCurrency } from "@/utils/formatters";
 import { useMemo } from "@/lib/react";
 
 interface PnLChartProps {

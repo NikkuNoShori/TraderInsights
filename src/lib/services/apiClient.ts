@@ -1,7 +1,7 @@
 import axios from "axios";
 import type { AuthResponse, User } from "@supabase/supabase-js";
-import type { UserMetadata } from "../../services/auth";
-import { supabase } from "../supabase";
+import type { UserMetadata } from "@/services/auth";
+import { supabase } from "@/lib/supabase";
 
 interface ApiErrorResponse {
   error: string;

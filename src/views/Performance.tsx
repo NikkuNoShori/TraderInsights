@@ -1,15 +1,15 @@
 import { useState, useMemo, useCallback } from "@/lib/react";
 import { useSupabaseStore } from "@/stores/supabaseStore";
-import { useTrades } from "../hooks/useTrades";
-import { Spinner } from "../components/ui/Spinner";
+import { useTrades } from "@/hooks/useTrades";
+import { Spinner } from "@/components/ui/Spinner";
 import {
   TimeframeSelector,
   type TimeframeOption,
 } from "../components/ui/TimeframeSelector";
-import { PerformanceMetrics } from "../components/dashboard/PerformanceMetrics";
-import { PnLChart } from "../components/dashboard/PnLChart";
-import { WinRateChart } from "../components/dashboard/WinRateChart";
-import { TradeDistributionChart } from "../components/dashboard/TradeDistributionChart";
+import { PerformanceMetrics } from "@/components/dashboard/PerformanceMetrics";
+import { PnLChart } from "@/components/dashboard/PnLChart";
+import { WinRateChart } from "@/components/dashboard/WinRateChart";
+import { TradeDistributionChart } from "@/components/dashboard/TradeDistributionChart";
 
 interface PerformanceError extends Error {
   message: string;

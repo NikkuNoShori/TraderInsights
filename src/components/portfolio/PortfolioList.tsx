@@ -1,7 +1,7 @@
 import { useState } from "@/lib/react";
-import { usePortfolios } from "../../hooks/usePortfolios";
+import { usePortfolios } from "@/hooks/usePortfolios";
 import { PortfolioForm } from "./PortfolioForm";
-import { Button } from "../ui/button";
+import { Button } from "@/components/ui";
 import { Plus } from "lucide-react";
 import type { Portfolio, CreatePortfolioData } from "@/types/portfolio";
 

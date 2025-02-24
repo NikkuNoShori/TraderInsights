@@ -1,6 +1,6 @@
 import { create } from "zustand";
-import { journalService } from "../lib/services/journalService";
-import type { Transaction } from "../types/database";
+import { journalService } from "@/lib/services/journalService";
+import type { Transaction } from "@/types/database";
 
 interface JournalState {
   transactions: Transaction[];
