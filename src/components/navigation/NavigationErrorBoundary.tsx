@@ -1,5 +1,5 @@
-import { useNavigate, useLocation } from 'react-router-dom';
-import { AlertCircle } from 'lucide-react';
+import { useNavigate, useLocation } from "react-router-dom";
+import { AlertCircle } from "lucide-react";
 
 interface Props {
   children: React.ReactNode;
@@ -21,7 +21,7 @@ export class NavigationErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Navigation error:', error, errorInfo);
+    console.error("Navigation error:", error, errorInfo);
   }
 
   render() {
@@ -34,7 +34,8 @@ export class NavigationErrorBoundary extends React.Component<Props, State> {
               <h2 className="text-lg font-semibold">Navigation Error</h2>
             </div>
             <p className="text-gray-600 dark:text-gray-300 mb-4">
-              {this.state.error?.message || 'An error occurred during navigation'}
+              {this.state.error?.message ||
+                "An error occurred during navigation"}
             </p>
             <div className="flex justify-end space-x-3">
               <button
@@ -57,4 +58,4 @@ export class NavigationErrorBoundary extends React.Component<Props, State> {
 
     return this.props.children;
   }
-} 
+}

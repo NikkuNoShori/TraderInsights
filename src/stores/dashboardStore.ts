@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Layout } from "react-grid-layout";
 import type { DashboardProfile } from "../types/dashboard";
@@ -23,11 +23,11 @@ interface DashboardActions {
   setIsEditing: (editing: boolean) => void;
   fetchProfiles: (userId: string) => Promise<void>;
   createProfile: (
-    profile: Omit<DashboardProfile, "id" | "createdAt" | "updatedAt">
+    profile: Omit<DashboardProfile, "id" | "createdAt" | "updatedAt">,
   ) => Promise<void>;
   updateProfile: (
     profileId: string,
-    updates: Partial<DashboardProfile>
+    updates: Partial<DashboardProfile>,
   ) => Promise<void>;
   deleteProfile: (profileId: string) => Promise<void>;
   setCurrentProfile: (profileId: string) => void;
@@ -100,7 +100,7 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
           if (userId) {
             localStorage.setItem(
               `dashboard-layout-${userId}`,
-              JSON.stringify(get().layouts)
+              JSON.stringify(get().layouts),
             );
           }
         } catch (error) {
@@ -163,7 +163,7 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
           if (error) throw error;
 
           const profiles = get().profiles.map((p) =>
-            p.id === profileId ? { ...p, ...data } : p
+            p.id === profileId ? { ...p, ...data } : p,
           );
 
           set({ profiles, isLoading: false });
@@ -235,7 +235,7 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
         if (userId) {
           localStorage.setItem(
             `dashboard-layout-${userId}`,
-            JSON.stringify(newLayouts)
+            JSON.stringify(newLayouts),
           );
         }
       },
@@ -246,6 +246,6 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
         currentProfileId: state.currentProfileId,
         layouts: state.layouts,
       }),
-    }
-  )
-); 
+    },
+  ),
+);

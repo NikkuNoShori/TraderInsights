@@ -1,30 +1,47 @@
-import { useLocalStorage } from '../hooks/useLocalStorage';
+import {
+  createContext,
+  useContext,
+  useState,
+  type ReactNode,
+} from "@/lib/react";
+import { useCreateContext } from "@/lib/utils/contextRegistry";
 
 interface DeveloperContextType {
   isDeveloperMode: boolean;
-  toggleDeveloperMode: () => void;
+  setDeveloperMode: (enabled: boolean) => void;
 }
 
-const DeveloperContext = createContext<DeveloperContextType>({} as DeveloperContextType);
+const DeveloperContext = createContext<DeveloperContextType>({
+  isDeveloperMode: false,
+  setDeveloperMode: () => {},
+});
 
-export function DeveloperProvider({ children }: { children: React.ReactNode }) {
-  const [isDeveloperMode, setIsDeveloperMode] = useLocalStorage('developer-mode', false);
+export function useDeveloperMode() {
+  return useContext(DeveloperContext);
+}
 
-  const toggleDeveloperMode = () => {
-    setIsDeveloperMode(!isDeveloperMode);
+export function DeveloperProvider({ children }: { children: ReactNode }) {
+  // Register the context
+  useCreateContext("DeveloperContext");
+
+  const [isDeveloperMode, setDeveloperMode] = useState(() => {
+    const saved = localStorage.getItem("developerMode");
+    return saved === "true";
+  });
+
+  const handleSetDeveloperMode = (enabled: boolean) => {
+    setDeveloperMode(enabled);
+    localStorage.setItem("developerMode", enabled.toString());
   };
 
   return (
-    <DeveloperContext.Provider value={{ isDeveloperMode, toggleDeveloperMode }}>
+    <DeveloperContext.Provider
+      value={{
+        isDeveloperMode,
+        setDeveloperMode: handleSetDeveloperMode,
+      }}
+    >
       {children}
     </DeveloperContext.Provider>
   );
 }
-
-export const useDeveloperMode = () => {
-  const context = useContext(DeveloperContext);
-  if (!context) {
-    throw new Error('useDeveloperMode must be used within a DeveloperProvider');
-  }
-  return context;
-};

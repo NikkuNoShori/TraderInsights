@@ -17,13 +17,13 @@ export const validatePassword = (password: string): ValidationResult => {
 
   if (password.length < passwordRules.minLength) {
     errors.push(
-      `Password must be at least ${passwordRules.minLength} characters long`
+      `Password must be at least ${passwordRules.minLength} characters long`,
     );
   }
 
   if (password.length > passwordRules.maxLength) {
     errors.push(
-      `Password must be less than ${passwordRules.maxLength} characters`
+      `Password must be less than ${passwordRules.maxLength} characters`,
     );
   }
 

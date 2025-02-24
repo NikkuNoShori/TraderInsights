@@ -1,4 +1,3 @@
-
 export const TradeReport = () => {
   return (
     <div className="bg-card dark:bg-dark-paper p-6 rounded-lg shadow">
@@ -12,4 +11,4 @@ export const TradeReport = () => {
       </div>
     </div>
   );
-}; 
+};

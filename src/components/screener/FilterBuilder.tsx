@@ -1,30 +1,30 @@
-import { Plus } from 'lucide-react';
+import { Plus } from "lucide-react";
 
 interface FilterOption {
   id: string;
   label: string;
-  type: 'number' | 'string' | 'boolean';
+  type: "number" | "string" | "boolean";
   operators: string[];
 }
 
 const filterOptions: FilterOption[] = [
   {
-    id: 'price',
-    label: 'Price',
-    type: 'number',
-    operators: ['>', '<', '=', '>=', '<='],
+    id: "price",
+    label: "Price",
+    type: "number",
+    operators: [">", "<", "=", ">=", "<="],
   },
   {
-    id: 'volume',
-    label: 'Volume',
-    type: 'number',
-    operators: ['>', '<', '=', '>=', '<='],
+    id: "volume",
+    label: "Volume",
+    type: "number",
+    operators: [">", "<", "=", ">=", "<="],
   },
   {
-    id: 'marketCap',
-    label: 'Market Cap',
-    type: 'number',
-    operators: ['>', '<', '=', '>=', '<='],
+    id: "marketCap",
+    label: "Market Cap",
+    type: "number",
+    operators: [">", "<", "=", ">=", "<="],
   },
 ];
 
@@ -35,7 +35,7 @@ interface FilterBuilderProps {
 export function FilterBuilder({ onApply }: FilterBuilderProps) {
   const [selectedMetric, setSelectedMetric] = useState(filterOptions[0].id);
   const [operator, setOperator] = useState(filterOptions[0].operators[0]);
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState("");
 
   const handleApply = () => {
     const filter = {

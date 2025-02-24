@@ -16,7 +16,7 @@ export interface AuthService {
   signIn: (
     email: string,
     password: string,
-    ip: string
+    ip: string,
   ) => Promise<AuthResponse>;
   signUp: (email: string, password: string) => Promise<AuthResponse>;
   signOut: () => Promise<{ error: AuthError | null }>;
@@ -25,7 +25,7 @@ export interface AuthService {
   checkUserExists: (email: string) => Promise<boolean>;
   updateUserMetadata: (
     userId: string,
-    metadata: Partial<UserMetadata>
+    metadata: Partial<UserMetadata>,
   ) => Promise<void>;
   verifyEmail: (token: string) => Promise<{ error: AuthError | null }>;
 }
@@ -34,7 +34,7 @@ class SupabaseAuthService implements AuthService {
   async signIn(
     email: string,
     password: string,
-    ip: string
+    ip: string,
   ): Promise<AuthResponse> {
     // Check rate limiting before attempting login
     const { allowed, remainingAttempts, lockoutRemaining } =
@@ -45,7 +45,7 @@ class SupabaseAuthService implements AuthService {
       return {
         data: { session: null, user: null },
         error: new Error(
-          `Too many failed attempts. Please try again in ${minutes} minutes.`
+          `Too many failed attempts. Please try again in ${minutes} minutes.`,
         ) as AuthError,
       };
     }
@@ -119,7 +119,7 @@ class SupabaseAuthService implements AuthService {
       return {
         data: { session: null, user: null },
         error: new Error(
-          "An account with this email already exists. Please sign in instead."
+          "An account with this email already exists. Please sign in instead.",
         ) as AuthError,
       };
     }
@@ -180,7 +180,7 @@ class SupabaseAuthService implements AuthService {
           error instanceof Error
             ? (error as AuthError)
             : (new Error(
-                "Failed to process reset password request"
+                "Failed to process reset password request",
               ) as AuthError),
       };
     }
@@ -234,7 +234,7 @@ class SupabaseAuthService implements AuthService {
 
   async updateUserMetadata(
     userId: string,
-    metadata: Partial<UserMetadata>
+    metadata: Partial<UserMetadata>,
   ): Promise<void> {
     try {
       const { error } = await supabase.auth.updateUser({

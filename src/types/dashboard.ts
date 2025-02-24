@@ -1,16 +1,16 @@
-import type { Layout } from 'react-grid-layout';
+import type { Layout } from "react-grid-layout";
 
-export type DashboardCardType = 
-  | 'total_pnl'
-  | 'win_rate'
-  | 'profit_factor'
-  | 'average_win'
-  | 'average_loss'
-  | 'active_trades'
-  | 'total_trades'
-  | 'recent_trades'
-  | 'playbook'
-  | 'max_drawdown_pct';
+export type DashboardCardType =
+  | "total_pnl"
+  | "win_rate"
+  | "profit_factor"
+  | "average_win"
+  | "average_loss"
+  | "active_trades"
+  | "total_trades"
+  | "recent_trades"
+  | "playbook"
+  | "max_drawdown_pct";
 
 export interface DashboardCard {
   type: DashboardCardType;
@@ -49,4 +49,4 @@ export type DashboardState = {
   profiles: DashboardProfile[];
   isLoading: boolean;
   error: Error | null;
-}; 
+};

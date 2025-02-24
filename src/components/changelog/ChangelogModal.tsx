@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import { X } from "lucide-react";
 
 interface ChangelogModalProps {
   isOpen: boolean;
@@ -9,34 +9,42 @@ interface ChangelogEntry {
   version: string;
   date: string;
   changes: {
-    type: 'added' | 'changed' | 'fixed' | 'removed';
+    type: "added" | "changed" | "fixed" | "removed";
     description: string;
   }[];
 }
 
 const CHANGELOG: ChangelogEntry[] = [
   {
-    version: '1.0.0-beta',
-    date: '2024-03-20',
+    version: "1.0.0-beta",
+    date: "2024-03-20",
     changes: [
-      { type: 'added', description: 'Initial beta release' },
-      { type: 'added', description: 'Stock and options trading support' },
-      { type: 'added', description: 'Dark mode support' },
-      { type: 'added', description: 'Trading analytics dashboard' },
-    ]
-  }
+      { type: "added", description: "Initial beta release" },
+      { type: "added", description: "Stock and options trading support" },
+      { type: "added", description: "Dark mode support" },
+      { type: "added", description: "Trading analytics dashboard" },
+    ],
+  },
 ];
 
-export const ChangelogModal: React.FC<ChangelogModalProps> = ({ isOpen, onClose }) => {
+export const ChangelogModal: React.FC<ChangelogModalProps> = ({
+  isOpen,
+  onClose,
+}) => {
   if (!isOpen) return null;
 
-  const getTypeColor = (type: ChangelogEntry['changes'][0]['type']) => {
+  const getTypeColor = (type: ChangelogEntry["changes"][0]["type"]) => {
     switch (type) {
-      case 'added': return 'text-green-600 dark:text-green-400';
-      case 'changed': return 'text-blue-600 dark:text-blue-400';
-      case 'fixed': return 'text-yellow-600 dark:text-yellow-400';
-      case 'removed': return 'text-red-600 dark:text-red-400';
-      default: return 'text-gray-600 dark:text-gray-400';
+      case "added":
+        return "text-green-600 dark:text-green-400";
+      case "changed":
+        return "text-blue-600 dark:text-blue-400";
+      case "fixed":
+        return "text-yellow-600 dark:text-yellow-400";
+      case "removed":
+        return "text-red-600 dark:text-red-400";
+      default:
+        return "text-gray-600 dark:text-gray-400";
     }
   };
 
@@ -71,7 +79,9 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ isOpen, onClose 
               <ul className="space-y-3">
                 {entry.changes.map((change, index) => (
                   <li key={index} className="flex items-start">
-                    <span className={`font-medium capitalize mr-2 ${getTypeColor(change.type)}`}>
+                    <span
+                      className={`font-medium capitalize mr-2 ${getTypeColor(change.type)}`}
+                    >
                       {change.type}:
                     </span>
                     <span className="text-gray-700 dark:text-gray-300">
@@ -86,4 +96,4 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ isOpen, onClose 
       </div>
     </div>
   );
-}; 
+};

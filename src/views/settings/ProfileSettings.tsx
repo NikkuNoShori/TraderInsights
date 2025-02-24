@@ -1,13 +1,18 @@
-import { useState } from '@/lib/hooks';
-import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '@/stores/authStore';
-import { profileService } from '@/lib/services/profileService';
-import { FormInput } from '@/components/ui/FormInput';
-import { LoadingButton } from '@/components/LoadingButton';
-import { toast } from 'react-hot-toast';
-import { clsx } from 'clsx';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { useState } from "@/lib/hooks";
+import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "@/stores/authStore";
+import { profileService } from "@/lib/services/profileService";
+import { FormInput } from "@/components/ui/FormInput";
+import { LoadingButton } from "@/components/LoadingButton";
+import { toast } from "react-hot-toast";
+import { clsx } from "clsx";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export default function ProfileSettings() {
   const navigate = useNavigate();
@@ -15,17 +20,19 @@ export default function ProfileSettings() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    firstName: userProfile?.first_name || '',
-    lastName: userProfile?.last_name || '',
-    username: userProfile?.username || '',
-    email: user?.email || '',
+    firstName: userProfile?.first_name || "",
+    lastName: userProfile?.last_name || "",
+    username: userProfile?.username || "",
+    email: user?.email || "",
   });
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
 
   const validateUsername = (username: string): boolean => {
     if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
-      setUsernameError('Username must be 3-20 characters and contain only letters, numbers, and underscores');
+      setUsernameError(
+        "Username must be 3-20 characters and contain only letters, numbers, and underscores",
+      );
       return false;
     }
     setUsernameError(null);
@@ -34,7 +41,7 @@ export default function ProfileSettings() {
   const [isDirty, setIsDirty] = useState(false);
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
-    if (field === 'username') {
+    if (field === "username") {
       if (userProfile?.username_changes_remaining === 0) {
         setShowPaymentDialog(true);
         return;
@@ -43,14 +50,14 @@ export default function ProfileSettings() {
         return;
       }
     }
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     setIsDirty(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
-      setError('User not authenticated');
+      setError("User not authenticated");
       return;
     }
 
@@ -58,37 +65,40 @@ export default function ProfileSettings() {
     setError(null);
 
     try {
-      console.log('Submitting profile update:', {
+      console.log("Submitting profile update:", {
         userId: user.id,
         updates: {
           first_name: formData.firstName,
-          last_name: formData.lastName
-        }
+          last_name: formData.lastName,
+        },
       });
 
-      const { error: updateError } = await profileService.updateProfile(user.id, {
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-      });
+      const { error: updateError } = await profileService.updateProfile(
+        user.id,
+        {
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+        },
+      );
 
       if (updateError) {
-        console.error('Profile update error:', updateError);
-        toast.error(updateError.message || 'Failed to update profile');
+        console.error("Profile update error:", updateError);
+        toast.error(updateError.message || "Failed to update profile");
       } else {
-        toast.success('Profile updated successfully');
+        toast.success("Profile updated successfully");
         setIsDirty(false);
-        
+
         // Refresh the page after successful update
         setTimeout(() => {
-          navigate('/settings/profile');
+          navigate("/settings/profile");
         }, 1500);
       }
     } catch (error) {
-      console.error('Failed to update profile:', error);
+      console.error("Failed to update profile:", error);
       setError(
-        error instanceof Error 
-          ? error.message 
-          : 'Failed to update profile. Please try again.'
+        error instanceof Error
+          ? error.message
+          : "Failed to update profile. Please try again.",
       );
     } finally {
       setIsLoading(false);
@@ -97,17 +107,20 @@ export default function ProfileSettings() {
 
   const handleCancel = () => {
     if (isDirty) {
-      if (window.confirm('Discard unsaved changes?')) {
-        navigate('/settings/profile');
+      if (window.confirm("Discard unsaved changes?")) {
+        navigate("/settings/profile");
       }
     } else {
-      navigate('/settings/profile');
+      navigate("/settings/profile");
     }
   };
 
   return (
     <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-sm">
-      <form onSubmit={handleSubmit} className="divide-y divide-gray-200 dark:divide-gray-700">
+      <form
+        onSubmit={handleSubmit}
+        className="divide-y divide-gray-200 dark:divide-gray-700"
+      >
         {/* Header section with improved styling */}
         <div className="px-8 py-6">
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
@@ -133,7 +146,9 @@ export default function ProfileSettings() {
                 <FormInput
                   label="Username"
                   value={formData.username}
-                  onChange={e => handleInputChange('username', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("username", e.target.value)
+                  }
                   error={usernameError}
                   className="w-full"
                   required
@@ -146,7 +161,10 @@ export default function ProfileSettings() {
                   )}
                   {userProfile?.last_username_change && (
                     <span className="text-xs text-gray-500 dark:text-gray-400">
-                      Last changed: {new Date(userProfile.last_username_change).toLocaleDateString()}
+                      Last changed:{" "}
+                      {new Date(
+                        userProfile.last_username_change,
+                      ).toLocaleDateString()}
                     </span>
                   )}
                 </div>
@@ -158,13 +176,13 @@ export default function ProfileSettings() {
               <FormInput
                 label="First Name"
                 value={formData.firstName}
-                onChange={e => handleInputChange('firstName', e.target.value)}
+                onChange={(e) => handleInputChange("firstName", e.target.value)}
                 required
               />
               <FormInput
                 label="Last Name"
                 value={formData.lastName}
-                onChange={e => handleInputChange('lastName', e.target.value)}
+                onChange={(e) => handleInputChange("lastName", e.target.value)}
                 required
               />
             </div>
@@ -175,17 +193,24 @@ export default function ProfileSettings() {
                 Account Type
               </label>
               <div className="flex items-center space-x-2">
-                <span className={clsx(
-                  "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium",
-                  {
-                    "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200": userProfile?.role === 'admin',
-                    "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200": userProfile?.role === 'developer',
-                    "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200": userProfile?.role === 'user'
-                  }
-                )}>
-                  {userProfile?.role === 'developer' ? 'Developer' :
-                   userProfile?.role === 'admin' ? 'Administrator' :
-                   'Standard User'}
+                <span
+                  className={clsx(
+                    "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium",
+                    {
+                      "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200":
+                        userProfile?.role === "admin",
+                      "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200":
+                        userProfile?.role === "developer",
+                      "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200":
+                        userProfile?.role === "user",
+                    },
+                  )}
+                >
+                  {userProfile?.role === "developer"
+                    ? "Developer"
+                    : userProfile?.role === "admin"
+                      ? "Administrator"
+                      : "Standard User"}
                 </span>
               </div>
             </div>
@@ -237,9 +262,10 @@ export default function ProfileSettings() {
           </DialogHeader>
           <div className="space-y-6 py-4">
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Username changes cost $5 each. This allows you to change your username again.
+              Username changes cost $5 each. This allows you to change your
+              username again.
             </p>
-            
+
             <div className="space-y-4 border border-gray-200 dark:border-gray-700 rounded-xl p-6 bg-gray-50 dark:bg-gray-700/50">
               <FormInput
                 label="Card Number"
@@ -247,15 +273,8 @@ export default function ProfileSettings() {
                 className="font-mono"
               />
               <div className="grid grid-cols-2 gap-4">
-                <FormInput
-                  label="Expiry Date"
-                  placeholder="MM/YY"
-                />
-                <FormInput
-                  label="CVC"
-                  placeholder="123"
-                  maxLength={3}
-                />
+                <FormInput label="Expiry Date" placeholder="MM/YY" />
+                <FormInput label="CVC" placeholder="123" maxLength={3} />
               </div>
             </div>
 
@@ -270,10 +289,10 @@ export default function ProfileSettings() {
               </Button>
               <Button
                 onClick={() => {
-                  toast.success('Username change purchased successfully!');
+                  toast.success("Username change purchased successfully!");
                   setShowPaymentDialog(false);
                   profileService.updateProfile(user!.id, {
-                    username_changes_remaining: 1
+                    username_changes_remaining: 1,
                   });
                 }}
                 className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700"

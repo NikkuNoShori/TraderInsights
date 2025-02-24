@@ -1,32 +1,32 @@
-import { useTheme } from '../../providers/ThemeProvider';
-import { Moon, Sun, Monitor } from 'lucide-react';
-import { clsx } from 'clsx';
+import { useTheme } from "../../providers/ThemeProvider";
+import { Moon, Sun, Monitor } from "lucide-react";
+import { clsx } from "clsx";
 
 export default function AppearanceSettings() {
   const { theme, setTheme } = useTheme();
 
   const themeOptions = [
     {
-      value: 'light',
-      label: 'Light',
-      description: 'Light mode for daytime use',
+      value: "light",
+      label: "Light",
+      description: "Light mode for daytime use",
       icon: Sun,
     },
     {
-      value: 'dark',
-      label: 'Dark',
-      description: 'Dark mode for nighttime use',
+      value: "dark",
+      label: "Dark",
+      description: "Dark mode for nighttime use",
       icon: Moon,
     },
     {
-      value: 'system',
-      label: 'System',
-      description: 'Follow system preferences',
+      value: "system",
+      label: "System",
+      description: "Follow system preferences",
       icon: Monitor,
     },
   ] as const;
 
-  const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
+  const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
     setTheme(newTheme);
   };
 
@@ -49,27 +49,31 @@ export default function AppearanceSettings() {
                 key={value}
                 onClick={() => handleThemeChange(value)}
                 className={clsx(
-                  'w-full flex items-center px-3 py-2.5 rounded-lg',
-                  'transition-colors duration-200',
-                  theme === value 
-                    ? 'bg-primary/10 dark:bg-primary-900/20 text-primary dark:text-primary-400'
-                    : 'hover:bg-muted dark:hover:bg-dark-muted text-foreground dark:text-dark-text'
+                  "w-full flex items-center px-3 py-2.5 rounded-lg",
+                  "transition-colors duration-200",
+                  theme === value
+                    ? "bg-primary/10 dark:bg-primary-900/20 text-primary dark:text-primary-400"
+                    : "hover:bg-muted dark:hover:bg-dark-muted text-foreground dark:text-dark-text",
                 )}
               >
-                <Icon className={clsx(
-                  "h-5 w-5 mr-3 flex-shrink-0",
-                  theme === value 
-                    ? 'text-primary dark:text-primary-400'
-                    : 'text-muted-foreground dark:text-dark-muted'
-                )} />
+                <Icon
+                  className={clsx(
+                    "h-5 w-5 mr-3 flex-shrink-0",
+                    theme === value
+                      ? "text-primary dark:text-primary-400"
+                      : "text-muted-foreground dark:text-dark-muted",
+                  )}
+                />
                 <div className="flex-1 text-left">
                   <div className="text-sm font-medium">{label}</div>
-                  <div className={clsx(
-                    "text-xs",
-                    theme === value 
-                      ? 'text-primary/70 dark:text-primary-400/70'
-                      : 'text-muted-foreground dark:text-dark-muted'
-                  )}>
+                  <div
+                    className={clsx(
+                      "text-xs",
+                      theme === value
+                        ? "text-primary/70 dark:text-primary-400/70"
+                        : "text-muted-foreground dark:text-dark-muted",
+                    )}
+                  >
                     {description}
                   </div>
                 </div>

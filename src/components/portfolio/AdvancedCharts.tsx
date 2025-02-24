@@ -1,10 +1,20 @@
 import {
-  LineChart, Line, AreaChart, Area, BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  ComposedChart, Scatter
-} from 'recharts';
-import { format, subDays, subMonths } from 'date-fns';
-import type { Trade } from '../../types/portfolio';
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  ComposedChart,
+  Scatter,
+} from "recharts";
+import { format, subDays, subMonths } from "date-fns";
+import type { Trade } from "../../types/portfolio";
 
 interface ChartData {
   date: string;
@@ -17,34 +27,43 @@ interface ChartData {
 
 interface AdvancedChartsProps {
   trades: Trade[];
-  timeframe?: '1M' | '3M' | '6M' | '1Y' | 'ALL';
+  timeframe?: "1M" | "3M" | "6M" | "1Y" | "ALL";
 }
 
-export function AdvancedCharts({ trades, timeframe = '1Y' }: AdvancedChartsProps) {
-  const [selectedMetric, setSelectedMetric] = useState<'returns' | 'drawdown' | 'volatility'>('returns');
+export function AdvancedCharts({
+  trades,
+  timeframe = "1Y",
+}: AdvancedChartsProps) {
+  const [selectedMetric, setSelectedMetric] = useState<
+    "returns" | "drawdown" | "volatility"
+  >("returns");
 
   const calculateVolatility = (returns: number[]) => {
     const mean = returns.reduce((sum, r) => sum + r, 0) / returns.length;
-    const squaredDiffs = returns.map(r => Math.pow(r - mean, 2));
-    return Math.sqrt(squaredDiffs.reduce((sum, d) => sum + d, 0) / returns.length);
+    const squaredDiffs = returns.map((r) => Math.pow(r - mean, 2));
+    return Math.sqrt(
+      squaredDiffs.reduce((sum, d) => sum + d, 0) / returns.length,
+    );
   };
 
   const processData = (): ChartData[] => {
     let runningValue = 0;
     let peak = 0;
     let returns: number[] = [];
-    
-    const sortedTrades = trades
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    const sortedTrades = trades.sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    );
 
     return sortedTrades.map((trade, index) => {
-      const tradeValue = trade.type === 'sell' 
-        ? trade.price * trade.shares 
-        : -(trade.price * trade.shares);
-      
+      const tradeValue =
+        trade.type === "sell"
+          ? trade.price * trade.shares
+          : -(trade.price * trade.shares);
+
       runningValue += tradeValue;
       peak = Math.max(peak, runningValue);
-      
+
       // Calculate daily return if we have a previous value
       if (index > 0) {
         const prevValue = runningValue - tradeValue;
@@ -56,7 +75,7 @@ export function AdvancedCharts({ trades, timeframe = '1Y' }: AdvancedChartsProps
       const volatility = calculateVolatility(returns.slice(-20)); // 20-day volatility
 
       return {
-        date: trade.date.split('T')[0],
+        date: trade.date.split("T")[0],
         value: tradeValue,
         cumulativeReturn: runningValue,
         drawdown: -drawdown,
@@ -68,10 +87,10 @@ export function AdvancedCharts({ trades, timeframe = '1Y' }: AdvancedChartsProps
 
   const chartData = processData();
 
-  const formatCurrency = (value: number) => 
-    new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 0,
     }).format(value);
 
@@ -79,20 +98,24 @@ export function AdvancedCharts({ trades, timeframe = '1Y' }: AdvancedChartsProps
 
   const renderChart = () => {
     switch (selectedMetric) {
-      case 'returns':
+      case "returns":
         return (
           <ComposedChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
             <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} />
-            <YAxis stroke="#94a3b8" fontSize={12} tickFormatter={formatCurrency} />
+            <YAxis
+              stroke="#94a3b8"
+              fontSize={12}
+              tickFormatter={formatCurrency}
+            />
             <Tooltip
               contentStyle={{
-                backgroundColor: 'rgb(30 41 59)',
-                border: 'none',
-                borderRadius: '0.375rem',
-                color: '#f1f5f9'
+                backgroundColor: "rgb(30 41 59)",
+                border: "none",
+                borderRadius: "0.375rem",
+                color: "#f1f5f9",
               }}
-              formatter={(value: number) => [formatCurrency(value), 'Value']}
+              formatter={(value: number) => [formatCurrency(value), "Value"]}
             />
             <Area
               type="monotone"
@@ -105,20 +128,24 @@ export function AdvancedCharts({ trades, timeframe = '1Y' }: AdvancedChartsProps
           </ComposedChart>
         );
 
-      case 'drawdown':
+      case "drawdown":
         return (
           <AreaChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
             <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} />
-            <YAxis stroke="#94a3b8" fontSize={12} tickFormatter={formatPercent} />
+            <YAxis
+              stroke="#94a3b8"
+              fontSize={12}
+              tickFormatter={formatPercent}
+            />
             <Tooltip
               contentStyle={{
-                backgroundColor: 'rgb(30 41 59)',
-                border: 'none',
-                borderRadius: '0.375rem',
-                color: '#f1f5f9'
+                backgroundColor: "rgb(30 41 59)",
+                border: "none",
+                borderRadius: "0.375rem",
+                color: "#f1f5f9",
               }}
-              formatter={(value: number) => [formatPercent(value), 'Drawdown']}
+              formatter={(value: number) => [formatPercent(value), "Drawdown"]}
             />
             <Area
               type="monotone"
@@ -130,20 +157,27 @@ export function AdvancedCharts({ trades, timeframe = '1Y' }: AdvancedChartsProps
           </AreaChart>
         );
 
-      case 'volatility':
+      case "volatility":
         return (
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
             <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} />
-            <YAxis stroke="#94a3b8" fontSize={12} tickFormatter={formatPercent} />
+            <YAxis
+              stroke="#94a3b8"
+              fontSize={12}
+              tickFormatter={formatPercent}
+            />
             <Tooltip
               contentStyle={{
-                backgroundColor: 'rgb(30 41 59)',
-                border: 'none',
-                borderRadius: '0.375rem',
-                color: '#f1f5f9'
+                backgroundColor: "rgb(30 41 59)",
+                border: "none",
+                borderRadius: "0.375rem",
+                color: "#f1f5f9",
               }}
-              formatter={(value: number) => [formatPercent(value), 'Volatility']}
+              formatter={(value: number) => [
+                formatPercent(value),
+                "Volatility",
+              ]}
             />
             <Line
               type="monotone"
@@ -162,17 +196,17 @@ export function AdvancedCharts({ trades, timeframe = '1Y' }: AdvancedChartsProps
       <div className="flex justify-between items-center">
         <div className="flex space-x-4">
           {[
-            { value: 'returns', label: 'Returns & Volume' },
-            { value: 'drawdown', label: 'Drawdown' },
-            { value: 'volatility', label: '20-Day Volatility' },
+            { value: "returns", label: "Returns & Volume" },
+            { value: "drawdown", label: "Drawdown" },
+            { value: "volatility", label: "20-Day Volatility" },
           ].map(({ value, label }) => (
             <button
               key={value}
               onClick={() => setSelectedMetric(value as typeof selectedMetric)}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 selectedMetric === value
-                  ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400'
-                  : 'text-gray-500 hover:text-gray-700 dark:text-dark-muted dark:hover:text-dark-text'
+                  ? "bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400"
+                  : "text-gray-500 hover:text-gray-700 dark:text-dark-muted dark:hover:text-dark-text"
               }`}
             >
               {label}
@@ -190,4 +224,4 @@ export function AdvancedCharts({ trades, timeframe = '1Y' }: AdvancedChartsProps
       </div>
     </div>
   );
-} 
+}

@@ -1,6 +1,6 @@
-export type TransactionType = 'stock' | 'option';
-export type TransactionSide = 'Long' | 'Short';
-export type TransactionStatus = 'open' | 'closed' | 'pending';
+export type TransactionType = "stock" | "option";
+export type TransactionSide = "Long" | "Short";
+export type TransactionStatus = "open" | "closed" | "pending";
 
 export interface Transaction {
   id: string;
@@ -19,4 +19,4 @@ export interface Transaction {
   created_at: string;
 }
 
-export type NewTransaction = Omit<Transaction, 'id' | 'user_id' | 'created_at'>;
+export type NewTransaction = Omit<Transaction, "id" | "user_id" | "created_at">;

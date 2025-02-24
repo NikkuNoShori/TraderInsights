@@ -1,9 +1,9 @@
-import { format } from 'date-fns';
-import { Trade } from '../../../types/trade';
-import { Button } from '../../../components/ui/button';
-import { Pencil, Trash2 } from 'lucide-react';
-import { formatCurrency } from '../../../utils/formatters';
-import { StatusBadge } from './StatusBadge';
+import { format } from "date-fns";
+import { Trade } from "../../../types/trade";
+import { Button } from "../../../components/ui/button";
+import { Pencil, Trash2 } from "lucide-react";
+import { formatCurrency } from "../../../utils/formatters";
+import { StatusBadge } from "./StatusBadge";
 
 interface TradeListItemProps {
   trade: Trade;
@@ -11,54 +11,63 @@ interface TradeListItemProps {
 }
 
 export function TradeListItem({ trade, onDelete }: TradeListItemProps) {
-  const formattedDate = format(new Date(trade.date + ' ' + trade.time), 'MMM dd, yyyy HH:mm');
-  
+  const formattedDate = format(
+    new Date(trade.date + " " + trade.time),
+    "MMM dd, yyyy HH:mm",
+  );
+
   const getPnLColor = (pnl: number | null | undefined) => {
-    if (!pnl) return 'text-muted-foreground';
-    return pnl > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
+    if (!pnl) return "text-muted-foreground";
+    return pnl > 0
+      ? "text-green-600 dark:text-green-400"
+      : "text-red-600 dark:text-red-400";
   };
 
   return (
     <tr className="hover:bg-muted/50 transition-colors">
-      <td className="px-6 py-4 whitespace-nowrap text-sm">
-        {formattedDate}
-      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm">{formattedDate}</td>
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
         {trade.symbol}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm">
-        {trade.type === 'option' ? (
+        {trade.type === "option" ? (
           <div>
-            <span className="font-medium">{trade.option_details?.contract_type.toUpperCase()}</span>
+            <span className="font-medium">
+              {trade.option_details?.contract_type.toUpperCase()}
+            </span>
             <span className="text-muted-foreground ml-1">
-              ${trade.option_details?.strike} {format(new Date(trade.option_details?.expiration || ''), 'MM/dd')}
+              ${trade.option_details?.strike}{" "}
+              {format(
+                new Date(trade.option_details?.expiration || ""),
+                "MM/dd",
+              )}
             </span>
           </div>
         ) : (
-          'Stock'
+          "Stock"
         )}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm">
-        <span className={trade.side === 'Long' ? 'text-green-600' : 'text-red-600'}>
+        <span
+          className={trade.side === "Long" ? "text-green-600" : "text-red-600"}
+        >
           {trade.side}
         </span>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm">
-        {trade.quantity}
-      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm">{trade.quantity}</td>
       <td className="px-6 py-4 whitespace-nowrap text-sm">
         {formatCurrency(trade.entry_price || 0)}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm">
-        {trade.exit_price ? formatCurrency(trade.exit_price) : '-'}
+        {trade.exit_price ? formatCurrency(trade.exit_price) : "-"}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
         <span className={getPnLColor(trade.pnl)}>
-          {trade.pnl ? formatCurrency(trade.pnl) : '-'}
+          {trade.pnl ? formatCurrency(trade.pnl) : "-"}
         </span>
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm">
-        <StatusBadge status={trade.status as 'open' | 'closed' | 'pending'} />
+        <StatusBadge status={trade.status as "open" | "closed" | "pending"} />
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-right space-x-2">
         <Button
@@ -81,4 +90,4 @@ export function TradeListItem({ trade, onDelete }: TradeListItemProps) {
       </td>
     </tr>
   );
-} 
+}

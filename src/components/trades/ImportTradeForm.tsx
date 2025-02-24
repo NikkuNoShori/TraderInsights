@@ -1,125 +1,128 @@
-import { useDropzone } from 'react-dropzone';
-import { FileSpreadsheet, Upload, AlertCircle } from 'lucide-react';
-import { Button } from '../ui/button';
-import { useToast } from '../../hooks/useToast';
-import { useAuthStore } from '../../stores/authStore';
-import { supabase } from '../../lib/supabase';
-import { Progress } from '../ui/progress';
-import { cn } from '../../lib/utils';
-import { processFile } from '../../utils/fileProcessing';
-import type { ProcessedTradeData } from '../../utils/fileProcessing';
+import { useState, useCallback } from "@/lib/react";
+import { useDropzone } from "react-dropzone";
+import { FileSpreadsheet, Upload, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/useToast";
+import { useAuthStore } from "@/stores/authStore";
+import { supabase } from "../../lib/supabase";
+import { Progress } from "../ui/progress";
+import { cn } from "../../lib/utils";
+import { processTradeFile } from "@/lib/services/fileProcessing";
+import type { Trade } from "@/types/trade";
 
 interface ImportTradeFormProps {
-  onSuccess: () => void;
+  onImportComplete: (trades: Trade[]) => void;
 }
 
-export const ImportTradeForm: React.FC<ImportTradeFormProps> = ({ onSuccess }) => {
+export function ImportTradeForm({ onImportComplete }: ImportTradeFormProps) {
   const { user } = useAuthStore();
   const toast = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
-  const handleProcessedData = async (data: ProcessedTradeData) => {
-    if (data.errors.length > 0) {
-      setValidationErrors(data.errors);
-      throw new Error('Validation failed. Please check the errors below.');
-    }
+  const onDrop = useCallback(
+    async (acceptedFiles: File[]) => {
+      if (acceptedFiles.length === 0) return;
 
-    const batchSize = 100;
-    const batches = Math.ceil(data.trades.length / batchSize);
-    
-    for (let i = 0; i < batches; i++) {
-      const batch = data.trades.slice(i * batchSize, (i + 1) * batchSize);
-      const { error } = await supabase.from('trades').insert(batch);
-      
-      if (error) throw error;
-      
-      setProgress(((i + 1) / batches) * 100);
-    }
+      setIsProcessing(true);
+      setProgress(0);
+      setValidationErrors([]);
 
-    toast.success(`Successfully imported ${data.trades.length} trades`);
-    onSuccess();
-  };
+      try {
+        const file = acceptedFiles[0];
+        const data = await processTradeFile(file, (progress) => {
+          setProgress(Math.round(progress * 100));
+        });
 
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    if (!file) return;
+        if (data.errors.length > 0) {
+          setValidationErrors(data.errors);
+          return;
+        }
 
-    setIsProcessing(true);
-    setProgress(0);
-    setValidationErrors([]);
-
-    try {
-      const processedData = await processFile(file);
-      await handleProcessedData(processedData);
-    } catch (error) {
-      console.error('Import error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to import trades');
-    } finally {
-      setIsProcessing(false);
-    }
-  }, []);
+        onImportComplete(data.trades);
+        toast.addToast("Successfully imported trades", "success");
+      } catch (error) {
+        console.error("Import error:", error);
+        toast.addToast(
+          error instanceof Error ? error.message : "Failed to import trades",
+          "error",
+        );
+      } finally {
+        setIsProcessing(false);
+      }
+    },
+    [onImportComplete, toast],
+  );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-      'application/vnd.ms-excel': ['.xls'],
-      'text/csv': ['.csv']
+      "text/csv": [".csv"],
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
+        ".xlsx",
+      ],
+      "application/vnd.ms-excel": [".xls"],
     },
     maxFiles: 1,
-    disabled: isProcessing,
   });
 
   return (
     <div className="space-y-4">
-      <div className="bg-light-paper dark:bg-dark-bg p-8 rounded-lg border-2 border-dashed border-light-border dark:border-dark-border">
-        <div {...getRootProps()} className={cn(
-          "text-center cursor-pointer",
-          isProcessing && "pointer-events-none opacity-50"
-        )}>
-          <input {...getInputProps()} />
-          <FileSpreadsheet className="mx-auto h-12 w-12 text-light-primary dark:text-dark-primary" />
-          {isDragActive ? (
-            <p className="mt-2 text-light-text dark:text-dark-text">
-              Drop the file here...
+      <div
+        {...getRootProps()}
+        className={`
+          border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
+          transition-colors duration-200
+          ${isDragActive ? "border-primary bg-primary/10" : "border-border"}
+        `}
+      >
+        <input {...getInputProps()} />
+        {isProcessing ? (
+          <div className="space-y-2">
+            <div className="text-sm">Processing file...</div>
+            <div className="w-full bg-border rounded-full h-2">
+              <div
+                className="bg-primary h-2 rounded-full transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        ) : isDragActive ? (
+          <p>Drop the file here...</p>
+        ) : (
+          <div className="space-y-2">
+            <p>Drag and drop a trade file here, or click to select</p>
+            <p className="text-sm text-muted-foreground">
+              Supported formats: CSV, XLSX, XLS
             </p>
-          ) : (
-            <>
-              <p className="mt-2 text-light-text dark:text-dark-text">
-                Drag & drop your trade data file here
-              </p>
-              <p className="text-sm text-light-muted dark:text-dark-muted">
-                or click to select file
-              </p>
-            </>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
-      {isProcessing && (
-        <div className="space-y-2">
-          <Progress value={progress} />
-          <p className="text-sm text-light-muted dark:text-dark-muted text-center">
-            Processing trades... {Math.round(progress)}%
-          </p>
-        </div>
-      )}
-
       {validationErrors.length > 0 && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-          <div className="flex items-center gap-2 text-red-800 dark:text-red-400 mb-2">
-            <AlertCircle className="h-4 w-4" />
-            <h4 className="font-medium">Validation Errors</h4>
-          </div>
-          <ul className="list-disc list-inside space-y-1 text-sm text-red-700 dark:text-red-300">
+        <div className="bg-destructive/10 text-destructive p-4 rounded-lg space-y-2">
+          <h4 className="font-medium">Validation Errors</h4>
+          <ul className="list-disc list-inside space-y-1">
             {validationErrors.map((error, index) => (
-              <li key={index}>{error}</li>
+              <li key={index} className="text-sm">
+                {error}
+              </li>
             ))}
           </ul>
         </div>
       )}
+
+      <div className="flex justify-end space-x-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setValidationErrors([])}
+          disabled={validationErrors.length === 0}
+        >
+          Clear Errors
+        </Button>
+      </div>
 
       <div className="space-y-2 text-sm text-light-muted dark:text-dark-muted">
         <h4 className="font-medium text-light-text dark:text-dark-text">
@@ -128,14 +131,19 @@ export const ImportTradeForm: React.FC<ImportTradeFormProps> = ({ onSuccess }) =
         <ul className="list-disc list-inside space-y-1">
           <li>File must be .xlsx, .xls, or .csv format</li>
           <li>First row must contain column headers</li>
-          <li>Required columns: symbol, type, direction, entry_date, entry_price, quantity</li>
+          <li>
+            Required columns: symbol, type, direction, entry_date, entry_price,
+            quantity
+          </li>
           <li>Optional columns: exit_date, exit_price, notes</li>
-          <li>For options: strike_price, expiration_date, option_type (call/put)</li>
+          <li>
+            For options: strike_price, expiration_date, option_type (call/put)
+          </li>
         </ul>
       </div>
 
       <Button
-        onClick={() => window.open('/template.xlsx')}
+        onClick={() => window.open("/template.xlsx")}
         variant="outline"
         className="w-full"
       >
@@ -144,4 +152,4 @@ export const ImportTradeForm: React.FC<ImportTradeFormProps> = ({ onSuccess }) =
       </Button>
     </div>
   );
-}; 
+}

@@ -1,10 +1,12 @@
-import { supabase } from '../supabase';
-import type { Profile } from '../../types/database';
-import type { UserPermissions } from '../../types/auth';
+import { supabase } from "../supabase";
+import type { Profile } from "../../types/database";
+import type { UserPermissions } from "../../types/auth";
 
 // Token Management
 export const getAuthToken = async (): Promise<string | null> => {
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   return session?.access_token ?? null;
 };
 
@@ -32,7 +34,7 @@ export async function fetchProfile(userId: string): Promise<Profile | null> {
 
 // Permissions Management
 export async function fetchPermissions(
-  _userId: string
+  _userId: string,
 ): Promise<UserPermissions> {
   try {
     // TODO: Implement actual permissions fetching from database

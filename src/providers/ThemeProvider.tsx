@@ -1,8 +1,8 @@
-import { type ReactNode } from '@/lib/react';
-import { useEffect } from '@/lib/hooks';
-import { useThemeStore } from '@/stores/themeStore';
+import { type ReactNode } from "@/lib/react";
+import { useEffect } from "@/lib/hooks";
+import { useThemeStore } from "@/stores/themeStore";
 
-export type Theme = 'light' | 'dark' | 'system';
+export type Theme = "light" | "dark" | "system";
 
 interface ThemeProviderProps {
   children: ReactNode;
@@ -13,10 +13,13 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
   useEffect(() => {
     const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
+    root.classList.remove("light", "dark");
 
-    if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    if (theme === "system") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+        .matches
+        ? "dark"
+        : "light";
       root.classList.add(systemTheme);
     } else {
       root.classList.add(theme);

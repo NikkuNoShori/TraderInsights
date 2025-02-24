@@ -8,9 +8,9 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-} from 'recharts';
-import type { Trade as PortfolioTrade } from '../../types/portfolio';
-import type { Trade } from '../../types/trade';
+} from "recharts";
+import type { Trade as PortfolioTrade } from "../../types/portfolio";
+import type { Trade } from "../../types/trade";
 
 // Common interface for chart data
 interface ChartData {
@@ -28,21 +28,22 @@ export function PerformanceCharts({ trades }: PerformanceChartsProps) {
   const processData = (): ChartData[] => {
     let runningValue = 0;
     let peak = 0;
-    
+
     return trades
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .map(trade => {
+      .map((trade) => {
         // Handle both trade types
-        const tradeValue = 'shares' in trade 
-          ? trade.price * trade.shares 
-          : trade.price * trade.quantity;
-        
+        const tradeValue =
+          "shares" in trade
+            ? trade.price * trade.shares
+            : trade.price * trade.quantity;
+
         runningValue += tradeValue;
         peak = Math.max(peak, runningValue);
         const drawdown = peak > 0 ? ((peak - runningValue) / peak) * 100 : 0;
 
         return {
-          date: trade.date.split('T')[0],
+          date: trade.date.split("T")[0],
           value: tradeValue,
           cumulativeReturn: runningValue,
           drawdown: -drawdown,
@@ -52,10 +53,10 @@ export function PerformanceCharts({ trades }: PerformanceChartsProps) {
 
   const chartData = processData();
 
-  const formatCurrency = (value: number) => 
-    new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
@@ -72,16 +73,12 @@ export function PerformanceCharts({ trades }: PerformanceChartsProps) {
             <AreaChart data={chartData}>
               <defs>
                 <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.1}/>
-                  <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.1} />
+                  <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-              <XAxis 
-                dataKey="date"
-                stroke="#94a3b8"
-                fontSize={12}
-              />
+              <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} />
               <YAxis
                 stroke="#94a3b8"
                 fontSize={12}
@@ -89,12 +86,12 @@ export function PerformanceCharts({ trades }: PerformanceChartsProps) {
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: 'rgb(30 41 59)',
-                  border: 'none',
-                  borderRadius: '0.375rem',
-                  color: '#f1f5f9'
+                  backgroundColor: "rgb(30 41 59)",
+                  border: "none",
+                  borderRadius: "0.375rem",
+                  color: "#f1f5f9",
                 }}
-                formatter={(value: number) => [formatCurrency(value), 'Equity']}
+                formatter={(value: number) => [formatCurrency(value), "Equity"]}
               />
               <Area
                 type="monotone"
@@ -116,16 +113,12 @@ export function PerformanceCharts({ trades }: PerformanceChartsProps) {
             <AreaChart data={chartData}>
               <defs>
                 <linearGradient id="colorDrawdown" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#e11d48" stopOpacity={0.1}/>
-                  <stop offset="95%" stopColor="#e11d48" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#e11d48" stopOpacity={0.1} />
+                  <stop offset="95%" stopColor="#e11d48" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-              <XAxis 
-                dataKey="date"
-                stroke="#94a3b8"
-                fontSize={12}
-              />
+              <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} />
               <YAxis
                 stroke="#94a3b8"
                 fontSize={12}
@@ -133,12 +126,15 @@ export function PerformanceCharts({ trades }: PerformanceChartsProps) {
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: 'rgb(30 41 59)',
-                  border: 'none',
-                  borderRadius: '0.375rem',
-                  color: '#f1f5f9'
+                  backgroundColor: "rgb(30 41 59)",
+                  border: "none",
+                  borderRadius: "0.375rem",
+                  color: "#f1f5f9",
                 }}
-                formatter={(value: number) => [formatPercent(value), 'Drawdown']}
+                formatter={(value: number) => [
+                  formatPercent(value),
+                  "Drawdown",
+                ]}
               />
               <Area
                 type="monotone"
@@ -159,11 +155,7 @@ export function PerformanceCharts({ trades }: PerformanceChartsProps) {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-              <XAxis 
-                dataKey="date"
-                stroke="#94a3b8"
-                fontSize={12}
-              />
+              <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} />
               <YAxis
                 stroke="#94a3b8"
                 fontSize={12}
@@ -171,21 +163,21 @@ export function PerformanceCharts({ trades }: PerformanceChartsProps) {
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: 'rgb(30 41 59)',
-                  border: 'none',
-                  borderRadius: '0.375rem',
-                  color: '#f1f5f9'
+                  backgroundColor: "rgb(30 41 59)",
+                  border: "none",
+                  borderRadius: "0.375rem",
+                  color: "#f1f5f9",
                 }}
-                formatter={(value: number) => [formatCurrency(value), 'Trade Value']}
+                formatter={(value: number) => [
+                  formatCurrency(value),
+                  "Trade Value",
+                ]}
               />
-              <Bar 
-                dataKey="value"
-                fill="#0ea5e9"
-              />
+              <Bar dataKey="value" fill="#0ea5e9" />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
     </div>
   );
-} 
+}

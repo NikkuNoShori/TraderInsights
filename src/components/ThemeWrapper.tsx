@@ -1,4 +1,4 @@
-import type { PropsWithChildren } from 'react';
+import type { PropsWithChildren } from "react";
 
 export function ThemeWrapper({ children }: PropsWithChildren) {
   return (
@@ -6,4 +6,4 @@ export function ThemeWrapper({ children }: PropsWithChildren) {
       {children}
     </div>
   );
-} 
+}

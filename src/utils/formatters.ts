@@ -1,11 +1,11 @@
-import { format } from 'date-fns';
+import { format } from "date-fns";
 
 export function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    maximumFractionDigits: 2,
   }).format(value);
 }
 
@@ -28,26 +28,26 @@ export function formatPercent(value: number): string {
 export const formatPercentage = formatPercent;
 
 export function formatDate(date: Date | string | null | undefined): string {
-  if (!date) return '-';
-  
+  if (!date) return "-";
+
   try {
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
-    
+    const dateObj = typeof date === "string" ? new Date(date) : date;
+
     // Check if date is valid
     if (isNaN(dateObj.getTime())) {
-      console.warn('Invalid date:', date);
-      return '-';
+      console.warn("Invalid date:", date);
+      return "-";
     }
 
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     }).format(dateObj);
   } catch (error) {
-    console.warn('Error formatting date:', error);
-    return '-';
+    console.warn("Error formatting date:", error);
+    return "-";
   }
 }

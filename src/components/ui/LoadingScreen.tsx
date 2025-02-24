@@ -1,4 +1,4 @@
-import { Logo } from './Logo';
+import { Logo } from "./Logo";
 
 export function LoadingScreen() {
   return (
@@ -6,9 +6,7 @@ export function LoadingScreen() {
       <div className="animate-pulse">
         <Logo />
       </div>
-      <div className="mt-4 text-gray-500 dark:text-gray-400">
-        Loading...
-      </div>
+      <div className="mt-4 text-gray-500 dark:text-gray-400">Loading...</div>
     </div>
   );
-} 
+}

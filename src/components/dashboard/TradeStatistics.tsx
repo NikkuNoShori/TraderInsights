@@ -1,14 +1,22 @@
 import React, { useMemo } from "react";
 import { format, subDays, isWithinInterval, startOfYear } from "date-fns";
 import { StatsCard } from "./StatsCard";
-import { TrendingUp, TrendingDown, Activity, DollarSign, Target, Percent, BarChart2 } from "lucide-react";
+import {
+  TrendingUp,
+  TrendingDown,
+  Activity,
+  DollarSign,
+  Target,
+  Percent,
+  BarChart2,
+} from "lucide-react";
 import { Trade } from "../../types/trade";
 import {
   formatTradeValue,
   calculateWinRate,
   calculateProfitFactor,
   calculateAverageTrade,
-  calculateMaxDrawdown
+  calculateMaxDrawdown,
 } from "../../utils/trade";
 
 interface TradeStatisticsProps {
@@ -17,47 +25,65 @@ interface TradeStatisticsProps {
   isLoading?: boolean;
 }
 
-export function TradeStatistics({ trades, timeframe = "1M", isLoading }: TradeStatisticsProps) {
+export function TradeStatistics({
+  trades,
+  timeframe = "1M",
+  isLoading,
+}: TradeStatisticsProps) {
   const stats = useMemo(() => {
     const now = new Date();
     const filterDate = {
       "1W": subDays(now, 7),
       "1M": subDays(now, 30),
       "3M": subDays(now, 90),
-      "YTD": startOfYear(now),
+      YTD: startOfYear(now),
       "1Y": subDays(now, 365),
     }[timeframe];
 
-    const filteredTrades = trades.filter(trade =>
+    const filteredTrades = trades.filter((trade) =>
       isWithinInterval(new Date(trade.date), {
         start: filterDate,
-        end: now
-      })
+        end: now,
+      }),
     );
 
     // Basic Statistics
     const totalTrades = filteredTrades.length;
-    const winningTrades = filteredTrades.filter(trade => trade.pnl > 0);
-    const losingTrades = filteredTrades.filter(trade => trade.pnl < 0);
+    const winningTrades = filteredTrades.filter((trade) => trade.pnl > 0);
+    const losingTrades = filteredTrades.filter((trade) => trade.pnl < 0);
     const winRate = calculateWinRate(filteredTrades);
 
     // Profit/Loss Calculations
-    const grossProfit = filteredTrades.reduce((sum, trade) => sum + (trade.pnl > 0 ? trade.pnl : 0), 0);
-    const grossLoss = Math.abs(filteredTrades.reduce((sum, trade) => sum + (trade.pnl < 0 ? trade.pnl : 0), 0));
+    const grossProfit = filteredTrades.reduce(
+      (sum, trade) => sum + (trade.pnl > 0 ? trade.pnl : 0),
+      0,
+    );
+    const grossLoss = Math.abs(
+      filteredTrades.reduce(
+        (sum, trade) => sum + (trade.pnl < 0 ? trade.pnl : 0),
+        0,
+      ),
+    );
     const netProfit = filteredTrades.reduce((sum, trade) => sum + trade.pnl, 0);
 
     // Advanced Metrics
     const profitFactor = calculateProfitFactor(filteredTrades);
     const avgTrade = calculateAverageTrade(filteredTrades);
     const maxDrawdown = calculateMaxDrawdown(filteredTrades);
-    const avgWinningTrade = winningTrades.length > 0
-      ? winningTrades.reduce((sum, trade) => sum + trade.pnl, 0) / winningTrades.length
-      : 0;
-    const avgLosingTrade = losingTrades.length > 0
-      ? Math.abs(losingTrades.reduce((sum, trade) => sum + trade.pnl, 0)) / losingTrades.length
-      : 0;
-    const riskRewardRatio = avgLosingTrade === 0 ? 0 : avgWinningTrade / avgLosingTrade;
-    const expectancy = (winRate * avgWinningTrade) - ((1 - winRate) * avgLosingTrade);
+    const avgWinningTrade =
+      winningTrades.length > 0
+        ? winningTrades.reduce((sum, trade) => sum + trade.pnl, 0) /
+          winningTrades.length
+        : 0;
+    const avgLosingTrade =
+      losingTrades.length > 0
+        ? Math.abs(losingTrades.reduce((sum, trade) => sum + trade.pnl, 0)) /
+          losingTrades.length
+        : 0;
+    const riskRewardRatio =
+      avgLosingTrade === 0 ? 0 : avgWinningTrade / avgLosingTrade;
+    const expectancy =
+      winRate * avgWinningTrade - (1 - winRate) * avgLosingTrade;
 
     return {
       totalTrades,
@@ -73,7 +99,7 @@ export function TradeStatistics({ trades, timeframe = "1M", isLoading }: TradeSt
       avgWinningTrade,
       avgLosingTrade,
       riskRewardRatio,
-      expectancy
+      expectancy,
     };
   }, [trades, timeframe]);
 
@@ -90,15 +116,21 @@ export function TradeStatistics({ trades, timeframe = "1M", isLoading }: TradeSt
           <div className="space-y-1 text-xs">
             <div className="flex justify-between">
               <span>Gross Profit:</span>
-              <span className="text-green-500">{formatTradeValue(stats.grossProfit)}</span>
+              <span className="text-green-500">
+                {formatTradeValue(stats.grossProfit)}
+              </span>
             </div>
             <div className="flex justify-between">
               <span>Gross Loss:</span>
-              <span className="text-red-500">{formatTradeValue(stats.grossLoss)}</span>
+              <span className="text-red-500">
+                {formatTradeValue(stats.grossLoss)}
+              </span>
             </div>
             <div className="flex justify-between pt-1 border-t">
               <span>Max Drawdown:</span>
-              <span className="text-red-500">{formatTradeValue(stats.maxDrawdown)}</span>
+              <span className="text-red-500">
+                {formatTradeValue(stats.maxDrawdown)}
+              </span>
             </div>
           </div>
         }
@@ -123,11 +155,15 @@ export function TradeStatistics({ trades, timeframe = "1M", isLoading }: TradeSt
             </div>
             <div className="flex justify-between pt-1 border-t">
               <span>Avg Win:</span>
-              <span className="text-green-500">{formatTradeValue(stats.avgWinningTrade)}</span>
+              <span className="text-green-500">
+                {formatTradeValue(stats.avgWinningTrade)}
+              </span>
             </div>
             <div className="flex justify-between">
               <span>Avg Loss:</span>
-              <span className="text-red-500">{formatTradeValue(stats.avgLosingTrade)}</span>
+              <span className="text-red-500">
+                {formatTradeValue(stats.avgLosingTrade)}
+              </span>
             </div>
           </div>
         }

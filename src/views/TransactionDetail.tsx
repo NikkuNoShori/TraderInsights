@@ -1,15 +1,26 @@
-import { useState, useEffect } from '@/lib/react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clock, Tag, DollarSign, FileText, Image as ImageIcon, Pencil, Trash2, CheckCircle, AlertCircle } from 'lucide-react';
-import { formatCurrency, formatDate } from '@/utils/formatters';
-import { OrdersList } from '@/components/transactions/OrdersList';
-import type { Transaction } from '@/types/database';
-import { TransactionModal } from '@/components/modals/TransactionModal';
-import { LoadingScreen } from '@/components/ui/LoadingScreen';
-import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
-import { supabase } from '@/lib/supabase';
-import { toast } from 'react-hot-toast';
+import { useState, useEffect } from "@/lib/react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import {
+  ArrowLeft,
+  Clock,
+  Tag,
+  DollarSign,
+  FileText,
+  Image as ImageIcon,
+  Pencil,
+  Trash2,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-react";
+import { formatCurrency, formatDate } from "@/utils/formatters";
+import { OrdersList } from "@/components/transactions/OrdersList";
+import type { Transaction } from "@/types/database";
+import { TransactionModal } from "@/components/modals/TransactionModal";
+import { LoadingScreen } from "@/components/ui/LoadingScreen";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase";
+import { toast } from "react-hot-toast";
 
 export function TransactionDetail() {
   const { id } = useParams();
@@ -25,16 +36,16 @@ export function TransactionDetail() {
       if (!id) return;
       try {
         const { data, error } = await supabase
-          .from('transactions')
-          .select('*')
-          .eq('id', id)
+          .from("transactions")
+          .select("*")
+          .eq("id", id)
           .single();
 
         if (error) throw error;
         setTransaction(data);
       } catch (err) {
-        console.error('Error fetching transaction:', err);
-        setError('Failed to load transaction');
+        console.error("Error fetching transaction:", err);
+        setError("Failed to load transaction");
       } finally {
         setLoading(false);
       }
@@ -47,15 +58,15 @@ export function TransactionDetail() {
     if (!id) return;
     try {
       const { error } = await supabase
-        .from('transactions')
+        .from("transactions")
         .delete()
-        .eq('id', id);
+        .eq("id", id);
 
       if (error) throw error;
-      navigate('/app/journal');
+      navigate("/app/journal");
     } catch (err) {
-      console.error('Error deleting transaction:', err);
-      setError('Failed to delete transaction');
+      console.error("Error deleting transaction:", err);
+      setError("Failed to delete transaction");
     }
   };
 
@@ -63,15 +74,17 @@ export function TransactionDetail() {
     if (!id || !transaction) return;
     try {
       const { error } = await supabase
-        .from('transactions')
+        .from("transactions")
         .update({ chart_image: null })
-        .eq('id', id);
+        .eq("id", id);
 
       if (error) throw error;
-      setTransaction(prev => prev ? { ...prev, chart_image: undefined } : null);
+      setTransaction((prev) =>
+        prev ? { ...prev, chart_image: undefined } : null,
+      );
     } catch (err) {
-      console.error('Error deleting image:', err);
-      setError('Failed to delete image');
+      console.error("Error deleting image:", err);
+      setError("Failed to delete image");
     }
   };
 
@@ -95,7 +108,9 @@ export function TransactionDetail() {
   if (!transaction) {
     return (
       <div className="p-6">
-        <p className="mt-2 text-gray-600">The transaction you're looking for doesn't exist.</p>
+        <p className="mt-2 text-gray-600">
+          The transaction you're looking for doesn't exist.
+        </p>
         <Link
           to="/app/journal"
           className="mt-4 inline-flex items-center text-indigo-600 hover:text-indigo-500"
@@ -111,7 +126,7 @@ export function TransactionDetail() {
     <div className="p-6">
       <div className="mb-8">
         <button
-          onClick={() => navigate('/app/journal')}
+          onClick={() => navigate("/app/journal")}
           className="inline-flex items-center text-indigo-600 hover:text-indigo-500"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -124,12 +139,16 @@ export function TransactionDetail() {
           <div>
             <h2 className="text-2xl font-bold text-gray-900 flex items-center">
               {transaction.symbol}
-              <span className={`ml-3 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                transaction.side === 'Long' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              }`}>
+              <span
+                className={`ml-3 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                  transaction.side === "Long"
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                }`}
+              >
                 {transaction.side}
               </span>
-              {transaction.status === 'open' ? (
+              {transaction.status === "open" ? (
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                   <AlertCircle className="h-3 w-3 mr-1" />
                   Open ({transaction.remaining_quantity} remaining)
@@ -165,7 +184,9 @@ export function TransactionDetail() {
           {/* Transaction Details */}
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-medium text-gray-900">Transaction Details</h3>
+              <h3 className="text-lg font-medium text-gray-900">
+                Transaction Details
+              </h3>
               <dl className="mt-3 space-y-3">
                 <div className="flex items-center text-sm">
                   <Clock className="h-4 w-4 text-gray-400 mr-2" />
@@ -195,20 +216,26 @@ export function TransactionDetail() {
               </dl>
             </div>
 
-            {transaction.type === 'option' && transaction.option_details && (
+            {transaction.type === "option" && transaction.option_details && (
               <div>
-                <h3 className="text-lg font-medium text-gray-900">Option Details</h3>
+                <h3 className="text-lg font-medium text-gray-900">
+                  Option Details
+                </h3>
                 <dl className="mt-3 space-y-3">
                   <div className="flex items-center text-sm">
                     <dt className="font-medium text-gray-500 w-24">Type:</dt>
-                    <dd className="capitalize">{transaction.option_details.type}</dd>
+                    <dd className="capitalize">
+                      {transaction.option_details.type}
+                    </dd>
                   </div>
                   <div className="flex items-center text-sm">
                     <dt className="font-medium text-gray-500 w-24">Strike:</dt>
                     <dd>{formatCurrency(transaction.option_details.strike)}</dd>
                   </div>
                   <div className="flex items-center text-sm">
-                    <dt className="font-medium text-gray-500 w-24">Expiration:</dt>
+                    <dt className="font-medium text-gray-500 w-24">
+                      Expiration:
+                    </dt>
                     <dd>{formatDate(transaction.option_details.expiration)}</dd>
                   </div>
                 </dl>
@@ -249,7 +276,7 @@ export function TransactionDetail() {
             </div>
           )}
         </div>
-        
+
         {transaction.orders && transaction.orders.length > 0 && (
           <div className="mt-8">
             <OrdersList orders={transaction.orders} />

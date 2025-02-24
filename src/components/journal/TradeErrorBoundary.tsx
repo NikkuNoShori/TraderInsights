@@ -1,4 +1,4 @@
-import { XCircleIcon, RefreshCw } from 'lucide-react';
+import { XCircleIcon, RefreshCw } from "lucide-react";
 
 interface Props {
   children: React.ReactNode;
@@ -22,7 +22,7 @@ export class TradeErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Trade component error:', error, errorInfo);
+    console.error("Trade component error:", error, errorInfo);
   }
 
   handleRetry = async () => {
@@ -33,8 +33,8 @@ export class TradeErrorBoundary extends Component<Props, State> {
       }
       this.setState({ hasError: false, error: undefined });
     } catch (error) {
-      this.setState({ 
-        error: error instanceof Error ? error : new Error('Retry failed') 
+      this.setState({
+        error: error instanceof Error ? error : new Error("Retry failed"),
       });
     } finally {
       this.setState({ isRetrying: false });
@@ -59,9 +59,11 @@ export class TradeErrorBoundary extends Component<Props, State> {
                        hover:bg-red-100 dark:hover:bg-red-900/40 rounded-md transition-colors
                        disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <RefreshCw className={`h-4 w-4 mr-1 ${
-                this.state.isRetrying ? 'animate-spin' : ''
-              }`} />
+              <RefreshCw
+                className={`h-4 w-4 mr-1 ${
+                  this.state.isRetrying ? "animate-spin" : ""
+                }`}
+              />
               Retry
             </button>
           </div>
@@ -71,4 +73,4 @@ export class TradeErrorBoundary extends Component<Props, State> {
 
     return this.props.children;
   }
-} 
+}

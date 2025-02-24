@@ -1,294 +1,295 @@
-import { X } from 'lucide-react';
-import { useAuthStore } from '../../stores/authStore';
-import { journalService } from '../../lib/services/journalService';
-import type { Transaction, TransactionType, TransactionSide, OptionDetails } from '../../types/database';
+import { useState } from "@/lib/react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { useToast } from "@/hooks/useToast";
+import type {
+  Trade,
+  TradeType,
+  TradeSide,
+  CreateTradeData,
+} from "@/types/trade";
 
 interface TransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: () => void;
-  initialData?: Transaction;
+  onSubmit: (transaction: CreateTradeData) => void;
+  initialData?: Partial<Trade>;
 }
 
-export function TransactionModal({ isOpen, onClose, onSuccess, initialData }: TransactionModalProps) {
-  const { user, profile } = useAuthStore();
+export function TransactionModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  initialData,
+}: TransactionModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
 
-  // Form state
-  const [symbol, setSymbol] = useState(initialData?.symbol || '');
-  const [type, setType] = useState<TransactionType>(initialData?.type || 'stock');
-  const [side, setSide] = useState<TransactionSide>(initialData?.side || 'Long');
-  const [quantity, setQuantity] = useState(initialData?.quantity?.toString() || '');
-  const [price, setPrice] = useState(initialData?.price?.toString() || '');
-  const [date, setDate] = useState(initialData?.date || new Date().toISOString().split('T')[0]);
-  const [time, setTime] = useState(initialData?.time || new Date().toTimeString().split(' ')[0]);
-  const [notes, setNotes] = useState(initialData?.notes || '');
-  
-  // Option details state
-  const [strike, setStrike] = useState(initialData?.option_details?.strike?.toString() || '');
-  const [expiration, setExpiration] = useState(initialData?.option_details?.expiration || '');
-  const [optionType, setOptionType] = useState<'call' | 'put'>(initialData?.option_details?.type || 'call');
+  const [symbol, setSymbol] = useState(initialData?.symbol || "");
+  const [type, setType] = useState<TradeType>(initialData?.type || "stock");
+  const [side, setSide] = useState<TradeSide>(initialData?.side || "Long");
+  const [quantity, setQuantity] = useState(
+    initialData?.quantity?.toString() || "",
+  );
+  const [price, setPrice] = useState(initialData?.price?.toString() || "");
+  const [date, setDate] = useState(
+    initialData?.date || new Date().toISOString().split("T")[0],
+  );
+  const [time, setTime] = useState(
+    initialData?.time || new Date().toTimeString().split(" ")[0],
+  );
+  const [notes, setNotes] = useState(initialData?.notes || "");
 
-  if (!isOpen) return null;
+  // Option specific fields
+  const [strike, setStrike] = useState(
+    initialData?.option_details?.strike?.toString() || "",
+  );
+  const [expiration, setExpiration] = useState(
+    initialData?.option_details?.expiration || "",
+  );
+  const [optionType, setOptionType] = useState<"call" | "put">(
+    initialData?.option_details?.option_type || "call",
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
-
     setLoading(true);
     setError(null);
 
     try {
-      const total = Number(quantity) * Number(price);
-      const transactionData: Omit<Transaction, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'status' | 'remaining_quantity'> = {
+      const transaction: CreateTradeData = {
         symbol: symbol.toUpperCase(),
         type,
         side,
         quantity: Number(quantity),
         price: Number(price),
-        total,
         date,
         time,
-        notes: notes || undefined,
+        notes,
+        status: "open",
+        ...(type === "option" && {
+          option_details: {
+            strike: Number(strike),
+            expiration,
+            option_type: optionType,
+          },
+        }),
       };
 
-      if (type === 'option') {
-        transactionData.option_details = {
-          strike: Number(strike),
-          expiration,
-          type: optionType,
-        };
-      }
-
-      if (initialData?.id) {
-        await journalService.updateTransaction(initialData.id, transactionData);
-      } else {
-        await journalService.createTransaction(user.id, transactionData);
-      }
-
-      onSuccess?.();
+      await onSubmit(transaction);
+      toast.addToast("Transaction added successfully", "success");
       onClose();
     } catch (err) {
-      console.error('Error saving transaction:', err);
-      setError('Failed to save transaction');
+      setError(
+        err instanceof Error ? err.message : "Failed to add transaction",
+      );
+      toast.addToast("Failed to add transaction", "error");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-        <div className="fixed inset-0 transition-opacity" aria-hidden="true">
-          <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
-        </div>
-
-        <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
-          <div className="flex justify-between items-start">
-            <h3 className="text-lg font-medium text-gray-900">
-              {initialData ? 'Edit Transaction' : 'New Transaction'}
-            </h3>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-500"
-            >
-              <X className="h-6 w-6" />
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-            <div>
-              <label htmlFor="symbol" className="block text-sm font-medium text-gray-700">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add Transaction</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label htmlFor="symbol" className="text-sm font-medium">
                 Symbol
               </label>
-              <input
-                type="text"
+              <Input
                 id="symbol"
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value)}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 required
               />
             </div>
 
-            <div>
-              <label htmlFor="type" className="block text-sm font-medium text-gray-700">
+            <div className="space-y-2">
+              <label htmlFor="type" className="text-sm font-medium">
                 Type
               </label>
-              <select
-                id="type"
+              <Select
                 value={type}
-                onChange={(e) => setType(e.target.value as TransactionType)}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                onValueChange={(value: TradeType) => setType(value)}
               >
-                <option value="stock">Stock</option>
-                <option value="option">Option</option>
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="stock">Stock</SelectItem>
+                  <SelectItem value="option">Option</SelectItem>
+                  <SelectItem value="crypto">Crypto</SelectItem>
+                  <SelectItem value="forex">Forex</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div>
-              <label htmlFor="side" className="block text-sm font-medium text-gray-700">
+            <div className="space-y-2">
+              <label htmlFor="side" className="text-sm font-medium">
                 Side
               </label>
-              <select
-                id="side"
+              <Select
                 value={side}
-                onChange={(e) => setSide(e.target.value as TransactionSide)}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                onValueChange={(value: TradeSide) => setSide(value)}
               >
-                <option value="Long">Long</option>
-                <option value="Short">Short</option>
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select side" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Long">Long</SelectItem>
+                  <SelectItem value="Short">Short</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div>
-              <label htmlFor="quantity" className="block text-sm font-medium text-gray-700">
+            <div className="space-y-2">
+              <label htmlFor="quantity" className="text-sm font-medium">
                 Quantity
               </label>
-              <input
-                type="number"
+              <Input
                 id="quantity"
+                type="number"
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
-                min="1"
-                step="1"
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 required
               />
             </div>
 
-            <div>
-              <label htmlFor="price" className="block text-sm font-medium text-gray-700">
+            <div className="space-y-2">
+              <label htmlFor="price" className="text-sm font-medium">
                 Price
               </label>
-              <input
-                type="number"
+              <Input
                 id="price"
+                type="number"
+                step="0.01"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                min="0.01"
-                step="0.01"
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 required
               />
             </div>
 
-            <div>
-              <label htmlFor="date" className="block text-sm font-medium text-gray-700">
+            <div className="space-y-2">
+              <label htmlFor="date" className="text-sm font-medium">
                 Date
               </label>
-              <input
-                type="date"
+              <Input
                 id="date"
+                type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 required
               />
             </div>
 
-            <div>
-              <label htmlFor="time" className="block text-sm font-medium text-gray-700">
+            <div className="space-y-2">
+              <label htmlFor="time" className="text-sm font-medium">
                 Time
               </label>
-              <input
-                type="time"
+              <Input
                 id="time"
+                type="time"
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 required
               />
             </div>
+          </div>
 
-            {type === 'option' && (
-              <>
-                <div>
-                  <label htmlFor="strike" className="block text-sm font-medium text-gray-700">
-                    Strike Price
-                  </label>
-                  <input
-                    type="number"
-                    id="strike"
-                    value={strike}
-                    onChange={(e) => setStrike(e.target.value)}
-                    min="0.01"
-                    step="0.01"
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="expiration" className="block text-sm font-medium text-gray-700">
-                    Expiration Date
-                  </label>
-                  <input
-                    type="date"
-                    id="expiration"
-                    value={expiration}
-                    onChange={(e) => setExpiration(e.target.value)}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="optionType" className="block text-sm font-medium text-gray-700">
-                    Option Type
-                  </label>
-                  <select
-                    id="optionType"
-                    value={optionType}
-                    onChange={(e) => setOptionType(e.target.value as 'call' | 'put')}
-                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  >
-                    <option value="call">Call</option>
-                    <option value="put">Put</option>
-                  </select>
-                </div>
-              </>
-            )}
-
-            <div>
-              <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
-                Notes
-              </label>
-              <textarea
-                id="notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={3}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              />
-            </div>
-
-            {error && (
-              <div className="text-sm text-red-600">
-                {error}
+          {type === "option" && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label htmlFor="strike" className="text-sm font-medium">
+                  Strike Price
+                </label>
+                <Input
+                  id="strike"
+                  type="number"
+                  step="0.01"
+                  value={strike}
+                  onChange={(e) => setStrike(e.target.value)}
+                  required
+                />
               </div>
-            )}
 
-            <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:col-start-2 sm:text-sm disabled:opacity-50"
-              >
-                {loading ? 'Saving...' : initialData ? 'Save Changes' : 'Create Transaction'}
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm"
-              >
-                Cancel
-              </button>
+              <div className="space-y-2">
+                <label htmlFor="expiration" className="text-sm font-medium">
+                  Expiration Date
+                </label>
+                <Input
+                  id="expiration"
+                  type="date"
+                  value={expiration}
+                  onChange={(e) => setExpiration(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="optionType" className="text-sm font-medium">
+                  Option Type
+                </label>
+                <Select
+                  value={optionType}
+                  onValueChange={(value: "call" | "put") =>
+                    setOptionType(value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select option type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="call">Call</SelectItem>
+                    <SelectItem value="put">Put</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </form>
-        </div>
-      </div>
-    </div>
+          )}
+
+          <div className="space-y-2">
+            <label htmlFor="notes" className="text-sm font-medium">
+              Notes
+            </label>
+            <textarea
+              id="notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          </div>
+
+          {error && <div className="text-red-500 text-sm">{error}</div>}
+
+          <div className="flex justify-end space-x-2">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Adding..." : "Add Transaction"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

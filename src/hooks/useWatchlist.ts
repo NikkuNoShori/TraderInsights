@@ -25,7 +25,7 @@ export function useWatchlist() {
       setItems(data || []);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to fetch watchlist"
+        err instanceof Error ? err.message : "Failed to fetch watchlist",
       );
     } finally {
       setIsLoading(false);

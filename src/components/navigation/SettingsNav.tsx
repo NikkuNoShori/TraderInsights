@@ -1,32 +1,32 @@
-import { NavLink } from 'react-router-dom';
-import { User, Palette, Bell, Shield } from 'lucide-react';
-import { clsx } from 'clsx';
+import { NavLink } from "react-router-dom";
+import { User, Palette, Bell, Shield } from "lucide-react";
+import { clsx } from "clsx";
 
 const settingsLinks = [
   {
-    to: '/settings/profile',
-    label: 'Profile',
+    to: "/settings/profile",
+    label: "Profile",
     icon: User,
-    description: 'Manage your personal information'
+    description: "Manage your personal information",
   },
   {
-    to: '/settings/security',
-    label: 'Security',
+    to: "/settings/security",
+    label: "Security",
     icon: Shield,
-    description: 'Update password and security settings'
+    description: "Update password and security settings",
   },
   {
-    to: '/settings/appearance',
-    label: 'Appearance',
+    to: "/settings/appearance",
+    label: "Appearance",
     icon: Palette,
-    description: 'Customize your interface'
+    description: "Customize your interface",
   },
   {
-    to: '/settings/notifications',
-    label: 'Notifications',
+    to: "/settings/notifications",
+    label: "Notifications",
     icon: Bell,
-    description: 'Configure your notifications'
-  }
+    description: "Configure your notifications",
+  },
 ];
 
 export function SettingsNav() {
@@ -38,10 +38,10 @@ export function SettingsNav() {
           to={to}
           className={({ isActive }) =>
             clsx(
-              'flex items-center px-3 py-2 rounded-md transition-colors',
+              "flex items-center px-3 py-2 rounded-md transition-colors",
               isActive
-                ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
-                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                ? "bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400"
+                : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800",
             )
           }
         >
@@ -56,4 +56,4 @@ export function SettingsNav() {
       ))}
     </nav>
   );
-} 
+}

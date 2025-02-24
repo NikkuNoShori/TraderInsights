@@ -34,11 +34,11 @@ api.interceptors.response.use(
         throw new Error("Network error. Please check your connection.");
       }
       throw new Error(
-        axiosError.response.data?.error || "An unexpected error occurred"
+        axiosError.response.data?.error || "An unexpected error occurred",
       );
     }
     throw error;
-  }
+  },
 );
 
 export const apiClient = {

@@ -1,6 +1,6 @@
-import { format } from 'date-fns';
-import { Trash2, Loader2 } from 'lucide-react';
-import { Trade, formatTradeValue } from '../../types/trade';
+import { format } from "date-fns";
+import { Trash2, Loader2 } from "lucide-react";
+import { Trade, formatTradeValue } from "../../types/trade";
 
 interface TradeEntryProps {
   trade: Trade;
@@ -8,7 +8,11 @@ interface TradeEntryProps {
   onRetry?: () => void;
 }
 
-export const TradeEntry: React.FC<TradeEntryProps> = ({ trade, onDelete, onRetry }) => {
+export const TradeEntry: React.FC<TradeEntryProps> = ({
+  trade,
+  onDelete,
+  onRetry,
+}) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,7 +22,7 @@ export const TradeEntry: React.FC<TradeEntryProps> = ({ trade, onDelete, onRetry
       setError(null);
       await onDelete(trade.id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete trade');
+      setError(err instanceof Error ? err.message : "Failed to delete trade");
     } finally {
       setIsDeleting(false);
     }
@@ -30,12 +34,14 @@ export const TradeEntry: React.FC<TradeEntryProps> = ({ trade, onDelete, onRetry
       setError(null);
       await onRetry();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to retry operation');
+      setError(
+        err instanceof Error ? err.message : "Failed to retry operation",
+      );
     }
   };
 
   const renderOptionDetails = () => {
-    if (trade.type !== 'option' || !trade.option_details) return null;
+    if (trade.type !== "option" || !trade.option_details) return null;
 
     const { strike, expiration, contract_type } = trade.option_details;
 
@@ -46,8 +52,10 @@ export const TradeEntry: React.FC<TradeEntryProps> = ({ trade, onDelete, onRetry
           <div>{formatTradeValue(strike)}</div>
         </div>
         <div>
-          <div className="text-sm text-gray-500 dark:text-gray-400">Expiration</div>
-          <div>{format(new Date(expiration), 'MMM d, yyyy')}</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            Expiration
+          </div>
+          <div>{format(new Date(expiration), "MMM d, yyyy")}</div>
         </div>
         <div>
           <div className="text-sm text-gray-500 dark:text-gray-400">Type</div>
@@ -60,8 +68,10 @@ export const TradeEntry: React.FC<TradeEntryProps> = ({ trade, onDelete, onRetry
   return (
     <div className="bg-white dark:bg-dark-paper rounded-lg shadow p-4 relative">
       {error && (
-        <div className="absolute inset-0 bg-red-50 dark:bg-red-900/20 rounded-lg 
-                      flex flex-col items-center justify-center p-4">
+        <div
+          className="absolute inset-0 bg-red-50 dark:bg-red-900/20 rounded-lg 
+                      flex flex-col items-center justify-center p-4"
+        >
           <div className="text-red-800 dark:text-red-200 text-sm mb-2">
             {error}
           </div>
@@ -76,7 +86,7 @@ export const TradeEntry: React.FC<TradeEntryProps> = ({ trade, onDelete, onRetry
           )}
         </div>
       )}
-      
+
       {isDeleting && (
         <div className="absolute inset-0 bg-gray-50/80 dark:bg-gray-900/80 rounded-lg flex items-center justify-center">
           <Loader2 className="h-6 w-6 text-primary-500 animate-spin" />
@@ -87,33 +97,39 @@ export const TradeEntry: React.FC<TradeEntryProps> = ({ trade, onDelete, onRetry
         <div>
           <div className="flex items-center space-x-2">
             <span className="text-lg font-medium">{trade.symbol}</span>
-            <span className={`text-sm px-2 py-1 rounded ${
-              trade.side === 'Long' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-            }`}>
+            <span
+              className={`text-sm px-2 py-1 rounded ${
+                trade.side === "Long"
+                  ? "bg-green-100 text-green-800"
+                  : "bg-red-100 text-red-800"
+              }`}
+            >
               {trade.side}
             </span>
             <span className="text-sm text-gray-500">
-              {trade.type === 'option' ? 'Option' : 'Stock'}
+              {trade.type === "option" ? "Option" : "Stock"}
             </span>
           </div>
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            {format(new Date(trade.date), 'MMM d, yyyy')} at {trade.time}
+            {format(new Date(trade.date), "MMM d, yyyy")} at {trade.time}
           </div>
         </div>
         <button
           onClick={handleDelete}
           disabled={isDeleting}
           className={`text-gray-400 hover:text-red-500 transition-colors ${
-            isDeleting ? 'opacity-50 cursor-not-allowed' : ''
+            isDeleting ? "opacity-50 cursor-not-allowed" : ""
           }`}
         >
           <Trash2 className="h-5 w-5" />
         </button>
       </div>
-      
+
       <div className="mt-4 grid grid-cols-2 gap-4">
         <div>
-          <div className="text-sm text-gray-500 dark:text-gray-400">Quantity</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            Quantity
+          </div>
           <div>{trade.quantity}</div>
         </div>
         <div>
@@ -140,4 +156,4 @@ export const TradeEntry: React.FC<TradeEntryProps> = ({ trade, onDelete, onRetry
       )}
     </div>
   );
-}; 
+};

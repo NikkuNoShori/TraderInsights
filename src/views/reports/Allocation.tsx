@@ -1,10 +1,10 @@
-import { PageHeader } from '../../components/ui/PageHeader';
-import { ReportingNav } from '../../components/navigation/ReportingNav';
+import { PageHeader } from "../../components/ui/PageHeader";
+import { ReportingNav } from "../../components/navigation/ReportingNav";
 
 export default function Allocation() {
   return (
     <div className="flex-grow p-4">
-      <PageHeader 
+      <PageHeader
         title="Portfolio Allocation"
         subtitle="View your portfolio distribution"
       />
@@ -21,4 +21,4 @@ export default function Allocation() {
       </div>
     </div>
   );
-} 
+}

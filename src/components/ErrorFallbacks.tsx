@@ -1,4 +1,4 @@
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from "lucide-react";
 
 export function PageErrorFallback() {
   return (
@@ -29,11 +29,11 @@ export function InputErrorFallback() {
 
 export function ButtonErrorFallback() {
   return (
-    <button 
-      disabled 
+    <button
+      disabled
       className="bg-error/10 text-error rounded px-4 py-2 opacity-50 cursor-not-allowed"
     >
       Error
     </button>
   );
-} 
+}

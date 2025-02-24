@@ -1,9 +1,9 @@
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
-import { Button } from '../ui/button';
-import { X } from 'lucide-react';
-import { ManualTradeForm } from './ManualTradeForm';
-import { ImportTradeForm } from './ImportTradeForm';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import { Button } from "../ui/button";
+import { X } from "lucide-react";
+import { ManualTradeForm } from "./ManualTradeForm";
+import { ImportTradeForm } from "./ImportTradeForm";
 
 interface AddTradeModalProps {
   isOpen: boolean;
@@ -37,13 +37,13 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
 
         <Tabs defaultValue="manual" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-4 bg-muted dark:bg-dark-muted">
-            <TabsTrigger 
+            <TabsTrigger
               value="manual"
               className="data-[state=active]:bg-background dark:data-[state=active]:bg-dark-paper data-[state=active]:text-foreground dark:data-[state=active]:text-dark-text"
             >
               Manual Entry
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value="import"
               className="data-[state=active]:bg-background dark:data-[state=active]:bg-dark-paper data-[state=active]:text-foreground dark:data-[state=active]:text-dark-text"
             >
@@ -62,4 +62,4 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
       </DialogContent>
     </Dialog>
   );
-}; 
+};

@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 
 interface HighlightProps {
   children: React.ReactNode;
@@ -24,4 +24,4 @@ export function Highlight({ children, active = false }: HighlightProps) {
       <div className="relative">{children}</div>
     </motion.div>
   );
-} 
+}

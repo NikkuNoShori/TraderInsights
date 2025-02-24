@@ -1,12 +1,12 @@
-import { Trade } from '../types/trade';
+import { Trade } from "../types/trade";
 
 export const formatTradeValue = (value: number): string => {
-  if (isNaN(value)) return '$0.00';
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
+  if (isNaN(value)) return "$0.00";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    maximumFractionDigits: 2,
   }).format(value);
 };
 
@@ -22,7 +22,7 @@ export const calculatePnL = (trade: Trade): number => {
 export const calculateWinRate = (trades: Trade[]): number => {
   if (!trades.length) return 0;
   const winningTrades = trades.filter(
-    (trade) => trade.pnl !== undefined && trade.pnl > 0
+    (trade) => trade.pnl !== undefined && trade.pnl > 0,
   );
   return winningTrades.length / trades.length;
 };
@@ -31,14 +31,14 @@ export const calculateProfitFactor = (trades: Trade[]): number => {
   const grossProfit = trades.reduce(
     (sum, trade) =>
       sum + (trade.pnl !== undefined && trade.pnl > 0 ? trade.pnl : 0),
-    0
+    0,
   );
   const grossLoss = Math.abs(
     trades.reduce(
       (sum, trade) =>
         sum + (trade.pnl !== undefined && trade.pnl < 0 ? trade.pnl : 0),
-      0
-    )
+      0,
+    ),
   );
   return grossLoss === 0 ? grossProfit : grossProfit / grossLoss;
 };
@@ -82,10 +82,10 @@ export const formatPercent = (value: number): string => {
 // Helper function to calculate risk reward ratio
 export const calculateRiskReward = (trades: Trade[]): number => {
   const winningTrades = trades.filter(
-    (trade) => trade.pnl !== undefined && trade.pnl > 0
+    (trade) => trade.pnl !== undefined && trade.pnl > 0,
   );
   const losingTrades = trades.filter(
-    (trade) => trade.pnl !== undefined && trade.pnl < 0
+    (trade) => trade.pnl !== undefined && trade.pnl < 0,
   );
 
   const avgWin =
@@ -97,9 +97,9 @@ export const calculateRiskReward = (trades: Trade[]): number => {
   const avgLoss =
     losingTrades.length > 0
       ? Math.abs(
-          losingTrades.reduce((sum, trade) => sum + (trade.pnl ?? 0), 0)
+          losingTrades.reduce((sum, trade) => sum + (trade.pnl ?? 0), 0),
         ) / losingTrades.length
       : 0;
 
   return avgLoss === 0 ? 0 : avgWin / avgLoss;
-}; 
+};

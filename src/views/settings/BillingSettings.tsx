@@ -1,10 +1,10 @@
-import { Eye, EyeOff, Download } from 'lucide-react';
-import { clsx } from 'clsx';
+import { Eye, EyeOff, Download } from "lucide-react";
+import { clsx } from "clsx";
 
 interface SensitiveDataProps {
   value: string;
   label: string;
-  type: 'card' | 'bank' | 'ssn' | 'tax';
+  type: "card" | "bank" | "ssn" | "tax";
 }
 
 function SensitiveData({ value, label, type }: SensitiveDataProps) {
@@ -13,16 +13,16 @@ function SensitiveData({ value, label, type }: SensitiveDataProps) {
   const formatValue = (val: string) => {
     if (!isVisible) {
       switch (type) {
-        case 'card':
+        case "card":
           return `****-****-****-${val.slice(-4)}`;
-        case 'bank':
+        case "bank":
           return `****${val.slice(-4)}`;
-        case 'ssn':
+        case "ssn":
           return `***-**-${val.slice(-4)}`;
-        case 'tax':
+        case "tax":
           return `**-***${val.slice(-4)}`;
         default:
-          return '****';
+          return "****";
       }
     }
     return val;
@@ -38,23 +38,27 @@ function SensitiveData({ value, label, type }: SensitiveDataProps) {
         onClick={() => setIsVisible(!isVisible)}
         className="p-2 text-gray-400 hover:text-gray-600"
       >
-        {isVisible ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+        {isVisible ? (
+          <EyeOff className="h-5 w-5" />
+        ) : (
+          <Eye className="h-5 w-5" />
+        )}
       </button>
     </div>
   );
 }
 
 export function BillingSettings() {
-  const [currentPassword, setCurrentPassword] = useState('');
+  const [currentPassword, setCurrentPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleAddPaymentMethod = async () => {
     setIsLoading(true);
     try {
       // TODO: Implement payment method addition
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     } catch (error) {
-      console.error('Failed to add payment method:', error);
+      console.error("Failed to add payment method:", error);
     } finally {
       setIsLoading(false);
     }
@@ -64,7 +68,9 @@ export function BillingSettings() {
     <div className="space-y-6">
       <div className="bg-white shadow rounded-lg p-6">
         <div className="pb-6">
-          <h2 className="text-lg font-medium text-gray-900">Billing Information</h2>
+          <h2 className="text-lg font-medium text-gray-900">
+            Billing Information
+          </h2>
           <p className="mt-1 text-sm text-gray-500">
             View and manage your billing information and payment methods.
           </p>
@@ -76,16 +82,8 @@ export function BillingSettings() {
             value="4242424242424242"
             type="card"
           />
-          <SensitiveData
-            label="Bank Account"
-            value="9876543210"
-            type="bank"
-          />
-          <SensitiveData
-            label="Tax ID"
-            value="12-3456789"
-            type="tax"
-          />
+          <SensitiveData label="Bank Account" value="9876543210" type="bank" />
+          <SensitiveData label="Tax ID" value="12-3456789" type="tax" />
         </div>
 
         <div className="mt-6">
@@ -93,11 +91,11 @@ export function BillingSettings() {
             onClick={handleAddPaymentMethod}
             disabled={isLoading}
             className={clsx(
-              'inline-flex items-center px-4 py-2 border border-transparent',
-              'text-sm font-medium rounded-md shadow-sm',
-              'text-white bg-indigo-600 hover:bg-indigo-700',
-              'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500',
-              isLoading && 'opacity-50 cursor-not-allowed'
+              "inline-flex items-center px-4 py-2 border border-transparent",
+              "text-sm font-medium rounded-md shadow-sm",
+              "text-white bg-indigo-600 hover:bg-indigo-700",
+              "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500",
+              isLoading && "opacity-50 cursor-not-allowed",
             )}
           >
             Add Payment Method
@@ -114,7 +112,7 @@ export function BillingSettings() {
         </div>
 
         <div className="space-y-4">
-          {['March 2024', 'February 2024', 'January 2024'].map((month) => (
+          {["March 2024", "February 2024", "January 2024"].map((month) => (
             <div
               key={month}
               className="flex items-center justify-between py-3 border-b last:border-0"

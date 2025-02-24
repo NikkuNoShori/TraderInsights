@@ -55,7 +55,7 @@ export class ErrorTrackingService {
       componentName?: string;
       userId?: string;
       additionalData?: Record<string, unknown>;
-    }
+    },
   ) {
     try {
       const errorLog: Omit<ErrorLog, "id"> = {
@@ -87,7 +87,7 @@ export class ErrorTrackingService {
         .select("severity")
         .gte(
           "timestamp",
-          new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+          new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
         );
 
       if (error) throw error;

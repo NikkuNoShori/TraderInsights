@@ -1,23 +1,18 @@
-import { useState } from 'react';
-import { useAuthStore } from '../../stores/authStore';
-import { supabase } from '../../lib/supabase';
-import { Button } from '../ui/button';
-import { 
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle 
-} from '../ui/dialog';
-import { 
+import { useState } from "react";
+import { useAuthStore } from "../../stores/authStore";
+import { supabase } from "../../lib/supabase";
+import { Button } from "../ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue 
-} from '../ui/select';
-import Papa from 'papaparse';
-import type { SchwabTradeImport } from '../../types/broker';
-import type { ParseResult } from 'papaparse';
+  SelectValue,
+} from "../ui/select";
+import Papa from "papaparse";
+import type { SchwabTradeImport } from "../../types/broker";
+import type { ParseResult } from "papaparse";
 
 interface TradeImportProps {
   isOpen: boolean;
@@ -31,7 +26,9 @@ export function TradeImport({ isOpen, onClose, onSuccess }: TradeImportProps) {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (file) setFile(file);
   };
@@ -49,27 +46,25 @@ export function TradeImport({ isOpen, onClose, onSuccess }: TradeImportProps) {
             user_id: user.id,
             broker_id: selectedBrokers[0],
             symbol: row.Symbol,
-            type: 'stock',
-            side: row.Action === 'Buy' ? 'Long' : 'Short',
+            type: "stock",
+            side: row.Action === "Buy" ? "Long" : "Short",
             quantity: row.Quantity,
             price: row.Price,
             total: Math.abs(row.Amount),
             fees: row.Fees || 0,
             date: row.Date,
-            status: 'closed',
-            created_at: new Date().toISOString()
+            status: "closed",
+            created_at: new Date().toISOString(),
           }));
 
-          const { error } = await supabase
-            .from('trades')
-            .insert(trades);
+          const { error } = await supabase.from("trades").insert(trades);
 
           if (error) throw error;
           onSuccess();
-        }
+        },
       });
     } catch (error) {
-      console.error('Import error:', error);
+      console.error("Import error:", error);
     } finally {
       setLoading(false);
     }
@@ -79,15 +74,21 @@ export function TradeImport({ isOpen, onClose, onSuccess }: TradeImportProps) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-card border border-border text-text-primary">
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">Import Trades</DialogTitle>
+          <DialogTitle className="text-lg font-semibold">
+            Import Trades
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-text-muted">Select Broker</label>
+            <label className="text-sm font-medium text-text-muted">
+              Select Broker
+            </label>
             <Select
-              value={selectedBrokers.join(',')}
-              onValueChange={(value) => setSelectedBrokers(value.split(',').filter(Boolean))}
+              value={selectedBrokers.join(",")}
+              onValueChange={(value) =>
+                setSelectedBrokers(value.split(",").filter(Boolean))
+              }
             >
               <SelectTrigger className="bg-background border-border">
                 <SelectValue placeholder="Choose a broker" />
@@ -101,7 +102,9 @@ export function TradeImport({ isOpen, onClose, onSuccess }: TradeImportProps) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-text-muted">CSV File</label>
+            <label className="text-sm font-medium text-text-muted">
+              CSV File
+            </label>
             <div className="flex items-center space-x-2">
               <input
                 type="file"
@@ -110,12 +113,12 @@ export function TradeImport({ isOpen, onClose, onSuccess }: TradeImportProps) {
                 className="hidden"
                 id="csv-upload"
               />
-              <label 
+              <label
                 htmlFor="csv-upload"
                 className="cursor-pointer inline-block"
               >
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   disabled={loading}
                   className="border-border hover:bg-background"
                 >
@@ -123,9 +126,7 @@ export function TradeImport({ isOpen, onClose, onSuccess }: TradeImportProps) {
                 </Button>
               </label>
               {file && (
-                <span className="text-sm text-text-muted">
-                  {file.name}
-                </span>
+                <span className="text-sm text-text-muted">{file.name}</span>
               )}
             </div>
           </div>
@@ -138,16 +139,16 @@ export function TradeImport({ isOpen, onClose, onSuccess }: TradeImportProps) {
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={handleImport}
               disabled={!file || loading || selectedBrokers.length === 0}
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              {loading ? 'Importing...' : 'Import Trades'}
+              {loading ? "Importing..." : "Import Trades"}
             </Button>
           </div>
         </div>
       </DialogContent>
     </Dialog>
   );
-} 
+}

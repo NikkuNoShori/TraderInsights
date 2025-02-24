@@ -1,5 +1,5 @@
-import { useDashboardStore } from '../../stores/dashboardStore';
-import { Select, SelectTrigger, SelectContent, SelectItem } from '../ui/select';
+import { useDashboardStore } from "../../stores/dashboardStore";
+import { Select, SelectTrigger, SelectContent, SelectItem } from "../ui/select";
 
 export function DashboardProfileSelect() {
   const { profiles, currentProfileId, setCurrentProfile } = useDashboardStore();
@@ -13,7 +13,8 @@ export function DashboardProfileSelect() {
     >
       <SelectTrigger className="w-[200px]">
         <span>
-          {profiles.find((p) => p.id === currentProfileId)?.name || 'Default Layout'}
+          {profiles.find((p) => p.id === currentProfileId)?.name ||
+            "Default Layout"}
         </span>
       </SelectTrigger>
       <SelectContent>
@@ -25,4 +26,4 @@ export function DashboardProfileSelect() {
       </SelectContent>
     </Select>
   );
-} 
+}

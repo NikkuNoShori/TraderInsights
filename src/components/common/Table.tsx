@@ -1,4 +1,3 @@
-
 interface Column<T> {
   header: string;
   accessor: keyof T;
@@ -11,13 +10,20 @@ interface TableProps<T> {
   isLoading?: boolean;
 }
 
-export function Table<T extends { id: string | number }>({ data, columns, isLoading }: TableProps<T>) {
+export function Table<T extends { id: string | number }>({
+  data,
+  columns,
+  isLoading,
+}: TableProps<T>) {
   if (isLoading) {
     return (
       <div className="animate-pulse">
         <div className="h-10 bg-gray-200 dark:bg-dark-paper rounded mb-4" />
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="h-16 bg-gray-100 dark:bg-dark-paper/50 rounded mb-2" />
+          <div
+            key={i}
+            className="h-16 bg-gray-100 dark:bg-dark-paper/50 rounded mb-2"
+          />
         ))}
       </div>
     );
@@ -40,7 +46,10 @@ export function Table<T extends { id: string | number }>({ data, columns, isLoad
         </thead>
         <tbody className="bg-white dark:bg-dark-paper divide-y divide-gray-200 dark:divide-dark-border">
           {data.map((item) => (
-            <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-dark-border/50">
+            <tr
+              key={item.id}
+              className="hover:bg-gray-50 dark:hover:bg-dark-border/50"
+            >
               {columns.map((column, i) => (
                 <td
                   key={i}
@@ -57,4 +66,4 @@ export function Table<T extends { id: string | number }>({ data, columns, isLoad
       </table>
     </div>
   );
-} 
+}

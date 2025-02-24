@@ -1,5 +1,5 @@
-import { useRouteError, useNavigate } from 'react-router-dom';
-import { AlertCircle } from 'lucide-react';
+import { useRouteError, useNavigate } from "react-router-dom";
+import { AlertCircle } from "lucide-react";
 
 export function RouteErrorBoundary() {
   const error = useRouteError() as any;
@@ -24,7 +24,7 @@ export function RouteErrorBoundary() {
               Go Back
             </button>
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate("/")}
               className="px-4 py-2 text-sm font-medium text-white bg-primary rounded hover:bg-primary/90"
             >
               Go Home
@@ -34,4 +34,4 @@ export function RouteErrorBoundary() {
       </div>
     </div>
   );
-} 
+}

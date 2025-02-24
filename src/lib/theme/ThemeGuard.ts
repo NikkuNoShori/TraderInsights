@@ -10,7 +10,7 @@ export class ThemeGuard {
   private static instance: ThemeGuard;
   private authorized: boolean = false;
   private themeChangeLog: ThemeChangeRequest[] = [];
-  private static readonly SECRET_KEY = 'SuperSecret123!';
+  private static readonly SECRET_KEY = "SuperSecret123!";
 
   private constructor() {}
 
@@ -24,20 +24,22 @@ export class ThemeGuard {
   authorize(key: string): boolean {
     this.authorized = key === ThemeGuard.SECRET_KEY;
     if (!this.authorized) {
-      console.error('Invalid theme authorization key');
+      console.error("Invalid theme authorization key");
     }
     return this.authorized;
   }
 
-  requestThemeChange(request: Omit<ThemeChangeRequest, 'timestamp'>): boolean {
+  requestThemeChange(request: Omit<ThemeChangeRequest, "timestamp">): boolean {
     if (!this.authorized) {
-      console.error('Unauthorized theme change attempt. Please use authorize() with the correct key first.');
+      console.error(
+        "Unauthorized theme change attempt. Please use authorize() with the correct key first.",
+      );
       return false;
     }
 
     this.themeChangeLog.push({
       ...request,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
 
     return true;
@@ -45,7 +47,7 @@ export class ThemeGuard {
 
   getThemeChangeLog(): ThemeChangeRequest[] {
     if (!this.authorized) {
-      console.error('Unauthorized access to theme change log');
+      console.error("Unauthorized access to theme change log");
       return [];
     }
     return this.themeChangeLog;
@@ -54,4 +56,4 @@ export class ThemeGuard {
   isAuthorized(): boolean {
     return this.authorized;
   }
-} 
+}

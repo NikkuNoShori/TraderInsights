@@ -1,19 +1,19 @@
-import { useAuthStore } from '../../stores/authStore';
-import { useTheme } from '../../providers/ThemeProvider';
-import { Link } from 'react-router-dom';
-import { User, LogOut, Sun, Moon, Settings } from 'lucide-react';
+import { useAuthStore } from "../../stores/authStore";
+import { useTheme } from "../../providers/ThemeProvider";
+import { Link } from "react-router-dom";
+import { User, LogOut, Sun, Moon, Settings } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-} from '../ui/dropdown-menu';
+} from "../ui/dropdown-menu";
 
 export function UserMenu() {
   const { user, signOut } = useAuthStore();
   const { theme, toggleTheme } = useTheme();
-  
+
   if (!user) return null;
 
   return (
@@ -49,21 +49,24 @@ export function UserMenu() {
         </DropdownMenuItem>
 
         <DropdownMenuItem onClick={toggleTheme}>
-          {theme === 'dark' ? (
+          {theme === "dark" ? (
             <Sun className="h-4 w-4 mr-2" />
           ) : (
             <Moon className="h-4 w-4 mr-2" />
           )}
-          {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+          {theme === "dark" ? "Light Mode" : "Dark Mode"}
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem onClick={signOut} className="text-red-600 dark:text-red-400">
+        <DropdownMenuItem
+          onClick={signOut}
+          className="text-red-600 dark:text-red-400"
+        >
           <LogOut className="h-4 w-4 mr-2" />
           Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
-} 
+}

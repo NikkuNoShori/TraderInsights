@@ -1,11 +1,11 @@
-import { ChevronRight } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { ChevronRight } from "lucide-react";
+import { motion } from "framer-motion";
 
 export function PlaybookCard(): JSX.Element {
   return (
     <div className="space-y-2">
-      {['Gap & Go', 'Breakout', 'VWAP Reversal'].map((strategy) => (
-        <motion.div 
+      {["Gap & Go", "Breakout", "VWAP Reversal"].map((strategy) => (
+        <motion.div
           key={strategy}
           className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 dark:hover:bg-gray-800/50 cursor-pointer"
           whileHover={{ x: 4 }}
@@ -24,4 +24,4 @@ export function PlaybookCard(): JSX.Element {
       ))}
     </div>
   );
-} 
+}

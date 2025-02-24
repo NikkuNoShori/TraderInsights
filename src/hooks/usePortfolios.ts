@@ -31,7 +31,7 @@ export function usePortfolios() {
   }, [fetchPortfolios]);
 
   const createPortfolio = async (
-    portfolio: Omit<Portfolio, "id" | "created_at" | "updated_at">
+    portfolio: Omit<Portfolio, "id" | "created_at" | "updated_at">,
   ) => {
     try {
       const { data, error } = await supabase

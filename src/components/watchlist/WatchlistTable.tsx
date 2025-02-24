@@ -1,7 +1,7 @@
-import { X, Loader2 } from 'lucide-react';
-import { useTheme } from '@/providers/ThemeProvider';
-import { cn } from '@/utils/cn';
-import type { WatchlistSymbol } from '@/types/stock';
+import { X, Loader2 } from "lucide-react";
+import { useTheme } from "@/providers/ThemeProvider";
+import { cn } from "@/utils/cn";
+import type { WatchlistSymbol } from "@/types/stock";
 
 interface WatchlistTableProps {
   symbols: WatchlistSymbol[];
@@ -9,7 +9,11 @@ interface WatchlistTableProps {
   isLoading?: boolean;
 }
 
-export function WatchlistTable({ symbols, onRemove, isLoading }: WatchlistTableProps) {
+export function WatchlistTable({
+  symbols,
+  onRemove,
+  isLoading,
+}: WatchlistTableProps) {
   const { theme } = useTheme();
 
   if (isLoading) {
@@ -29,7 +33,7 @@ export function WatchlistTable({ symbols, onRemove, isLoading }: WatchlistTableP
   }
 
   return (
-    <div className={cn('overflow-x-auto', theme === 'dark' ? 'dark' : '')}>
+    <div className={cn("overflow-x-auto", theme === "dark" ? "dark" : "")}>
       <table className="w-full border-collapse">
         <thead>
           <tr className="border-b dark:border-gray-700">
@@ -41,13 +45,22 @@ export function WatchlistTable({ symbols, onRemove, isLoading }: WatchlistTableP
           </tr>
         </thead>
         <tbody>
-          {symbols.map(symbol => (
-            <tr key={symbol.symbol} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
+          {symbols.map((symbol) => (
+            <tr
+              key={symbol.symbol}
+              className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+            >
               <td className="p-4">{symbol.symbol}</td>
               <td className="p-4">{symbol.name}</td>
               <td className="p-4">${symbol.price.toFixed(2)}</td>
-              <td className={cn('p-4', symbol.change >= 0 ? 'text-green-500' : 'text-red-500')}>
-                {symbol.change >= 0 ? '+' : ''}{symbol.change.toFixed(2)}%
+              <td
+                className={cn(
+                  "p-4",
+                  symbol.change >= 0 ? "text-green-500" : "text-red-500",
+                )}
+              >
+                {symbol.change >= 0 ? "+" : ""}
+                {symbol.change.toFixed(2)}%
               </td>
               <td className="p-4 text-right">
                 <button

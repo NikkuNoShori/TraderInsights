@@ -1,12 +1,12 @@
-import React from '@/lib/react';
-import { AlertTriangle } from 'lucide-react';
-import { withErrorBoundary } from './hoc/withErrorBoundary';
+import React from "@/lib/react";
+import { AlertTriangle } from "lucide-react";
+import { withErrorBoundary } from "./hoc/withErrorBoundary";
 import {
   PageErrorFallback,
   CardErrorFallback,
   InputErrorFallback,
-  ButtonErrorFallback
-} from './ErrorFallbacks';
+  ButtonErrorFallback,
+} from "./ErrorFallbacks";
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -18,7 +18,10 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends React.Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -29,7 +32,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Error:', error, errorInfo);
+    console.error("Error:", error, errorInfo);
   }
 
   render() {
@@ -44,9 +47,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             <AlertTriangle className="h-5 w-5" />
             <h2 className="text-lg font-semibold">Something went wrong</h2>
           </div>
-          <p className="mt-2 text-error">
-            {this.state.error?.message}
-          </p>
+          <p className="mt-2 text-error">{this.state.error?.message}</p>
           <button
             onClick={() => this.setState({ hasError: false, error: null })}
             className="mt-4 px-4 py-2 bg-error text-white rounded-md hover:opacity-90"
@@ -62,7 +63,19 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 }
 
 // Export specific error boundaries with their fallbacks
-export const PageErrorBoundary = withErrorBoundary(ErrorBoundary, <PageErrorFallback />);
-export const CardErrorBoundary = withErrorBoundary(ErrorBoundary, <CardErrorFallback />);
-export const InputErrorBoundary = withErrorBoundary(ErrorBoundary, <InputErrorFallback />);
-export const ButtonErrorBoundary = withErrorBoundary(ErrorBoundary, <ButtonErrorFallback />); 
+export const PageErrorBoundary = withErrorBoundary(
+  ErrorBoundary,
+  <PageErrorFallback />,
+);
+export const CardErrorBoundary = withErrorBoundary(
+  ErrorBoundary,
+  <CardErrorFallback />,
+);
+export const InputErrorBoundary = withErrorBoundary(
+  ErrorBoundary,
+  <InputErrorFallback />,
+);
+export const ButtonErrorBoundary = withErrorBoundary(
+  ErrorBoundary,
+  <ButtonErrorFallback />,
+);

@@ -61,4 +61,4 @@ export const themes = {
     input: "border-dark-400",
     ring: "ring-dark-400",
   },
-}; 
+};

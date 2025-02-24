@@ -1,12 +1,12 @@
-import { forwardRef } from 'react';
+import { forwardRef } from "react";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from './select';
-import { cn } from '@/utils/cn';
+} from "./select";
+import { cn } from "@/utils/cn";
 
 interface FormSelectProps {
   value: string;
@@ -20,7 +20,20 @@ interface FormSelectProps {
 }
 
 export const FormSelect = forwardRef<HTMLButtonElement, FormSelectProps>(
-  ({ className, label, error, helperText, children, placeholder, value, onValueChange, ...props }, ref) => {
+  (
+    {
+      className,
+      label,
+      error,
+      helperText,
+      children,
+      placeholder,
+      value,
+      onValueChange,
+      ...props
+    },
+    ref,
+  ) => {
     return (
       <div className="space-y-2">
         {label && (
@@ -29,21 +42,28 @@ export const FormSelect = forwardRef<HTMLButtonElement, FormSelectProps>(
           </label>
         )}
         <Select value={value} onValueChange={onValueChange}>
-          <SelectTrigger ref={ref} className={cn('w-full', error && 'border-red-500 focus:ring-red-500', className)}>
+          <SelectTrigger
+            ref={ref}
+            className={cn(
+              "w-full",
+              error && "border-red-500 focus:ring-red-500",
+              className,
+            )}
+          >
             <SelectValue placeholder={placeholder} />
           </SelectTrigger>
-          <SelectContent>
-            {children}
-          </SelectContent>
+          <SelectContent>{children}</SelectContent>
         </Select>
         {(error || helperText) && (
-          <p className={cn('text-sm', error ? 'text-red-500' : 'text-gray-500')}>
+          <p
+            className={cn("text-sm", error ? "text-red-500" : "text-gray-500")}
+          >
             {error || helperText}
           </p>
         )}
       </div>
     );
-  }
+  },
 );
 
-FormSelect.displayName = 'FormSelect';
+FormSelect.displayName = "FormSelect";

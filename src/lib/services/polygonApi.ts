@@ -1,9 +1,9 @@
-import axios from 'axios';
-import { restClient, websocketClient } from '@polygon.io/client-js';
-import { withRetry } from '../../utils/withRetry';
-import { create } from 'zustand';
+import axios from "axios";
+import { restClient, websocketClient } from "@polygon.io/client-js";
+import { withRetry } from "../../utils/withRetry";
+import { create } from "zustand";
 
-const POLYGON_API_KEY = 'FFEAlcuNOfPCBDK4hEsED_VrWvJlYxNO';
+const POLYGON_API_KEY = "FFEAlcuNOfPCBDK4hEsED_VrWvJlYxNO";
 const rest = restClient(POLYGON_API_KEY);
 const ws = websocketClient(POLYGON_API_KEY);
 
@@ -16,36 +16,38 @@ interface ApiState {
 export const useApiStore = create<ApiState>((set) => ({
   requestCount: 0,
   lastRequestTime: Date.now(),
-  remainingCalls: 5
+  remainingCalls: 5,
 }));
 
 const checkRateLimit = () => {
   const { requestCount, lastRequestTime } = useApiStore.getState();
   const now = Date.now();
-  
+
   if (now - lastRequestTime >= 60000) {
     useApiStore.setState({
       requestCount: 1,
       lastRequestTime: now,
-      remainingCalls: 4
+      remainingCalls: 4,
     });
     return;
   }
 
   if (requestCount >= 5) {
-    throw new Error('Rate limit exceeded. Please wait before making more requests.');
+    throw new Error(
+      "Rate limit exceeded. Please wait before making more requests.",
+    );
   }
 
-  useApiStore.setState(state => ({
+  useApiStore.setState((state) => ({
     requestCount: state.requestCount + 1,
-    remainingCalls: Math.max(0, 5 - (state.requestCount + 1))
+    remainingCalls: Math.max(0, 5 - (state.requestCount + 1)),
   }));
 };
 
 export const polygonApi = {
   subscribeToTicker: (symbol: string, callback: (data: any) => void) => {
     ws.stocks.subscribe(symbol);
-    ws.on('T', (trade) => callback(trade));
+    ws.on("T", (trade) => callback(trade));
     return () => ws.stocks.unsubscribe(symbol);
   },
 
@@ -60,7 +62,7 @@ export const polygonApi = {
   getDailyBars: async (symbol: string, from: string, to: string) => {
     checkRateLimit();
     return withRetry(async () => {
-      const response = await rest.stocks.aggregates(symbol, 1, 'day', from, to);
+      const response = await rest.stocks.aggregates(symbol, 1, "day", from, to);
       return response;
     });
   },
@@ -87,5 +89,5 @@ export const polygonApi = {
       const response = await rest.stocks.snapshots(symbols);
       return response;
     });
-  }
+  },
 };

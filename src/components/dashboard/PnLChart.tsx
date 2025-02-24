@@ -1,7 +1,14 @@
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import type { Trade } from '../../types/trade';
-import type { TimeframeOption } from '../ui/TimeframeSelector';
-import { formatCurrency } from '../../utils/formatters';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import type { Trade } from "../../types/trade";
+import type { TimeframeOption } from "../ui/TimeframeSelector";
+import { formatCurrency } from "../../utils/formatters";
 
 interface PnLChartProps {
   trades: Trade[];
@@ -22,4 +29,4 @@ export function PnLChart({ trades, timeframe }: PnLChartProps) {
       </ResponsiveContainer>
     </div>
   );
-} 
+}

@@ -1,4 +1,3 @@
-
 export const MetricSkeleton: React.FC = () => {
   return (
     <div className="bg-white dark:bg-dark-paper rounded-lg shadow-md p-4 animate-pulse">
@@ -7,4 +6,4 @@ export const MetricSkeleton: React.FC = () => {
       <div className="h-3 w-40 bg-gray-100 dark:bg-gray-800 rounded" />
     </div>
   );
-}; 
+};

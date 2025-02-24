@@ -20,9 +20,13 @@ export function FeatureCards() {
           <div className="p-2 bg-primary/10 dark:bg-primary/5 rounded">
             <span className="text-primary-600 dark:text-primary-400">📋</span>
           </div>
-          <h2 className="text-lg font-medium text-foreground dark:text-gray-200">Watchlists</h2>
+          <h2 className="text-lg font-medium text-foreground dark:text-gray-200">
+            Watchlists
+          </h2>
         </div>
-        <p className="text-muted-foreground dark:text-gray-400">Monitor your favorite stocks</p>
+        <p className="text-muted-foreground dark:text-gray-400">
+          Monitor your favorite stocks
+        </p>
       </div>
 
       <div className="bg-card dark:bg-gray-800 rounded-lg p-6 border border-border dark:border-gray-700">
@@ -30,10 +34,14 @@ export function FeatureCards() {
           <div className="p-2 bg-primary/10 dark:bg-primary/5 rounded">
             <span className="text-primary-600 dark:text-primary-400">🔍</span>
           </div>
-          <h2 className="text-lg font-medium text-foreground dark:text-gray-200">Stock Screener</h2>
+          <h2 className="text-lg font-medium text-foreground dark:text-gray-200">
+            Stock Screener
+          </h2>
         </div>
-        <p className="text-muted-foreground dark:text-gray-400">Find stocks matching your criteria</p>
+        <p className="text-muted-foreground dark:text-gray-400">
+          Find stocks matching your criteria
+        </p>
       </div>
     </div>
   );
-} 
+}

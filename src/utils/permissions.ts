@@ -1,4 +1,4 @@
-import type { UserRole, UserPermissions } from '../types/auth';
+import type { UserRole, UserPermissions } from "../types/auth";
 
 const rolePermissions: Record<UserRole, UserPermissions> = {
   developer: {
@@ -9,7 +9,7 @@ const rolePermissions: Record<UserRole, UserPermissions> = {
     canManageUsers: true,
     canManageRoles: true,
     canViewAuditLogs: true,
-    canModifySystemSettings: true
+    canModifySystemSettings: true,
   },
   admin: {
     canAccessDashboard: true,
@@ -19,7 +19,7 @@ const rolePermissions: Record<UserRole, UserPermissions> = {
     canManageUsers: true,
     canManageRoles: true,
     canViewAuditLogs: true,
-    canModifySystemSettings: false
+    canModifySystemSettings: false,
   },
   user: {
     canAccessDashboard: true,
@@ -29,8 +29,8 @@ const rolePermissions: Record<UserRole, UserPermissions> = {
     canManageUsers: false,
     canManageRoles: false,
     canViewAuditLogs: false,
-    canModifySystemSettings: false
-  }
+    canModifySystemSettings: false,
+  },
 };
 
 export const getPermissionsForRole = (role: UserRole): UserPermissions => {
@@ -39,7 +39,7 @@ export const getPermissionsForRole = (role: UserRole): UserPermissions => {
 
 export const hasPermission = (
   permissions: UserPermissions,
-  permission: keyof UserPermissions
+  permission: keyof UserPermissions,
 ): boolean => {
   return permissions[permission];
 };

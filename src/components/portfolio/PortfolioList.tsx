@@ -1,12 +1,20 @@
-import { usePortfolios, Portfolio } from '../../hooks/usePortfolios';
-import { LoadingSpinner } from '../ui/LoadingSpinner';
-import { PortfolioForm } from './PortfolioForm';
-import { PlusIcon } from 'lucide-react';
+import { usePortfolios, Portfolio } from "../../hooks/usePortfolios";
+import { LoadingSpinner } from "../ui/LoadingSpinner";
+import { PortfolioForm } from "./PortfolioForm";
+import { PlusIcon } from "lucide-react";
 
 export const PortfolioList = () => {
-  const { portfolios, loading, createPortfolio, updatePortfolio, deletePortfolio } = usePortfolios();
+  const {
+    portfolios,
+    loading,
+    createPortfolio,
+    updatePortfolio,
+    deletePortfolio,
+  } = usePortfolios();
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingPortfolio, setEditingPortfolio] = useState<Portfolio | null>(null);
+  const [editingPortfolio, setEditingPortfolio] = useState<Portfolio | null>(
+    null,
+  );
 
   if (loading) return <LoadingSpinner />;
 
@@ -42,7 +50,7 @@ export const PortfolioList = () => {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {portfolios.map(portfolio => (
+        {portfolios.map((portfolio) => (
           <div
             key={portfolio.id}
             className="border border-light-border dark:border-dark-border rounded-lg p-4"
@@ -91,4 +99,4 @@ export const PortfolioList = () => {
       )}
     </div>
   );
-}; 
+};

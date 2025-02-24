@@ -1,4 +1,4 @@
-import { PortfolioList } from '../components/portfolio/PortfolioList';
+import { PortfolioList } from "../components/portfolio/PortfolioList";
 
 export const PortfoliosPage = () => {
   return (
@@ -6,4 +6,4 @@ export const PortfoliosPage = () => {
       <PortfolioList />
     </div>
   );
-}; 
+};

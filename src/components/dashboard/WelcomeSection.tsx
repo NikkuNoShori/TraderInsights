@@ -1,10 +1,11 @@
-import { useAuthStore } from '../../stores/authStore';
-import { Search } from 'lucide-react';
-import { ErrorBoundary } from '../ErrorBoundary';
+import { useAuthStore } from "../../stores/authStore";
+import { Search } from "lucide-react";
+import { ErrorBoundary } from "../ErrorBoundary";
 
 export function WelcomeSection() {
   const { user } = useAuthStore();
-  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Trader';
+  const userName =
+    user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Trader";
 
   return (
     <ErrorBoundary
@@ -15,7 +16,8 @@ export function WelcomeSection() {
               Welcome back, {userName}
             </h1>
             <p className="mt-2 text-lg text-muted-foreground">
-              Track your trades, analyze your performance, and improve your strategy.
+              Track your trades, analyze your performance, and improve your
+              strategy.
             </p>
           </div>
         </div>
@@ -57,4 +59,4 @@ export function WelcomeSection() {
       </div>
     </ErrorBoundary>
   );
-} 
+}

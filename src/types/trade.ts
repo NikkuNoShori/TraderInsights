@@ -1,51 +1,75 @@
+export type TradeType = "stock" | "option" | "crypto" | "forex";
+export type TradeSide = "Long" | "Short";
+export type TradeStatus = "open" | "closed" | "pending";
+
 export interface OptionDetails {
   strike: number;
   expiration: string;
-  contract_type: 'call' | 'put';
+  option_type: "call" | "put";
+  contract_type: "call" | "put";
 }
 
 export interface Trade {
   id: string;
   user_id: string;
-  date: string;
-  time: string;
+  portfolio_id?: string;
   symbol: string;
-  type: 'stock' | 'option';
-  side: 'Long' | 'Short';
+  type: TradeType;
+  side: TradeSide;
   quantity: number;
   price: number;
   total: number;
-  notes?: string | null;
-  chart_image?: string | null;
-  option_details?: OptionDetails | null;
-  status: 'open' | 'closed' | 'pending';
-  remaining_quantity?: number;
-  avg_entry_price?: number;
-  avg_exit_price?: number;
-  entry_price?: number;
-  exit_price?: number;
-  pnl?: number;
+  date: string;
+  time: string;
+  entry_date: string;
+  status: TradeStatus;
+  notes?: string;
+  option_details?: OptionDetails;
   created_at: string;
   updated_at: string;
-  setup_type?: string;
-  timeframe?: string;
+  entry_price?: number;
+  exit_price?: number;
+  avg_entry_price?: number;
+  avg_exit_price?: number;
+  pnl?: number;
+  fees?: number;
   risk_amount?: number;
   stop_loss?: number;
   take_profit?: number;
-  fees?: number;
-  execution_quality?: number;
-  emotion_rating?: number;
-  market_conditions?: string;
+  remaining_quantity?: number;
+  strategy?: string;
+  risk_reward?: number;
   tags?: string[];
-  planned_entry?: number;
-  planned_exit?: number;
-  plan_followed?: boolean;
-  position_size_percentage?: number;
 }
 
+export type CreateTradeData = Omit<
+  Trade,
+  "id" | "user_id" | "created_at" | "updated_at" | "total"
+>;
+
+export type UpdateTradeData = Partial<CreateTradeData>;
+
 export function formatTradeValue(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD'
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
   }).format(value);
+}
+
+export function getPnLColor(pnl: number | undefined | null): string {
+  if (!pnl) return "text-gray-500";
+  return pnl > 0 ? "text-green-500" : "text-red-500";
+}
+
+export function formatCurrency(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+export function formatDate(date: string): string {
+  return new Date(date).toLocaleDateString();
 }

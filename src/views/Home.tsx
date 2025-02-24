@@ -1,4 +1,3 @@
-
 export default function Home() {
   return (
     <div>
@@ -6,4 +5,4 @@ export default function Home() {
       <p className="mt-4">Your personal stock trading companion</p>
     </div>
   );
-} 
+}

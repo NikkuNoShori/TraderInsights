@@ -1,30 +1,20 @@
-import { Plus, Save } from 'lucide-react';
-import { Button } from '../ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '../ui/card';
+import { Plus, Save } from "lucide-react";
+import { Button } from "../ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import { Card, CardHeader, CardTitle, CardDescription } from "../ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../ui/select';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { DASHBOARD_CARDS } from '../../config/dashboardCards';
-import { useDashboard } from '../../contexts/DashboardContext';
-import type { DashboardCardType } from '../../types/dashboard';
-import { toast } from '../ui/use-toast';
+} from "../ui/select";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { DASHBOARD_CARDS } from "../../config/dashboardCards";
+import { useDashboard } from "../../contexts/DashboardContext";
+import type { DashboardCardType } from "../../types/dashboard";
+import { toast } from "../ui/use-toast";
 
 interface DashboardEditorProps {
   isOpen: boolean;
@@ -32,20 +22,25 @@ interface DashboardEditorProps {
 }
 
 export function DashboardEditor({ isOpen, onClose }: DashboardEditorProps) {
-  const { config, createDashboard, switchDashboard, updateDashboard } = useDashboard();
-  const [selectedDashboard, setSelectedDashboard] = React.useState(config.currentLayout);
-  const [isCreatingNew, setIsCreatingNew] = React.useState(false);
-  const [dashboardName, setDashboardName] = React.useState('');
-  const [selectedCards, setSelectedCards] = React.useState<Set<DashboardCardType>>(
-    new Set(config.enabledCards)
+  const { config, createDashboard, switchDashboard, updateDashboard } =
+    useDashboard();
+  const [selectedDashboard, setSelectedDashboard] = React.useState(
+    config.currentLayout,
   );
+  const [isCreatingNew, setIsCreatingNew] = React.useState(false);
+  const [dashboardName, setDashboardName] = React.useState("");
+  const [selectedCards, setSelectedCards] = React.useState<
+    Set<DashboardCardType>
+  >(new Set(config.enabledCards));
 
   // Reset state when dialog opens
   React.useEffect(() => {
     if (isOpen) {
-      const currentDashboard = config.layouts.find(l => l.id === config.currentLayout);
+      const currentDashboard = config.layouts.find(
+        (l) => l.id === config.currentLayout,
+      );
       setSelectedDashboard(config.currentLayout);
-      setDashboardName(currentDashboard?.name || '');
+      setDashboardName(currentDashboard?.name || "");
       setSelectedCards(new Set(config.enabledCards));
       setIsCreatingNew(false);
     }
@@ -62,13 +57,13 @@ export function DashboardEditor({ isOpen, onClose }: DashboardEditorProps) {
   };
 
   const handleDashboardChange = (dashboardId: string) => {
-    if (dashboardId === 'new') {
+    if (dashboardId === "new") {
       setIsCreatingNew(true);
-      setDashboardName('');
+      setDashboardName("");
       setSelectedCards(new Set(config.enabledCards));
     } else {
       setIsCreatingNew(false);
-      const dashboard = config.layouts.find(l => l.id === dashboardId);
+      const dashboard = config.layouts.find((l) => l.id === dashboardId);
       if (dashboard) {
         setSelectedDashboard(dashboardId);
         setDashboardName(dashboard.name);
@@ -124,10 +119,11 @@ export function DashboardEditor({ isOpen, onClose }: DashboardEditorProps) {
 
       onClose();
     } catch (error) {
-      console.error('Error saving dashboard:', error);
+      console.error("Error saving dashboard:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to save dashboard",
+        description:
+          error instanceof Error ? error.message : "Failed to save dashboard",
         variant: "destructive",
       });
     }
@@ -144,7 +140,7 @@ export function DashboardEditor({ isOpen, onClose }: DashboardEditorProps) {
           <div className="space-y-2">
             <Label>Select Dashboard</Label>
             <Select
-              value={isCreatingNew ? 'new' : selectedDashboard}
+              value={isCreatingNew ? "new" : selectedDashboard}
               onValueChange={handleDashboardChange}
             >
               <SelectTrigger>
@@ -153,7 +149,7 @@ export function DashboardEditor({ isOpen, onClose }: DashboardEditorProps) {
               <SelectContent>
                 {config.layouts.map((layout) => (
                   <SelectItem key={layout.id} value={layout.id}>
-                    {layout.name} {layout.isDefault && '(Default)'}
+                    {layout.name} {layout.isDefault && "(Default)"}
                   </SelectItem>
                 ))}
                 <SelectItem value="new">
@@ -180,12 +176,12 @@ export function DashboardEditor({ isOpen, onClose }: DashboardEditorProps) {
             <Label>Available Cards</Label>
             <div className="grid grid-cols-2 gap-4">
               {Object.entries(DASHBOARD_CARDS).map(([type, card]) => (
-                <Card 
+                <Card
                   key={type}
                   className={`cursor-pointer transition-colors ${
                     selectedCards.has(type as DashboardCardType)
-                      ? 'border-primary'
-                      : 'hover:border-muted-foreground'
+                      ? "border-primary"
+                      : "hover:border-muted-foreground"
                   }`}
                   onClick={() => handleToggleCard(type as DashboardCardType)}
                 >
@@ -207,15 +203,15 @@ export function DashboardEditor({ isOpen, onClose }: DashboardEditorProps) {
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={handleSave}
             disabled={!dashboardName.trim() || selectedCards.size === 0}
           >
             <Save className="h-4 w-4 mr-2" />
-            {isCreatingNew ? 'Create Dashboard' : 'Save Changes'}
+            {isCreatingNew ? "Create Dashboard" : "Save Changes"}
           </Button>
         </div>
       </DialogContent>
     </Dialog>
   );
-} 
+}

@@ -111,4 +111,4 @@
 /* Today's date */
 .react-datepicker__day--today {
   @apply font-semibold text-primary-600 dark:text-primary-400 !important;
-} 
+}

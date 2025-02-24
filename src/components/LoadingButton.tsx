@@ -1,8 +1,9 @@
-import { Button } from './ui/button';
-import { Loader2 } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { Button } from "./ui/button";
+import { Loader2 } from "lucide-react";
+import { cn } from "../lib/utils";
 
-interface LoadingButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface LoadingButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean;
   loadingText?: string;
 }

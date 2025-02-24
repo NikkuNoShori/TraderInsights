@@ -1,15 +1,15 @@
-import { useState } from '@/lib/hooks';
-import { useAuthStore } from '@/stores/authStore';
-import { toast } from 'react-hot-toast';
-import { supabase } from '../../lib/supabase';
-import { validatePassword } from '../../utils/validation';
-import { FormInput } from '@/components/ui/FormInput';
-import { LoadingButton } from '@/components/LoadingButton';
+import { useState } from "@/lib/hooks";
+import { useAuthStore } from "@/stores/authStore";
+import { toast } from "react-hot-toast";
+import { supabase } from "../../lib/supabase";
+import { validatePassword } from "../../utils/validation";
+import { FormInput } from "@/components/ui/FormInput";
+import { LoadingButton } from "@/components/LoadingButton";
 
 export default function SecuritySettings() {
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,39 +33,48 @@ export default function SecuritySettings() {
 
     try {
       // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
       if (userError || !user) {
-        throw new Error('Unable to verify current user. Please try logging in again.');
+        throw new Error(
+          "Unable to verify current user. Please try logging in again.",
+        );
       }
 
       // First verify the current password by attempting to sign in
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user.email || '',
+        email: user.email || "",
         password: currentPassword,
       });
 
       if (signInError) {
-        throw new Error('Current password is incorrect');
+        throw new Error("Current password is incorrect");
       }
 
       // Update to the new password
       const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword
+        password: newPassword,
       });
 
       if (updateError) throw updateError;
 
-      toast.success('Password updated successfully');
-      
+      toast.success("Password updated successfully");
+
       // Clear the form
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
     } catch (error) {
-      console.error('Failed to change password:', error);
-      setError(error instanceof Error ? error.message : 'Failed to change password');
-      toast.error(error instanceof Error ? error.message : 'Failed to change password');
+      console.error("Failed to change password:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to change password",
+      );
+      toast.error(
+        error instanceof Error ? error.message : "Failed to change password",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -73,7 +82,10 @@ export default function SecuritySettings() {
 
   return (
     <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-sm">
-      <form onSubmit={handlePasswordChange} className="divide-y divide-gray-200 dark:divide-gray-700">
+      <form
+        onSubmit={handlePasswordChange}
+        className="divide-y divide-gray-200 dark:divide-gray-700"
+      >
         <div className="px-8 py-6">
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
             Security Settings
@@ -143,4 +155,4 @@ export default function SecuritySettings() {
       </form>
     </div>
   );
-} 
+}

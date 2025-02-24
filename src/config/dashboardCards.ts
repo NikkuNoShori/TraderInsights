@@ -1,7 +1,11 @@
-import type { DashboardCard, DashboardCardType, DashboardConfig } from '../types/dashboard';
-import { PlaybookCard } from '../components/dashboard/PlaybookCard';
-import { RecentTradesCard } from '../components/dashboard/RecentTradesCard';
-import type { Layout } from 'react-grid-layout';
+import type {
+  DashboardCard,
+  DashboardCardType,
+  DashboardConfig,
+} from "../types/dashboard";
+import { PlaybookCard } from "../components/dashboard/PlaybookCard";
+import { RecentTradesCard } from "../components/dashboard/RecentTradesCard";
+import type { Layout } from "react-grid-layout";
 import {
   DEFAULT_DASHBOARD_LAYOUT,
   DEFAULT_ENABLED_CARDS,
@@ -73,8 +77,8 @@ export const DASHBOARD_CARDS: Record<DashboardCardType, DashboardCardConfig> = {
 export function getDefaultDashboardConfig(): DashboardConfig {
   const defaultLayouts = DEFAULT_ENABLED_CARDS.map((cardType) =>
     DEFAULT_DASHBOARD_LAYOUT.find(
-      (layout) => layout.i === cardType.replace("_", "-")
-    )
+      (layout) => layout.i === cardType.replace("_", "-"),
+    ),
   ).filter((layout): layout is Layout => layout !== null);
 
   const now = new Date().toISOString();
@@ -94,4 +98,4 @@ export function getDefaultDashboardConfig(): DashboardConfig {
     ],
     enabledCards: DEFAULT_ENABLED_CARDS,
   };
-} 
+}

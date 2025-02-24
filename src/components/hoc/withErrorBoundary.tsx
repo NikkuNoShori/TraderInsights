@@ -1,8 +1,8 @@
-import { ErrorBoundary } from '../ErrorBoundary';
+import { ErrorBoundary } from "../ErrorBoundary";
 
 export function withErrorBoundary<P extends object>(
   Component: React.ComponentType<P>,
-  fallback: React.ReactNode
+  fallback: React.ReactNode,
 ) {
   return function WithErrorBoundary(props: P) {
     return (
@@ -11,4 +11,4 @@ export function withErrorBoundary<P extends object>(
       </ErrorBoundary>
     );
   };
-} 
+}

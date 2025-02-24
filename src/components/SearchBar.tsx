@@ -1,4 +1,4 @@
-import { Search, Loader2 } from 'lucide-react';
+import { Search, Loader2 } from "lucide-react";
 
 interface SearchBarProps {
   value: string;
@@ -7,7 +7,12 @@ interface SearchBarProps {
   isLoading?: boolean;
 }
 
-export function SearchBar({ value, onChange, onSubmit, isLoading = false }: SearchBarProps) {
+export function SearchBar({
+  value,
+  onChange,
+  onSubmit,
+  isLoading = false,
+}: SearchBarProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isLoading && value.trim()) {

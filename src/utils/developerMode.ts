@@ -1,4 +1,4 @@
-const DEV_MODE_KEY = 'dev_mode_hash';
+const DEV_MODE_KEY = "dev_mode_hash";
 
 export const setDeveloperMode = (enabled: boolean) => {
   try {
@@ -12,7 +12,7 @@ export const setDeveloperMode = (enabled: boolean) => {
       sessionStorage.removeItem(DEV_MODE_KEY);
     }
   } catch (error) {
-    console.error('Error setting developer mode:', error);
+    console.error("Error setting developer mode:", error);
     return false;
   }
 };
@@ -24,19 +24,19 @@ export const isDeveloperMode = (): boolean => {
     const sessionHash = sessionStorage.getItem(DEV_MODE_KEY);
     return !!(localHash || sessionHash);
   } catch (error) {
-    console.error('Error checking developer mode:', error);
+    console.error("Error checking developer mode:", error);
     return false;
   }
 };
 
 export const validateDevModeAccess = (): boolean => {
   try {
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === "production") {
       return false;
     }
-    
+
     // Add Firefox-specific check
-    const isFirefox = navigator.userAgent.toLowerCase().includes('firefox');
+    const isFirefox = navigator.userAgent.toLowerCase().includes("firefox");
     if (isFirefox) {
       // Ensure Firefox has the necessary permissions
       return true; // We'll always allow it in Firefox for development
@@ -44,14 +44,14 @@ export const validateDevModeAccess = (): boolean => {
 
     return true;
   } catch (error) {
-    console.error('Error validating developer mode access:', error);
+    console.error("Error validating developer mode access:", error);
     return false;
   }
 };
 
 export const toggleDeveloperMode = (): void => {
   const current = isDeveloperMode();
-  localStorage.setItem('developer-mode', (!current).toString());
-  console.log('Developer mode toggled:', !current);
+  localStorage.setItem("developer-mode", (!current).toString());
+  console.log("Developer mode toggled:", !current);
   window.location.reload();
 };

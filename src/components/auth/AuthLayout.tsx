@@ -1,4 +1,4 @@
-import { AuthLogo } from './AuthLogo';
+import { AuthLogo } from "./AuthLogo";
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -12,8 +12,12 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <AuthLogo />
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">{title}</h2>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{subtitle}</p>
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">
+            {title}
+          </h2>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            {subtitle}
+          </p>
         </div>
         {children}
       </div>
