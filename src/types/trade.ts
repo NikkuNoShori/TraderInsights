@@ -22,15 +22,13 @@ export interface Trade {
   date: string;
   time: string;
   entry_date: string;
+  entry_price: number;
+  exit_price?: number;
   status: TradeStatus;
   notes?: string;
   option_details?: OptionDetails;
   created_at: string;
   updated_at: string;
-  entry_price?: number;
-  exit_price?: number;
-  avg_entry_price?: number;
-  avg_exit_price?: number;
   pnl?: number;
   fees?: number;
   risk_amount?: number;
@@ -40,12 +38,16 @@ export interface Trade {
   strategy?: string;
   risk_reward?: number;
   tags?: string[];
+  avg_entry_price?: number;
+  avg_exit_price?: number;
 }
 
 export type CreateTradeData = Omit<
   Trade,
-  "id" | "user_id" | "created_at" | "updated_at" | "total"
->;
+  "id" | "user_id" | "created_at" | "updated_at"
+> & {
+  total?: number;
+};
 
 export type UpdateTradeData = Partial<CreateTradeData>;
 

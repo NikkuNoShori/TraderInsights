@@ -1,86 +1,87 @@
-import { useState, useEffect, useCallback } from "react";
-import { useSupabase } from "../contexts/SupabaseContext";
-import { useToast } from "./useToast";
-import type { Portfolio } from "../types/database";
+import { useState, useEffect } from "@/lib/react";
+import { useAuthStore } from "@/stores/authStore";
+import { supabase } from "@/lib/supabase";
+import type {
+  Portfolio,
+  CreatePortfolioData,
+  UpdatePortfolioData,
+} from "@/types/portfolio";
 
 export function usePortfolios() {
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [loading, setLoading] = useState(true);
-  const { supabase } = useSupabase();
-  const toast = useToast();
+  const { user } = useAuthStore();
 
-  const fetchPortfolios = useCallback(async () => {
+  useEffect(() => {
+    if (user) {
+      fetchPortfolios();
+    }
+  }, [user]);
+
+  const fetchPortfolios = async () => {
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from("portfolios")
         .select("*")
+        .eq("user_id", user?.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       setPortfolios(data || []);
     } catch (error) {
-      toast.error("Error fetching portfolios");
-      console.error("Error:", error);
+      console.error("Error fetching portfolios:", error);
     } finally {
       setLoading(false);
     }
-  }, [supabase, toast]);
+  };
 
-  useEffect(() => {
-    fetchPortfolios();
-  }, [fetchPortfolios]);
-
-  const createPortfolio = async (
-    portfolio: Omit<Portfolio, "id" | "created_at" | "updated_at">,
-  ) => {
+  const createPortfolio = async (data: CreatePortfolioData) => {
     try {
-      const { data, error } = await supabase
-        .from("portfolios")
-        .insert([portfolio])
-        .select()
-        .single();
+      const { error } = await supabase.from("portfolios").insert([
+        {
+          ...data,
+          user_id: user?.id,
+        },
+      ]);
 
       if (error) throw error;
-      setPortfolios((prev) => [data, ...prev]);
-      toast.success("Portfolio created successfully");
-      return data;
+      await fetchPortfolios();
     } catch (error) {
-      toast.error("Error creating portfolio");
-      console.error("Error:", error);
-      return null;
+      console.error("Error creating portfolio:", error);
+      throw error;
     }
   };
 
-  const updatePortfolio = async (id: string, updates: Partial<Portfolio>) => {
+  const updatePortfolio = async (id: string, data: UpdatePortfolioData) => {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("portfolios")
-        .update(updates)
+        .update(data)
         .eq("id", id)
-        .select()
-        .single();
+        .eq("user_id", user?.id);
 
       if (error) throw error;
-      setPortfolios((prev) => prev.map((p) => (p.id === id ? data : p)));
-      toast.success("Portfolio updated successfully");
-      return data;
+      await fetchPortfolios();
     } catch (error) {
-      toast.error("Error updating portfolio");
-      console.error("Error:", error);
-      return null;
+      console.error("Error updating portfolio:", error);
+      throw error;
     }
   };
 
   const deletePortfolio = async (id: string) => {
     try {
-      const { error } = await supabase.from("portfolios").delete().eq("id", id);
+      const { error } = await supabase
+        .from("portfolios")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user?.id);
 
       if (error) throw error;
-      setPortfolios((prev) => prev.filter((p) => p.id !== id));
-      toast.success("Portfolio deleted successfully");
+      await fetchPortfolios();
     } catch (error) {
-      toast.error("Error deleting portfolio");
-      console.error("Error:", error);
+      console.error("Error deleting portfolio:", error);
+      throw error;
     }
   };
 
@@ -90,6 +91,5 @@ export function usePortfolios() {
     createPortfolio,
     updatePortfolio,
     deletePortfolio,
-    refreshPortfolios: fetchPortfolios,
   };
 }

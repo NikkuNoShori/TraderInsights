@@ -3,7 +3,7 @@ import { PageHeader } from "../../components/ui/PageHeader";
 import { SettingsNav } from "../../components/navigation/SettingsNav";
 import ProfileSettings from "./ProfileSettings";
 import SecuritySettings from "./SecuritySettings";
-import AppearanceSettings from "./AppearanceSettings";
+import { AppearanceSettings } from "./AppearanceSettings";
 import NotificationSettings from "./NotificationSettings";
 
 export default function Settings() {

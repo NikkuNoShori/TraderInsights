@@ -9,6 +9,7 @@ export interface Portfolio {
   type: PortfolioType;
   currency: PortfolioCurrency;
   is_public: boolean;
+  initial_balance: number;
   created_at: string;
   updated_at: string;
 }

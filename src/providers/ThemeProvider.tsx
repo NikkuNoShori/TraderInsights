@@ -1,33 +1,41 @@
-import { type ReactNode } from "@/lib/react";
-import { useEffect } from "@/lib/hooks";
+import { useEffect } from "react";
 import { useThemeStore } from "@/stores/themeStore";
+import { ThemeContext } from "@/contexts/ThemeContext";
+import type { Theme } from "@/stores/themeStore";
 
-export type Theme = "light" | "dark" | "system";
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const { theme, setTheme } = useThemeStore();
 
-interface ThemeProviderProps {
-  children: ReactNode;
-}
-
-export function ThemeProvider({ children }: ThemeProviderProps) {
-  const { theme } = useThemeStore();
-
+  // Handle system theme changes
   useEffect(() => {
-    const root = window.document.documentElement;
-    root.classList.remove("light", "dark");
-
     if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
-        ? "dark"
-        : "light";
-      root.classList.add(systemTheme);
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      const handler = () => {
+        document.documentElement.classList.toggle("dark", mediaQuery.matches);
+      };
+      
+      mediaQuery.addEventListener("change", handler);
+      handler(); // Initial check
+      
+      return () => mediaQuery.removeEventListener("change", handler);
     } else {
-      root.classList.add(theme);
+      document.documentElement.classList.toggle("dark", theme === "dark");
     }
   }, [theme]);
 
-  return children;
+  const getThemeClass = () => {
+    if (theme === "system") {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    }
+    return theme;
+  };
+
+  return (
+    <ThemeContext.Provider value={{ theme, setTheme, getThemeClass }}>
+      {children}
+    </ThemeContext.Provider>
+  );
 }
 
-// Re-export the store hook for convenience
+// Re-export the hook for convenience
 export const useTheme = useThemeStore;

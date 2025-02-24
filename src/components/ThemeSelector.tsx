@@ -1,17 +1,22 @@
 import { Palette } from "lucide-react";
-import { useTheme, type ThemeName } from "@/providers/ThemeProvider";
+import { useThemeStore, type Theme } from "@/stores/themeStore";
 import { clsx } from "clsx";
 
-const themes: Array<{ name: ThemeName; label: string; color: string }> = [
-  { name: "coolBlue", label: "Cool Blue", color: "bg-blue-500" },
-  { name: "gunpowderGrey", label: "Gunpowder Grey", color: "bg-gray-500" },
-  { name: "highContrast", label: "High Contrast", color: "bg-black" },
-  { name: "mintGreen", label: "Mint Green", color: "bg-emerald-500" },
-  { name: "autumnOrange", label: "Autumn Orange", color: "bg-orange-500" },
+const themes: Array<{ name: Theme; label: string; color: string }> = [
+  { name: "light", label: "Light Mode", color: "bg-gray-100" },
+  { name: "dark", label: "Dark Mode", color: "bg-gray-900" },
+  { name: "system", label: "System", color: "bg-gradient-to-r from-gray-100 to-gray-900" }
 ];
 
 export function ThemeSelector() {
-  const { theme: currentTheme, setTheme, getThemeClass } = useTheme();
+  const { theme: currentTheme, setTheme } = useThemeStore();
+  
+  const getThemeClass = () => {
+    if (currentTheme === "system") {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    }
+    return currentTheme;
+  };
 
   return (
     <div className="relative group">
@@ -19,7 +24,8 @@ export function ThemeSelector() {
         className={clsx(
           "p-2 rounded-md transition-colors",
           "hover:bg-gray-100 dark:hover:bg-gray-700",
-          getThemeClass("accent"),
+          getThemeClass() === "dark" && "bg-gray-700",
+          getThemeClass() === "light" && "bg-gray-100",
         )}
       >
         <Palette className="h-5 w-5" />
@@ -34,7 +40,8 @@ export function ThemeSelector() {
               "w-full px-4 py-2 text-left text-sm flex items-center space-x-3",
               "hover:bg-gray-50 dark:hover:bg-gray-700",
               currentTheme === name && "font-medium",
-              getThemeClass("text"),
+              getThemeClass() === "dark" && "bg-gray-700",
+              getThemeClass() === "light" && "bg-gray-100",
             )}
           >
             <span className={clsx("w-4 h-4 rounded-full", color)} />

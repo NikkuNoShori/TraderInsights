@@ -1,9 +1,9 @@
-import { useTheme } from "../../providers/ThemeProvider";
+import { useThemeStore } from "@/stores/themeStore";
 import { Moon, Sun, Monitor } from "lucide-react";
 import { clsx } from "clsx";
 
-export default function AppearanceSettings() {
-  const { theme, setTheme } = useTheme();
+export function AppearanceSettings() {
+  const { theme, setTheme } = useThemeStore();
 
   const themeOptions = [
     {
