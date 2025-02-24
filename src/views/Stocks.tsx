@@ -5,13 +5,13 @@ import { StockInfo } from "@/components/dashboard/StockInfo";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { InsightCard } from "@/components/InsightCard";
 import { FeatureAccessError } from "@/components/FeatureAccessError";
-import { getCurrentMarketSession } from "@/utils/marketHours";
+import { getCurrentSession } from "@/utils/marketHours";
 import { useStockData } from "@/hooks/useStockData";
 import type { ChartType } from "@/components/ChartTypeSelector";
 import { useTheme } from "@/providers/ThemeProvider";
 
 export function Stocks() {
-  const marketSession = getCurrentMarketSession();
+  const marketSession = getCurrentSession();
   const isAccessible = marketSession !== "closed";
   const [symbol, setSymbol] = useState("");
   const [searchedSymbol, setSearchedSymbol] = useState("");

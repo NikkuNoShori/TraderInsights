@@ -1,5 +1,6 @@
 import { X, AlertCircle } from "lucide-react";
 import { clsx } from "clsx";
+import { useEffect } from "@/lib/react";
 
 interface ToastProps {
   message: string;

@@ -4,8 +4,8 @@ export function calculateTradeMetrics(trade: Trade) {
   const isComplete = trade.status === "closed";
   const hasExit = trade.exit_price != null;
 
-  const entryPrice = trade.avg_entry_price || trade.entry_price || trade.price;
-  const exitPrice = trade.avg_exit_price || trade.exit_price;
+  const entryPrice = trade.entry_price || trade.price;
+  const exitPrice = trade.exit_price;
 
   const pnl =
     hasExit && exitPrice

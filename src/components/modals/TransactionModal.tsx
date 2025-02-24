@@ -75,6 +75,7 @@ export function TransactionModal({
         symbol: symbol.toUpperCase(),
         type,
         side,
+        direction: side,
         quantity: Number(quantity),
         price: Number(price),
         date,

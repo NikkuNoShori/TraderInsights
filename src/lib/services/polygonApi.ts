@@ -1,11 +1,4 @@
-import axios from "axios";
-import {
-  restClient,
-  type IStocksClient,
-  type IAggsPreviousClose,
-  type IAggs,
-  type ITickerDetails,
-} from "@polygon.io/client-js";
+import { restClient } from "@polygon.io/client-js";
 import { withRetry } from "../../utils/withRetry";
 import { create } from "zustand";
 import { env } from "../../config/env";
@@ -21,7 +14,7 @@ interface ApiState {
   remainingCalls: number;
 }
 
-export const useApiStore = create<ApiState>((set) => ({
+export const useApiStore = create<ApiState>(() => ({
   requestCount: 0,
   lastRequestTime: Date.now(),
   remainingCalls: 5,
@@ -53,17 +46,14 @@ const checkRateLimit = () => {
 };
 
 export const polygonApi = {
-  subscribeToTicker: (
-    symbol: string,
-    callback: (data: TradeMessage) => void
-  ) => {
+  subscribeToTicker: (symbol: string, callback: (data: any) => void) => {
     return wsManager.subscribe(symbol, callback);
   },
 
   getStockQuote: async (symbol: string) => {
     checkRateLimit();
     return withRetry(async () => {
-      const response = await rest.stocks.previousClose(symbol);
+      const response = await rest.stocks.previousClose({ ticker: symbol });
       return response;
     });
   },
@@ -96,7 +86,7 @@ export const polygonApi = {
     checkRateLimit();
     return withRetry(async () => {
       const response = await Promise.all(
-        symbols.map((symbol) => rest.stocks.previousClose(symbol))
+        symbols.map((symbol) => rest.stocks.previousClose({ ticker: symbol }))
       );
       return response;
     });

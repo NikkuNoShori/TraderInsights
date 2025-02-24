@@ -103,3 +103,28 @@ export function formatCurrency(value: number): string {
 export function formatDate(date: string): string {
   return new Date(date).toLocaleDateString();
 }
+
+// Helper function to ensure both side and direction are set
+export function createTrade(data: Omit<Trade, "direction">): Trade {
+  return {
+    ...data,
+    direction: data.side, // Always set direction to match side
+  };
+}
+
+// Helper function to ensure both side and direction are set when updating
+export function updateTrade(data: Partial<Trade>): Partial<Trade> {
+  if (data.side && !data.direction) {
+    return {
+      ...data,
+      direction: data.side,
+    };
+  }
+  if (data.direction && !data.side) {
+    return {
+      ...data,
+      side: data.direction,
+    };
+  }
+  return data;
+}

@@ -1,9 +1,9 @@
 import { env } from "../../config/env";
 import {
   websocketClient,
-  type IWebsocketClient,
-  type PolygonWebSocket,
-  type TradeMessage,
+  WebSocketClient,
+  WebSocketClientEvent,
+  WebSocketMessage,
 } from "@polygon.io/client-js";
 import { create } from "zustand";
 
@@ -37,10 +37,10 @@ const useWebSocketStore = create<WebSocketStore>((set) => ({
 
 class WebSocketManager {
   private static instance: WebSocketManager;
-  private client: IWebsocketClient;
-  private socket: PolygonWebSocket | null = null;
+  private client: WebSocketClient;
+  private socket: WebSocketClient | null = null;
   private subscriptions: Set<string> = new Set();
-  private messageHandlers: Map<string, Set<(data: TradeMessage) => void>> =
+  private messageHandlers: Map<string, Set<(data: WebSocketMessage) => void>> =
     new Map();
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private readonly MAX_RECONNECT_ATTEMPTS = 5;
@@ -108,7 +108,7 @@ class WebSocketManager {
 
   private handleMessage = (event: MessageEvent) => {
     try {
-      const data = JSON.parse(event.data) as TradeMessage;
+      const data = JSON.parse(event.data) as WebSocketMessage;
       const handlers = this.messageHandlers.get(data.sym);
       if (handlers) {
         handlers.forEach((handler) => handler(data));
@@ -137,7 +137,7 @@ class WebSocketManager {
 
   subscribe(
     symbol: string,
-    callback: (data: TradeMessage) => void
+    callback: (data: WebSocketMessage) => void
   ): () => void {
     const formattedSymbol = `T.${symbol}`;
     this.subscriptions.add(formattedSymbol);
@@ -156,7 +156,10 @@ class WebSocketManager {
     };
   }
 
-  private unsubscribe(symbol: string, callback: (data: TradeMessage) => void) {
+  private unsubscribe(
+    symbol: string,
+    callback: (data: WebSocketMessage) => void
+  ) {
     const formattedSymbol = `T.${symbol}`;
     const handlers = this.messageHandlers.get(symbol);
 

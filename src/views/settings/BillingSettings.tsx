@@ -1,5 +1,6 @@
 import { Eye, EyeOff, Download } from "lucide-react";
 import { clsx } from "clsx";
+import { useState } from "@/lib/react";
 
 interface SensitiveDataProps {
   value: string;

@@ -8,25 +8,23 @@ import {
   TableRow,
   TableCell,
 } from "@tremor/react";
-import { ErrorTrackingService } from "../../lib/services/errorTracking";
+import { ErrorTrackingService, type ErrorStats } from "../../lib/services/errorTracking";
 import { format } from "date-fns";
-
-interface ErrorStats {
-  low: number;
-  medium: number;
-  high: number;
-  critical: number;
-}
 
 interface ErrorLog {
   id: string;
   message: string;
-  component_name: string;
+  component_name?: string;
   severity: "low" | "medium" | "high" | "critical";
   timestamp: string;
 }
 
-const ErrorMonitoring: React.FC = () => {
+interface ErrorData {
+  stats: ErrorStats;
+  logs: ErrorLog[];
+}
+
+const ErrorMonitoring: FC = () => {
   const [errorStats, setErrorStats] = useState<ErrorStats>({
     low: 0,
     medium: 0,
@@ -42,7 +40,7 @@ const ErrorMonitoring: React.FC = () => {
         const errorService = new ErrorTrackingService();
         const stats = await errorService.getErrorStats();
         const logs = await errorService.getRecentErrors();
-
+        
         setErrorStats(stats);
         setRecentErrors(logs);
       } catch (error) {
