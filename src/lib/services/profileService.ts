@@ -15,7 +15,23 @@ interface ProfileUpdate {
 
 export const profileService = {
   getProfile: async (userId: string): Promise<ProfileResponse> => {
-    console.log("Fetching profile for user:", userId);
+    if (userId === "dev-123") {
+      return {
+        data: {
+          id: "dev-123",
+          email: "developer@test.com",
+          username: "developer",
+          username_changes_remaining: 3,
+          last_username_change: null,
+          first_name: "Dev",
+          last_name: "User",
+          date_of_birth: null,
+          created_at: new Date().toISOString(),
+          role: "developer",
+        },
+        error: null,
+      };
+    }
 
     const { data, error } = await supabase
       .from("profiles")
@@ -60,7 +76,12 @@ export const profileService = {
           email: "dev@example.com",
           first_name: updates.first_name || "Developer",
           last_name: updates.last_name || "Mode",
+          username: updates.username || "developer",
+          username_changes_remaining: updates.username_changes_remaining || 3,
+          last_username_change: updates.last_username_change || null,
+          date_of_birth: null,
           created_at: new Date().toISOString(),
+          role: "developer" as const,
         },
         error: null,
       };

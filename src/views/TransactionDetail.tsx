@@ -15,12 +15,13 @@ import {
 import { formatCurrency, formatDate } from "@/utils/formatters";
 import { OrdersList } from "@/components/transactions/OrdersList";
 import type { Transaction } from "@/types/database";
-import { TransactionModal } from "@/components/modals/TransactionModal";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { useAuthStore } from "@/stores/authStore";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { toast } from "react-hot-toast";
+import { TradeModal } from "@/components/trades/TradeModal";
+import type { Trade } from "@/types/trade";
 
 export function TransactionDetail() {
   const { id } = useParams();
@@ -30,6 +31,24 @@ export function TransactionDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleSubmit = async (data: any) => {
+    try {
+      const { error } = await supabase
+        .from("transactions")
+        .update(data)
+        .eq("id", id);
+
+      if (error) throw error;
+      
+      setIsModalOpen(false);
+      toast.success("Transaction updated successfully");
+      window.location.reload();
+    } catch (err) {
+      console.error("Error updating transaction:", err);
+      toast.error("Failed to update transaction");
+    }
+  };
 
   useEffect(() => {
     const fetchTransaction = async () => {
@@ -284,14 +303,22 @@ export function TransactionDetail() {
         )}
       </div>
 
-      <TransactionModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSuccess={() => {
-          setIsModalOpen(false);
-          window.location.reload();
-        }}
-      />
+      {isModalOpen && (
+        <TradeModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleSubmit}
+          initialData={{
+            ...transaction,
+            option_details: transaction.option_details ? {
+              ...transaction.option_details,
+              option_type: transaction.option_details.type || 'call',
+              contract_type: transaction.option_details.type || 'call'
+            } : undefined
+          }}
+          mode="edit"
+        />
+      )}
     </div>
   );
 }

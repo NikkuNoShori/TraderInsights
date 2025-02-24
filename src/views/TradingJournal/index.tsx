@@ -5,9 +5,9 @@ import { TradeList } from "./components/TradeList";
 import { Button } from "../../components/ui/button";
 import { Plus } from "lucide-react";
 import { useSupabaseClient } from "../../hooks/useSupabaseClient";
-import { Trade, createTrade } from "../../types/trade";
+import { Trade, CreateTradeData, createTrade } from "../../types/trade";
 import { config } from "../../config";
-import { AddTradeModal } from "../../components/trades/AddTradeModal";
+import { TradeModal } from "../../components/trades/TradeModal";
 
 // Mock trades for development mode
 const MOCK_TRADES: Trade[] = [
@@ -59,15 +59,16 @@ export default function TradingJournal() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isAddingTrade, setIsAddingTrade] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const { supabase, user } = useSupabaseClient();
-  const navigate = useNavigate();
 
   const fetchTrades = async () => {
     try {
       setIsLoading(true);
-      // Return mock data in development mode
+      setError(null);
+
       if (!config.isProduction && user?.id === "dev-123") {
         setTrades(MOCK_TRADES);
         return;
@@ -77,34 +78,53 @@ export default function TradingJournal() {
         .from("trades")
         .select("*")
         .eq("user_id", user?.id)
-        .order("date", { ascending: false });
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setTrades(data || []);
-    } catch (error) {
-      console.error("Error fetching trades:", error);
-      setError(
-        error instanceof Error ? error.message : "Failed to fetch trades",
-      );
-      toast.error("Failed to load trades");
+
+      setTrades(data?.map(createTrade) || []);
+    } catch (err) {
+      console.error("Error fetching trades:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch trades");
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    if (!user) {
-      navigate("/auth/login");
-      return;
+    if (user) {
+      fetchTrades();
     }
+  }, [user]);
 
-    fetchTrades();
-  }, [user, navigate]);
+  const handleTradeSubmit = async (tradeData: CreateTradeData) => {
+    try {
+      if (!config.isProduction && user?.id === "dev-123") {
+        const newTrade = createTrade({
+          ...tradeData,
+          id: `dev-trade-${Date.now()}`,
+          user_id: "dev-123",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+        setTrades((prev) => [newTrade, ...prev]);
+        toast.success("Trade added successfully");
+        return;
+      }
 
-  const handleTradeAdded = (newTrade: Trade) => {
-    setTrades((prev) => [newTrade, ...prev]);
-    setIsAddingTrade(false);
-    toast.success("Trade added successfully");
+      const { error } = await supabase.from("trades").insert([{
+        ...tradeData,
+        user_id: user?.id,
+      }]);
+
+      if (error) throw error;
+
+      toast.success("Trade added successfully");
+      fetchTrades();
+    } catch (err) {
+      console.error("Error adding trade:", err);
+      toast.error("Failed to add trade");
+    }
   };
 
   const handleDeleteTrade = async (id: string) => {
@@ -125,6 +145,11 @@ export default function TradingJournal() {
       console.error("Error deleting trade:", error);
       toast.error("Failed to delete trade");
     }
+  };
+
+  const handleEditTrade = (trade: Trade) => {
+    setSelectedTrade(trade);
+    setIsModalOpen(true);
   };
 
   const totalPages = Math.ceil(trades.length / TRADES_PER_PAGE);
@@ -149,7 +174,10 @@ export default function TradingJournal() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Trading Journal</h1>
         <Button
-          onClick={() => setIsAddingTrade(true)}
+          onClick={() => {
+            setSelectedTrade(null);
+            setIsModalOpen(true);
+          }}
           className="flex items-center gap-2"
         >
           <Plus className="h-4 w-4" />
@@ -157,20 +185,22 @@ export default function TradingJournal() {
         </Button>
       </div>
 
-      <AddTradeModal
-        isOpen={isAddingTrade}
-        onClose={() => setIsAddingTrade(false)}
-        onTradeAdded={() => {
-          setIsAddingTrade(false);
-          // Refresh trades
-          fetchTrades();
+      <TradeModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedTrade(null);
         }}
+        onSubmit={handleTradeSubmit}
+        initialData={selectedTrade || undefined}
+        mode={selectedTrade ? "edit" : "add"}
       />
 
       <TradeList
         trades={paginatedTrades}
         isLoading={isLoading}
         onDelete={handleDeleteTrade}
+        onEdit={handleEditTrade}
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}

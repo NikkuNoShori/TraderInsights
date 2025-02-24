@@ -1,12 +1,14 @@
 import { useState } from "@/lib/react";
-import { ChevronDown, ChevronRight, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Trash2, Edit } from "lucide-react";
 import { formatCurrency, formatDate } from "@/utils/formatters";
 import type { Trade } from "@/types/trade";
 import { useNavigate } from "react-router-dom";
+import { cn } from "@/utils/cn";
 
 interface TradeRowProps {
   trade: Trade;
   onDelete?: (id: string) => void;
+  onEdit?: (trade: Trade) => void;
 }
 
 interface TradeTag {
@@ -15,7 +17,7 @@ interface TradeTag {
   color?: string;
 }
 
-export function TradeRow({ trade, onDelete }: TradeRowProps) {
+export function TradeRow({ trade, onDelete, onEdit }: TradeRowProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();
 
@@ -23,6 +25,13 @@ export function TradeRow({ trade, onDelete }: TradeRowProps) {
     e.stopPropagation();
     if (onDelete && trade.id) {
       onDelete(trade.id);
+    }
+  };
+
+  const handleEdit = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    if (onEdit) {
+      onEdit(trade);
     }
   };
 
@@ -58,11 +67,12 @@ export function TradeRow({ trade, onDelete }: TradeRowProps) {
         {/* Symbol and Type */}
         <div className="flex items-center space-x-3">
           <span
-            className={`px-2 py-1 text-xs rounded ${
+            className={cn(
+              "px-2 py-1 text-xs rounded",
               trade.side === "Long"
                 ? "bg-emerald-100 text-emerald-800"
                 : "bg-rose-100 text-rose-800"
-            }`}
+            )}
           >
             {trade.side}
           </span>
@@ -86,9 +96,10 @@ export function TradeRow({ trade, onDelete }: TradeRowProps) {
           )}
           {trade.pnl !== undefined && (
             <div
-              className={`text-sm font-medium ${
+              className={cn(
+                "text-sm font-medium",
                 trade.pnl >= 0 ? "text-emerald-600" : "text-rose-600"
-              }`}
+              )}
             >
               {formatCurrency(trade.pnl)}
             </div>
@@ -100,14 +111,24 @@ export function TradeRow({ trade, onDelete }: TradeRowProps) {
           <span className="text-sm text-muted-foreground">
             {formatDate(trade.entry_date)}
           </span>
-          {onDelete && (
-            <button
-              onClick={handleDelete}
-              className="text-muted-foreground hover:text-rose-500 transition-colors"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          )}
+          <div className="flex items-center space-x-2">
+            {onEdit && (
+              <button
+                onClick={handleEdit}
+                className="text-muted-foreground hover:text-blue-500 transition-colors"
+              >
+                <Edit className="h-4 w-4" />
+              </button>
+            )}
+            {onDelete && (
+              <button
+                onClick={handleDelete}
+                className="text-muted-foreground hover:text-rose-500 transition-colors"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
