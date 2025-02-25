@@ -33,14 +33,14 @@ app.use("/api/auth", authRouter);
 // Error handling
 app.use(
   (
-    err: Error,
-    req: express.Request,
+    error: Error,
+    _req: express.Request,
     res: express.Response,
-    next: express.NextFunction,
+    _next: express.NextFunction
   ) => {
-    console.error(err.stack);
-    res.status(500).json({ error: "Internal Server Error" });
-  },
+    console.error("Error:", error);
+    res.status(500).json({ error: error.message });
+  }
 );
 
 app.listen(serverEnv.port, () => {

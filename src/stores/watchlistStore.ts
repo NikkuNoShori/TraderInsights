@@ -9,6 +9,7 @@ import { isFeatureAccessible } from "@/utils/marketHours";
 interface WatchlistState {
   symbols: string[];
   quotes: StockQuote[];
+  watchlistData: WatchlistSymbol[];
   isLoading: boolean;
   error: string | null;
   initialized: boolean;
@@ -23,6 +24,7 @@ export const useWatchlistStore = create<WatchlistState>()(
     (set, get) => ({
       symbols: [],
       quotes: [],
+      watchlistData: [],
       isLoading: false,
       error: null,
       initialized: false,
@@ -43,7 +45,7 @@ export const useWatchlistStore = create<WatchlistState>()(
           console.log("Initializing watchlist for user:", userId);
           const { data: watchlistSymbols, error } = await supabase
             .from("symbols_watched")
-            .select("symbol")
+            .select("*")
             .eq("user_id", userId);
 
           if (error) {
@@ -53,7 +55,11 @@ export const useWatchlistStore = create<WatchlistState>()(
 
           console.log("Fetched watchlist symbols:", watchlistSymbols);
           const symbols = (watchlistSymbols || []).map((ws) => ws.symbol);
-          set({ symbols, initialized: true });
+          set({
+            symbols,
+            watchlistData: watchlistSymbols as WatchlistSymbol[],
+            initialized: true,
+          });
 
           if (symbols.length > 0) {
             console.log("Refreshing quotes for symbols:", symbols);
@@ -137,7 +143,7 @@ export const useWatchlistStore = create<WatchlistState>()(
                   attempt: "retry",
                 });
               },
-            },
+            }
           );
 
           console.log("Successfully fetched quote:", {
@@ -251,7 +257,7 @@ export const useWatchlistStore = create<WatchlistState>()(
                     attempt: "retry",
                   });
                 },
-              }).catch(() => null), // Convert individual failures to null
+              }).catch(() => null) // Convert individual failures to null
           );
 
           const quotes = await Promise.all(quotesPromises);
@@ -298,6 +304,6 @@ export const useWatchlistStore = create<WatchlistState>()(
       partialize: (state) => ({
         symbols: state.symbols,
       }),
-    },
-  ),
+    }
+  )
 );

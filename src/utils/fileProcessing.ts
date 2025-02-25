@@ -1,8 +1,10 @@
+import ExcelJS from "exceljs";
+import Papa from "papaparse";
 import type { Trade } from "@/types/trade";
 import { TradeImportError } from "./errorHandler";
 import { sanitizeTradeData } from "./fileValidation";
-import type { Row, Workbook, Worksheet } from "exceljs";
-import type { ParseResult, ParseConfig } from "papaparse";
+import type { Row, Workbook } from "exceljs";
+import type { ParseResult } from "papaparse";
 
 export interface ProcessedTradeData {
   trades: Trade[];
@@ -11,7 +13,6 @@ export interface ProcessedTradeData {
 
 export const processExcel = async (file: File): Promise<ProcessedTradeData> => {
   try {
-    const ExcelJS = await import("exceljs");
     const workbook: Workbook = new ExcelJS.Workbook();
 
     const buffer = await file.arrayBuffer();
@@ -38,7 +39,7 @@ export const processExcel = async (file: File): Promise<ProcessedTradeData> => {
             }
             return acc;
           },
-          {},
+          {}
         );
 
         const sanitizedTrade = sanitizeTradeData(trade);
@@ -49,7 +50,7 @@ export const processExcel = async (file: File): Promise<ProcessedTradeData> => {
         errors.push(
           `Row ${rowNumber}: ${
             error instanceof Error ? error.message : "Invalid data"
-          }`,
+          }`
         );
       }
     });
@@ -59,17 +60,15 @@ export const processExcel = async (file: File): Promise<ProcessedTradeData> => {
     throw new TradeImportError(
       `Failed to process Excel file: ${
         error instanceof Error ? error.message : "Unknown error"
-      }`,
+      }`
     );
   }
 };
 
 export const processCsv = async (file: File): Promise<ProcessedTradeData> => {
   try {
-    const Papa = await import("papaparse");
-
     return new Promise((resolve, reject) => {
-      Papa.default.parse<Record<string, unknown>>(file, {
+      Papa.parse<Record<string, unknown>>(file, {
         header: true,
         skipEmptyLines: true,
         complete: (results: ParseResult<Record<string, unknown>>) => {
@@ -86,7 +85,7 @@ export const processCsv = async (file: File): Promise<ProcessedTradeData> => {
               errors.push(
                 `Row ${index + 2}: ${
                   error instanceof Error ? error.message : "Invalid data"
-                }`,
+                }`
               );
             }
           });
@@ -95,7 +94,7 @@ export const processCsv = async (file: File): Promise<ProcessedTradeData> => {
         },
         error: (error: Error) => {
           reject(
-            new TradeImportError(`Failed to parse CSV file: ${error.message}`),
+            new TradeImportError(`Failed to parse CSV file: ${error.message}`)
           );
         },
       });
@@ -104,7 +103,7 @@ export const processCsv = async (file: File): Promise<ProcessedTradeData> => {
     throw new TradeImportError(
       `Failed to process CSV file: ${
         error instanceof Error ? error.message : "Unknown error"
-      }`,
+      }`
     );
   }
 };

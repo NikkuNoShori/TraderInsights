@@ -1,5 +1,3 @@
-import { AlertTriangle } from "lucide-react";
-
 export function PageErrorFallback() {
   return (
     <div className="p-8 bg-background">

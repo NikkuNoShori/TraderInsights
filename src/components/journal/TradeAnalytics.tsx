@@ -11,12 +11,10 @@ import type { Trade } from "@/types/trade";
 
 interface TradeAnalyticsProps {
   trades: Trade[];
-  timeframe?: "1W" | "1M" | "3M" | "YTD" | "1Y";
 }
 
 export function TradeAnalytics({
   trades,
-  timeframe = "1M",
 }: TradeAnalyticsProps) {
   const calculateMetrics = () => {
     if (trades.length === 0) {

@@ -14,7 +14,7 @@ import { Input } from "@/components/ui";
 import { toast } from "react-hot-toast";
 import { DASHBOARD_CARDS } from "@/config/dashboardCards";
 import { useDashboardStore } from "@/stores/dashboardStore";
-import type { DashboardCardType, DashboardProfile } from "@/types/dashboard";
+import type { DashboardCardType } from "@/types/dashboard";
 import { useAuthStore } from "@/stores/authStore";
 import { DEFAULT_DASHBOARD_LAYOUT } from "@/config/dashboardTheme";
 
