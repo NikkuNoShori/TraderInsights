@@ -4,7 +4,6 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { useTrade } from "@/hooks/useTrade";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { formatDate, formatCurrency } from "@/utils/formatters";
-import type { Trade } from "@/types/trade";
 
 export function TradeDetails() {
   const { id } = useParams();

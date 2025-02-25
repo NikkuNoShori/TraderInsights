@@ -1,14 +1,24 @@
 import type { Trade } from "@/types/trade";
 import { formatCurrency, formatDate } from "@/utils/formatters";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, Pencil } from "lucide-react";
 
 interface TradeTableProps {
   trades: Trade[];
   onDelete?: (id: string) => void;
+  onEdit?: (trade: Trade) => void;
+  isLoading?: boolean;
 }
 
-export function TradeTable({ trades, onDelete }: TradeTableProps) {
+export function TradeTable({ trades, onDelete, onEdit, isLoading = false }: TradeTableProps) {
+  if (isLoading) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        Loading trades...
+      </div>
+    );
+  }
+
   if (!trades.length) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -42,7 +52,17 @@ export function TradeTable({ trades, onDelete }: TradeTableProps) {
               <td className="px-4 py-2 text-right">{trade.quantity}</td>
               <td className="px-4 py-2 text-right">{formatCurrency(trade.price)}</td>
               <td className="px-4 py-2 text-right">{formatCurrency(trade.total)}</td>
-              <td className="px-4 py-2 text-center">
+              <td className="px-4 py-2 text-center space-x-2">
+                {onEdit && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onEdit(trade)}
+                    className="text-primary hover:text-primary/90"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                )}
                 {onDelete && (
                   <Button
                     variant="ghost"

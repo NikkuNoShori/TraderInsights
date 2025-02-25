@@ -5,11 +5,6 @@ import { PerformanceCharts } from "@/components/portfolio/PerformanceCharts";
 import { TradeStatistics } from "@/components/dashboard/TradeStatistics";
 import { PageHeader } from "@/components/ui";
 
-interface PerformanceError extends Error {
-  message: string;
-  code?: string;
-}
-
 export default function Performance() {
   const { user } = useAuthStore();
   const { trades, fetchTrades } = useTradeStore();
