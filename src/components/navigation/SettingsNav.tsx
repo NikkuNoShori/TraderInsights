@@ -4,25 +4,25 @@ import { clsx } from "clsx";
 
 const settingsLinks = [
   {
-    to: "/settings/profile",
+    to: "/app/settings/profile",
     label: "Profile",
     icon: User,
     description: "Manage your personal information",
   },
   {
-    to: "/settings/security",
+    to: "/app/settings/security",
     label: "Security",
     icon: Shield,
     description: "Update password and security settings",
   },
   {
-    to: "/settings/appearance",
+    to: "/app/settings/appearance",
     label: "Appearance",
     icon: Palette,
     description: "Customize your interface",
   },
   {
-    to: "/settings/notifications",
+    to: "/app/settings/notifications",
     label: "Notifications",
     icon: Bell,
     description: "Configure your notifications",

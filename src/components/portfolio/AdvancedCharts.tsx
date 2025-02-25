@@ -3,7 +3,6 @@ import {
   Line,
   AreaChart,
   Area,
-  BarChart,
   Bar,
   XAxis,
   YAxis,
@@ -11,9 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   ComposedChart,
-  Scatter,
 } from "recharts";
-import { format, subDays, subMonths } from "date-fns";
 import type { Trade } from "@/types/portfolio";
 import { useState } from "@/lib/react";
 import type { ReactElement } from "@/lib/react";
@@ -29,20 +26,10 @@ interface ChartData {
 
 interface AdvancedChartsProps {
   trades: Trade[];
-  timeframe?: "1M" | "3M" | "6M" | "1Y" | "ALL";
-}
-
-interface TooltipProps {
-  active?: boolean;
-  payload?: Array<{
-    value: number;
-    payload: ChartData;
-  }>;
 }
 
 export function AdvancedCharts({
   trades,
-  timeframe = "1Y",
 }: AdvancedChartsProps) {
   const [selectedMetric, setSelectedMetric] = useState<
     "returns" | "drawdown" | "volatility"

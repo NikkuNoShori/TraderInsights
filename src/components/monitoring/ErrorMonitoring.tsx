@@ -19,11 +19,6 @@ interface ErrorLog {
   timestamp: string;
 }
 
-interface ErrorData {
-  stats: ErrorStats;
-  logs: ErrorLog[];
-}
-
 const ErrorMonitoring: FC = () => {
   const [errorStats, setErrorStats] = useState<ErrorStats>({
     low: 0,
@@ -32,7 +27,6 @@ const ErrorMonitoring: FC = () => {
     critical: 0,
   });
   const [recentErrors, setRecentErrors] = useState<ErrorLog[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchErrorData = async () => {
@@ -45,8 +39,6 @@ const ErrorMonitoring: FC = () => {
         setRecentErrors(logs);
       } catch (error) {
         console.error("Failed to fetch error data:", error);
-      } finally {
-        setIsLoading(false);
       }
     };
 

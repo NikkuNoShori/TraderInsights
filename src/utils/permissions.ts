@@ -4,7 +4,6 @@ const rolePermissions: Record<UserRole, UserPermissions> = {
   admin: {
     canAccessDashboard: true,
     canAccessJournal: true,
-    canAccessScreener: true,
     canAccessAnalytics: true,
     canManageUsers: true,
     canManageRoles: true,
@@ -14,7 +13,6 @@ const rolePermissions: Record<UserRole, UserPermissions> = {
   manager: {
     canAccessDashboard: true,
     canAccessJournal: true,
-    canAccessScreener: true,
     canAccessAnalytics: true,
     canManageUsers: true,
     canManageRoles: false,
@@ -24,7 +22,6 @@ const rolePermissions: Record<UserRole, UserPermissions> = {
   user: {
     canAccessDashboard: true,
     canAccessJournal: true,
-    canAccessScreener: true,
     canAccessAnalytics: false,
     canManageUsers: false,
     canManageRoles: false,

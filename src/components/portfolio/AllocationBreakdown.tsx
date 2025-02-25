@@ -1,7 +1,6 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import {
   DollarSign,
-  PieChart as PieIcon,
   Percent,
   AlertTriangle,
 } from "lucide-react";
@@ -112,7 +111,7 @@ export function AllocationBreakdown({ trades }: AllocationBreakdownProps) {
         <div className="card p-6">
           <h3 className="heading-3 mb-4">Position Details</h3>
           <div className="space-y-4">
-            {allocations.map(({ symbol, value, percentage, risk }) => (
+            {allocations.map(({ symbol, value, percentage }) => (
               <div key={symbol} className="flex items-center justify-between">
                 <div>
                   <h4 className="font-medium text-gray-900 dark:text-dark-text">

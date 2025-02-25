@@ -11,6 +11,9 @@ import { AuthGuard } from "./components/AuthGuard";
 import { AuthLayout } from "./components/auth/AuthLayout";
 import { AppProvider } from "./providers/AppProvider";
 import { StoreProvider } from "./providers/StoreProvider";
+import LandingPage from "./views/LandingPage";
+import Performance from "./views/Performance";
+import ComingSoon from "./views/ComingSoon";
 
 function ProtectedLayout() {
   return (
@@ -28,6 +31,9 @@ export default function App() {
       <StoreProvider>
         <Router>
           <Routes>
+            {/* Public routes */}
+            <Route index element={<LandingPage />} />
+
             {/* Auth routes */}
             <Route path="/auth" element={<AuthLayout title="Welcome to Trading Insights" subtitle="Sign in to your account" />}>
               <Route index element={<Navigate to="login" replace />} />
@@ -37,16 +43,21 @@ export default function App() {
             </Route>
 
             {/* Protected routes */}
-            <Route element={<ProtectedLayout />}>
-              <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="/app" element={<ProtectedLayout />}>
+              <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="journal" element={<TradingJournal />} />
               <Route path="journal/:id" element={<TradeDetails />} />
+              <Route path="performance" element={<Performance />} />
               <Route path="settings/*" element={<Settings />} />
+              
+              {/* Coming Soon Features */}
+              <Route path="watchlist" element={<ComingSoon />} />
+              <Route path="portfolios" element={<ComingSoon />} />
             </Route>
 
             {/* Catch all redirect */}
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>
       </StoreProvider>
