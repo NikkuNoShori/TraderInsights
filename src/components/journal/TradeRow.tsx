@@ -11,12 +11,6 @@ interface TradeRowProps {
   onEdit?: (trade: Trade) => void;
 }
 
-interface TradeTag {
-  id: string;
-  name: string;
-  color?: string;
-}
-
 export function TradeRow({ trade, onDelete, onEdit }: TradeRowProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();

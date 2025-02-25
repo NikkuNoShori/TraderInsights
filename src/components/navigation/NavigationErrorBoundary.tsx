@@ -1,4 +1,3 @@
-import { useNavigate, useLocation } from "react-router-dom";
 import { AlertCircle } from "lucide-react";
 import { type ReactNode, type ErrorInfo } from "@/lib/react";
 import { Component } from "react";

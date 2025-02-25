@@ -25,9 +25,6 @@ export {
 // Profile types
 export { type Profile as UserProfile } from "./profile";
 
-// Screener types
-export * from "./screener";
-
 // Stock types
 export * from "./stock";
 

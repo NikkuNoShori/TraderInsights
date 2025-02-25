@@ -8,20 +8,16 @@ import {
   List,
   Briefcase,
   ChevronLeft,
-  BarChart2,
   ChevronRight,
   User,
   Settings,
   LogOut,
-  Menu,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { clsx } from "clsx";
 import { Tooltip } from "@/components/ui";
 import { useAuthStore } from "@/stores/authStore";
-import { DarkModeToggle } from "@/components/ui/DarkModeToggle";
 import { Badge } from "@/components/ui";
-import { cn } from "@/utils/cn";
 
 type NavCategory = {
   label: string;
@@ -53,7 +49,7 @@ const navCategories: NavCategory[] = [
       {
         label: "Performance",
         icon: LineChart,
-        href: "/app/analysis/performance",
+        href: "/app/performance",
       },
     ],
   },
@@ -91,7 +87,6 @@ export function MainNav({ defaultCollapsed = true }: MainNavProps) {
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuthStore();
   const navigate = useNavigate();
@@ -109,7 +104,7 @@ export function MainNav({ defaultCollapsed = true }: MainNavProps) {
         userMenuRef.current &&
         !userMenuRef.current.contains(event.target as Node)
       ) {
-        setIsUserMenuOpen(false);
+        // Menu closes automatically with CSS
       }
     };
     document.addEventListener("click", handleClickOutside);
@@ -117,7 +112,7 @@ export function MainNav({ defaultCollapsed = true }: MainNavProps) {
   }, []);
 
   useEffect(() => {
-    setIsUserMenuOpen(false);
+    // Menu closes automatically with CSS
   }, [location.pathname]);
 
   useEffect(() => {
@@ -147,7 +142,7 @@ export function MainNav({ defaultCollapsed = true }: MainNavProps) {
   }, []);
 
   const handleSettingsClick = () => {
-    navigate("/settings/profile");
+    navigate("/app/settings/profile");
   };
 
   const handleLogout = async () => {
@@ -404,11 +399,6 @@ export function MainNav({ defaultCollapsed = true }: MainNavProps) {
                   <Settings className="h-4 w-4" />
                   <span>Settings</span>
                 </button>
-
-                <DarkModeToggle
-                  showLabel
-                  className="w-full justify-start hover:bg-primary-50 dark:hover:bg-primary-900/10 rounded-md"
-                />
 
                 <button
                   onClick={handleLogout}

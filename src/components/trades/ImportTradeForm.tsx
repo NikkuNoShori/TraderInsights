@@ -1,6 +1,7 @@
+import { Upload } from "lucide-react";
 import { useState, useCallback } from "@/lib/react";
 import { useDropzone } from "react-dropzone";
-import { FileSpreadsheet, Upload, AlertCircle } from "lucide-react";
+import { FileSpreadsheet, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/useToast";
 import { useAuthStore } from "@/stores/authStore";
@@ -9,9 +10,10 @@ import { Progress } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { processTradeFile } from "@/lib/services/fileProcessing";
 import type { Trade } from "@/types/trade";
+import { useTradeStore } from "@/stores/tradeStore";
 
 interface ImportTradeFormProps {
-  onImportComplete: (trades: Partial<Trade>[]) => void;
+  onClose: () => void;
 }
 
 interface FileProcessingResult {
@@ -19,12 +21,13 @@ interface FileProcessingResult {
   errors: string[];
 }
 
-export function ImportTradeForm({ onImportComplete }: ImportTradeFormProps) {
+export function ImportTradeForm({ onClose }: ImportTradeFormProps) {
   const { user } = useAuthStore();
   const toast = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const { importTrades } = useTradeStore();
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -45,7 +48,7 @@ export function ImportTradeForm({ onImportComplete }: ImportTradeFormProps) {
           return;
         }
 
-        onImportComplete(data.trades);
+        importTrades(data.trades);
         toast.addToast("Successfully imported trades", "success");
       } catch (error) {
         console.error("Import error:", error);
@@ -57,7 +60,7 @@ export function ImportTradeForm({ onImportComplete }: ImportTradeFormProps) {
         setIsProcessing(false);
       }
     },
-    [onImportComplete, toast],
+    [importTrades, toast],
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
