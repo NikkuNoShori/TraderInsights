@@ -22,7 +22,6 @@ export interface UserProfile {
 export type Permission =
   | "dashboard.access"
   | "journal.access"
-  | "screener.access"
   | "settings.access"
   | "settings";
 

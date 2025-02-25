@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { useToast } from "@/hooks/useToast";
+import { toast } from "react-hot-toast";
 import { useAuthStore } from "@/stores/authStore";
 import type { Trade, CreateTradeData, TradeType, TradeSide, TradeStatus } from "@/types/trade";
 
@@ -47,7 +47,6 @@ interface ManualTradeFormProps {
 export function ManualTradeForm({ onSuccess, initialData }: ManualTradeFormProps) {
   const [isOption, setIsOption] = useState(initialData?.type === "option");
   const { user } = useAuthStore();
-  const toast = useToast();
 
   const {
     register,

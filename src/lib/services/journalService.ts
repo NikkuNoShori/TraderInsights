@@ -1,89 +1,43 @@
 import { supabase } from "@/lib/supabase";
-import { calculateTransactionStatus } from "@/utils/transactions";
-import type { Transaction } from "@/types/database";
+import type { Trade } from "@/types/trade";
 
-export const journalService = {
-  getTransactions: async (userId: string) => {
+export class JournalService {
+  async getTrades(userId: string): Promise<Trade[]> {
     const { data, error } = await supabase
-      .from("transactions")
+      .from("trades")
       .select("*")
       .eq("user_id", userId)
-      .order("date", { ascending: false });
+      .order("entry_date", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching transactions:", error);
-      throw error;
-    }
+    if (error) throw error;
+    return data || [];
+  }
 
-    return data;
-  },
-
-  getTransaction: async (id: string) => {
+  async addTrade(trade: Partial<Trade>): Promise<Trade> {
     const { data, error } = await supabase
-      .from("transactions")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (error) {
-      console.error("Error fetching transaction:", error);
-      return { data: null, error };
-    }
-
-    return { data, error };
-  },
-
-  createTransaction: async (
-    userId: string,
-    transaction: Omit<
-      Transaction,
-      | "id"
-      | "user_id"
-      | "created_at"
-      | "updated_at"
-      | "status"
-      | "remaining_quantity"
-    >,
-  ) => {
-    const { data, error } = await supabase
-      .from("transactions")
-      .insert({
-        ...transaction,
-        user_id: userId,
-      })
+      .from("trades")
+      .insert([trade])
       .select()
       .single();
 
-    if (error) {
-      console.error("Error creating transaction:", error);
-      throw error;
-    }
-
+    if (error) throw error;
     return data;
-  },
+  }
 
-  updateTransaction: async (id: string, updates: Partial<Transaction>) => {
+  async updateTrade(id: string, updates: Partial<Trade>): Promise<Trade> {
     const { data, error } = await supabase
-      .from("transactions")
+      .from("trades")
       .update(updates)
       .eq("id", id)
       .select()
       .single();
 
-    if (error) {
-      console.error("Error updating transaction:", error);
-      throw error;
-    }
-
+    if (error) throw error;
     return data;
-  },
+  }
 
-  deleteTransaction: async (id: string) => {
-    const { error } = await supabase.from("transactions").delete().eq("id", id);
-
-    if (error) {
-      console.error("Error deleting transaction:", error);
-      throw error;
-    }
-  },
-};
+  async deleteTrade(id: string): Promise<void> {
+    const { error } = await supabase.from("trades").delete().eq("id", id);
+    if (error) throw error;
+  }
+}

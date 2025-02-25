@@ -1,78 +1,28 @@
-import React from "@/lib/react";
-import { useState, useCallback, type ReactNode } from "@/lib/react";
-import { toast } from "react-hot-toast";
+import { useState, useCallback } from "@/lib/react";
 
-export type ToastType = "success" | "error" | "info" | "warning";
-
-export interface Toast {
-  id: number;
+interface Toast {
+  id: string;
   message: string;
-  type: ToastType;
+  type: "success" | "error" | "info";
 }
 
 export function useToast() {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const addToast = useCallback((message: string, type: ToastType = "info") => {
-    switch (type) {
-      case "success":
-        toast.success(message);
-        break;
-      case "error":
-        toast.error(message);
-        break;
-      case "warning":
-        toast(message, {
-          icon: "⚠️",
-        });
-        break;
-      default:
-        toast(message);
-    }
+  const addToast = useCallback((message: string, type: Toast["type"] = "info") => {
+    const id = Math.random().toString(36).substr(2, 9);
+    const toast: Toast = { id, message, type };
+    setToasts((prev) => [...prev, toast]);
+    return toast;
   }, []);
 
-  const removeToast = useCallback((id: string) => {
-    toast.dismiss(id);
+  const removeToast = useCallback((toastId: string) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== toastId));
   }, []);
-
-  const ToastContainer = useCallback(() => {
-    const toastClasses = {
-      info: "bg-blue-500",
-      success: "bg-green-500",
-      warning: "bg-yellow-500",
-      error: "bg-red-500",
-    };
-
-    return React.createElement(
-      "div",
-      { className: "fixed bottom-4 right-4 z-50 flex flex-col gap-2" },
-      toasts.map((t: Toast) =>
-        React.createElement(
-          "div",
-          {
-            key: t.id,
-            className: `${
-              toastClasses[t.type]
-            } text-white px-4 py-2 rounded shadow-lg cursor-pointer`,
-            onClick: () => removeToast(t.id.toString()),
-          },
-          React.createElement(
-            "p",
-            { className: "text-sm font-medium" },
-            t.message,
-          ),
-        ),
-      ),
-    );
-  }, [toasts, removeToast]);
 
   return {
+    toasts,
     addToast,
     removeToast,
-    success: (message: string) => addToast(message, "success"),
-    error: (message: string) => addToast(message, "error"),
-    warning: (message: string) => addToast(message, "warning"),
-    info: (message: string) => addToast(message, "info"),
-    ToastContainer,
   };
 }

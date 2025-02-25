@@ -1,62 +1,47 @@
 import { create } from "zustand";
-import { journalService } from "@/lib/services/journalService";
-import type { Transaction } from "@/types/database";
+import { JournalService } from "@/lib/services/journalService";
+import type { Trade } from "@/types/trade";
 
 interface JournalState {
-  transactions: Transaction[];
+  trades: Trade[];
   isLoading: boolean;
   error: string | null;
-  fetchTransactions: (userId: string) => Promise<void>;
-  addTransaction: (
-    userId: string,
-    transaction: Omit<Transaction, "id" | "user_id" | "created_at">,
-  ) => Promise<void>;
-  updateTransaction: (
-    id: string,
-    updates: Partial<Transaction>,
-  ) => Promise<void>;
-  deleteTransaction: (id: string) => Promise<void>;
+  fetchTrades: (userId: string) => Promise<void>;
+  addTrade: (trade: Omit<Trade, "id" | "user_id">) => Promise<void>;
+  updateTrade: (id: string, updates: Partial<Trade>) => Promise<void>;
+  deleteTrade: (id: string) => Promise<void>;
 }
 
-export const useJournalStore = create<JournalState>((set, get) => ({
-  transactions: [],
+const journalService = new JournalService();
+
+export const useJournalStore = create<JournalState>((set) => ({
+  trades: [],
   isLoading: false,
   error: null,
 
-  fetchTransactions: async (userId: string) => {
+  fetchTrades: async (userId: string) => {
     set({ isLoading: true, error: null });
     try {
-      const transactions = await journalService.getTransactions(userId);
-      set({ transactions });
+      const trades = await journalService.getTrades(userId);
+      set({ trades });
     } catch (error) {
       set({
         error:
-          error instanceof Error
-            ? error.message
-            : "Failed to fetch transactions",
+          error instanceof Error ? error.message : "Failed to fetch trades",
       });
     } finally {
       set({ isLoading: false });
     }
   },
 
-  addTransaction: async (
-    userId: string,
-    transaction: Omit<Transaction, "id" | "user_id" | "created_at">,
-  ) => {
+  addTrade: async (trade) => {
     set({ isLoading: true, error: null });
     try {
-      const newTransaction = await journalService.createTransaction(
-        userId,
-        transaction,
-      );
-      set((state) => ({
-        transactions: [newTransaction, ...state.transactions],
-      }));
+      const newTrade = await journalService.addTrade(trade);
+      set((state) => ({ trades: [newTrade, ...state.trades] }));
     } catch (error) {
       set({
-        error:
-          error instanceof Error ? error.message : "Failed to add transaction",
+        error: error instanceof Error ? error.message : "Failed to add trade",
       });
       throw error;
     } finally {
@@ -64,24 +49,17 @@ export const useJournalStore = create<JournalState>((set, get) => ({
     }
   },
 
-  updateTransaction: async (id: string, updates: Partial<Transaction>) => {
+  updateTrade: async (id, updates) => {
     set({ isLoading: true, error: null });
     try {
-      const updatedTransaction = await journalService.updateTransaction(
-        id,
-        updates,
-      );
+      const updatedTrade = await journalService.updateTrade(id, updates);
       set((state) => ({
-        transactions: state.transactions.map((t) =>
-          t.id === id ? updatedTransaction : t,
-        ),
+        trades: state.trades.map((t) => (t.id === id ? updatedTrade : t)),
       }));
     } catch (error) {
       set({
         error:
-          error instanceof Error
-            ? error.message
-            : "Failed to update transaction",
+          error instanceof Error ? error.message : "Failed to update trade",
       });
       throw error;
     } finally {
@@ -89,19 +67,17 @@ export const useJournalStore = create<JournalState>((set, get) => ({
     }
   },
 
-  deleteTransaction: async (id: string) => {
+  deleteTrade: async (id) => {
     set({ isLoading: true, error: null });
     try {
-      await journalService.deleteTransaction(id);
+      await journalService.deleteTrade(id);
       set((state) => ({
-        transactions: state.transactions.filter((t) => t.id !== id),
+        trades: state.trades.filter((t) => t.id !== id),
       }));
     } catch (error) {
       set({
         error:
-          error instanceof Error
-            ? error.message
-            : "Failed to delete transaction",
+          error instanceof Error ? error.message : "Failed to delete trade",
       });
       throw error;
     } finally {
