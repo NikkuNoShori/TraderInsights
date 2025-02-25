@@ -1,23 +1,28 @@
 export const generateMockStockData = (symbol: string) => {
-  const basePrice = Math.random() * 1000 + 100;
+  const basePrice = 100;
   const volatility = 0.02;
-  const days = 30;
+  const numPoints = 100;
+  const data = [];
 
-  return Array.from({ length: days }, (_, i) => {
+  for (let i = 0; i < numPoints; i++) {
     const date = new Date();
-    date.setDate(date.getDate() - (days - i - 1));
+    date.setDate(date.getDate() - (numPoints - i));
 
     const randomChange = (Math.random() - 0.5) * 2 * volatility;
-    const price = basePrice * (1 + randomChange * i);
+    const price = basePrice * (1 + randomChange);
 
-    return {
-      date: date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      }),
-      price: Number(price.toFixed(2)),
-    };
-  });
+    data.push({
+      symbol,
+      date: date.toISOString(),
+      open: price * (1 - volatility / 2),
+      high: price * (1 + volatility),
+      low: price * (1 - volatility),
+      close: price,
+      volume: Math.floor(Math.random() * 1000000),
+    });
+  }
+
+  return data;
 };
 
 export const generateMockInsights = (

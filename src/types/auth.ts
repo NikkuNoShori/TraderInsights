@@ -1,6 +1,6 @@
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
-export type UserRole = "admin" | "user" | "manager";
+export type UserRole = "admin" | "user" | "developer";
 
 export interface User extends SupabaseUser {
   role: UserRole;
@@ -10,11 +10,14 @@ export interface User extends SupabaseUser {
 
 export interface UserProfile {
   id: string;
-  user_id: string;
-  role: UserRole;
+  email: string;
+  first_name: string;
+  last_name: string;
   username?: string;
-  first_name?: string;
-  last_name?: string;
+  username_changes_remaining: number;
+  last_username_change?: string;
+  role: UserRole;
+  date_of_birth?: string;
   created_at: string;
   updated_at: string;
 }

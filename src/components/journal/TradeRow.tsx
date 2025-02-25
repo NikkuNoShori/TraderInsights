@@ -1,7 +1,7 @@
 import { useState } from "@/lib/react";
 import { ChevronDown, ChevronRight, Trash2, Edit } from "lucide-react";
 import { formatCurrency, formatDate } from "@/utils/formatters";
-import type { Trade } from "@/types/trade";
+import type { Trade, TradeSide } from "@/types/trade";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/utils/cn";
 
@@ -40,6 +40,12 @@ export function TradeRow({ trade, onDelete, onEdit }: TradeRowProps) {
     }
   };
 
+  const getSideStyles = (side: TradeSide) => {
+    return side === "Long"
+      ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300"
+      : "bg-rose-100 text-rose-800 dark:bg-rose-900/20 dark:text-rose-300";
+  };
+
   return (
     <>
       <div
@@ -60,14 +66,7 @@ export function TradeRow({ trade, onDelete, onEdit }: TradeRowProps) {
 
         {/* Symbol and Type */}
         <div className="flex items-center space-x-3">
-          <span
-            className={cn(
-              "px-2 py-1 text-xs rounded",
-              trade.side === "Long"
-                ? "bg-emerald-100 text-emerald-800"
-                : "bg-rose-100 text-rose-800"
-            )}
-          >
+          <span className={cn("px-2 py-1 text-xs rounded", getSideStyles(trade.side))}>
             {trade.side}
           </span>
           <span className="font-medium">{trade.symbol}</span>
@@ -92,7 +91,9 @@ export function TradeRow({ trade, onDelete, onEdit }: TradeRowProps) {
             <div
               className={cn(
                 "text-sm font-medium",
-                trade.pnl >= 0 ? "text-emerald-600" : "text-rose-600"
+                trade.pnl >= 0 
+                  ? "text-emerald-600 dark:text-emerald-400" 
+                  : "text-rose-600 dark:text-rose-400"
               )}
             >
               {formatCurrency(trade.pnl)}
@@ -140,7 +141,9 @@ export function TradeRow({ trade, onDelete, onEdit }: TradeRowProps) {
               <div className="text-sm font-medium text-muted-foreground">
                 Risk/Reward
               </div>
-              <div className="mt-1 text-sm">{trade.risk_reward || "N/A"}</div>
+              <div className="mt-1 text-sm">
+                {trade.risk_reward?.toFixed(2) || "N/A"}
+              </div>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">
@@ -148,13 +151,13 @@ export function TradeRow({ trade, onDelete, onEdit }: TradeRowProps) {
               </div>
               <div className="mt-1 text-sm">{trade.notes || "No notes"}</div>
             </div>
-            {Array.isArray(trade.tags) && (
+            {Array.isArray(trade.tags) && trade.tags.length > 0 && (
               <div>
                 <div className="text-sm font-medium text-muted-foreground">
                   Tags
                 </div>
                 <div className="mt-1 flex flex-wrap gap-1">
-                  {trade.tags.map((tag: string) => (
+                  {trade.tags.map((tag) => (
                     <span
                       key={tag}
                       className="px-2 py-0.5 text-xs rounded bg-muted dark:bg-dark-muted"

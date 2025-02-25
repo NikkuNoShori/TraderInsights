@@ -1,5 +1,4 @@
 import { useState, useMemo, useCallback } from "@/lib/react";
-import { useSupabaseStore } from "@/stores/supabaseStore";
 import { useTrades } from "@/hooks/useTrades";
 import { Spinner } from "@/components/ui/Spinner";
 import {

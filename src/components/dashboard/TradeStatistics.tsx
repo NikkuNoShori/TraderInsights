@@ -10,13 +10,7 @@ import {
   Percent,
 } from "lucide-react";
 import type { Trade } from "@/types/trade";
-import {
-  formatTradeValue,
-  calculateWinRate,
-  calculateProfitFactor,
-  calculateAverageTrade,
-  calculateMaxDrawdown,
-} from "../../utils/trade";
+import { formatCurrency } from "@/utils/formatters";
 
 interface TradeStatisticsProps {
   trades: Trade[];
@@ -65,36 +59,42 @@ export function TradeStatistics({
 
     // Basic Statistics
     const totalTrades = filteredTrades.length;
-    const winningTrades = filteredTrades.filter((trade) => (trade.pnl || 0) > 0);
-    const losingTrades = filteredTrades.filter((trade) => (trade.pnl || 0) < 0);
-    const winRate = calculateWinRate(filteredTrades);
+    const winningTrades = filteredTrades.filter((trade) => (trade.pnl ?? 0) > 0).length;
+    const losingTrades = filteredTrades.filter((trade) => (trade.pnl ?? 0) < 0).length;
+    const winRate = totalTrades > 0 ? winningTrades / totalTrades : 0;
 
     // Profit/Loss Calculations
     const grossProfit = filteredTrades.reduce(
-      (sum, trade) => sum + ((trade.pnl || 0) > 0 ? (trade.pnl || 0) : 0),
+      (sum, trade) => sum + ((trade.pnl ?? 0) > 0 ? (trade.pnl ?? 0) : 0),
       0,
     );
     const grossLoss = Math.abs(
       filteredTrades.reduce(
-        (sum, trade) => sum + ((trade.pnl || 0) < 0 ? (trade.pnl || 0) : 0),
+        (sum, trade) => sum + ((trade.pnl ?? 0) < 0 ? (trade.pnl ?? 0) : 0),
         0,
       ),
     );
-    const netProfit = filteredTrades.reduce((sum, trade) => sum + (trade.pnl || 0), 0);
+    const netProfit = filteredTrades.reduce((sum, trade) => sum + (trade.pnl ?? 0), 0);
 
     // Advanced Metrics
-    const profitFactor = calculateProfitFactor(filteredTrades);
-    const avgTrade = calculateAverageTrade(filteredTrades);
-    const maxDrawdown = calculateMaxDrawdown(filteredTrades);
+    const profitFactor = grossLoss === 0 ? 0 : grossProfit / grossLoss;
+    const avgTrade = totalTrades > 0 ? netProfit / totalTrades : 0;
+    const maxDrawdown = Math.abs(
+      filteredTrades.reduce((max, trade) => Math.min(max, trade.pnl ?? 0), 0),
+    );
+
+    const winningTradesArr = filteredTrades.filter((trade) => (trade.pnl ?? 0) > 0);
+    const losingTradesArr = filteredTrades.filter((trade) => (trade.pnl ?? 0) < 0);
+
     const avgWinningTrade =
-      winningTrades.length > 0
-        ? winningTrades.reduce((sum, trade) => sum + (trade.pnl || 0), 0) /
-          winningTrades.length
+      winningTradesArr.length > 0
+        ? winningTradesArr.reduce((sum, trade) => sum + (trade.pnl ?? 0), 0) /
+          winningTradesArr.length
         : 0;
     const avgLosingTrade =
-      losingTrades.length > 0
-        ? Math.abs(losingTrades.reduce((sum, trade) => sum + (trade.pnl || 0), 0)) /
-          losingTrades.length
+      losingTradesArr.length > 0
+        ? Math.abs(losingTradesArr.reduce((sum, trade) => sum + (trade.pnl ?? 0), 0)) /
+          losingTradesArr.length
         : 0;
     const riskRewardRatio =
       avgLosingTrade === 0 ? 0 : avgWinningTrade / avgLosingTrade;
@@ -103,8 +103,8 @@ export function TradeStatistics({
 
     return {
       totalTrades,
-      winningTrades: winningTrades.length,
-      losingTrades: losingTrades.length,
+      winningTrades,
+      losingTrades,
       winRate,
       grossProfit,
       grossLoss,
@@ -123,10 +123,10 @@ export function TradeStatistics({
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
       <StatsCard
         title="Net P&L"
-        value={formatTradeValue(stats.netProfit)}
+        value={formatCurrency(stats.netProfit)}
         icon={DollarSign}
         trendDirection={stats.netProfit >= 0 ? "up" : "down"}
-        trend={formatTradeValue(Math.abs(stats.netProfit))}
+        trend={formatCurrency(Math.abs(stats.netProfit))}
         subtitle="Total profit/loss across all trades"
         isLoading={isLoading}
       />
@@ -146,7 +146,7 @@ export function TradeStatistics({
         value={stats.profitFactor.toFixed(2)}
         icon={TrendingDown}
         trendDirection={stats.profitFactor >= 1.5 ? "up" : "down"}
-        trend={`${formatTradeValue(stats.grossProfit)} / ${formatTradeValue(stats.grossLoss)}`}
+        trend={`${formatCurrency(stats.grossProfit)} / ${formatCurrency(stats.grossLoss)}`}
         subtitle="Ratio of gross profit to gross loss"
         isLoading={isLoading}
       />
@@ -156,14 +156,14 @@ export function TradeStatistics({
         value={stats.riskRewardRatio.toFixed(2)}
         icon={Target}
         trendDirection={stats.riskRewardRatio >= 2 ? "up" : "down"}
-        trend={`${formatTradeValue(stats.avgWinningTrade)} / ${formatTradeValue(stats.avgLosingTrade)}`}
+        trend={`${formatCurrency(stats.avgWinningTrade)} / ${formatCurrency(stats.avgLosingTrade)}`}
         subtitle="Ratio of average win to average loss"
         isLoading={isLoading}
       />
 
       <StatsCard
         title="Expectancy"
-        value={formatTradeValue(stats.expectancy)}
+        value={formatCurrency(stats.expectancy)}
         icon={Percent}
         trendDirection={stats.expectancy > 0 ? "up" : "down"}
         trend={`${(stats.winRate * 100).toFixed(1)}% win rate`}

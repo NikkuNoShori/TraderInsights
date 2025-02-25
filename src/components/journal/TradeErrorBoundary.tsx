@@ -1,6 +1,5 @@
 import { XCircleIcon, RefreshCw } from "lucide-react";
-import { type ErrorInfo, type ReactNode } from "@/lib/react";
-import { Component } from "react";
+import { Component, type ErrorInfo, type ReactNode } from "@/lib/react";
 
 interface Props {
   children: ReactNode;
@@ -23,11 +22,11 @@ export class TradeErrorBoundary extends Component<Props, State> {
     return { hasError: true, error, isRetrying: false };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     console.error("Trade component error:", error, errorInfo);
   }
 
-  handleRetry = async () => {
+  handleRetry = async (): Promise<void> => {
     this.setState({ isRetrying: true });
     try {
       if (this.props.onRetry) {
@@ -43,7 +42,7 @@ export class TradeErrorBoundary extends Component<Props, State> {
     }
   };
 
-  render() {
+  render(): ReactNode {
     if (this.state.hasError) {
       return (
         <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4">

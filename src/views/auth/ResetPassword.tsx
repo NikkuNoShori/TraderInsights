@@ -1,62 +1,21 @@
-import { useState, useEffect } from "@/lib/hooks";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useState } from "@/lib/react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { supabase } from "@/lib/supabase";
 import { validatePassword } from "@/utils/validation";
 import { FormInput } from "@/components/ui";
 import { LoadingButton } from "@/components/LoadingButton";
-import { useAuthStore } from "@/stores/authStore";
 
 export default function ResetPassword() {
+  const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isTokenValid, setIsTokenValid] = useState(false);
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-
-  // Verify the token when component mounts
-  useEffect(() => {
-    const verifyToken = async () => {
-      try {
-        // Get the current session
-        const {
-          data: { session },
-          error: sessionError,
-        } = await supabase.auth.getSession();
-
-        if (sessionError) {
-          console.error("Session error:", sessionError);
-          setError("Failed to verify reset link");
-          return;
-        }
-
-        if (!session) {
-          setError("Invalid or expired reset link");
-          return;
-        }
-
-        // If we have a valid session, the token was already verified by Supabase
-        setIsTokenValid(true);
-      } catch (error) {
-        console.error("Error verifying token:", error);
-        setError("Failed to verify reset link");
-        toast.error("Failed to verify reset link");
-      }
-    };
-
-    verifyToken();
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-
-    if (!isTokenValid) {
-      setError("Invalid or expired reset link");
-      return;
-    }
 
     if (password !== confirmPassword) {
       setError("Passwords don't match");
@@ -69,7 +28,7 @@ export default function ResetPassword() {
       return;
     }
 
-    setIsLoading(true);
+    setLoading(true);
 
     try {
       const { error: updateError } = await supabase.auth.updateUser({
@@ -97,7 +56,7 @@ export default function ResetPassword() {
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -127,7 +86,6 @@ export default function ResetPassword() {
             onChange={(e) => setPassword(e.target.value)}
             required
             autoComplete="new-password"
-            disabled={!isTokenValid || !!error}
           />
 
           <FormInput
@@ -137,7 +95,6 @@ export default function ResetPassword() {
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
             autoComplete="new-password"
-            disabled={!isTokenValid || !!error}
           />
 
           <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
@@ -162,16 +119,14 @@ export default function ResetPassword() {
           </button>
           <LoadingButton
             type="submit"
-            isLoading={isLoading}
+            isLoading={loading}
             disabled={
-              !isTokenValid ||
-              !!error ||
               !password ||
               password !== confirmPassword
             }
             className="flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
           >
-            {isLoading ? "Updating..." : "Reset Password"}
+            {loading ? "Updating..." : "Reset Password"}
           </LoadingButton>
         </div>
       </form>

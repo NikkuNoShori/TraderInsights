@@ -1,10 +1,46 @@
 import type { Transaction } from "@/types/transaction";
+import type { Trade, TradeSide } from "@/types/trade";
 
 export interface TransactionOrder {
   action: "buy" | "sell";
   quantity: number;
   price: number;
 }
+
+export const getTransactionStatus = (trade: Trade): "open" | "closed" => {
+  if (!trade.exit_date) {
+    return "open";
+  }
+  return "closed";
+};
+
+export const calculateTransactionValue = (trade: Trade): number => {
+  return trade.quantity * trade.price;
+};
+
+export const calculateTransactionPnL = (trade: Trade): number => {
+  if (!trade.exit_date || !trade.exit_price) {
+    return 0;
+  }
+
+  const entryValue = trade.quantity * trade.price;
+  const exitValue = trade.quantity * trade.exit_price;
+
+  return trade.side === ("long" as TradeSide)
+    ? exitValue - entryValue
+    : entryValue - exitValue;
+};
+
+export const calculateTransactionROI = (trade: Trade): number => {
+  if (!trade.exit_date || !trade.exit_price) {
+    return 0;
+  }
+
+  const pnl = calculateTransactionPnL(trade);
+  const entryValue = trade.quantity * trade.price;
+
+  return (pnl / entryValue) * 100;
+};
 
 export const calculateTransactionStatus = (
   transaction: Transaction,
@@ -14,10 +50,6 @@ export const calculateTransactionStatus = (
   const isEntryOrder =
     (transaction.side === "Long" && order.action === "buy") ||
     (transaction.side === "Short" && order.action === "sell");
-
-  const isExitOrder =
-    (transaction.side === "Long" && order.action === "sell") ||
-    (transaction.side === "Short" && order.action === "buy");
 
   // Calculate remaining quantity based on the new order
   const remainingQuantity = isEntryOrder

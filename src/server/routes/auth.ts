@@ -202,7 +202,7 @@ const updateMetadataHandler: RequestHandler<{}, any, MetadataRequest> = async (
       return;
     }
 
-    await authService.updateUserMetadata(user.id, metadata);
+    await authService.updateUserMetadata(metadata);
     res.json({ message: "Metadata updated successfully" });
   } catch (error) {
     res.status(500).json({ error: "Failed to update user metadata" });

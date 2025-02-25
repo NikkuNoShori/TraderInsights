@@ -1,5 +1,3 @@
-import { supabase } from "@/lib/supabase";
-
 export interface ErrorStats {
   low: number;
   medium: number;
@@ -19,34 +17,17 @@ interface ErrorLog {
 }
 
 export class ErrorTrackingService {
-  private async logToDatabase(error: ErrorLog) {
-    try {
-      const { error: dbError } = await supabase
-        .from("error_logs")
-        .insert([error]);
-
-      if (dbError) {
-        console.error("Failed to log error to database:", dbError);
-      }
-    } catch (e) {
-      console.error("Error logging service failed:", e);
-    }
-  }
-
   private getErrorSeverity(error: Error): ErrorLog["severity"] {
-    if (
-      error.message.includes("auth") ||
-      error.message.includes("permission")
-    ) {
+    if (error.name === "TypeError" || error.name === "ReferenceError") {
       return "high";
     }
-    if (
-      error.message.includes("network") ||
-      error.message.includes("timeout")
-    ) {
+    if (error.name === "NetworkError") {
       return "medium";
     }
-    return "low";
+    if (error.name === "ValidationError") {
+      return "low";
+    }
+    return "medium";
   }
 
   async logError(
@@ -55,77 +36,36 @@ export class ErrorTrackingService {
       componentName?: string;
       userId?: string;
       additionalData?: Record<string, unknown>;
-    },
-  ) {
-    try {
-      const errorLog: Omit<ErrorLog, "id"> = {
-        message: error.message,
-        stack: error.stack,
-        component_name: metadata?.componentName,
-        user_id: metadata?.userId,
-        metadata: metadata?.additionalData,
-        severity: this.getErrorSeverity(error),
-        timestamp: new Date().toISOString(),
-      };
-
-      const { error: dbError } = await supabase
-        .from("error_logs")
-        .insert([errorLog]);
-
-      if (dbError) throw dbError;
-
-      console.log("Error logged successfully");
-    } catch (err) {
-      console.error("Failed to log error:", err);
     }
+  ) {
+    const errorLog: ErrorLog = {
+      id: Math.random().toString(36).substring(2),
+      message: error.message,
+      stack: error.stack,
+      component_name: metadata?.componentName,
+      user_id: metadata?.userId,
+      metadata: metadata?.additionalData,
+      severity: this.getErrorSeverity(error),
+      timestamp: new Date().toISOString(),
+    };
+
+    console.error("Error logged:", errorLog);
+    return errorLog;
   }
 
   async getErrorStats(): Promise<ErrorStats> {
-    try {
-      const { data, error } = await supabase
-        .from("error_logs")
-        .select("severity")
-        .gte(
-          "timestamp",
-          new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-        );
-
-      if (error) throw error;
-
-      const stats: ErrorStats = {
-        low: 0,
-        medium: 0,
-        high: 0,
-        critical: 0,
-      };
-
-      data?.forEach((log) => {
-        const severity = log.severity as keyof ErrorStats;
-        stats[severity]++;
-      });
-
-      return stats;
-    } catch (error) {
-      console.error("Error fetching error stats:", error);
-      return { low: 0, medium: 0, high: 0, critical: 0 };
-    }
+    // TODO: Implement actual error stats fetching
+    return {
+      low: 0,
+      medium: 0,
+      high: 0,
+      critical: 0,
+    };
   }
 
   async getRecentErrors(): Promise<ErrorLog[]> {
-    try {
-      const { data, error } = await supabase
-        .from("error_logs")
-        .select("*")
-        .order("timestamp", { ascending: false })
-        .limit(10);
-
-      if (error) throw error;
-
-      return data || [];
-    } catch (error) {
-      console.error("Error fetching recent errors:", error);
-      return [];
-    }
+    // TODO: Implement actual error logs fetching
+    return [];
   }
 }
 
