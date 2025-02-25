@@ -1,5 +1,4 @@
 import { useState, useEffect } from "@/lib/react";
-import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { TradeList } from "./components/TradeList";
 import { Button } from "@/components/ui";
