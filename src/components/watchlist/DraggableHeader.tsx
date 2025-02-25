@@ -1,16 +1,15 @@
 import { GripVertical } from "lucide-react";
-import { clsx } from "clsx";
+import { cn } from "@/utils/cn";
 import type { WatchlistColumn } from "@/types/watchlist";
 
 interface DraggableHeaderProps {
   column: WatchlistColumn;
-  index: number;
 }
 
-export function DraggableHeader({ column, index }: DraggableHeaderProps) {
+export function DraggableHeader({ column }: DraggableHeaderProps) {
   return (
     <th
-      className={clsx(
+      className={cn(
         "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider",
         "group cursor-move select-none",
       )}

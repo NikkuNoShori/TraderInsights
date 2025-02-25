@@ -1,5 +1,5 @@
 import { useMemo } from "@/lib/react";
-import { format, subDays, isWithinInterval, startOfYear } from "date-fns";
+import { subDays, isWithinInterval, startOfYear } from "date-fns";
 import { StatsCard } from "./StatsCard";
 import {
   TrendingUp,

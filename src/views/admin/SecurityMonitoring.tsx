@@ -1,4 +1,3 @@
-import React from "react";
 import { PageHeader } from "@/components/ui";
 import { AuthMonitoring } from "@/components/admin/AuthMonitoring";
 import { Shield } from "lucide-react";

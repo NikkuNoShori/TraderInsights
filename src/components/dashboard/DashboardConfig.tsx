@@ -1,5 +1,3 @@
-import { useEffect } from "@/lib/react";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
 import type { DashboardCardType } from "@/types/dashboard";
 import { Button } from "@/components/ui";
 

@@ -2,16 +2,9 @@ import { useState, useEffect, useCallback } from "@/lib/react";
 import { useSupabaseStore } from "@/stores/supabaseStore";
 import type { WatchlistSymbol } from "@/types/stock";
 
-interface WatchlistItem {
-  id: string;
-  symbol: string;
-  notes?: string;
-  created_at: string;
-}
-
 export function useWatchlist() {
   const { client: supabase } = useSupabaseStore();
-  const [items, setItems] = useState<WatchlistItem[]>([]);
+  const [items, setItems] = useState<WatchlistSymbol[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,7 +16,7 @@ export function useWatchlist() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setItems(data || []);
+      setItems((data as WatchlistSymbol[]) || []);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to fetch watchlist"
@@ -38,9 +31,17 @@ export function useWatchlist() {
   }, [fetchWatchlist]);
 
   const addSymbol = async (symbol: string, userId: string) => {
-    const { error } = await supabase
-      .from("watchlist")
-      .insert([{ symbol, user_id: userId }]);
+    const { error } = await supabase.from("watchlist").insert([
+      {
+        symbol,
+        user_id: userId,
+        name: symbol,
+        price: 0,
+        change: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+    ]);
     return { error };
   };
 

@@ -1,5 +1,5 @@
 import { useState } from "@/lib/react";
-import { X, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { WatchlistSymbol } from "@/types/stock";
+import { toast } from "react-hot-toast";
 
 interface AddSymbolModalProps {
   isOpen: boolean;
@@ -35,6 +35,7 @@ export function AddSymbolModal({
       onClose();
     } catch (error) {
       console.error("Failed to add symbol:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to add symbol");
     } finally {
       setIsLoading(false);
     }
