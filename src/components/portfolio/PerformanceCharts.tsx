@@ -25,12 +25,24 @@ interface PerformanceChartsProps {
 }
 
 export function PerformanceCharts({ trades }: PerformanceChartsProps) {
+  if (!trades || trades.length === 0) {
+    return (
+      <div className="text-center text-text-muted py-8">
+        No trade data available for the selected timeframe.
+      </div>
+    );
+  }
+
   const processData = (): ChartData[] => {
     let runningValue = 0;
     let peak = 0;
 
     return trades
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .sort((a, b) => {
+        const dateA = "entry_date" in a ? a.entry_date : a.date;
+        const dateB = "entry_date" in b ? b.entry_date : b.date;
+        return new Date(dateA).getTime() - new Date(dateB).getTime();
+      })
       .map((trade) => {
         // Handle both trade types
         const tradeValue =
@@ -42,8 +54,10 @@ export function PerformanceCharts({ trades }: PerformanceChartsProps) {
         peak = Math.max(peak, runningValue);
         const drawdown = peak > 0 ? ((peak - runningValue) / peak) * 100 : 0;
 
+        const tradeDate = "entry_date" in trade ? trade.entry_date : trade.date;
+
         return {
-          date: trade.date.split("T")[0],
+          date: tradeDate.split("T")[0],
           value: tradeValue,
           cumulativeReturn: runningValue,
           drawdown: -drawdown,
@@ -52,6 +66,14 @@ export function PerformanceCharts({ trades }: PerformanceChartsProps) {
   };
 
   const chartData = processData();
+
+  if (chartData.length === 0) {
+    return (
+      <div className="text-center text-text-muted py-8">
+        No trade data available for the selected timeframe.
+      </div>
+    );
+  }
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("en-US", {

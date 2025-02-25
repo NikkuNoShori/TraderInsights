@@ -11,6 +11,7 @@ import { X } from "lucide-react";
 import { ManualTradeForm } from "./ManualTradeForm";
 import { ImportTradeForm } from "./ImportTradeForm";
 import type { Trade, CreateTradeData } from "@/types/trade";
+import { useTradeStore } from "@/stores/tradeStore";
 
 interface TradeModalProps {
   isOpen: boolean;
@@ -28,18 +29,19 @@ export function TradeModal({
   mode = "add",
 }: TradeModalProps) {
   const [activeTab, setActiveTab] = useState<"manual" | "import">("manual");
+  const { importTrades } = useTradeStore();
 
   const handleSubmitSuccess = (trade: CreateTradeData) => {
     onSubmit(trade);
     onClose();
   };
 
-  const handleImportComplete = (trades: Partial<Trade>[]) => {
-    // For now, we'll just submit the first trade
-    // TODO: Add support for multiple trade submission
-    if (trades.length > 0) {
-      onSubmit(trades[0] as CreateTradeData);
+  const handleImportComplete = async (trades: Partial<Trade>[]) => {
+    try {
+      await importTrades(trades);
       onClose();
+    } catch (error) {
+      console.error("Failed to import trades:", error);
     }
   };
 
@@ -84,7 +86,7 @@ export function TradeModal({
             </TabsContent>
 
             <TabsContent value="import">
-              <ImportTradeForm onImportComplete={handleImportComplete} />
+              <ImportTradeForm onClose={onClose} onImportComplete={handleImportComplete} />
             </TabsContent>
           </Tabs>
         ) : (

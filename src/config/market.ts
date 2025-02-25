@@ -21,12 +21,6 @@ export const marketConfig = {
       start: "04:00",
       end: "20:00",
     },
-    screener: {
-      enabled: true,
-      restrictions: true,
-      start: "09:30",
-      end: "16:00",
-    },
     watchlist: {
       enabled: true,
       restrictions: false,

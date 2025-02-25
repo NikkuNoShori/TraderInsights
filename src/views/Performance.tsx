@@ -10,6 +10,7 @@ import { PerformanceMetrics } from "@/components/dashboard/PerformanceMetrics";
 import { PnLChart } from "@/components/dashboard/PnLChart";
 import { WinRateChart } from "@/components/dashboard/WinRateChart";
 import { TradeDistributionChart } from "@/components/dashboard/TradeDistributionChart";
+import { PerformanceCharts } from "@/components/portfolio/PerformanceCharts";
 
 interface PerformanceError extends Error {
   message: string;
@@ -20,56 +21,52 @@ export default function Performance() {
   const { data: trades = [], isLoading, error } = useTrades();
   const [timeframe, setTimeframe] = useState<TimeframeOption>("1M");
 
-  // Memoize the timeframe change handler
-  const handleTimeframeChange = useCallback((newTimeframe: TimeframeOption) => {
-    setTimeframe(newTimeframe);
+  const handleTimeframeChange = useCallback((value: TimeframeOption) => {
+    setTimeframe(value);
   }, []);
 
-  // Memoize filtered trades
   const filteredTrades = useMemo(() => {
     if (!trades.length) return [];
+    // Filter trades based on timeframe
     const now = new Date();
-    const timeframeInDays = {
-      "1D": 1,
-      "1W": 7,
-      "1M": 30,
-      "3M": 90,
-      "1Y": 365,
-      YTD: Math.floor(
-        (now.getTime() - new Date(now.getFullYear(), 0, 1).getTime()) /
-          (1000 * 60 * 60 * 24),
-      ),
-      ALL: Infinity,
-    }[timeframe];
-
-    return trades.filter((trade) => {
-      const tradeDate = new Date(trade.created_at);
-      const diffTime = Math.abs(now.getTime() - tradeDate.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays <= timeframeInDays;
-    });
+    const cutoff = new Date();
+    switch (timeframe) {
+      case "1D":
+        cutoff.setDate(now.getDate() - 1);
+        break;
+      case "1W":
+        cutoff.setDate(now.getDate() - 7);
+        break;
+      case "1M":
+        cutoff.setMonth(now.getMonth() - 1);
+        break;
+      case "3M":
+        cutoff.setMonth(now.getMonth() - 3);
+        break;
+      case "1Y":
+        cutoff.setFullYear(now.getFullYear() - 1);
+        break;
+      case "YTD":
+        cutoff.setMonth(0, 1);
+        break;
+      case "ALL":
+        return trades;
+    }
+    return trades.filter((trade) => new Date(trade.entry_date) >= cutoff);
   }, [trades, timeframe]);
 
   if (isLoading) {
     return (
-      <div className="flex-grow bg-background p-6">
-        <div className="flex justify-center">
-          <Spinner className="text-primary" size="lg" />
-        </div>
+      <div className="flex items-center justify-center h-full">
+        <Spinner size="lg" />
       </div>
     );
   }
 
   if (error) {
-    const err = error as PerformanceError;
     return (
-      <div className="flex-grow bg-background p-6">
-        <div className="rounded-lg border border-border bg-card p-4">
-          <h3 className="text-lg font-medium text-text-primary mb-2">
-            Error Loading Performance Data
-          </h3>
-          <p className="text-text-muted">{err.message}</p>
-        </div>
+      <div className="flex items-center justify-center h-full">
+        <div className="text-error">{(error as PerformanceError).message}</div>
       </div>
     );
   }
@@ -89,6 +86,14 @@ export default function Performance() {
           />
         </div>
         <PerformanceMetrics trades={filteredTrades} timeframe={timeframe} />
+      </div>
+
+      {/* Advanced Charts */}
+      <div className="bg-card border border-border rounded-lg p-6 mb-6">
+        <h3 className="text-base font-medium text-text-primary mb-4">
+          Advanced Performance Analysis
+        </h3>
+        <PerformanceCharts trades={filteredTrades} />
       </div>
 
       {/* Charts Section */}

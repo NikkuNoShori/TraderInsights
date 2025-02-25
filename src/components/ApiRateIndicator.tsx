@@ -1,5 +1,5 @@
 import { Activity } from "lucide-react";
-import { useApiStore } from "@/lib/services/polygonApi";
+import { useApiStore } from "@/stores/apiStore";
 import { useAuthStore } from "@/stores/authStore";
 import { clsx } from "clsx";
 

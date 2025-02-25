@@ -1,98 +1,39 @@
-import { restClient } from "@polygon.io/client-js";
-import { withRetry } from "@/utils/withRetry";
-import { create } from "zustand";
 import { env } from "@/config/env";
-import { wsManager } from "./websocketManager";
-import type { TradeMessage } from "@/types/polygon";
+import type { StockQuote } from "@/types/stock";
 
-// Initialize REST client
-const rest = restClient(env.POLYGON_API_KEY);
+const POLYGON_API_KEY = env.POLYGON_API_KEY;
+const BASE_URL = "https://api.polygon.io";
 
-interface ApiState {
-  requestCount: number;
-  lastRequestTime: number;
-  remainingCalls: number;
-}
-
-export const useApiStore = create<ApiState>(() => ({
-  requestCount: 0,
-  lastRequestTime: Date.now(),
-  remainingCalls: 5,
-}));
-
-const checkRateLimit = () => {
-  const { requestCount, lastRequestTime } = useApiStore.getState();
-  const now = Date.now();
-
-  if (now - lastRequestTime >= 60000) {
-    useApiStore.setState({
-      requestCount: 1,
-      lastRequestTime: now,
-      remainingCalls: 4,
-    });
-    return;
-  }
-
-  if (requestCount >= 5) {
-    throw new Error(
-      "Rate limit exceeded. Please wait before making more requests."
+export class PolygonApi {
+  async getQuote(symbol: string): Promise<StockQuote> {
+    const response = await fetch(
+      `${BASE_URL}/v2/last/trade/${symbol}?apiKey=${POLYGON_API_KEY}`
     );
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch quote for ${symbol}`);
+    }
+
+    const data = await response.json();
+    return {
+      symbol: data.symbol,
+      currentPrice: data.last,
+      change: data.todaysChange,
+      changePercent: data.todaysChangePerc,
+      volume: data.volume,
+      avgVolume: data.prevDay?.volume || 0,
+      avgVolume3Month: data.volume, // Using current volume as fallback
+      marketCap: data.marketCap || 0,
+      weekHigh52: data.week52High || 0,
+      weekLow52: data.week52Low || 0,
+      lastUpdated: new Date(data.updated).toISOString(),
+    };
   }
 
-  useApiStore.setState((state) => ({
-    requestCount: state.requestCount + 1,
-    remainingCalls: Math.max(0, 5 - (state.requestCount + 1)),
-  }));
-};
-
-export const polygonApi = {
-  subscribeToTicker: (symbol: string, callback: (data: any) => void) => {
-    return wsManager.subscribe(symbol, callback);
-  },
-
-  getStockQuote: async (symbol: string) => {
-    checkRateLimit();
-    return withRetry(async () => {
-      const response = await rest.stocks.previousClose({ ticker: symbol });
-      return response;
-    });
-  },
-
-  getDailyBars: async (symbol: string, from: string, to: string) => {
-    checkRateLimit();
-    return withRetry(async () => {
-      const response = await rest.stocks.aggregates(symbol, 1, "day", from, to);
-      return response;
-    });
-  },
-
-  getCompanyDetails: async (symbol: string) => {
-    checkRateLimit();
-    return withRetry(async () => {
-      const response = await rest.reference.tickerDetails(symbol);
-      return response;
-    });
-  },
-
-  getMarketStatus: async () => {
-    checkRateLimit();
-    return withRetry(async () => {
-      const response = await rest.reference.marketStatus();
-      return response;
-    });
-  },
-
-  getSnapshots: async (symbols: string[]) => {
-    checkRateLimit();
-    return withRetry(async () => {
-      const response = await Promise.all(
-        symbols.map((symbol) => rest.stocks.previousClose({ ticker: symbol }))
-      );
-      return response;
-    });
-  },
-
-  cleanup: () => {
-    wsManager.cleanup();
-  },
-};
+  async getQuotes(symbols: string[]): Promise<StockQuote[]> {
+    const quotes = await Promise.all(
+      symbols.map((symbol) => this.getQuote(symbol))
+    );
+    return quotes;
+  }
+}

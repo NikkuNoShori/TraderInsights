@@ -17,6 +17,14 @@ interface PnLChartProps {
 }
 
 export function PnLChart({ trades, timeframe }: PnLChartProps) {
+  if (!trades || trades.length === 0) {
+    return (
+      <div className="text-center text-text-muted py-8">
+        No trade data available for the selected timeframe.
+      </div>
+    );
+  }
+
   const filteredTrades = useMemo(() => {
     const now = new Date();
     const cutoff = new Date();
@@ -45,14 +53,22 @@ export function PnLChart({ trades, timeframe }: PnLChartProps) {
         return trades;
     }
 
-    return trades.filter(trade => new Date(trade.date) >= cutoff);
+    return trades.filter(trade => new Date(trade.entry_date) >= cutoff);
   }, [trades, timeframe]);
+
+  if (filteredTrades.length === 0) {
+    return (
+      <div className="text-center text-text-muted py-8">
+        No trade data available for the selected timeframe.
+      </div>
+    );
+  }
 
   return (
     <div className="h-[300px]">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={filteredTrades}>
-          <XAxis dataKey="date" />
+          <XAxis dataKey="entry_date" />
           <YAxis />
           <Tooltip formatter={(value) => formatCurrency(Number(value))} />
           <Line type="monotone" dataKey="pnl" stroke="var(--primary)" />

@@ -1,5 +1,12 @@
 import { supabase } from "@/lib/supabase";
 
+export interface ErrorStats {
+  low: number;
+  medium: number;
+  high: number;
+  critical: number;
+}
+
 interface ErrorLog {
   id: string;
   message: string;
@@ -9,13 +16,6 @@ interface ErrorLog {
   metadata?: Record<string, unknown>;
   severity: "low" | "medium" | "high" | "critical";
   timestamp: string;
-}
-
-export interface ErrorStats {
-  low: number;
-  medium: number;
-  high: number;
-  critical: number;
 }
 
 export class ErrorTrackingService {

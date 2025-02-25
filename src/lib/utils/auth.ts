@@ -41,7 +41,6 @@ export async function fetchPermissions(
     return {
       "dashboard.access": true,
       "journal.access": true,
-      "screener.access": true,
     };
   } catch (error) {
     console.error("Error fetching permissions:", error);
