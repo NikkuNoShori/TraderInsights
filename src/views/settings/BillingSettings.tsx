@@ -1,6 +1,8 @@
 import { Eye, EyeOff, Download } from "lucide-react";
 import { clsx } from "clsx";
 import { useState } from "@/lib/react";
+import { PageHeader } from "@/components/ui";
+import { Button } from "@/components/ui/button";
 
 interface SensitiveDataProps {
   value: string;
@@ -49,24 +51,41 @@ function SensitiveData({ value, label, type }: SensitiveDataProps) {
   );
 }
 
-export function BillingSettings() {
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+export default function BillingSettings() {
+  const [loading, setLoading] = useState(false);
 
-  const handleAddPaymentMethod = async () => {
-    setIsLoading(true);
+  const handleUpgrade = async () => {
+    setLoading(true);
     try {
-      // TODO: Implement payment method addition
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // TODO: Implement upgrade logic
     } catch (error) {
-      console.error("Failed to add payment method:", error);
+      console.error("Failed to upgrade:", error);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
     <div className="space-y-6">
+      <PageHeader
+        title="Billing"
+        subtitle="Manage your subscription and billing information"
+      />
+
+      <div className="bg-card p-6 rounded-lg border border-border">
+        <h3 className="text-lg font-medium">Current Plan</h3>
+        <p className="text-muted-foreground mt-1">Free Tier</p>
+
+        <div className="mt-6">
+          <Button
+            onClick={handleUpgrade}
+            disabled={loading}
+          >
+            {loading ? "Processing..." : "Upgrade to Pro"}
+          </Button>
+        </div>
+      </div>
+
       <div className="bg-white shadow rounded-lg p-6">
         <div className="pb-6">
           <h2 className="text-lg font-medium text-gray-900">
@@ -89,14 +108,13 @@ export function BillingSettings() {
 
         <div className="mt-6">
           <button
-            onClick={handleAddPaymentMethod}
-            disabled={isLoading}
+            disabled={loading}
             className={clsx(
               "inline-flex items-center px-4 py-2 border border-transparent",
               "text-sm font-medium rounded-md shadow-sm",
               "text-white bg-indigo-600 hover:bg-indigo-700",
               "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500",
-              isLoading && "opacity-50 cursor-not-allowed",
+              loading && "opacity-50 cursor-not-allowed",
             )}
           >
             Add Payment Method

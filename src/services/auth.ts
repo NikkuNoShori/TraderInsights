@@ -16,17 +16,14 @@ export interface AuthService {
   signIn: (
     email: string,
     password: string,
-    ip: string,
+    ip: string
   ) => Promise<AuthResponse>;
   signUp: (email: string, password: string) => Promise<AuthResponse>;
   signOut: () => Promise<{ error: AuthError | null }>;
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
   getCurrentUser: () => Promise<User | null>;
   checkUserExists: (email: string) => Promise<boolean>;
-  updateUserMetadata: (
-    userId: string,
-    metadata: Partial<UserMetadata>,
-  ) => Promise<void>;
+  updateUserMetadata: (metadata: Partial<UserMetadata>) => Promise<void>;
   verifyEmail: (token: string) => Promise<{ error: AuthError | null }>;
 }
 
@@ -34,7 +31,7 @@ class SupabaseAuthService implements AuthService {
   async signIn(
     email: string,
     password: string,
-    ip: string,
+    ip: string
   ): Promise<AuthResponse> {
     // Check rate limiting before attempting login
     const { allowed, remainingAttempts, lockoutRemaining } =
@@ -45,7 +42,7 @@ class SupabaseAuthService implements AuthService {
       return {
         data: { session: null, user: null },
         error: new Error(
-          `Too many failed attempts. Please try again in ${minutes} minutes.`,
+          `Too many failed attempts. Please try again in ${minutes} minutes.`
         ) as AuthError,
       };
     }
@@ -85,7 +82,7 @@ class SupabaseAuthService implements AuthService {
             (response.data.user?.user_metadata?.sign_in_count || 0) + 1,
         };
 
-        await this.updateUserMetadata(response.data.user!.id, metadata);
+        await this.updateUserMetadata(metadata);
       }
 
       return response;
@@ -119,7 +116,7 @@ class SupabaseAuthService implements AuthService {
       return {
         data: { session: null, user: null },
         error: new Error(
-          "An account with this email already exists. Please sign in instead.",
+          "An account with this email already exists. Please sign in instead."
         ) as AuthError,
       };
     }
@@ -145,7 +142,7 @@ class SupabaseAuthService implements AuthService {
   async signOut(): Promise<{ error: AuthError | null }> {
     const user = await this.getCurrentUser();
     if (user) {
-      await this.updateUserMetadata(user.id, {
+      await this.updateUserMetadata({
         last_seen_at: new Date().toISOString(),
       });
     }
@@ -180,7 +177,7 @@ class SupabaseAuthService implements AuthService {
           error instanceof Error
             ? (error as AuthError)
             : (new Error(
-                "Failed to process reset password request",
+                "Failed to process reset password request"
               ) as AuthError),
       };
     }
@@ -192,7 +189,7 @@ class SupabaseAuthService implements AuthService {
     } = await supabase.auth.getUser();
     if (user) {
       // Update last seen timestamp
-      await this.updateUserMetadata(user.id, {
+      await this.updateUserMetadata({
         last_seen_at: new Date().toISOString(),
       });
     }
@@ -232,10 +229,7 @@ class SupabaseAuthService implements AuthService {
     }
   }
 
-  async updateUserMetadata(
-    userId: string,
-    metadata: Partial<UserMetadata>,
-  ): Promise<void> {
+  async updateUserMetadata(metadata: Partial<UserMetadata>): Promise<void> {
     try {
       const { error } = await supabase.auth.updateUser({
         data: metadata,

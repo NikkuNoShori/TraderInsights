@@ -8,16 +8,7 @@ const rolePermissions: Record<UserRole, UserPermissions> = {
     canManageUsers: true,
     canManageRoles: true,
     canViewAuditLogs: true,
-    canModifySystemSettings: false,
-  },
-  manager: {
-    canAccessDashboard: true,
-    canAccessJournal: true,
-    canAccessAnalytics: true,
-    canManageUsers: true,
-    canManageRoles: false,
-    canViewAuditLogs: true,
-    canModifySystemSettings: false,
+    canModifySystemSettings: true,
   },
   user: {
     canAccessDashboard: true,
@@ -27,6 +18,15 @@ const rolePermissions: Record<UserRole, UserPermissions> = {
     canManageRoles: false,
     canViewAuditLogs: false,
     canModifySystemSettings: false,
+  },
+  developer: {
+    canAccessDashboard: true,
+    canAccessJournal: true,
+    canAccessAnalytics: true,
+    canManageUsers: true,
+    canManageRoles: true,
+    canViewAuditLogs: true,
+    canModifySystemSettings: true,
   },
 };
 
