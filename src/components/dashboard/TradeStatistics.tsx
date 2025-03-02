@@ -1,20 +1,12 @@
 import { useMemo } from "@/lib/react";
-import { subDays, isWithinInterval, startOfYear } from "date-fns";
 import { StatsCard } from "./StatsCard";
-import {
-  TrendingUp,
-  TrendingDown,
-  Activity,
-  DollarSign,
-  Target,
-  Percent,
-} from "lucide-react";
-import type { Trade } from "@/types/trade";
+import { DollarSign, TrendingUp, TrendingDown, Target, Percent, Activity } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
+import { useFilteredTrades } from "@/hooks/useFilteredTrades";
+import type { Trade } from "@/types/trade";
 
 interface TradeStatisticsProps {
   trades: Trade[];
-  timeframe?: "1W" | "1M" | "3M" | "YTD" | "1Y";
   isLoading?: boolean;
 }
 
@@ -37,26 +29,11 @@ interface TradeStats {
 
 export function TradeStatistics({
   trades,
-  timeframe = "1M",
   isLoading,
 }: TradeStatisticsProps) {
+  const filteredTrades = useFilteredTrades(trades, "performance");
+
   const stats = useMemo((): TradeStats => {
-    const now = new Date();
-    const filterDate = {
-      "1W": subDays(now, 7),
-      "1M": subDays(now, 30),
-      "3M": subDays(now, 90),
-      YTD: startOfYear(now),
-      "1Y": subDays(now, 365),
-    }[timeframe];
-
-    const filteredTrades = trades.filter((trade) =>
-      isWithinInterval(new Date(trade.date), {
-        start: filterDate,
-        end: now,
-      }),
-    );
-
     // Basic Statistics
     const totalTrades = filteredTrades.length;
     const winningTrades = filteredTrades.filter((trade) => (trade.pnl ?? 0) > 0).length;
@@ -117,7 +94,7 @@ export function TradeStatistics({
       riskRewardRatio,
       expectancy,
     };
-  }, [trades, timeframe]);
+  }, [filteredTrades]);
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">

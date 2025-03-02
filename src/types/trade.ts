@@ -12,8 +12,10 @@ export interface OptionDetails {
 export interface Trade {
   id: string;
   user_id: string;
+  broker_id?: string;
   date: string;
   time: string;
+  timestamp: string; // Original ISO timestamp
   symbol: string;
   type: TradeType;
   side: TradeSide;
@@ -22,8 +24,12 @@ export interface Trade {
   price: number;
   total: number;
   entry_date: string;
+  entry_time: string;
+  entry_timestamp: string;
   entry_price: number;
   exit_date?: string;
+  exit_time?: string;
+  exit_timestamp?: string;
   exit_price?: number;
   pnl?: number;
   status: TradeStatus;
@@ -42,15 +48,17 @@ export interface Trade {
 }
 
 export interface TradeFilters {
+  brokers?: string[];
   dateRange?: [Date, Date];
   symbols?: string[];
-  types?: string[];
-  sides?: ("Long" | "Short")[];
-  status?: ("pending" | "open" | "closed")[];
+  types?: TradeType[];
+  sides?: TradeSide[];
+  status?: TradeStatus[];
   minPnl?: number;
   maxPnl?: number;
   setupTypes?: string[];
   strategies?: string[];
+  winLoss?: "win" | "loss";
 }
 
 export interface TradeStats {

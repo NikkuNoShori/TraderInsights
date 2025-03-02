@@ -15,9 +15,9 @@ export default function Dashboard() {
   }, [user, fetchTrades]);
 
   return (
-    <div className="flex-grow p-6">
+    <div>
       <WelcomeSection />
-      <div className="mt-6">
+      <div className="max-w-screen-2xl mx-auto py-8">
         <DashboardCards trades={trades} />
       </div>
     </div>

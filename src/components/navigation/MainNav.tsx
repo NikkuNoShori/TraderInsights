@@ -17,6 +17,7 @@ import { motion } from "framer-motion";
 import { clsx } from "clsx";
 import { Tooltip } from "@/components/ui";
 import { useAuthStore } from "@/stores/authStore";
+import { useNavStore } from "@/stores/navStore";
 import { Badge } from "@/components/ui";
 
 type NavCategory = {
@@ -72,16 +73,8 @@ const navCategories: NavCategory[] = [
   },
 ];
 
-interface MainNavProps {
-  defaultCollapsed?: boolean;
-}
-
-export function MainNav({ defaultCollapsed = true }: MainNavProps) {
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    const saved = localStorage.getItem("nav-collapsed");
-    return saved ? JSON.parse(saved) : defaultCollapsed;
-  });
-
+export function MainNav() {
+  const { isCollapsed, toggleCollapsed } = useNavStore();
   const [openCategories, setOpenCategories] = useState<string[]>(() => {
     const saved = localStorage.getItem("nav-open-categories");
     return saved ? JSON.parse(saved) : [];
@@ -116,10 +109,6 @@ export function MainNav({ defaultCollapsed = true }: MainNavProps) {
   }, [location.pathname]);
 
   useEffect(() => {
-    localStorage.setItem("nav-collapsed", JSON.stringify(isCollapsed));
-  }, [isCollapsed]);
-
-  useEffect(() => {
     localStorage.setItem("nav-open-categories", JSON.stringify(openCategories));
   }, [openCategories]);
 
@@ -127,10 +116,6 @@ export function MainNav({ defaultCollapsed = true }: MainNavProps) {
     console.log("MainNav mounted");
     return () => console.log("MainNav unmounted");
   }, []);
-
-  const toggleCollapse = () => {
-    setIsCollapsed((prev: boolean) => !prev);
-  };
 
   const toggleCategory = useCallback((category: string, e: ReactMouseEvent) => {
     e.preventDefault();
@@ -425,7 +410,7 @@ export function MainNav({ defaultCollapsed = true }: MainNavProps) {
         )}
       >
         <button
-          onClick={toggleCollapse}
+          onClick={toggleCollapsed}
           className={clsx(
             "w-8 h-8 rounded-full border border-border",
             "flex items-center justify-center",

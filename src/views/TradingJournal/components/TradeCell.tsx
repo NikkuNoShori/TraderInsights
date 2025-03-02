@@ -23,6 +23,13 @@ export function TradeCell({ columnId, trade, value }: TradeCellProps) {
         </div>
       );
 
+    case "broker_id":
+      return (
+        <span className="inline-block px-2 py-1 rounded-md text-sm font-medium bg-muted/50 text-muted-foreground">
+          {renderedValue}
+        </span>
+      );
+
     case "side":
       return (
         <span

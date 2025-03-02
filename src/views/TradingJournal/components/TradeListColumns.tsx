@@ -1,5 +1,6 @@
 import { Trade } from "@/types/trade";
 import { formatTradeValue } from "@/utils/trade";
+import { format } from "date-fns";
 
 export interface TradeColumn {
   id: string;
@@ -14,16 +15,23 @@ export interface TradeColumn {
 export const TRADE_COLUMNS: TradeColumn[] = [
   {
     id: "date",
-    label: "Date",
+    label: "Date/Time",
     accessor: "date",
     sortable: true,
     defaultVisible: true,
-    renderCell: (value, trade) => (
-      <div>
-        <div>{value}</div>
-        <div className="text-sm text-muted-foreground">{trade.time}</div>
-      </div>
-    ),
+    renderCell: (value, trade) => {
+      const dateObj = new Date(`${trade.date}T${trade.time}`);
+      return (
+        <div className="flex flex-col">
+          <span className="font-medium">
+            {format(dateObj, "MMM d, yyyy")}
+          </span>
+          <span className="text-sm text-muted-foreground">
+            {format(dateObj, "HH:mm:ss")}
+          </span>
+        </div>
+      );
+    },
   },
   {
     id: "symbol",

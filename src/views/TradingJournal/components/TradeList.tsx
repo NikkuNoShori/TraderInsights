@@ -5,6 +5,8 @@ import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { TRADE_COLUMNS, TradeColumn } from "./TradeListColumns";
 import { ColumnSelector } from "./ColumnSelector";
+import { TradeCell } from "./TradeCell";
+import React from "react";
 
 export type SortField = 'date' | 'symbol' | 'side' | 'quantity' | 'entry_price' | 'exit_price' | 'pnl' | 'status' | 'fees' | 'total' | 'risk_amount' | 'take_profit' | 'stop_loss';
 export type SortDirection = 'asc' | 'desc';
@@ -117,11 +119,8 @@ export function TradeList({
             </thead>
             <tbody className="divide-y divide-border dark:divide-dark-border">
               {trades.map((trade) => (
-                <>
-                  <tr
-                    key={trade.id}
-                    className="bg-card dark:bg-dark-card hover:bg-muted dark:hover:bg-dark-muted transition-colors"
-                  >
+                <React.Fragment key={trade.id}>
+                  <tr className="bg-card dark:bg-dark-card hover:bg-muted dark:hover:bg-dark-muted transition-colors">
                     <td className="py-4 px-2 text-center">
                       <Button
                         variant="ghost"
@@ -142,7 +141,7 @@ export function TradeList({
                         : trade[column.accessor];
                       
                       return (
-                        <td key={column.id} className="py-4 px-4 text-center">
+                        <td key={`${trade.id}-${column.id}`} className="py-4 px-4 text-center">
                           {column.id === 'symbol' ? (
                             <Link
                               to={`/app/journal/${trade.id}`}
@@ -150,10 +149,12 @@ export function TradeList({
                             >
                               {value}
                             </Link>
-                          ) : column.renderCell ? (
-                            column.renderCell(value, trade)
                           ) : (
-                            value
+                            <TradeCell
+                              columnId={column.id}
+                              trade={trade}
+                              value={value}
+                            />
                           )}
                         </td>
                       );
@@ -218,7 +219,7 @@ export function TradeList({
                       </td>
                     </tr>
                   )}
-                </>
+                </React.Fragment>
               ))}
             </tbody>
           </table>

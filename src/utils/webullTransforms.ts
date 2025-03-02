@@ -14,23 +14,47 @@ export function transformWebullTrade(
   // Default to stock type for now
   const type: TradeType = "stock";
 
-  const [date, time] = webullTrade.createTime.split("T");
+  // Parse the timestamp properly
+  const timestamp = new Date(webullTrade.createTime);
+  const date = timestamp.toISOString().split("T")[0];
+  const time = timestamp.toLocaleTimeString("en-US", {
+    hour12: false,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
 
   return {
     date,
-    time: time.split(".")[0], // Remove milliseconds
+    time,
+    timestamp: webullTrade.createTime, // Store original ISO timestamp
     symbol: webullTrade.symbol,
     type,
     side,
-    direction: side, // Alias for backward compatibility
+    direction: side,
     quantity: webullTrade.filledQuantity || webullTrade.quantity,
     price: webullTrade.filledPrice || webullTrade.price || 0,
     total:
       (webullTrade.filledPrice || webullTrade.price || 0) *
       (webullTrade.filledQuantity || webullTrade.quantity),
     entry_date: webullTrade.createTime,
+    entry_time: time,
+    entry_timestamp: webullTrade.createTime,
     entry_price: webullTrade.filledPrice || webullTrade.price || 0,
     exit_date:
+      webullTrade.status === "FILLED"
+        ? new Date(webullTrade.updateTime).toISOString().split("T")[0]
+        : undefined,
+    exit_time:
+      webullTrade.status === "FILLED"
+        ? new Date(webullTrade.updateTime).toLocaleTimeString("en-US", {
+            hour12: false,
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          })
+        : undefined,
+    exit_timestamp:
       webullTrade.status === "FILLED" ? webullTrade.updateTime : undefined,
     exit_price:
       webullTrade.status === "FILLED" ? webullTrade.filledPrice : undefined,
