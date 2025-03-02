@@ -21,10 +21,16 @@ export function TradeCell({ columnId, trade, value }: TradeCellProps) {
   switch (columnId) {
     case "date":
       return (
-        <div>
-          <div>{trade.date}</div>
-          <div className="text-sm text-muted-foreground">{trade.time}</div>
-        </div>
+        <span className="font-medium">
+          {value}
+        </span>
+      );
+
+    case "time":
+      return (
+        <span className="font-medium text-muted-foreground">
+          {value}
+        </span>
       );
 
     case "broker_id":

@@ -30,7 +30,7 @@ export function TradeStats({ trades }: TradeStatsProps) {
   const totalTrades = filteredTrades.length;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div className="bg-card dark:bg-dark-card rounded-lg p-4 border border-border dark:border-dark-border">
         <h3 className="text-sm font-medium text-muted-foreground mb-1">
           Total P&L

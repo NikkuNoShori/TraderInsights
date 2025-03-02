@@ -10,13 +10,13 @@ interface NavState {
 export const useNavStore = create<NavState>()(
   persist(
     (set) => ({
-      isCollapsed: true, // Default to collapsed state
+      isCollapsed: true, // Set default to true
       setCollapsed: (collapsed) => set({ isCollapsed: collapsed }),
       toggleCollapsed: () =>
         set((state) => ({ isCollapsed: !state.isCollapsed })),
     }),
     {
       name: "nav-state",
-    },
-  ),
+    }
+  )
 );

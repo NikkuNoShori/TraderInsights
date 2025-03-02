@@ -1,7 +1,7 @@
 import type { Trade } from "@/types/trade";
 import { useMemo } from "@/lib/react";
 import { StatsCard } from "./StatsCard";
-import { TrendingUp, TrendingDown, Activity } from "lucide-react";
+import { TrendingUp, TrendingDown, Activity, DollarSign, Receipt } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 import { useFilteredTrades } from "@/hooks/useFilteredTrades";
 
@@ -13,34 +13,69 @@ export function DashboardCards({ trades }: DashboardCardsProps) {
   const filteredTrades = useFilteredTrades(trades, "overview");
 
   const stats = useMemo(() => {
-    const totalPnL = filteredTrades.reduce(
-      (sum, trade) => sum + (trade.pnl || 0),
-      0,
-    );
-    const winningTrades = filteredTrades.filter(
-      (trade) => (trade.pnl || 0) > 0,
-    );
+    // Calculate raw P&L without fees
+    const rawPnL = filteredTrades.reduce((sum, trade) => {
+      if (trade.exit_price && trade.entry_price) {
+        const tradePnL = trade.side === "Long"
+          ? (trade.exit_price - trade.entry_price) * trade.quantity
+          : (trade.entry_price - trade.exit_price) * trade.quantity;
+        return sum + tradePnL;
+      }
+      return sum;
+    }, 0);
+
+    // Calculate total fees
+    const totalFees = filteredTrades.reduce((sum, trade) => sum + (trade.fees || 0), 0);
+
+    // Calculate net return (P&L - fees)
+    const netReturn = rawPnL - totalFees;
+
+    const winningTrades = filteredTrades.filter((trade) => {
+      if (trade.exit_price && trade.entry_price) {
+        const tradePnL = trade.side === "Long"
+          ? (trade.exit_price - trade.entry_price) * trade.quantity
+          : (trade.entry_price - trade.exit_price) * trade.quantity;
+        return tradePnL > 0;
+      }
+      return false;
+    });
+
     const winRate =
       filteredTrades.length > 0
         ? (winningTrades.length / filteredTrades.length) * 100
         : 0;
 
     return {
-      totalPnL,
+      rawPnL,
+      totalFees,
+      netReturn,
       winRate,
       totalTrades: filteredTrades.length,
     };
   }, [filteredTrades]);
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+    <div className="w-full max-w-[1400px] mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         <StatsCard
-          title="Total P&L"
-          value={formatCurrency(stats.totalPnL)}
-          icon={stats.totalPnL >= 0 ? TrendingUp : TrendingDown}
-          trend={formatCurrency(Math.abs(stats.totalPnL))}
-          trendDirection={stats.totalPnL >= 0 ? "up" : "down"}
+          title="P&L"
+          value={formatCurrency(stats.rawPnL)}
+          icon={stats.rawPnL >= 0 ? TrendingUp : TrendingDown}
+          trend={formatCurrency(Math.abs(stats.rawPnL))}
+          trendDirection={stats.rawPnL >= 0 ? "up" : "down"}
+        />
+        <StatsCard
+          title="Total Fees"
+          value={formatCurrency(stats.totalFees)}
+          icon={Receipt}
+          className="text-muted-foreground"
+        />
+        <StatsCard
+          title="Net Return"
+          value={formatCurrency(stats.netReturn)}
+          icon={DollarSign}
+          trend={formatCurrency(Math.abs(stats.netReturn))}
+          trendDirection={stats.netReturn >= 0 ? "up" : "down"}
         />
         <StatsCard
           title="Win Rate"

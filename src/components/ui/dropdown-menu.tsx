@@ -3,11 +3,7 @@ import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { cn } from "@/lib/utils";
 import { Check, ChevronRight, Circle } from "lucide-react";
 
-const DropdownMenu = ({
-  ...props
-}: React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Root>) => (
-  <DropdownMenuPrimitive.Root modal={false} {...props} />
-);
+const DropdownMenu = DropdownMenuPrimitive.Root;
 DropdownMenu.displayName = DropdownMenuPrimitive.Root.displayName;
 
 const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
@@ -123,7 +119,7 @@ DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName;
 const DropdownMenuCheckboxItem = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.CheckboxItem>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.CheckboxItem>
->(({ className, children, checked, ...props }, ref) => (
+>(({ className, children, checked, onSelect, ...props }, ref) => (
   <DropdownMenuPrimitive.CheckboxItem
     ref={ref}
     className={cn(
@@ -133,6 +129,10 @@ const DropdownMenuCheckboxItem = React.forwardRef<
       className,
     )}
     checked={checked}
+    onSelect={(e) => {
+      e.preventDefault();
+      onSelect?.(e);
+    }}
     {...props}
   >
     <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">

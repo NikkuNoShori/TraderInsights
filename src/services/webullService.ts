@@ -198,23 +198,31 @@ class WebullService {
     const existingWinRate =
       existingTrades.length > 0
         ? existingTrades.filter((trade) => {
-            const buyOrder = existingTrades.find(
-              (t) =>
-                t.symbol === trade.symbol &&
-                t.action === "BUY" &&
-                t.orderId.split("-")[2] === trade.orderId.split("-")[2]
-            );
-            const sellOrder = existingTrades.find(
-              (t) =>
-                t.symbol === trade.symbol &&
-                t.action === "SELL" &&
-                t.orderId.split("-")[2] === trade.orderId.split("-")[2]
-            );
+          const buyOrder = existingTrades.find(
+            (t) =>
+              t.symbol === trade.symbol &&
+              t.action === "BUY" &&
+              t.orderId.split("-")[2] === trade.orderId.split("-")[2]
+          );
+          const sellOrder = existingTrades.find(
+            (t) =>
+              t.symbol === trade.symbol &&
+              t.action === "SELL" &&
+              t.orderId.split("-")[2] === trade.orderId.split("-")[2]
+          );
 
-            if (!buyOrder || !sellOrder || trade.action !== "SELL")
-              return false;
-            return (sellOrder.filledPrice || 0) > (buyOrder.filledPrice || 0);
-          }).length /
+          if (!buyOrder || !sellOrder || trade.action !== "SELL") return false;
+
+          // For Long trades: sell price should be higher than buy price
+          // For Short trades: sell price should be lower than buy price
+          const isLongTrade = buyOrder.createTime < sellOrder.createTime;
+          const buyPrice = buyOrder.filledPrice || buyOrder.price || 0;
+          const sellPrice = sellOrder.filledPrice || sellOrder.price || 0;
+
+          return isLongTrade
+            ? sellPrice > buyPrice // Long trade is profitable if sell > buy
+            : sellPrice < buyPrice; // Short trade is profitable if sell < buy
+        }).length /
           (existingTrades.length / 2)
         : 0.5; // Default to 50% if no existing trades
 
@@ -228,60 +236,102 @@ class WebullService {
       const entryPrice = Math.random() * 1000 + 10;
 
       // Determine if this should be a winning trade based on current win rate
-      // If current win rate is low, higher chance of winning trade to balance it
-      // If current win rate is high, higher chance of losing trade to normalize
       const targetWinRate = 0.6; // We want to maintain around 60% win rate
       const winProbability = existingWinRate < targetWinRate ? 0.7 : 0.5;
       const isWinner = Math.random() < winProbability;
 
-      const exitPrice = isWinner
-        ? entryPrice * (1 + Math.random() * 0.2) // +0-20% gain
-        : entryPrice * (1 - Math.random() * 0.05); // -0-5% loss
+      // Randomly decide if this is a Long or Short trade
+      const isLongTrade = Math.random() > 0.3; // 70% chance of long trade
+
+      // Calculate exit price based on trade direction and win/loss status
+      const exitPrice = isLongTrade
+        ? isWinner
+          ? entryPrice * (1 + Math.random() * 0.2) // Long winner: +0-20%
+          : entryPrice * (1 - Math.random() * 0.05) // Long loser: -0-5%
+        : isWinner
+        ? entryPrice * (1 - Math.random() * 0.2) // Short winner: -0-20%
+        : entryPrice * (1 + Math.random() * 0.05); // Short loser: +0-5%
 
       const createTime = new Date(
         Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
       );
       const updateTime = new Date(createTime.getTime() + 1000 * 60 * 60 * 24); // 24 hours later
 
-      // Generate BUY order
-      const buyOrder: WebullTrade = {
-        orderId: `mock-${Date.now()}-${i}-buy`,
-        symbol,
-        action: "BUY" as const,
-        orderType: "MARKET",
-        timeInForce: "DAY",
-        quantity,
-        filledQuantity: quantity,
-        price: entryPrice,
-        filledPrice: entryPrice,
-        status: "FILLED",
-        createTime: createTime.toISOString(),
-        updateTime: createTime.toISOString(),
-        commission: Math.random() * 5,
-        exchange: exchanges[Math.floor(Math.random() * exchanges.length)],
-      };
-      console.log(`Generated BUY order:`, buyOrder);
-      trades.push(buyOrder);
+      if (isLongTrade) {
+        // For Long trades: BUY first, then SELL
+        const buyOrder: WebullTrade = {
+          orderId: `mock-${Date.now()}-${i}-buy`,
+          symbol,
+          action: "BUY",
+          orderType: "MARKET",
+          timeInForce: "DAY",
+          quantity,
+          filledQuantity: quantity,
+          price: entryPrice,
+          filledPrice: entryPrice,
+          status: "FILLED",
+          createTime: createTime.toISOString(),
+          updateTime: createTime.toISOString(),
+          commission: Math.random() * 5,
+          exchange: exchanges[Math.floor(Math.random() * exchanges.length)],
+        };
+        trades.push(buyOrder);
 
-      // Generate matching SELL order
-      const sellOrder: WebullTrade = {
-        orderId: `mock-${Date.now()}-${i}-sell`,
-        symbol,
-        action: "SELL" as const,
-        orderType: "MARKET",
-        timeInForce: "DAY",
-        quantity,
-        filledQuantity: quantity,
-        price: exitPrice,
-        filledPrice: exitPrice,
-        status: "FILLED",
-        createTime: updateTime.toISOString(),
-        updateTime: updateTime.toISOString(),
-        commission: Math.random() * 5,
-        exchange: exchanges[Math.floor(Math.random() * exchanges.length)],
-      };
-      console.log(`Generated SELL order:`, sellOrder);
-      trades.push(sellOrder);
+        const sellOrder: WebullTrade = {
+          orderId: `mock-${Date.now()}-${i}-sell`,
+          symbol,
+          action: "SELL",
+          orderType: "MARKET",
+          timeInForce: "DAY",
+          quantity,
+          filledQuantity: quantity,
+          price: exitPrice,
+          filledPrice: exitPrice,
+          status: "FILLED",
+          createTime: updateTime.toISOString(),
+          updateTime: updateTime.toISOString(),
+          commission: Math.random() * 5,
+          exchange: exchanges[Math.floor(Math.random() * exchanges.length)],
+        };
+        trades.push(sellOrder);
+      } else {
+        // For Short trades: SELL first, then BUY
+        const sellOrder: WebullTrade = {
+          orderId: `mock-${Date.now()}-${i}-sell`,
+          symbol,
+          action: "SELL",
+          orderType: "MARKET",
+          timeInForce: "DAY",
+          quantity,
+          filledQuantity: quantity,
+          price: entryPrice,
+          filledPrice: entryPrice,
+          status: "FILLED",
+          createTime: createTime.toISOString(),
+          updateTime: createTime.toISOString(),
+          commission: Math.random() * 5,
+          exchange: exchanges[Math.floor(Math.random() * exchanges.length)],
+        };
+        trades.push(sellOrder);
+
+        const buyOrder: WebullTrade = {
+          orderId: `mock-${Date.now()}-${i}-buy`,
+          symbol,
+          action: "BUY",
+          orderType: "MARKET",
+          timeInForce: "DAY",
+          quantity,
+          filledQuantity: quantity,
+          price: exitPrice,
+          filledPrice: exitPrice,
+          status: "FILLED",
+          createTime: updateTime.toISOString(),
+          updateTime: updateTime.toISOString(),
+          commission: Math.random() * 5,
+          exchange: exchanges[Math.floor(Math.random() * exchanges.length)],
+        };
+        trades.push(buyOrder);
+      }
     }
 
     console.log(`Generated ${trades.length} total trades`);

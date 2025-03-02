@@ -26,12 +26,15 @@ export const TRADE_COLUMNS: TradeColumn[] = [
     accessor: "date",
     sortable: true,
     defaultVisible: true,
-    renderCell: (value, trade) => (
-      <div>
-        <div>{trade.date}</div>
-        <div className="text-sm text-muted-foreground">{trade.time}</div>
-      </div>
-    ),
+    renderCell: (value) => value,
+  },
+  {
+    id: "time",
+    label: "Time",
+    accessor: "time",
+    sortable: true,
+    defaultVisible: true,
+    renderCell: (value) => value,
   },
   {
     id: "broker_id",

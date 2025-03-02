@@ -14,11 +14,10 @@ export function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen bg-background dark:bg-dark-bg flex">
       <MainNav />
-
       <div
         className={clsx(
-          "flex-1 transition-all duration-300 ease-in-out",
-          "px-6", // Add horizontal padding on both sides
+          "flex-1 transition-all duration-300 ease-in-out overflow-x-hidden",
+          "p-6",
           isCollapsed ? "ml-[80px]" : "ml-[250px]", // Adjust margin based on nav width
         )}
       >

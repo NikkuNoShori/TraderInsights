@@ -19,7 +19,9 @@ import { TRADE_COLUMNS } from "./components/TradeListColumns";
 import { FilterBar } from "@/components/trades/FilterBar";
 import { useFilteredTrades } from "@/hooks/useFilteredTrades";
 
-const TRADES_PER_PAGE = 10;
+const PAGE_SIZE_OPTIONS = [25, 50, 100, -1] as const;
+type PageSize = typeof PAGE_SIZE_OPTIONS[number];
+const DEFAULT_PAGE_SIZE = PAGE_SIZE_OPTIONS[0];
 
 export default function TradingJournal() {
   const { user } = useAuthStore();
@@ -29,6 +31,7 @@ export default function TradingJournal() {
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [selectedOrderType, setSelectedOrderType] = useState<"buy" | "sell" | undefined>();
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState<PageSize>(DEFAULT_PAGE_SIZE);
   const [sort, setSort] = useState<SortState>({
     field: "date",
     direction: "desc",
@@ -75,11 +78,10 @@ export default function TradingJournal() {
   };
 
   const sortedTrades = sortTrades(tradesWithCalculatedValues);
-  const totalPages = Math.ceil(sortedTrades.length / TRADES_PER_PAGE);
-  const paginatedTrades = sortedTrades.slice(
-    (currentPage - 1) * TRADES_PER_PAGE,
-    currentPage * TRADES_PER_PAGE,
-  );
+  const totalPages = pageSize === -1 ? 1 : Math.ceil(sortedTrades.length / pageSize);
+  const paginatedTrades = pageSize === -1 
+    ? sortedTrades 
+    : sortedTrades.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const handleSort = (field: SortField) => {
     setSort((prev) => ({
@@ -90,11 +92,16 @@ export default function TradingJournal() {
     setCurrentPage(1);
   };
 
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize as PageSize);
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+
   const handleTradeSubmit = async (tradeData: CreateTradeData) => {
     try {
       const now = new Date().toISOString();
       const completeTradeData = {
-        ...tradeData,
+          ...tradeData,
         created_at: selectedTrade?.created_at || now,
         updated_at: now,
       };
@@ -140,44 +147,49 @@ export default function TradingJournal() {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Trading Journal</h1>
-        <Button onClick={() => setIsModalOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add Trade
-        </Button>
+    <div className="w-full px-6">
+      <div className="max-w-[1400px] mx-auto space-y-8">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Trading Journal</h1>
+          <Button onClick={() => setIsModalOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add Trade
+          </Button>
+        </div>
+
+        <div className="space-y-6">
+          <FilterBar section="journal" />
+          <TradeStats trades={trades} />
+        </div>
+
+        <TradeModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedTrade(null);
+            setSelectedOrderType(undefined);
+          }}
+          onSubmit={handleTradeSubmit}
+          initialData={selectedTrade || undefined}
+          mode={selectedTrade ? "edit" : "add"}
+          orderType={selectedOrderType}
+        />
+
+        <TradeList
+          trades={paginatedTrades}
+          isLoading={isLoading}
+          onDelete={handleDeleteTrade}
+          onEdit={handleEditTrade}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          pageSize={pageSize}
+          pageSizeOptions={PAGE_SIZE_OPTIONS}
+          onPageSizeChange={handlePageSizeChange}
+          sort={sort}
+          onSort={handleSort}
+        />
       </div>
-
-      <div className="space-y-6">
-        <FilterBar section="journal" />
-        <TradeStats trades={trades} />
-      </div>
-
-      <TradeModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setSelectedTrade(null);
-          setSelectedOrderType(undefined);
-        }}
-        onSubmit={handleTradeSubmit}
-        initialData={selectedTrade || undefined}
-        mode={selectedTrade ? "edit" : "add"}
-        orderType={selectedOrderType}
-      />
-
-      <TradeList
-        trades={paginatedTrades}
-        isLoading={isLoading}
-        onDelete={handleDeleteTrade}
-        onEdit={handleEditTrade}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-        sort={sort}
-        onSort={handleSort}
-      />
     </div>
   );
 }

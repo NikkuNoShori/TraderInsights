@@ -223,7 +223,9 @@ export function MainNav() {
                         to={href}
                         className={({ isActive }) =>
                           clsx(
-                            "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                            "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200",
+                            "hover:scale-105",
+                            "cursor-pointer",
                             isCollapsed ? "justify-center" : "justify-start",
                             isActive
                               ? "bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400"
@@ -235,11 +237,12 @@ export function MainNav() {
                           <>
                             <Icon
                               className={clsx(
-                                "h-5 w-5",
+                                "h-5 w-5 transition-all duration-200",
                                 !isCollapsed && "mr-3",
+                                "hover:scale-110",
                                 isActive
                                   ? "text-primary-600 dark:text-primary-400"
-                                  : "text-muted-foreground dark:text-gray-300",
+                                  : "text-muted-foreground dark:text-gray-300 hover:text-primary-500 dark:hover:text-primary-400",
                               )}
                             />
                             {!isCollapsed && (
