@@ -17,17 +17,18 @@ import { useFilterStore } from "@/stores/filterStore";
 import { calculatePnL } from "@/utils/trade";
 import { TRADE_COLUMNS } from "./components/TradeListColumns";
 import { FilterBar } from "@/components/trades/FilterBar";
-import { useTradesData } from "@/stores/tradeStore";
 import { useFilteredTrades } from "@/hooks/useFilteredTrades";
 
 const TRADES_PER_PAGE = 10;
 
 export default function TradingJournal() {
   const { user } = useAuthStore();
-  const { trades, isLoading, error } = useTradesData(user?.id || "");
-  const [currentPage, setCurrentPage] = useState(1);
+  const { trades, isLoading, fetchTrades, addTrade, updateTrade, deleteTrade } =
+    useTradeStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
+  const [selectedOrderType, setSelectedOrderType] = useState<"buy" | "sell" | undefined>();
+  const [currentPage, setCurrentPage] = useState(1);
   const [sort, setSort] = useState<SortState>({
     field: "date",
     direction: "desc",
@@ -91,63 +92,52 @@ export default function TradingJournal() {
 
   const handleTradeSubmit = async (tradeData: CreateTradeData) => {
     try {
+      const now = new Date().toISOString();
+      const completeTradeData = {
+        ...tradeData,
+        created_at: selectedTrade?.created_at || now,
+        updated_at: now,
+      };
+
       if (selectedTrade) {
-        await useTradeStore.getState().updateTrade(selectedTrade.id, tradeData);
+        await updateTrade(selectedTrade.id, completeTradeData);
         toast.success("Trade updated successfully");
       } else {
-        const newTrade = {
-          ...tradeData,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        await useTradeStore.getState().addTrade(newTrade);
+        await addTrade(completeTradeData);
         toast.success("Trade added successfully");
+      }
+      if (user) {
+        await fetchTrades(user.id);
       }
       setIsModalOpen(false);
       setSelectedTrade(null);
-      // Force refresh trades
-      if (user) {
-        await useTradeStore.getState().fetchTrades(user.id, true);
-      }
+      setSelectedOrderType(undefined);
     } catch (error) {
       console.error("Error submitting trade:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to submit trade",
+        selectedTrade ? "Failed to update trade" : "Failed to add trade",
       );
     }
+  };
+
+  const handleEditTrade = (trade: Trade, orderType: "buy" | "sell") => {
+    setSelectedTrade(trade);
+    setSelectedOrderType(orderType);
+    setIsModalOpen(true);
   };
 
   const handleDeleteTrade = async (id: string) => {
     try {
-      await useTradeStore.getState().deleteTrade(id);
+      await deleteTrade(id);
       toast.success("Trade deleted successfully");
-      // Force refresh trades
       if (user) {
-        await useTradeStore.getState().fetchTrades(user.id, true);
+        await fetchTrades(user.id);
       }
     } catch (error) {
       console.error("Error deleting trade:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to delete trade",
-      );
+      toast.error("Failed to delete trade");
     }
   };
-
-  const handleEditTrade = (trade: Trade) => {
-    setSelectedTrade(trade);
-    setIsModalOpen(true);
-  };
-
-  if (error) {
-    return (
-      <div className="p-4">
-        <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-lg">
-          <h3 className="text-lg font-medium">Error</h3>
-          <p>{error}</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-8">
@@ -169,10 +159,12 @@ export default function TradingJournal() {
         onClose={() => {
           setIsModalOpen(false);
           setSelectedTrade(null);
+          setSelectedOrderType(undefined);
         }}
         onSubmit={handleTradeSubmit}
         initialData={selectedTrade || undefined}
         mode={selectedTrade ? "edit" : "add"}
+        orderType={selectedOrderType}
       />
 
       <TradeList

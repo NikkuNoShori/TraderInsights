@@ -21,6 +21,7 @@ interface TradeModalProps {
   onSubmit: (trade: CreateTradeData) => void;
   initialData?: Partial<Trade>;
   mode?: "add" | "edit";
+  orderType?: "buy" | "sell";
 }
 
 export function TradeModal({
@@ -29,6 +30,7 @@ export function TradeModal({
   onSubmit,
   initialData,
   mode = "add",
+  orderType,
 }: TradeModalProps) {
   const [activeTab, setActiveTab] = useState<"manual" | "import">("manual");
   const { importTrades, fetchTrades } = useTradeStore();
@@ -52,13 +54,20 @@ export function TradeModal({
     }
   };
 
+  const getModalTitle = () => {
+    if (mode === "add") return "Add Trade";
+    if (orderType === "buy") return "Edit Buy Order";
+    if (orderType === "sell") return "Edit Sell Order";
+    return "Edit Trade";
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-background dark:bg-dark-paper border-border dark:border-dark-border max-w-2xl">
         <DialogHeader className="border-b border-border pb-4">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-xl font-semibold text-foreground dark:text-dark-text">
-              {mode === "add" ? "Add Trade" : "Edit Trade"}
+              {getModalTitle()}
             </DialogTitle>
             <Button
               variant="ghost"
@@ -72,7 +81,7 @@ export function TradeModal({
           <DialogDescription className="sr-only">
             {mode === "add"
               ? "Add a new trade manually or import trades"
-              : "Edit existing trade details"}
+              : `Edit ${orderType} order details`}
           </DialogDescription>
         </DialogHeader>
 
@@ -103,6 +112,8 @@ export function TradeModal({
                   <ManualTradeForm
                     onSuccess={handleSubmitSuccess}
                     initialData={initialData}
+                    onCancel={onClose}
+                    orderType={orderType}
                   />
                 </TabsContent>
 
@@ -120,6 +131,8 @@ export function TradeModal({
             <ManualTradeForm
               onSuccess={handleSubmitSuccess}
               initialData={initialData}
+              onCancel={onClose}
+              orderType={orderType}
             />
           </div>
         )}

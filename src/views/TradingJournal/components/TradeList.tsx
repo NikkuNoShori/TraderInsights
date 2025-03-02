@@ -41,7 +41,7 @@ export interface TradeListProps {
   trades: Trade[];
   isLoading: boolean;
   onDelete: (id: string) => void;
-  onEdit: (trade: Trade) => void;
+  onEdit: (trade: Trade, orderType: "buy" | "sell") => void;
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
@@ -197,15 +197,6 @@ export function TradeList({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => onEdit(trade)}
-                          className="h-8 w-8 p-0 hover:bg-muted dark:hover:bg-dark-muted"
-                        >
-                          <Edit className="h-4 w-4" />
-                          <span className="sr-only">Edit</span>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
                           onClick={() => onDelete(trade.id)}
                           className="h-8 w-8 p-0 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
                         >
@@ -223,46 +214,129 @@ export function TradeList({
                       >
                         <div className="space-y-4">
                           <div className="flex justify-between items-center">
-                            <h4 className="text-sm font-medium">
-                              Trade Details
-                            </h4>
-                            <span className="text-xs text-muted-foreground">
-                              {trade.notes ? "Has Notes" : "No Notes"}
-                            </span>
+                            <h4 className="text-sm font-medium">Trade Details</h4>
+                            {trade.notes && (
+                              <span className="text-xs text-muted-foreground">
+                                Has Notes
+                              </span>
+                            )}
                           </div>
-                          <div className="grid grid-cols-3 gap-6 text-sm">
-                            <div className="bg-card dark:bg-dark-card rounded-lg p-3 border border-border dark:border-dark-border">
-                              <p className="text-muted-foreground font-medium mb-2">
-                                Entry
-                              </p>
-                              <p>Date: {trade.entry_date || trade.date}</p>
-                              <p>Price: ${trade.entry_price?.toFixed(2)}</p>
-                            </div>
-                            <div className="bg-card dark:bg-dark-card rounded-lg p-3 border border-border dark:border-dark-border">
-                              <p className="text-muted-foreground font-medium mb-2">
-                                Exit
-                              </p>
-                              <p>Date: {trade.exit_date || "-"}</p>
-                              <p>
-                                Price:{" "}
-                                {trade.exit_price
-                                  ? `$${trade.exit_price.toFixed(2)}`
-                                  : "-"}
-                              </p>
-                            </div>
-                            <div className="bg-card dark:bg-dark-card rounded-lg p-3 border border-border dark:border-dark-border">
-                              <p className="text-muted-foreground font-medium mb-2">
-                                Performance
-                              </p>
-                              <p>Total: ${trade.total?.toFixed(2)}</p>
-                              <p>Fees: ${trade.fees?.toFixed(2) || "0.00"}</p>
-                            </div>
+
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="border-b border-border dark:border-dark-border">
+                                  <th className="text-left py-2 px-4 font-medium text-muted-foreground">Order Type</th>
+                                  <th className="text-left py-2 px-4 font-medium text-muted-foreground">Date</th>
+                                  <th className="text-left py-2 px-4 font-medium text-muted-foreground">Time</th>
+                                  <th className="text-right py-2 px-4 font-medium text-muted-foreground">Price</th>
+                                  <th className="text-right py-2 px-4 font-medium text-muted-foreground">Quantity</th>
+                                  <th className="text-right py-2 px-4 font-medium text-muted-foreground">Total</th>
+                                  <th className="text-center py-2 px-4 font-medium text-muted-foreground">Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-border dark:divide-dark-border">
+                                {/* Buy Order Row */}
+                                <tr>
+                                  <td className="py-3 px-4">
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                      Buy
+                                    </span>
+                                  </td>
+                                  <td className="py-3 px-4">{trade.entry_date || trade.date}</td>
+                                  <td className="py-3 px-4">
+                                    {new Date(trade.entry_date || trade.date).toLocaleTimeString()}
+                                  </td>
+                                  <td className="py-3 px-4 text-right">
+                                    ${trade.entry_price?.toFixed(2)}
+                                  </td>
+                                  <td className="py-3 px-4 text-right">
+                                    {trade.quantity}
+                                  </td>
+                                  <td className="py-3 px-4 text-right">
+                                    ${(trade.entry_price * trade.quantity).toFixed(2)}
+                                  </td>
+                                  <td className="py-3 px-4 text-center">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => onEdit(trade, "buy")}
+                                      className="h-6 w-6 p-0 hover:bg-muted dark:hover:bg-dark-muted"
+                                    >
+                                      <Edit className="h-3 w-3" />
+                                      <span className="sr-only">Edit Buy Order</span>
+                                    </Button>
+                                  </td>
+                                </tr>
+
+                                {/* Sell Order Row */}
+                                {trade.exit_price && (
+                                  <tr>
+                                    <td className="py-3 px-4">
+                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
+                                        Sell
+                                      </span>
+                                    </td>
+                                    <td className="py-3 px-4">{trade.exit_date || '-'}</td>
+                                    <td className="py-3 px-4">
+                                      {trade.exit_date ? new Date(trade.exit_date).toLocaleTimeString() : '-'}
+                                    </td>
+                                    <td className="py-3 px-4 text-right">
+                                      ${trade.exit_price.toFixed(2)}
+                                    </td>
+                                    <td className="py-3 px-4 text-right">
+                                      {trade.quantity}
+                                    </td>
+                                    <td className="py-3 px-4 text-right">
+                                      ${(trade.exit_price * trade.quantity).toFixed(2)}
+                                    </td>
+                                    <td className="py-3 px-4 text-center">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => onEdit(trade, "sell")}
+                                        className="h-6 w-6 p-0 hover:bg-muted dark:hover:bg-dark-muted"
+                                      >
+                                        <Edit className="h-3 w-3" />
+                                        <span className="sr-only">Edit Sell Order</span>
+                                      </Button>
+                                    </td>
+                                  </tr>
+                                )}
+                              </tbody>
+                              <tfoot className="border-t border-border dark:border-dark-border">
+                                <tr>
+                                  <td colSpan={3} className="py-3 px-4 font-medium">Performance Summary</td>
+                                  <td colSpan={4} className="py-3 px-4 text-right">
+                                    <div className="space-y-1">
+                                      <div className="flex justify-between">
+                                        <span className="text-muted-foreground">P/L:</span>
+                                        <span className={trade.total >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
+                                          ${trade.total?.toFixed(2)}
+                                        </span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Return:</span>
+                                        <span className={trade.total >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
+                                          {trade.exit_price
+                                            ? `${(((trade.exit_price - trade.entry_price) / trade.entry_price) * 100).toFixed(2)}%`
+                                            : '-'}
+                                        </span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Fees:</span>
+                                        <span>${trade.fees?.toFixed(2) || '0.00'}</span>
+                                      </div>
+                                    </div>
+                                  </td>
+                                </tr>
+                              </tfoot>
+                            </table>
                           </div>
+
                           {trade.notes && (
-                            <div className="bg-card dark:bg-dark-card rounded-lg p-3 border border-border dark:border-dark-border mt-4">
-                              <p className="text-muted-foreground font-medium mb-2">
-                                Notes
-                              </p>
+                            <div className="mt-4 bg-card dark:bg-dark-card rounded-lg p-3 border border-border dark:border-dark-border">
+                              <p className="text-muted-foreground font-medium mb-2">Notes</p>
                               <p className="text-sm">{trade.notes}</p>
                             </div>
                           )}

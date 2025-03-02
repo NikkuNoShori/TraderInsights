@@ -13,9 +13,9 @@ export function transformWebullTrade(
   // Map Webull action to our TradeSide
   const side: TradeSide = webullTrade.action === "BUY" ? "Long" : "Short";
 
-  // Map status
-  const status: TradeStatus =
-    webullTrade.status === "FILLED" ? "closed" : "pending";
+  // For single trades, we'll mark them as open by default
+  // Matching with exit trades will be handled in transformWebullTrades
+  const status: TradeStatus = "open";
 
   // Default to stock type for now
   const type: TradeType = "stock";
@@ -55,27 +55,6 @@ export function transformWebullTrade(
     fees: (webullTrade.commission || 0) + (webullTrade.fees || 0),
   };
 
-  // Add exit information if the trade is closed
-  if (status === "closed") {
-    const exitTimestamp = new Date(webullTrade.updateTime);
-    trade.exit_date = exitTimestamp.toISOString().split("T")[0];
-    trade.exit_time = exitTimestamp.toLocaleTimeString("en-US", {
-      hour12: false,
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
-    trade.exit_timestamp = webullTrade.updateTime;
-    trade.exit_price = webullTrade.filledPrice || webullTrade.price;
-
-    if (trade.exit_price) {
-      trade.pnl =
-        side === "Long"
-          ? (trade.exit_price - entryPrice) * quantity
-          : (entryPrice - trade.exit_price) * quantity;
-    }
-  }
-
   return trade;
 }
 
@@ -84,44 +63,52 @@ export function transformWebullTrades(
 ): CreateTradeData[] {
   console.log("Starting trade transformation with trades:", webullTrades);
 
-  // Group trades by symbol and quantity to find matching pairs
-  const tradePairs = new Map<string, WebullTrade[]>();
-  webullTrades.forEach((trade) => {
-    const key = `${trade.symbol}_${trade.quantity}`;
-    const existingTrades = tradePairs.get(key) || [];
-    tradePairs.set(key, [...existingTrades, trade]);
+  // Sort all trades by createTime first
+  const sortedTrades = [...webullTrades].sort(
+    (a, b) =>
+      new Date(a.createTime).getTime() - new Date(b.createTime).getTime()
+  );
+
+  // Group trades by symbol to find matching pairs
+  const tradeGroups = new Map<string, WebullTrade[]>();
+  sortedTrades.forEach((trade) => {
+    const existingTrades = tradeGroups.get(trade.symbol) || [];
+    tradeGroups.set(trade.symbol, [...existingTrades, trade]);
   });
 
   const processedTrades: CreateTradeData[] = [];
 
-  // Process each group of trades
-  tradePairs.forEach((trades, key) => {
-    console.log(`Processing trade group for ${key}...`);
+  // Process each group of trades by symbol
+  tradeGroups.forEach((trades, symbol) => {
+    console.log(`Processing trades for symbol ${symbol}...`);
 
-    // Sort trades by createTime to ensure proper order
-    trades.sort(
-      (a, b) =>
-        new Date(a.createTime).getTime() - new Date(b.createTime).getTime()
-    );
-
-    // Find matching BUY and SELL trades
+    // Separate BUY and SELL trades
     const buyTrades = trades.filter((t) => t.action === "BUY");
     const sellTrades = trades.filter((t) => t.action === "SELL");
 
     console.log(
-      `Found ${buyTrades.length} BUY trades and ${sellTrades.length} SELL trades for ${key}`
+      `Found ${buyTrades.length} BUY trades and ${sellTrades.length} SELL trades for ${symbol}`
     );
 
-    // Process BUY trades and match them with SELL trades
-    buyTrades.forEach((buyTrade, index) => {
-      const matchingSellTrade = sellTrades[index];
+    // Process each BUY trade
+    buyTrades.forEach((buyTrade) => {
       const processedTrade = transformWebullTrade(buyTrade);
 
-      // If we have a matching SELL trade, use it to set exit information
-      if (matchingSellTrade) {
+      // Look for a matching SELL trade with the same quantity
+      const matchingSellIndex = sellTrades.findIndex(
+        (sell) =>
+          (sell.filledQuantity || sell.quantity) ===
+            (buyTrade.filledQuantity || buyTrade.quantity) &&
+          new Date(sell.createTime) > new Date(buyTrade.createTime)
+      );
+
+      if (matchingSellIndex !== -1) {
+        const matchingSellTrade = sellTrades[matchingSellIndex];
         console.log(
-          `Found matching SELL trade for BUY trade ${buyTrade.orderId}`
+          `Found matching SELL trade for BUY trade ${buyTrade.orderId} -> ${matchingSellTrade.orderId}`
         );
+
+        // Set exit information
         const exitTimestamp = new Date(matchingSellTrade.createTime);
         processedTrade.exit_date = exitTimestamp.toISOString().split("T")[0];
         processedTrade.exit_time = exitTimestamp.toLocaleTimeString("en-US", {
@@ -145,25 +132,29 @@ export function transformWebullTrades(
                 processedTrade.quantity;
         }
 
-        // Add the matching order ID to notes
+        // Update notes with matching order info
         processedTrade.notes += `\nMatching Sell Order ID: ${matchingSellTrade.orderId}`;
 
-        // Add fees from both trades
-        processedTrade.fees =
-          (processedTrade.fees || 0) +
-          ((matchingSellTrade.commission || 0) + (matchingSellTrade.fees || 0));
+        // Remove the used sell trade
+        sellTrades.splice(matchingSellIndex, 1);
       }
 
       processedTrades.push(processedTrade);
     });
 
-    // Process remaining SELL trades that don't have matching BUY trades
-    const unmatchedSellTrades = sellTrades.slice(buyTrades.length);
-    unmatchedSellTrades.forEach((sellTrade) => {
-      processedTrades.push(transformWebullTrade(sellTrade));
+    // Process remaining SELL trades as potential exits for previously imported trades
+    sellTrades.forEach((sellTrade) => {
+      const processedTrade = transformWebullTrade(sellTrade);
+      // Mark these as closed since they represent exits
+      processedTrade.status = "closed";
+      processedTrade.exit_date = processedTrade.date;
+      processedTrade.exit_time = processedTrade.time;
+      processedTrade.exit_timestamp = processedTrade.timestamp;
+      processedTrade.exit_price = sellTrade.filledPrice || sellTrade.price;
+      processedTrades.push(processedTrade);
     });
   });
 
-  console.log(`Finished processing ${processedTrades.length} trades`);
+  console.log(`Processed ${processedTrades.length} trades`);
   return processedTrades;
 }

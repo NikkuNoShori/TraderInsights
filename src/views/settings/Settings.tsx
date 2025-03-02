@@ -5,6 +5,7 @@ import ProfileSettings from "./ProfileSettings";
 import SecuritySettings from "./SecuritySettings";
 import { AppearanceSettings } from "./AppearanceSettings";
 import NotificationSettings from "./NotificationSettings";
+import BrokerSettings from "./BrokerSettings";
 
 export default function Settings() {
   const location = useLocation();
@@ -14,6 +15,8 @@ export default function Settings() {
     switch (path) {
       case "profile":
         return <ProfileSettings />;
+      case "brokers":
+        return <BrokerSettings />;
       case "security":
         return <SecuritySettings />;
       case "appearance":
