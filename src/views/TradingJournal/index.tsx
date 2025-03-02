@@ -1,148 +1,139 @@
 import { useState, useEffect } from "@/lib/react";
 import { toast } from "react-hot-toast";
-import { TradeList } from "./components/TradeList";
+import { TradeList, SortField, SortDirection, SortState } from "./components/TradeList";
 import { Button } from "@/components/ui";
 import { Plus } from "lucide-react";
-import { useSupabaseClient } from "@/hooks/useSupabaseClient";
-import { Trade, CreateTradeData, createTrade } from "@/types/trade";
-import { config } from "@/config";
+import { Trade, CreateTradeData } from "@/types/trade";
 import { TradeModal } from "@/components/trades/TradeModal";
-
-// Mock trades for development mode
-const MOCK_TRADES: Trade[] = [
-  createTrade({
-    id: "dev-trade-1",
-    user_id: "dev-123",
-    symbol: "AAPL",
-    type: "stock",
-    side: "Long",
-    quantity: 100,
-    price: 150.0,
-    total: 15000.0,
-    date: new Date().toISOString().split("T")[0],
-    time: new Date().toISOString().split("T")[1].split(".")[0],
-    entry_date: new Date().toISOString(),
-    status: "closed",
-    notes: "Example trade",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    entry_price: 150.0,
-    exit_price: 155.0,
-    pnl: 500.0,
-  }),
-  createTrade({
-    id: "dev-trade-2",
-    user_id: "dev-123",
-    symbol: "TSLA",
-    type: "stock",
-    side: "Long",
-    quantity: 50,
-    price: 200.0,
-    total: 10000.0,
-    date: new Date(Date.now() - 86400000).toISOString().split("T")[0],
-    time: new Date(Date.now() - 86400000).toISOString().split("T")[1].split(".")[0],
-    entry_date: new Date(Date.now() - 86400000).toISOString(),
-    status: "closed",
-    notes: "Another example trade",
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-    updated_at: new Date(Date.now() - 86400000).toISOString(),
-    entry_price: 200.0,
-    exit_price: 210.0,
-    pnl: 500.0,
-  }),
-];
+import { useTradeStore } from "@/stores/tradeStore";
+import { useAuthStore } from "@/stores/authStore";
+import { calculatePnL } from "@/utils/trade";
+import { TRADE_COLUMNS } from "./components/TradeListColumns";
 
 const TRADES_PER_PAGE = 10;
 
 export default function TradingJournal() {
-  const [trades, setTrades] = useState<Trade[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { user } = useAuthStore();
+  const { trades, isLoading, error, fetchTrades, deleteTrade } = useTradeStore();
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
-  const { supabase, user } = useSupabaseClient();
-
-  const fetchTrades = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      if (!config.isProduction && user?.id === "dev-123") {
-        setTrades(MOCK_TRADES);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("trades")
-        .select("*")
-        .eq("user_id", user?.id)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      setTrades(data?.map(createTrade) || []);
-    } catch (err) {
-      console.error("Error fetching trades:", err);
-      setError(err instanceof Error ? err.message : "Failed to fetch trades");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const [sort, setSort] = useState<SortState>({ field: 'date', direction: 'desc' });
 
   useEffect(() => {
     if (user) {
-      fetchTrades();
+      fetchTrades(user.id);
     }
-  }, [user]);
+  }, [user, fetchTrades]);
+
+  // Calculate derived values for each trade
+  const tradesWithCalculatedValues = trades.map(trade => {
+    // Calculate total value
+    const total = trade.quantity * (trade.entry_price || 0);
+
+    // Calculate PnL
+    const pnl = calculatePnL(trade);
+
+    return {
+      ...trade,
+      total,
+      pnl,
+    };
+  });
+
+  const sortTrades = (unsortedTrades: Trade[]) => {
+    return [...unsortedTrades].sort((a, b) => {
+      const direction = sort.direction === 'asc' ? 1 : -1;
+
+      // Get the column configuration for the current sort field
+      const column = TRADE_COLUMNS.find(col => col.id === sort.field);
+      if (!column) return 0;
+
+      // Get the values to compare using the column's accessor
+      const aValue = typeof column.accessor === 'function' 
+        ? column.accessor(a)
+        : a[column.accessor];
+      const bValue = typeof column.accessor === 'function'
+        ? column.accessor(b)
+        : b[column.accessor];
+
+      // Handle different types of values
+      if (sort.field === 'date') {
+        const dateA = new Date(`${a.date} ${a.time}`).getTime();
+        const dateB = new Date(`${b.date} ${b.time}`).getTime();
+        return (dateA - dateB) * direction;
+      }
+
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return aValue.localeCompare(bValue) * direction;
+      }
+
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return (aValue - bValue) * direction;
+      }
+
+      // Handle undefined/null values
+      if (aValue === undefined || aValue === null) return 1;
+      if (bValue === undefined || bValue === null) return -1;
+
+      return 0;
+    });
+  };
+
+  // Sort all trades first
+  const sortedTrades = sortTrades(tradesWithCalculatedValues);
+
+  // Then calculate pagination
+  const totalPages = Math.ceil(sortedTrades.length / TRADES_PER_PAGE);
+  const startIndex = (currentPage - 1) * TRADES_PER_PAGE;
+  const paginatedTrades = sortedTrades.slice(startIndex, startIndex + TRADES_PER_PAGE);
+
+  const handleSort = (field: SortField) => {
+    setSort((prev) => ({
+      field,
+      direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc',
+    }));
+    // Reset to first page when sorting changes
+    setCurrentPage(1);
+  };
 
   const handleTradeSubmit = async (tradeData: CreateTradeData) => {
     try {
-      if (!config.isProduction && user?.id === "dev-123") {
-        const newTrade = createTrade({
+      if (selectedTrade) {
+        // Handle edit
+        await useTradeStore.getState().updateTrade(selectedTrade.id, tradeData);
+        toast.success("Trade updated successfully");
+      } else {
+        // Handle add
+        const newTrade = {
           ...tradeData,
-          id: `dev-trade-${Date.now()}`,
-          user_id: "dev-123",
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-        });
-        setTrades((prev) => [newTrade, ...prev]);
+        };
+        await useTradeStore.getState().addTrade(newTrade);
         toast.success("Trade added successfully");
-        return;
       }
-
-      const { error } = await supabase.from("trades").insert([{
-        ...tradeData,
-        user_id: user?.id,
-      }]);
-
-      if (error) throw error;
-
-      toast.success("Trade added successfully");
-      fetchTrades();
-    } catch (err) {
-      console.error("Error adding trade:", err);
-      toast.error("Failed to add trade");
+      setIsModalOpen(false);
+      setSelectedTrade(null);
+      if (user) {
+        await fetchTrades(user.id);
+      }
+    } catch (error) {
+      console.error("Error submitting trade:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to submit trade");
     }
   };
 
   const handleDeleteTrade = async (id: string) => {
     try {
-      if (!config.isProduction && user?.id === "dev-123") {
-        setTrades((prev) => prev.filter((trade) => trade.id !== id));
-        toast.success("Trade deleted successfully");
-        return;
-      }
-
-      const { error } = await supabase.from("trades").delete().eq("id", id);
-
-      if (error) throw error;
-
-      setTrades((prev) => prev.filter((trade) => trade.id !== id));
+      await deleteTrade(id);
       toast.success("Trade deleted successfully");
+      if (user) {
+        await fetchTrades(user.id);
+      }
     } catch (error) {
       console.error("Error deleting trade:", error);
-      toast.error("Failed to delete trade");
+      toast.error(error instanceof Error ? error.message : "Failed to delete trade");
     }
   };
 
@@ -150,12 +141,6 @@ export default function TradingJournal() {
     setSelectedTrade(trade);
     setIsModalOpen(true);
   };
-
-  const totalPages = Math.ceil(trades.length / TRADES_PER_PAGE);
-  const paginatedTrades = trades.slice(
-    (currentPage - 1) * TRADES_PER_PAGE,
-    currentPage * TRADES_PER_PAGE,
-  );
 
   if (error) {
     return (
@@ -203,6 +188,8 @@ export default function TradingJournal() {
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
+        sort={sort}
+        onSort={handleSort}
       />
     </div>
   );
