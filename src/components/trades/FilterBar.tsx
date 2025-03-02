@@ -1,20 +1,20 @@
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { Separator } from '@/components/ui/separator';
-import { Filter, X } from 'lucide-react';
-import { useFilterStore, type FilterSection } from '@/stores/filterStore';
-import { Checkbox } from '@/components/ui/checkbox';
+} from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
+import { Filter, X } from "lucide-react";
+import { useFilterStore, type FilterSection } from "@/stores/filterStore";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const BROKERS = [
-  { id: 'webull', name: 'Webull' },
-  { id: 'schwab', name: 'Charles Schwab' },
-  { id: 'td', name: 'TD Ameritrade' },
-  { id: 'ibkr', name: 'Interactive Brokers' },
+  { id: "webull", name: "Webull" },
+  { id: "schwab", name: "Charles Schwab" },
+  { id: "td", name: "TD Ameritrade" },
+  { id: "ibkr", name: "Interactive Brokers" },
 ];
 
 interface FilterBarProps {
@@ -22,7 +22,8 @@ interface FilterBarProps {
 }
 
 export function FilterBar({ section }: FilterBarProps) {
-  const { filters, toggleBroker, clearFilters, setActiveSection } = useFilterStore();
+  const { filters, toggleBroker, clearFilters, setActiveSection } =
+    useFilterStore();
   const [isOpen, setIsOpen] = useState(false);
 
   // Set the active section when the component mounts or section changes
@@ -31,9 +32,9 @@ export function FilterBar({ section }: FilterBarProps) {
   }, [section, setActiveSection]);
 
   const currentFilters = filters[section];
-  
-  const activeFilterCount = Object.values(currentFilters).filter(value => 
-    Array.isArray(value) ? value.length > 0 : value !== undefined
+
+  const activeFilterCount = Object.values(currentFilters).filter((value) =>
+    Array.isArray(value) ? value.length > 0 : value !== undefined,
   ).length;
 
   return (
@@ -77,7 +78,9 @@ export function FilterBar({ section }: FilterBarProps) {
                   <div key={broker.id} className="flex items-center space-x-2">
                     <Checkbox
                       id={broker.id}
-                      checked={(currentFilters.brokers || []).includes(broker.id)}
+                      checked={(currentFilters.brokers || []).includes(
+                        broker.id,
+                      )}
                       onCheckedChange={() => toggleBroker(broker.id)}
                     />
                     <label
@@ -95,40 +98,60 @@ export function FilterBar({ section }: FilterBarProps) {
 
             {/* Placeholder for Trade Type filter */}
             <div>
-              <h5 className="text-sm font-medium mb-2 text-muted-foreground">Trade Type</h5>
-              <div className="text-sm text-muted-foreground italic">Coming soon</div>
+              <h5 className="text-sm font-medium mb-2 text-muted-foreground">
+                Trade Type
+              </h5>
+              <div className="text-sm text-muted-foreground italic">
+                Coming soon
+              </div>
             </div>
 
             <Separator />
 
             {/* Placeholder for Side filter */}
             <div>
-              <h5 className="text-sm font-medium mb-2 text-muted-foreground">Side</h5>
-              <div className="text-sm text-muted-foreground italic">Coming soon</div>
+              <h5 className="text-sm font-medium mb-2 text-muted-foreground">
+                Side
+              </h5>
+              <div className="text-sm text-muted-foreground italic">
+                Coming soon
+              </div>
             </div>
 
             <Separator />
 
             {/* Placeholder for Status filter */}
             <div>
-              <h5 className="text-sm font-medium mb-2 text-muted-foreground">Status</h5>
-              <div className="text-sm text-muted-foreground italic">Coming soon</div>
+              <h5 className="text-sm font-medium mb-2 text-muted-foreground">
+                Status
+              </h5>
+              <div className="text-sm text-muted-foreground italic">
+                Coming soon
+              </div>
             </div>
 
             <Separator />
 
             {/* Placeholder for P&L Range filter */}
             <div>
-              <h5 className="text-sm font-medium mb-2 text-muted-foreground">P&L Range</h5>
-              <div className="text-sm text-muted-foreground italic">Coming soon</div>
+              <h5 className="text-sm font-medium mb-2 text-muted-foreground">
+                P&L Range
+              </h5>
+              <div className="text-sm text-muted-foreground italic">
+                Coming soon
+              </div>
             </div>
 
             <Separator />
 
             {/* Placeholder for Win/Loss filter */}
             <div>
-              <h5 className="text-sm font-medium mb-2 text-muted-foreground">Win/Loss</h5>
-              <div className="text-sm text-muted-foreground italic">Coming soon</div>
+              <h5 className="text-sm font-medium mb-2 text-muted-foreground">
+                Win/Loss
+              </h5>
+              <div className="text-sm text-muted-foreground italic">
+                Coming soon
+              </div>
             </div>
           </div>
         </PopoverContent>
@@ -138,21 +161,26 @@ export function FilterBar({ section }: FilterBarProps) {
       {currentFilters.brokers && currentFilters.brokers.length > 0 && (
         <div className="flex gap-2 flex-wrap">
           {currentFilters.brokers.map((brokerId) => {
-            const broker = BROKERS.find(b => b.id === brokerId);
-            return broker && (
-              <span key={brokerId} className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm bg-primary/10">
-                {broker.name}
-                <button
-                  onClick={() => toggleBroker(brokerId)}
-                  className="ml-1 hover:text-destructive"
+            const broker = BROKERS.find((b) => b.id === brokerId);
+            return (
+              broker && (
+                <span
+                  key={brokerId}
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm bg-primary/10"
                 >
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
+                  {broker.name}
+                  <button
+                    onClick={() => toggleBroker(brokerId)}
+                    className="ml-1 hover:text-destructive"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )
             );
           })}
         </div>
       )}
     </div>
   );
-} 
+}

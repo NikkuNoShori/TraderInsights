@@ -13,7 +13,13 @@ import {
 } from "../ui/select";
 import { toast } from "react-hot-toast";
 import { useAuthStore } from "@/stores/authStore";
-import type { Trade, CreateTradeData, TradeType, TradeSide, TradeStatus } from "@/types/trade";
+import type {
+  Trade,
+  CreateTradeData,
+  TradeType,
+  TradeSide,
+  TradeStatus,
+} from "@/types/trade";
 
 const optionDetailsSchema = z.object({
   strike: z.number().positive("Strike price must be positive"),
@@ -44,7 +50,10 @@ interface ManualTradeFormProps {
   initialData?: Partial<Trade>;
 }
 
-export function ManualTradeForm({ onSuccess, initialData }: ManualTradeFormProps) {
+export function ManualTradeForm({
+  onSuccess,
+  initialData,
+}: ManualTradeFormProps) {
   const [isOption, setIsOption] = useState(initialData?.type === "option");
   const { user } = useAuthStore();
 
@@ -63,7 +72,8 @@ export function ManualTradeForm({ onSuccess, initialData }: ManualTradeFormProps
       side: (initialData?.side as TradeSide) || "Long",
       quantity: initialData?.quantity || undefined,
       price: initialData?.price || undefined,
-      entry_date: initialData?.entry_date || new Date().toISOString().split("T")[0],
+      entry_date:
+        initialData?.entry_date || new Date().toISOString().split("T")[0],
       entry_price: initialData?.entry_price || undefined,
       exit_price: initialData?.exit_price,
       exit_date: initialData?.exit_date,
@@ -85,7 +95,7 @@ export function ManualTradeForm({ onSuccess, initialData }: ManualTradeFormProps
         direction: data.side,
         total: data.quantity * data.price,
         date: data.entry_date,
-        time: new Date().toISOString().split('T')[1],
+        time: new Date().toISOString().split("T")[1],
         status: data.status,
         option_details: isOption ? data.option_details : undefined,
       };
@@ -116,14 +126,13 @@ export function ManualTradeForm({ onSuccess, initialData }: ManualTradeFormProps
             className="uppercase"
           />
           {errors.symbol && (
-            <span className="text-xs text-red-500">{errors.symbol.message}</span>
+            <span className="text-xs text-red-500">
+              {errors.symbol.message}
+            </span>
           )}
         </div>
 
-        <Select
-          value={watch("type")}
-          onValueChange={handleTypeChange}
-        >
+        <Select value={watch("type")} onValueChange={handleTypeChange}>
           <SelectTrigger>
             <SelectValue placeholder="Type" />
           </SelectTrigger>
@@ -154,7 +163,9 @@ export function ManualTradeForm({ onSuccess, initialData }: ManualTradeFormProps
           placeholder="Quantity"
         />
         {errors.quantity && (
-          <span className="text-xs text-red-500">{errors.quantity.message}</span>
+          <span className="text-xs text-red-500">
+            {errors.quantity.message}
+          </span>
         )}
 
         <Input
@@ -188,7 +199,9 @@ export function ManualTradeForm({ onSuccess, initialData }: ManualTradeFormProps
             />
             <Select
               value={watch("option_details.option_type")}
-              onValueChange={(value: "call" | "put") => setValue("option_details.option_type", value)}
+              onValueChange={(value: "call" | "put") =>
+                setValue("option_details.option_type", value)
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Option Type" />
@@ -220,7 +233,11 @@ export function ManualTradeForm({ onSuccess, initialData }: ManualTradeFormProps
           Reset
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Submitting..." : initialData ? "Update Trade" : "Add Trade"}
+          {isSubmitting
+            ? "Submitting..."
+            : initialData
+              ? "Update Trade"
+              : "Add Trade"}
         </Button>
       </div>
     </form>

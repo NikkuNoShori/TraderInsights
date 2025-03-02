@@ -39,7 +39,9 @@ export default function ProfileSettings() {
       }, 1500);
     } catch (err) {
       console.error("Failed to update profile:", err);
-      toast.error(err instanceof Error ? err.message : "Failed to update profile");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to update profile",
+      );
     } finally {
       setLoading(false);
     }
@@ -47,10 +49,7 @@ export default function ProfileSettings() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Profile"
-        subtitle="Manage your personal information"
-      />
+      <PageHeader title="Profile" subtitle="Manage your personal information" />
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-card p-6 rounded-lg border border-border">
@@ -81,10 +80,7 @@ export default function ProfileSettings() {
           </div>
 
           <div className="mt-6 flex justify-end">
-            <Button
-              type="submit"
-              disabled={loading}
-            >
+            <Button type="submit" disabled={loading}>
               {loading ? "Saving..." : "Save Changes"}
             </Button>
           </div>

@@ -1,9 +1,5 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import {
-  DollarSign,
-  Percent,
-  AlertTriangle,
-} from "lucide-react";
+import { DollarSign, Percent, AlertTriangle } from "lucide-react";
 import type { Trade } from "@/types/portfolio";
 
 interface AllocationData {

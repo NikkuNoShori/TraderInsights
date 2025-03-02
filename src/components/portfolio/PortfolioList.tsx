@@ -7,8 +7,11 @@ import type { Portfolio, CreatePortfolioData } from "@/types/portfolio";
 
 export function PortfolioList() {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingPortfolio, setEditingPortfolio] = useState<Portfolio | null>(null);
-  const { portfolios, createPortfolio, updatePortfolio, deletePortfolio } = usePortfolios();
+  const [editingPortfolio, setEditingPortfolio] = useState<Portfolio | null>(
+    null,
+  );
+  const { portfolios, createPortfolio, updatePortfolio, deletePortfolio } =
+    usePortfolios();
 
   const handleCreatePortfolio = async (data: CreatePortfolioData) => {
     try {

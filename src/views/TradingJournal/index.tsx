@@ -1,6 +1,11 @@
 import { useState, useEffect } from "@/lib/react";
 import { toast } from "react-hot-toast";
-import { TradeList, SortField, SortDirection, SortState } from "./components/TradeList";
+import {
+  TradeList,
+  SortField,
+  SortDirection,
+  SortState,
+} from "./components/TradeList";
 import { TradeStats } from "./components/TradeStats";
 import { Button } from "@/components/ui";
 import { Plus } from "lucide-react";
@@ -23,13 +28,16 @@ export default function TradingJournal() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
-  const [sort, setSort] = useState<SortState>({ field: 'date', direction: 'desc' });
+  const [sort, setSort] = useState<SortState>({
+    field: "date",
+    direction: "desc",
+  });
 
   // Get filtered trades
   const filteredTrades = useFilteredTrades(trades, "journal");
 
   // Calculate derived values for each trade
-  const tradesWithCalculatedValues = filteredTrades.map(trade => ({
+  const tradesWithCalculatedValues = filteredTrades.map((trade) => ({
     ...trade,
     total: trade.quantity * (trade.entry_price || 0),
     pnl: calculatePnL(trade),
@@ -38,23 +46,29 @@ export default function TradingJournal() {
   // Sort trades
   const sortTrades = (unsortedTrades: Trade[]) => {
     return [...unsortedTrades].sort((a, b) => {
-      const direction = sort.direction === 'asc' ? 1 : -1;
-      
+      const direction = sort.direction === "asc" ? 1 : -1;
+
       switch (sort.field) {
-        case 'date':
-          return (new Date(a.date).getTime() - new Date(b.date).getTime()) * direction;
-        case 'pnl':
+        case "date":
+          return (
+            (new Date(a.date).getTime() - new Date(b.date).getTime()) *
+            direction
+          );
+        case "pnl":
           return ((a.pnl || 0) - (b.pnl || 0)) * direction;
-        case 'quantity':
+        case "quantity":
           return (a.quantity - b.quantity) * direction;
-        case 'entry_price':
+        case "entry_price":
           return (a.entry_price - b.entry_price) * direction;
-        case 'exit_price':
+        case "exit_price":
           return ((a.exit_price || 0) - (b.exit_price || 0)) * direction;
-        case 'total':
+        case "total":
           return ((a.total || 0) - (b.total || 0)) * direction;
         default:
-          return String(a[sort.field]).localeCompare(String(b[sort.field])) * direction;
+          return (
+            String(a[sort.field]).localeCompare(String(b[sort.field])) *
+            direction
+          );
       }
     });
   };
@@ -63,13 +77,14 @@ export default function TradingJournal() {
   const totalPages = Math.ceil(sortedTrades.length / TRADES_PER_PAGE);
   const paginatedTrades = sortedTrades.slice(
     (currentPage - 1) * TRADES_PER_PAGE,
-    currentPage * TRADES_PER_PAGE
+    currentPage * TRADES_PER_PAGE,
   );
 
   const handleSort = (field: SortField) => {
     setSort((prev) => ({
       field,
-      direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc',
+      direction:
+        prev.field === field && prev.direction === "asc" ? "desc" : "asc",
     }));
     setCurrentPage(1);
   };
@@ -96,7 +111,9 @@ export default function TradingJournal() {
       }
     } catch (error) {
       console.error("Error submitting trade:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to submit trade");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to submit trade",
+      );
     }
   };
 
@@ -110,7 +127,9 @@ export default function TradingJournal() {
       }
     } catch (error) {
       console.error("Error deleting trade:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to delete trade");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete trade",
+      );
     }
   };
 

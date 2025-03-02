@@ -15,11 +15,11 @@ export default function TradeDetails() {
   const { trades, deleteTrade, fetchTrades } = useTradeStore();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Fetch trades if not already in store
   useEffect(() => {
     async function loadTrades() {
-      if (user && (!trades.length || !trades.find(t => t.id === tradeId))) {
+      if (user && (!trades.length || !trades.find((t) => t.id === tradeId))) {
         setIsLoading(true);
         try {
           await fetchTrades(user.id);
@@ -35,7 +35,7 @@ export default function TradeDetails() {
   }, [user, tradeId, trades.length, fetchTrades]);
 
   // Find the trade in the store
-  const trade = trades.find(t => t.id === tradeId);
+  const trade = trades.find((t) => t.id === tradeId);
 
   const handleDelete = async () => {
     if (!trade) return;
@@ -138,11 +138,13 @@ export default function TradeDetails() {
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
             <div>
               <dt className="text-xs text-muted-foreground">Side</dt>
-              <dd className={`text-sm font-medium ${
-                trade.side === "Long"
-                  ? "text-green-600 dark:text-green-400"
-                  : "text-red-600 dark:text-red-400"
-              }`}>
+              <dd
+                className={`text-sm font-medium ${
+                  trade.side === "Long"
+                    ? "text-green-600 dark:text-green-400"
+                    : "text-red-600 dark:text-red-400"
+                }`}
+              >
                 {trade.side}
               </dd>
             </div>
@@ -160,12 +162,14 @@ export default function TradeDetails() {
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">Entry Price</dt>
-              <dd className="text-sm font-medium">${trade.entry_price?.toFixed(2)}</dd>
+              <dd className="text-sm font-medium">
+                ${trade.entry_price?.toFixed(2)}
+              </dd>
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">Exit Price</dt>
               <dd className="text-sm font-medium">
-                {trade.exit_price ? `$${trade.exit_price.toFixed(2)}` : '-'}
+                {trade.exit_price ? `$${trade.exit_price.toFixed(2)}` : "-"}
               </dd>
             </div>
           </div>
@@ -177,22 +181,28 @@ export default function TradeDetails() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <dt className="text-xs text-muted-foreground">Total Value</dt>
-              <dd className="text-sm font-medium">${trade.total?.toFixed(2)}</dd>
+              <dd className="text-sm font-medium">
+                ${trade.total?.toFixed(2)}
+              </dd>
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">P&L</dt>
-              <dd className={`text-sm font-medium ${
-                trade.pnl && trade.pnl > 0 
-                  ? "text-green-600 dark:text-green-400" 
-                  : "text-red-600 dark:text-red-400"
-              }`}>
-                {trade.pnl ? `$${trade.pnl.toFixed(2)}` : 'N/A'}
+              <dd
+                className={`text-sm font-medium ${
+                  trade.pnl && trade.pnl > 0
+                    ? "text-green-600 dark:text-green-400"
+                    : "text-red-600 dark:text-red-400"
+                }`}
+              >
+                {trade.pnl ? `$${trade.pnl.toFixed(2)}` : "N/A"}
               </dd>
             </div>
             {trade.fees !== undefined && (
               <div>
                 <dt className="text-xs text-muted-foreground">Fees</dt>
-                <dd className="text-sm font-medium">${trade.fees.toFixed(2)}</dd>
+                <dd className="text-sm font-medium">
+                  ${trade.fees.toFixed(2)}
+                </dd>
               </div>
             )}
           </div>
@@ -204,7 +214,9 @@ export default function TradeDetails() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <dt className="text-xs text-muted-foreground">Broker</dt>
-              <dd className="text-sm font-medium capitalize">{trade.broker_id || 'Manual Entry'}</dd>
+              <dd className="text-sm font-medium capitalize">
+                {trade.broker_id || "Manual Entry"}
+              </dd>
             </div>
             {trade.orderId && (
               <div>
@@ -219,7 +231,9 @@ export default function TradeDetails() {
         {trade.notes && (
           <div className="col-span-12 bg-card dark:bg-dark-card rounded-lg p-4 border border-border dark:border-dark-border">
             <h2 className="text-sm font-semibold mb-2">Notes</h2>
-            <p className="text-sm whitespace-pre-wrap text-muted-foreground">{trade.notes}</p>
+            <p className="text-sm whitespace-pre-wrap text-muted-foreground">
+              {trade.notes}
+            </p>
           </div>
         )}
       </div>
@@ -233,4 +247,4 @@ export default function TradeDetails() {
       />
     </div>
   );
-} 
+}

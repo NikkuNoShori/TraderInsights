@@ -7,7 +7,7 @@ const BASE_URL = "https://api.polygon.io";
 export class PolygonApi {
   async getQuote(symbol: string): Promise<StockQuote> {
     const response = await fetch(
-      `${BASE_URL}/v2/last/trade/${symbol}?apiKey=${POLYGON_API_KEY}`
+      `${BASE_URL}/v2/last/trade/${symbol}?apiKey=${POLYGON_API_KEY}`,
     );
 
     if (!response.ok) {
@@ -32,7 +32,7 @@ export class PolygonApi {
 
   async getQuotes(symbols: string[]): Promise<StockQuote[]> {
     const quotes = await Promise.all(
-      symbols.map((symbol) => this.getQuote(symbol))
+      symbols.map((symbol) => this.getQuote(symbol)),
     );
     return quotes;
   }

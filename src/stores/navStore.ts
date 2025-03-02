@@ -17,6 +17,6 @@ export const useNavStore = create<NavState>()(
     }),
     {
       name: "nav-state",
-    }
-  )
+    },
+  ),
 );

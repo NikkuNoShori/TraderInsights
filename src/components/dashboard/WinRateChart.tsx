@@ -14,9 +14,7 @@ interface WinRateChartProps {
   timeframe: TimeframeOption;
 }
 
-export function WinRateChart({
-  trades,
-}: WinRateChartProps) {
+export function WinRateChart({ trades }: WinRateChartProps) {
   // Chart implementation here
   return (
     <div className="h-[300px]">

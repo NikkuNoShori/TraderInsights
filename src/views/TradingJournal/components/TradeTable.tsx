@@ -10,7 +10,12 @@ interface TradeTableProps {
   isLoading?: boolean;
 }
 
-export function TradeTable({ trades, onDelete, onEdit, isLoading = false }: TradeTableProps) {
+export function TradeTable({
+  trades,
+  onDelete,
+  onEdit,
+  isLoading = false,
+}: TradeTableProps) {
   if (isLoading) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -44,14 +49,21 @@ export function TradeTable({ trades, onDelete, onEdit, isLoading = false }: Trad
         </thead>
         <tbody>
           {trades.map((trade) => (
-            <tr key={trade.id} className="border-b border-border hover:bg-muted/50">
+            <tr
+              key={trade.id}
+              className="border-b border-border hover:bg-muted/50"
+            >
               <td className="px-4 py-2">{formatDate(trade.entry_date)}</td>
               <td className="px-4 py-2 font-medium">{trade.symbol}</td>
               <td className="px-4 py-2">{trade.type}</td>
               <td className="px-4 py-2">{trade.side}</td>
               <td className="px-4 py-2 text-right">{trade.quantity}</td>
-              <td className="px-4 py-2 text-right">{formatCurrency(trade.price)}</td>
-              <td className="px-4 py-2 text-right">{formatCurrency(trade.total)}</td>
+              <td className="px-4 py-2 text-right">
+                {formatCurrency(trade.price)}
+              </td>
+              <td className="px-4 py-2 text-right">
+                {formatCurrency(trade.total)}
+              </td>
               <td className="px-4 py-2 text-center space-x-2">
                 {onEdit && (
                   <Button
@@ -80,4 +92,4 @@ export function TradeTable({ trades, onDelete, onEdit, isLoading = false }: Trad
       </table>
     </div>
   );
-} 
+}

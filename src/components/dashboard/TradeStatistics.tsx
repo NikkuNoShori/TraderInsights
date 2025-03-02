@@ -1,6 +1,13 @@
 import { useMemo } from "@/lib/react";
 import { StatsCard } from "./StatsCard";
-import { DollarSign, TrendingUp, TrendingDown, Target, Percent, Activity } from "lucide-react";
+import {
+  DollarSign,
+  TrendingUp,
+  TrendingDown,
+  Target,
+  Percent,
+  Activity,
+} from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 import { useFilteredTrades } from "@/hooks/useFilteredTrades";
 import type { Trade } from "@/types/trade";
@@ -27,17 +34,18 @@ interface TradeStats {
   expectancy: number;
 }
 
-export function TradeStatistics({
-  trades,
-  isLoading,
-}: TradeStatisticsProps) {
+export function TradeStatistics({ trades, isLoading }: TradeStatisticsProps) {
   const filteredTrades = useFilteredTrades(trades, "performance");
 
   const stats = useMemo((): TradeStats => {
     // Basic Statistics
     const totalTrades = filteredTrades.length;
-    const winningTrades = filteredTrades.filter((trade) => (trade.pnl ?? 0) > 0).length;
-    const losingTrades = filteredTrades.filter((trade) => (trade.pnl ?? 0) < 0).length;
+    const winningTrades = filteredTrades.filter(
+      (trade) => (trade.pnl ?? 0) > 0,
+    ).length;
+    const losingTrades = filteredTrades.filter(
+      (trade) => (trade.pnl ?? 0) < 0,
+    ).length;
     const winRate = totalTrades > 0 ? winningTrades / totalTrades : 0;
 
     // Profit/Loss Calculations
@@ -51,7 +59,10 @@ export function TradeStatistics({
         0,
       ),
     );
-    const netProfit = filteredTrades.reduce((sum, trade) => sum + (trade.pnl ?? 0), 0);
+    const netProfit = filteredTrades.reduce(
+      (sum, trade) => sum + (trade.pnl ?? 0),
+      0,
+    );
 
     // Advanced Metrics
     const profitFactor = grossLoss === 0 ? 0 : grossProfit / grossLoss;
@@ -60,8 +71,12 @@ export function TradeStatistics({
       filteredTrades.reduce((max, trade) => Math.min(max, trade.pnl ?? 0), 0),
     );
 
-    const winningTradesArr = filteredTrades.filter((trade) => (trade.pnl ?? 0) > 0);
-    const losingTradesArr = filteredTrades.filter((trade) => (trade.pnl ?? 0) < 0);
+    const winningTradesArr = filteredTrades.filter(
+      (trade) => (trade.pnl ?? 0) > 0,
+    );
+    const losingTradesArr = filteredTrades.filter(
+      (trade) => (trade.pnl ?? 0) < 0,
+    );
 
     const avgWinningTrade =
       winningTradesArr.length > 0
@@ -70,8 +85,9 @@ export function TradeStatistics({
         : 0;
     const avgLosingTrade =
       losingTradesArr.length > 0
-        ? Math.abs(losingTradesArr.reduce((sum, trade) => sum + (trade.pnl ?? 0), 0)) /
-          losingTradesArr.length
+        ? Math.abs(
+            losingTradesArr.reduce((sum, trade) => sum + (trade.pnl ?? 0), 0),
+          ) / losingTradesArr.length
         : 0;
     const riskRewardRatio =
       avgLosingTrade === 0 ? 0 : avgWinningTrade / avgLosingTrade;

@@ -2,7 +2,12 @@ import { useState } from "@/lib/react";
 import { useAuthStore } from "@/stores/authStore";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui";
 import {
   Select,
   SelectContent,

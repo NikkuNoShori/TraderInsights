@@ -22,6 +22,7 @@ export interface WebullTrade extends WebullOrder {
   createTime: string;
   updateTime: string;
   commission?: number;
+  fees?: number;
 }
 
 // Local storage keys
@@ -138,8 +139,12 @@ class WebullService {
       console.log("Fetching trades from Webull...");
       // In development, generate some mock trades
       if (process.env.NODE_ENV === "development") {
+        console.log("Generating mock trades in development mode...");
         const mockTrades = await this.generateMockTrades(5);
-        console.log("Generated mock trades:", mockTrades);
+        console.log(
+          "Generated mock trades:",
+          JSON.stringify(mockTrades, null, 2)
+        );
         return mockTrades;
       }
 
@@ -155,38 +160,65 @@ class WebullService {
   }
 
   private async generateMockTrades(count: number = 5): Promise<WebullTrade[]> {
+    console.log(`Generating ${count} mock trade pairs...`);
     const symbols = ["AAPL", "GOOGL", "MSFT", "AMZN", "META"];
-    const actions: Array<"BUY" | "SELL"> = ["BUY", "SELL"];
     const exchanges = ["NASDAQ", "NYSE"];
     const trades: WebullTrade[] = [];
 
+    // Generate pairs of trades (BUY and SELL) for each count
     for (let i = 0; i < count; i++) {
-      const action = actions[Math.floor(Math.random() * actions.length)];
+      console.log(`Generating trade pair ${i + 1}...`);
       const symbol = symbols[Math.floor(Math.random() * symbols.length)];
       const quantity = Math.floor(Math.random() * 100) + 1;
-      const price = Math.random() * 1000 + 10;
+      const entryPrice = Math.random() * 1000 + 10;
+      const exitPrice = entryPrice * (1 + (Math.random() * 0.2 - 0.1)); // +/- 10% from entry price
       const createTime = new Date(
         Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
       );
+      const updateTime = new Date(createTime.getTime() + 1000 * 60 * 60 * 24); // 24 hours later
 
-      trades.push({
-        orderId: `mock-${Date.now()}-${i}`,
+      // Generate BUY order
+      const buyOrder: WebullTrade = {
+        orderId: `mock-${Date.now()}-${i}-buy`,
         symbol,
-        action,
+        action: "BUY" as const,
         orderType: "MARKET",
         timeInForce: "DAY",
         quantity,
         filledQuantity: quantity,
-        price,
-        filledPrice: price,
+        price: entryPrice,
+        filledPrice: entryPrice,
         status: "FILLED",
         createTime: createTime.toISOString(),
-        updateTime: new Date(createTime.getTime() + 1000 * 60).toISOString(),
+        updateTime: createTime.toISOString(), // Same as create time for entry
         commission: Math.random() * 5,
         exchange: exchanges[Math.floor(Math.random() * exchanges.length)],
-      });
+      };
+      console.log(`Generated BUY order:`, buyOrder);
+      trades.push(buyOrder);
+
+      // Generate matching SELL order
+      const sellOrder: WebullTrade = {
+        orderId: `mock-${Date.now()}-${i}-sell`,
+        symbol,
+        action: "SELL" as const,
+        orderType: "MARKET",
+        timeInForce: "DAY",
+        quantity,
+        filledQuantity: quantity,
+        price: exitPrice,
+        filledPrice: exitPrice,
+        status: "FILLED",
+        createTime: updateTime.toISOString(), // Use update time as create time for exit
+        updateTime: updateTime.toISOString(),
+        commission: Math.random() * 5,
+        exchange: exchanges[Math.floor(Math.random() * exchanges.length)],
+      };
+      console.log(`Generated SELL order:`, sellOrder);
+      trades.push(sellOrder);
     }
 
+    console.log(`Generated ${trades.length} total trades`);
     return trades;
   }
 

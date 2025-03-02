@@ -230,6 +230,6 @@ export const useFilterStore = create<FilterState>()(
           state.sessionId = generateSessionId();
         }
       },
-    }
-  )
+    },
+  ),
 );

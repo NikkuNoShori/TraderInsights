@@ -37,7 +37,7 @@ const getStoredTrades = (): Trade[] => {
       if (process.env.NODE_ENV === "development") {
         console.debug(
           "[TradeStore] Loaded trades from localStorage:",
-          trades.length
+          trades.length,
         );
       }
       return trades;
@@ -45,7 +45,7 @@ const getStoredTrades = (): Trade[] => {
   } catch (error) {
     console.error(
       "[TradeStore] Error loading trades from localStorage:",
-      error
+      error,
     );
   }
   return [];
@@ -140,6 +140,7 @@ export const useTradeStore = create<TradeState & TradeActions>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       if (!config.isProduction) {
+        console.log("Importing trades in development mode:", trades);
         const completeTrades = trades.map((trade) => ({
           ...trade,
           id: generateId(),
@@ -147,31 +148,38 @@ export const useTradeStore = create<TradeState & TradeActions>((set, get) => ({
           updated_at: new Date().toISOString(),
         })) as Trade[];
 
-        console.log("Importing trades:", completeTrades);
+        console.log("Completed trades with IDs:", completeTrades);
 
         // Get current trades and filter out any duplicates by orderId if it exists
         const currentTrades = getStoredTrades();
+        console.log("Current stored trades:", currentTrades);
+
         const newTrades = completeTrades.filter(
           (newTrade) =>
             !currentTrades.some(
               (existingTrade) =>
                 (newTrade as any).orderId &&
-                existingTrade.notes?.includes((newTrade as any).orderId)
-            )
+                existingTrade.notes?.includes((newTrade as any).orderId),
+            ),
         );
+
+        console.log("New trades after filtering duplicates:", newTrades);
 
         // Add PnL to new trades
         const tradesWithPnL = newTrades.map(addPnLToTrade);
+        console.log("Trades with PnL calculated:", tradesWithPnL);
 
         // Add new trades at the beginning of the array
         const updatedTrades = [...tradesWithPnL, ...currentTrades];
         setStoredTrades(updatedTrades);
+        console.log("Updated stored trades:", updatedTrades);
 
         // Update the store's state with the complete updated trades list
         // Filter by the current user's ID
         const userTrades = updatedTrades.filter(
-          (t) => t.user_id === trades[0]?.user_id
+          (t) => t.user_id === trades[0]?.user_id,
         );
+        console.log("Filtered trades for current user:", userTrades);
         set({ trades: userTrades });
         console.log("Updated store state with user trades:", userTrades);
         return;
@@ -243,7 +251,7 @@ export const useTradeStore = create<TradeState & TradeActions>((set, get) => ({
                 ...updates,
                 updated_at: new Date().toISOString(),
               })
-            : t
+            : t,
         );
         setStoredTrades(updatedTrades);
         set((state) => ({
@@ -254,7 +262,7 @@ export const useTradeStore = create<TradeState & TradeActions>((set, get) => ({
                   ...updates,
                   updated_at: new Date().toISOString(),
                 })
-              : t
+              : t,
           ),
         }));
         return;
@@ -270,7 +278,7 @@ export const useTradeStore = create<TradeState & TradeActions>((set, get) => ({
       if (error) throw error;
       set((state) => ({
         trades: state.trades.map((t) =>
-          t.id === id ? addPnLToTrade(data) : t
+          t.id === id ? addPnLToTrade(data) : t,
         ),
       }));
     } catch (error) {

@@ -28,7 +28,7 @@ export function PnLChart({ trades, timeframe }: PnLChartProps) {
   const filteredTrades = useMemo(() => {
     const now = new Date();
     const cutoff = new Date();
-    
+
     switch (timeframe) {
       case "1D":
         cutoff.setDate(now.getDate() - 1);
@@ -53,7 +53,7 @@ export function PnLChart({ trades, timeframe }: PnLChartProps) {
         return trades;
     }
 
-    return trades.filter(trade => new Date(trade.entry_date) >= cutoff);
+    return trades.filter((trade) => new Date(trade.entry_date) >= cutoff);
   }, [trades, timeframe]);
 
   if (filteredTrades.length === 0) {

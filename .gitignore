@@ -19,6 +19,8 @@ yarn-debug.log*
 yarn-error.log*
 logs/
 *.log
+src/Logging/
+errorLogs.md
 
 # System Files
 .DS_Store

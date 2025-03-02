@@ -136,7 +136,7 @@ export function TradeHistory({ trades, onDelete }: TradeHistoryProps) {
                       "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
                       trade.type === "buy"
                         ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400"
-                        : "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400"
+                        : "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400",
                     )}
                   >
                     {trade.type.toUpperCase()}

@@ -14,6 +14,6 @@ export const useDeveloperStore = create<DeveloperState>()(
     }),
     {
       name: "developer-storage",
-    }
-  )
+    },
+  ),
 );

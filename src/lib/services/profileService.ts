@@ -20,7 +20,7 @@ export class ProfileService {
 
   async updateProfile(
     userId: string,
-    updates: Partial<UserProfile>
+    updates: Partial<UserProfile>,
   ): Promise<UserProfile | null> {
     try {
       const { data, error } = await supabase
@@ -40,7 +40,7 @@ export class ProfileService {
 
   async updateUsername(
     userId: string,
-    username: string
+    username: string,
   ): Promise<UserProfile | null> {
     try {
       const { data: profile } = await supabase

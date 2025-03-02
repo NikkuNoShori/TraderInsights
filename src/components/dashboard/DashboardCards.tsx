@@ -13,9 +13,17 @@ export function DashboardCards({ trades }: DashboardCardsProps) {
   const filteredTrades = useFilteredTrades(trades, "overview");
 
   const stats = useMemo(() => {
-    const totalPnL = filteredTrades.reduce((sum, trade) => sum + (trade.pnl || 0), 0);
-    const winningTrades = filteredTrades.filter((trade) => (trade.pnl || 0) > 0);
-    const winRate = filteredTrades.length > 0 ? (winningTrades.length / filteredTrades.length) * 100 : 0;
+    const totalPnL = filteredTrades.reduce(
+      (sum, trade) => sum + (trade.pnl || 0),
+      0,
+    );
+    const winningTrades = filteredTrades.filter(
+      (trade) => (trade.pnl || 0) > 0,
+    );
+    const winRate =
+      filteredTrades.length > 0
+        ? (winningTrades.length / filteredTrades.length) * 100
+        : 0;
 
     return {
       totalPnL,

@@ -1,9 +1,15 @@
 import type { WebullTrade } from "@/services/webullService";
-import type { Trade, TradeType, TradeSide, TradeStatus } from "@/types/trade";
+import type {
+  Trade,
+  TradeType,
+  TradeSide,
+  TradeStatus,
+  CreateTradeData,
+} from "@/types/trade";
 
 export function transformWebullTrade(
   webullTrade: WebullTrade
-): Omit<Trade, "id" | "user_id" | "created_at" | "updated_at"> {
+): CreateTradeData {
   // Map Webull action to our TradeSide
   const side: TradeSide = webullTrade.action === "BUY" ? "Long" : "Short";
 
@@ -24,84 +30,140 @@ export function transformWebullTrade(
     second: "2-digit",
   });
 
-  return {
+  const quantity = webullTrade.filledQuantity || webullTrade.quantity;
+  const entryPrice = webullTrade.filledPrice || webullTrade.price || 0;
+  const total = quantity * entryPrice;
+
+  const trade: CreateTradeData = {
+    broker_id: "webull",
     date,
     time,
-    timestamp: webullTrade.createTime, // Store original ISO timestamp
+    timestamp: webullTrade.createTime,
     symbol: webullTrade.symbol,
     type,
     side,
     direction: side,
-    quantity: webullTrade.filledQuantity || webullTrade.quantity,
-    price: webullTrade.filledPrice || webullTrade.price || 0,
-    total:
-      (webullTrade.filledPrice || webullTrade.price || 0) *
-      (webullTrade.filledQuantity || webullTrade.quantity),
-    entry_date: webullTrade.createTime,
+    quantity,
+    price: entryPrice,
+    total,
+    entry_date: date,
     entry_time: time,
     entry_timestamp: webullTrade.createTime,
-    entry_price: webullTrade.filledPrice || webullTrade.price || 0,
-    exit_date:
-      webullTrade.status === "FILLED"
-        ? new Date(webullTrade.updateTime).toISOString().split("T")[0]
-        : undefined,
-    exit_time:
-      webullTrade.status === "FILLED"
-        ? new Date(webullTrade.updateTime).toLocaleTimeString("en-US", {
-            hour12: false,
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-          })
-        : undefined,
-    exit_timestamp:
-      webullTrade.status === "FILLED" ? webullTrade.updateTime : undefined,
-    exit_price:
-      webullTrade.status === "FILLED" ? webullTrade.filledPrice : undefined,
+    entry_price: entryPrice,
     status,
     notes: `Webull Order ID: ${webullTrade.orderId}\nOrder Type: ${webullTrade.orderType}\nTime In Force: ${webullTrade.timeInForce}`,
     fees: (webullTrade.commission || 0) + (webullTrade.fees || 0),
   };
+
+  // Add exit information if the trade is closed
+  if (status === "closed") {
+    const exitTimestamp = new Date(webullTrade.updateTime);
+    trade.exit_date = exitTimestamp.toISOString().split("T")[0];
+    trade.exit_time = exitTimestamp.toLocaleTimeString("en-US", {
+      hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+    trade.exit_timestamp = webullTrade.updateTime;
+    trade.exit_price = webullTrade.filledPrice || webullTrade.price;
+
+    if (trade.exit_price) {
+      trade.pnl =
+        side === "Long"
+          ? (trade.exit_price - entryPrice) * quantity
+          : (entryPrice - trade.exit_price) * quantity;
+    }
+  }
+
+  return trade;
 }
 
 export function transformWebullTrades(
   webullTrades: WebullTrade[]
-): Partial<Trade>[] {
-  return webullTrades.map((webullTrade) => {
-    const isLong = webullTrade.action.toLowerCase() === "buy";
-    let createDate = new Date(webullTrade.createTime);
+): CreateTradeData[] {
+  console.log("Starting trade transformation with trades:", webullTrades);
 
-    // Ensure valid date
-    if (isNaN(createDate.getTime())) {
-      console.error("Invalid date from Webull trade:", webullTrade.createTime);
-      createDate = new Date(); // Fallback to current date
-    }
-
-    const dateStr = createDate.toISOString().split("T")[0];
-    const timeStr = createDate.toISOString().split("T")[1].split(".")[0];
-
-    return {
-      symbol: webullTrade.symbol,
-      type: "stock",
-      side: isLong ? "Long" : "Short",
-      direction: isLong ? "Long" : "Short",
-      quantity: webullTrade.filledQuantity || webullTrade.quantity,
-      price: webullTrade.filledPrice || webullTrade.price || 0,
-      total:
-        (webullTrade.filledQuantity || webullTrade.quantity) *
-        (webullTrade.filledPrice || webullTrade.price || 0),
-      date: dateStr,
-      time: timeStr,
-      entry_date: webullTrade.createTime,
-      entry_price: webullTrade.filledPrice || webullTrade.price || 0,
-      exit_date:
-        webullTrade.status === "FILLED" ? webullTrade.updateTime : undefined,
-      exit_price:
-        webullTrade.status === "FILLED" ? webullTrade.filledPrice : undefined,
-      status: webullTrade.status.toLowerCase() === "filled" ? "closed" : "open",
-      notes: `Imported from Webull - Order ID: ${webullTrade.orderId}`,
-      fees: (webullTrade.commission || 0) + (webullTrade.fees || 0),
-      pnl: undefined,
-    };
+  // Group trades by symbol and quantity to find matching pairs
+  const tradePairs = new Map<string, WebullTrade[]>();
+  webullTrades.forEach((trade) => {
+    const key = `${trade.symbol}_${trade.quantity}`;
+    const existingTrades = tradePairs.get(key) || [];
+    tradePairs.set(key, [...existingTrades, trade]);
   });
+
+  const processedTrades: CreateTradeData[] = [];
+
+  // Process each group of trades
+  tradePairs.forEach((trades, key) => {
+    console.log(`Processing trade group for ${key}...`);
+
+    // Sort trades by createTime to ensure proper order
+    trades.sort(
+      (a, b) =>
+        new Date(a.createTime).getTime() - new Date(b.createTime).getTime()
+    );
+
+    // Find matching BUY and SELL trades
+    const buyTrades = trades.filter((t) => t.action === "BUY");
+    const sellTrades = trades.filter((t) => t.action === "SELL");
+
+    console.log(
+      `Found ${buyTrades.length} BUY trades and ${sellTrades.length} SELL trades for ${key}`
+    );
+
+    // Process BUY trades and match them with SELL trades
+    buyTrades.forEach((buyTrade, index) => {
+      const matchingSellTrade = sellTrades[index];
+      const processedTrade = transformWebullTrade(buyTrade);
+
+      // If we have a matching SELL trade, use it to set exit information
+      if (matchingSellTrade) {
+        console.log(
+          `Found matching SELL trade for BUY trade ${buyTrade.orderId}`
+        );
+        const exitTimestamp = new Date(matchingSellTrade.createTime);
+        processedTrade.exit_date = exitTimestamp.toISOString().split("T")[0];
+        processedTrade.exit_time = exitTimestamp.toLocaleTimeString("en-US", {
+          hour12: false,
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
+        processedTrade.exit_timestamp = matchingSellTrade.createTime;
+        processedTrade.exit_price =
+          matchingSellTrade.filledPrice || matchingSellTrade.price;
+        processedTrade.status = "closed";
+
+        // Calculate PnL
+        if (processedTrade.exit_price) {
+          processedTrade.pnl =
+            processedTrade.side === "Long"
+              ? (processedTrade.exit_price - processedTrade.entry_price) *
+                processedTrade.quantity
+              : (processedTrade.entry_price - processedTrade.exit_price) *
+                processedTrade.quantity;
+        }
+
+        // Add the matching order ID to notes
+        processedTrade.notes += `\nMatching Sell Order ID: ${matchingSellTrade.orderId}`;
+
+        // Add fees from both trades
+        processedTrade.fees =
+          (processedTrade.fees || 0) +
+          ((matchingSellTrade.commission || 0) + (matchingSellTrade.fees || 0));
+      }
+
+      processedTrades.push(processedTrade);
+    });
+
+    // Process remaining SELL trades that don't have matching BUY trades
+    const unmatchedSellTrades = sellTrades.slice(buyTrades.length);
+    unmatchedSellTrades.forEach((sellTrade) => {
+      processedTrades.push(transformWebullTrade(sellTrade));
+    });
+  });
+
+  console.log(`Finished processing ${processedTrades.length} trades`);
+  return processedTrades;
 }

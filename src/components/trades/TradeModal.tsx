@@ -70,13 +70,19 @@ export function TradeModal({
             </Button>
           </div>
           <DialogDescription className="sr-only">
-            {mode === "add" ? "Add a new trade manually or import trades" : "Edit existing trade details"}
+            {mode === "add"
+              ? "Add a new trade manually or import trades"
+              : "Edit existing trade details"}
           </DialogDescription>
         </DialogHeader>
 
         {mode === "add" ? (
           <div className="py-4">
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "manual" | "import")} className="w-full">
+            <Tabs
+              value={activeTab}
+              onValueChange={(v) => setActiveTab(v as "manual" | "import")}
+              className="w-full"
+            >
               <TabsList className="grid w-full grid-cols-2 mb-6 bg-muted dark:bg-dark-muted">
                 <TabsTrigger
                   value="manual"
@@ -94,21 +100,30 @@ export function TradeModal({
 
               <div className="mt-4">
                 <TabsContent value="manual">
-                  <ManualTradeForm onSuccess={handleSubmitSuccess} initialData={initialData} />
+                  <ManualTradeForm
+                    onSuccess={handleSubmitSuccess}
+                    initialData={initialData}
+                  />
                 </TabsContent>
 
                 <TabsContent value="import">
-                  <ImportTradeForm onClose={onClose} onImportComplete={handleImportComplete} />
+                  <ImportTradeForm
+                    onClose={onClose}
+                    onImportComplete={handleImportComplete}
+                  />
                 </TabsContent>
               </div>
             </Tabs>
           </div>
         ) : (
           <div className="py-4">
-            <ManualTradeForm onSuccess={handleSubmitSuccess} initialData={initialData} />
+            <ManualTradeForm
+              onSuccess={handleSubmitSuccess}
+              initialData={initialData}
+            />
           </div>
         )}
       </DialogContent>
     </Dialog>
   );
-} 
+}

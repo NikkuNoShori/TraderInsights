@@ -25,10 +25,14 @@ interface TradeMetrics {
 export function TradeListItem({ trade }: TradeListItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const metrics = useMemo((): TradeMetrics => calculateTradeMetrics(trade), [trade]);
-  const returnPercent = metrics.pnl && metrics.entryPrice && metrics.quantity
-    ? (metrics.pnl / (metrics.entryPrice * metrics.quantity)) * 100
-    : 0;
+  const metrics = useMemo(
+    (): TradeMetrics => calculateTradeMetrics(trade),
+    [trade],
+  );
+  const returnPercent =
+    metrics.pnl && metrics.entryPrice && metrics.quantity
+      ? (metrics.pnl / (metrics.entryPrice * metrics.quantity)) * 100
+      : 0;
 
   return (
     <div className="border-b border-slate-700/50 last:border-0">

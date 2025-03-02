@@ -62,10 +62,7 @@ export default function SecuritySettings() {
           </div>
 
           <div className="mt-6 flex justify-end">
-            <Button
-              type="submit"
-              disabled={loading}
-            >
+            <Button type="submit" disabled={loading}>
               {loading ? "Updating..." : "Update Password"}
             </Button>
           </div>

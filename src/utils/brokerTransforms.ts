@@ -4,7 +4,7 @@ import type { Trade, TradeType, TradeSide, TradeStatus } from "@/types/trade";
 // Common date/time parsing utility
 export function parseDateTime(
   dateStr: string,
-  timeStr?: string
+  timeStr?: string,
 ): {
   date: string;
   time: string;
@@ -55,7 +55,7 @@ export function parseDateTime(
 
 // Schwab date format: MM/DD/YYYY
 export function transformSchwabTrade(
-  schwabTrade: any
+  schwabTrade: any,
 ): Omit<Trade, "id" | "user_id" | "created_at" | "updated_at"> {
   // Schwab provides dates as MM/DD/YYYY and times as HH:MM:SS AM/PM
   const entryDateTime = parseDateTime(schwabTrade.Date, schwabTrade.Time);
@@ -92,12 +92,12 @@ export function transformSchwabTrade(
 
 // TD Ameritrade date format: YYYY-MM-DD
 export function transformTDAmeritradeTrade(
-  tdTrade: any
+  tdTrade: any,
 ): Omit<Trade, "id" | "user_id" | "created_at" | "updated_at"> {
   // TD provides dates in YYYY-MM-DD format and times in 24-hour HH:mm:ss
   const entryDateTime = parseDateTime(
     tdTrade.TransactionDate,
-    tdTrade.TransactionTime
+    tdTrade.TransactionTime,
   );
   const exitDateTime = tdTrade.ClosingDate
     ? parseDateTime(tdTrade.ClosingDate, tdTrade.ClosingTime)
@@ -134,7 +134,7 @@ export function transformTDAmeritradeTrade(
 
 // IBKR date format: YYYY-MM-DD HH:mm:ss
 export function transformIBKRTrade(
-  ibkrTrade: any
+  ibkrTrade: any,
 ): Omit<Trade, "id" | "user_id" | "created_at" | "updated_at"> {
   // IBKR provides dates in YYYY-MM-DD HH:mm:ss format
   const entryDateTime = parseDateTime(ibkrTrade.DateTime);
@@ -170,7 +170,7 @@ export function transformIBKRTrade(
 // Export a unified transform function that handles any broker
 export function transformBrokerTrade(
   trade: any,
-  broker: string
+  broker: string,
 ): Omit<Trade, "id" | "user_id" | "created_at" | "updated_at"> {
   switch (broker.toLowerCase()) {
     case "webull":

@@ -15,7 +15,10 @@ interface ColumnSelectorProps {
   onColumnToggle: (columnId: string) => void;
 }
 
-export function ColumnSelector({ visibleColumns, onColumnToggle }: ColumnSelectorProps) {
+export function ColumnSelector({
+  visibleColumns,
+  onColumnToggle,
+}: ColumnSelectorProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -47,4 +50,4 @@ export function ColumnSelector({ visibleColumns, onColumnToggle }: ColumnSelecto
       </DropdownMenuContent>
     </DropdownMenu>
   );
-} 
+}

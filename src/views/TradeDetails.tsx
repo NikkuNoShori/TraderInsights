@@ -52,12 +52,16 @@ export function TradeDetails() {
             </div>
             <div>
               <dt className="text-sm text-muted-foreground">Entry Price</dt>
-              <dd className="text-foreground">{formatCurrency(trade.entry_price)}</dd>
+              <dd className="text-foreground">
+                {formatCurrency(trade.entry_price)}
+              </dd>
             </div>
             {trade.exit_price && (
               <div>
                 <dt className="text-sm text-muted-foreground">Exit Price</dt>
-                <dd className="text-foreground">{formatCurrency(trade.exit_price)}</dd>
+                <dd className="text-foreground">
+                  {formatCurrency(trade.exit_price)}
+                </dd>
               </div>
             )}
             <div>
@@ -67,7 +71,9 @@ export function TradeDetails() {
             {trade.pnl !== undefined && (
               <div>
                 <dt className="text-sm text-muted-foreground">P&L</dt>
-                <dd className={`text-foreground ${trade.pnl >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                <dd
+                  className={`text-foreground ${trade.pnl >= 0 ? "text-green-500" : "text-red-500"}`}
+                >
                   {formatCurrency(trade.pnl)}
                 </dd>
               </div>
@@ -78,7 +84,9 @@ export function TradeDetails() {
         {trade.notes && (
           <div className="bg-card dark:bg-dark-paper rounded-lg p-6 border border-border dark:border-dark-border">
             <h3 className="text-lg font-medium mb-4">Notes</h3>
-            <p className="text-muted-foreground whitespace-pre-wrap">{trade.notes}</p>
+            <p className="text-muted-foreground whitespace-pre-wrap">
+              {trade.notes}
+            </p>
           </div>
         )}
       </div>

@@ -44,5 +44,6 @@
     }
   },
   "include": ["src"],
+  "exclude": ["src/Logging", "**/*.md", "node_modules"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

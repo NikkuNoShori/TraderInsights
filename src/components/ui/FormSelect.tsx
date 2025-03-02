@@ -1,10 +1,5 @@
 import { forwardRef } from "react";
-import {
-  Select,
-  SelectContent,
-  SelectTrigger,
-  SelectValue,
-} from "./select";
+import { Select, SelectContent, SelectTrigger, SelectValue } from "./select";
 import { cn } from "@/utils/cn";
 
 interface FormSelectProps {
@@ -28,7 +23,7 @@ export const FormSelect = forwardRef<HTMLButtonElement, FormSelectProps>(
       children,
       placeholder,
       value,
-      onValueChange
+      onValueChange,
     },
     ref,
   ) => {
@@ -57,7 +52,9 @@ export const FormSelect = forwardRef<HTMLButtonElement, FormSelectProps>(
           <p
             className={cn(
               "text-sm",
-              error ? "text-red-500 dark:text-red-400" : "text-gray-500 dark:text-gray-400"
+              error
+                ? "text-red-500 dark:text-red-400"
+                : "text-gray-500 dark:text-gray-400",
             )}
           >
             {error || helperText}

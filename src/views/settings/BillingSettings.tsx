@@ -77,10 +77,7 @@ export default function BillingSettings() {
         <p className="text-muted-foreground mt-1">Free Tier</p>
 
         <div className="mt-6">
-          <Button
-            onClick={handleUpgrade}
-            disabled={loading}
-          >
+          <Button onClick={handleUpgrade} disabled={loading}>
             {loading ? "Processing..." : "Upgrade to Pro"}
           </Button>
         </div>

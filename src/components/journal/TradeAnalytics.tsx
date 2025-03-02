@@ -13,9 +13,7 @@ interface TradeAnalyticsProps {
   trades: Trade[];
 }
 
-export function TradeAnalytics({
-  trades,
-}: TradeAnalyticsProps) {
+export function TradeAnalytics({ trades }: TradeAnalyticsProps) {
   const calculateMetrics = () => {
     if (trades.length === 0) {
       return {

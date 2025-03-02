@@ -51,8 +51,8 @@ export function StatsCard({
                 trendDirection === "up"
                   ? "text-emerald-600 dark:text-emerald-400"
                   : trendDirection === "down"
-                  ? "text-rose-600 dark:text-rose-400"
-                  : "text-muted-foreground"
+                    ? "text-rose-600 dark:text-rose-400"
+                    : "text-muted-foreground",
               )}
             >
               {trend}

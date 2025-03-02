@@ -129,7 +129,7 @@ export function useTrades() {
             exit_price: rawTrade.exit_price
               ? Number(rawTrade.exit_price)
               : undefined,
-          })
+          }),
       );
     },
     enabled: !!user,
