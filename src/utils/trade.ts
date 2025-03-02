@@ -10,13 +10,19 @@ export const formatTradeValue = (value: number): string => {
   }).format(value);
 };
 
-export const calculatePnL = (trade: Trade): number => {
-  if (!trade.exit_price || !trade.entry_price) return 0;
+export const calculatePnL = (trade: Trade): number | undefined => {
+  // Only calculate PnL for closed trades with both entry and exit prices
+  if (trade.status !== "closed" || !trade.exit_price || !trade.entry_price) {
+    return undefined;
+  }
+
   const pnl =
     trade.side === "Long"
       ? (trade.exit_price - trade.entry_price) * trade.quantity
       : (trade.entry_price - trade.exit_price) * trade.quantity;
-  return pnl;
+
+  // Subtract fees if they exist
+  return trade.fees ? pnl - trade.fees : pnl;
 };
 
 export const calculateWinRate = (trades: Trade[]): number => {

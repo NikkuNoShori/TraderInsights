@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-
 import { Layout } from "./components/layout/Layout";
 import Dashboard from "./views/Dashboard";
 import TradingJournal from "./views/TradingJournal";
-import { TradeDetails } from "./views/TradeDetails";
+import TradeDetails from "./views/TradingJournal/TradeDetails";
 import Settings from "./views/settings/Settings";
 import Login from "./views/auth/Login";
 import RequestPasswordReset from "./views/auth/RequestPasswordReset";

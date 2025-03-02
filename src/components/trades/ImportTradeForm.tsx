@@ -1,7 +1,7 @@
 import { useState } from "@/lib/react";
 import { useAuthStore } from "@/stores/authStore";
 import { Button } from "@/components/ui";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -12,6 +12,8 @@ import {
 import type { Trade } from "@/types/trade";
 import { processTradeFile } from "@/lib/services/fileProcessing";
 import { toast } from "react-hot-toast";
+import { WebullImportForm } from "./WebullImportForm";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 interface ImportTradeFormProps {
   onClose: () => void;
@@ -20,7 +22,7 @@ interface ImportTradeFormProps {
 
 export function ImportTradeForm({ onClose, onImportComplete }: ImportTradeFormProps) {
   const { user } = useAuthStore();
-  const [selectedBrokers, setSelectedBrokers] = useState<string[]>([]);
+  const [selectedBroker, setSelectedBroker] = useState<string>("");
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -45,7 +47,7 @@ export function ImportTradeForm({ onClose, onImportComplete }: ImportTradeFormPr
       const processedTrades = result.trades.map(trade => ({
         ...trade,
         user_id: user.id,
-        broker_id: selectedBrokers[0],
+        broker_id: selectedBroker,
         created_at: new Date().toISOString(),
       }));
 
@@ -63,39 +65,36 @@ export function ImportTradeForm({ onClose, onImportComplete }: ImportTradeFormPr
   };
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Import Trades</DialogTitle>
-        </DialogHeader>
+    <div className="space-y-6">
+      <div>
+        <label className="text-sm font-medium text-text-muted">
+          Select Broker
+        </label>
+        <Select
+          value={selectedBroker}
+          onValueChange={setSelectedBroker}
+        >
+          <SelectTrigger className="mt-1.5 bg-background border-border">
+            <SelectValue placeholder="Choose a broker" />
+          </SelectTrigger>
+          <SelectContent className="bg-card border-border">
+            <SelectItem value="webull">Webull</SelectItem>
+            <SelectItem value="schwab">Charles Schwab</SelectItem>
+            <SelectItem value="td">TD Ameritrade</SelectItem>
+            <SelectItem value="ibkr">Interactive Brokers</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-text-muted">
-              Select Broker
-            </label>
-            <Select
-              value={selectedBrokers.join(",")}
-              onValueChange={(value) =>
-                setSelectedBrokers(value.split(",").filter(Boolean))
-              }
-            >
-              <SelectTrigger className="bg-background border-border">
-                <SelectValue placeholder="Choose a broker" />
-              </SelectTrigger>
-              <SelectContent className="bg-card border-border">
-                <SelectItem value="schwab">Charles Schwab</SelectItem>
-                <SelectItem value="td">TD Ameritrade</SelectItem>
-                <SelectItem value="ibkr">Interactive Brokers</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
+      {selectedBroker === "webull" ? (
+        <WebullImportForm onClose={onClose} onImportComplete={onImportComplete} />
+      ) : selectedBroker ? (
+        <div className="space-y-4">
+          <div>
             <label className="text-sm font-medium text-text-muted">
               CSV File
             </label>
-            <div className="flex items-center space-x-2">
+            <div className="mt-1.5 flex items-center space-x-2">
               <input
                 type="file"
                 accept=".csv,.xlsx,.xls"
@@ -120,7 +119,7 @@ export function ImportTradeForm({ onClose, onImportComplete }: ImportTradeFormPr
               )}
             </div>
             {loading && progress > 0 && (
-              <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+              <div className="mt-2 w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
                 <div
                   className="bg-primary h-2.5 rounded-full"
                   style={{ width: `${progress}%` }}
@@ -139,14 +138,14 @@ export function ImportTradeForm({ onClose, onImportComplete }: ImportTradeFormPr
             </Button>
             <Button
               onClick={handleImport}
-              disabled={!file || loading || selectedBrokers.length === 0}
+              disabled={!file || loading}
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {loading ? "Importing..." : "Import Trades"}
             </Button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      ) : null}
+    </div>
   );
 }
