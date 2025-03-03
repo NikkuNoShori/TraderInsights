@@ -7,6 +7,7 @@ import { ArrowLeft, Edit, Trash } from "lucide-react";
 import { TradeModal } from "@/components/trades/TradeModal";
 import { toast } from "react-hot-toast";
 import type { Trade } from "@/types/trade";
+import { formatDate, formatCurrency } from "@/types/trade";
 
 export default function TradeDetails() {
   const { id: tradeId } = useParams();
@@ -161,10 +162,8 @@ export default function TradeDetails() {
               <dd className="text-sm font-medium capitalize">{trade.status}</dd>
             </div>
             <div>
-              <dt className="text-xs text-muted-foreground">Entry Price</dt>
-              <dd className="text-sm font-medium">
-                ${trade.entry_price?.toFixed(2)}
-              </dd>
+              <dt className="text-xs text-muted-foreground">Entry Date</dt>
+              <dd className="text-sm font-medium">{formatDate(trade.entry_date)}</dd>
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">Exit Price</dt>
@@ -218,12 +217,6 @@ export default function TradeDetails() {
                 {trade.broker_id || "Manual Entry"}
               </dd>
             </div>
-            {trade.orderId && (
-              <div>
-                <dt className="text-xs text-muted-foreground">Order ID</dt>
-                <dd className="text-sm font-medium">{trade.orderId}</dd>
-              </div>
-            )}
           </div>
         </div>
 
@@ -236,6 +229,15 @@ export default function TradeDetails() {
             </p>
           </div>
         )}
+
+        {/* Remove or update the orderId section */}
+        {/* If orderId is needed, we should add it to the BaseTrade interface */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <dt className="text-sm text-muted-foreground">Entry Price</dt>
+            <dd className="text-sm font-medium">{formatCurrency(trade.entry_price)}</dd>
+          </div>
+        </div>
       </div>
 
       <TradeModal

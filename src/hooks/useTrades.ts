@@ -6,27 +6,44 @@ import {
   type TradeType,
   type TradeSide,
   type TradeStatus,
+  type OptionDetails,
 } from "../types/trade";
 import { config } from "@/config";
 
 interface RawTradeData {
   id: string;
   user_id: string;
+  broker_id?: string;
   date: string;
   time: string;
+  timestamp: string;
   symbol: string;
   type: TradeType;
   side: TradeSide;
+  direction: TradeSide;
   quantity: number;
   price: number;
   total: number;
-  entry_date?: string;
-  entry_price?: number;
+  entry_date: string;
+  entry_time: string;
+  entry_timestamp: string;
+  entry_price: number;
   exit_date?: string;
+  exit_time?: string;
+  exit_timestamp?: string;
   exit_price?: number;
   pnl?: number;
   status: TradeStatus;
   notes?: string;
+  setup_type?: string;
+  strategy?: string;
+  risk_reward?: number;
+  stop_loss?: number;
+  take_profit?: number;
+  risk_amount?: number;
+  fees?: number;
+  tags?: string[];
+  option_details?: OptionDetails;
   created_at: string;
   updated_at: string;
 }
@@ -35,15 +52,19 @@ const MOCK_TRADES: Trade[] = [
   createTrade({
     id: "dev-trade-1",
     user_id: "dev-123",
+    broker_id: "mock-broker",
     date: new Date().toISOString().split("T")[0],
     time: new Date().toISOString().split("T")[1].split(".")[0],
+    timestamp: new Date().toISOString(),
     symbol: "AAPL",
     type: "stock",
     side: "Long",
     quantity: 100,
     price: 150.0,
     total: 15000.0,
-    entry_date: new Date().toISOString(),
+    entry_date: new Date().toISOString().split("T")[0],
+    entry_time: new Date().toISOString().split("T")[1].split(".")[0],
+    entry_timestamp: new Date().toISOString(),
     entry_price: 150.0,
     exit_price: 155.0,
     pnl: 500.0,
@@ -55,18 +76,25 @@ const MOCK_TRADES: Trade[] = [
   createTrade({
     id: "dev-trade-2",
     user_id: "dev-123",
+    broker_id: "mock-broker",
     date: new Date(Date.now() - 86400000).toISOString().split("T")[0],
     time: new Date(Date.now() - 86400000)
       .toISOString()
       .split("T")[1]
       .split(".")[0],
+    timestamp: new Date(Date.now() - 86400000).toISOString(),
     symbol: "TSLA",
     type: "stock",
     side: "Long",
     quantity: 50,
     price: 200.0,
     total: 10000.0,
-    entry_date: new Date(Date.now() - 86400000).toISOString(),
+    entry_date: new Date(Date.now() - 86400000).toISOString().split("T")[0],
+    entry_time: new Date(Date.now() - 86400000)
+      .toISOString()
+      .split("T")[1]
+      .split(".")[0],
+    entry_timestamp: new Date(Date.now() - 86400000).toISOString(),
     entry_price: 200.0,
     exit_price: 210.0,
     pnl: 500.0,
@@ -80,6 +108,13 @@ const MOCK_TRADES: Trade[] = [
 interface TradeError extends Error {
   code?: string;
   details?: string;
+}
+
+// Add this utility function before the useTrades hook
+function safeNumber(value: any, fallback?: number): number | undefined {
+  if (value === null || value === undefined) return fallback;
+  const num = Number(value);
+  return isNaN(num) ? fallback : num;
 }
 
 export function useTrades() {
@@ -114,23 +149,49 @@ export function useTrades() {
         return [];
       }
 
-      // Ensure all required fields are present and properly formatted
-      return data.map(
-        (rawTrade: RawTradeData): Trade =>
-          createTrade({
+      // Update the mapping logic with safe number conversion and required fields
+      return data.map((rawTrade: RawTradeData) => {
+        try {
+          const baseTradeData = {
             ...rawTrade,
-            entry_date: rawTrade.entry_date || rawTrade.date,
-            entry_price: rawTrade.entry_price || rawTrade.price,
-            // Ensure numeric fields are properly typed
-            quantity: Number(rawTrade.quantity),
-            price: Number(rawTrade.price),
-            total: Number(rawTrade.total),
-            pnl: rawTrade.pnl ? Number(rawTrade.pnl) : undefined,
-            exit_price: rawTrade.exit_price
-              ? Number(rawTrade.exit_price)
-              : undefined,
-          }),
-      );
+            // Ensure required fields are present with proper types
+            quantity: safeNumber(rawTrade.quantity, 0)!,
+            price: safeNumber(rawTrade.price, 0)!,
+            total: safeNumber(rawTrade.total, 0)!,
+            entry_price: safeNumber(rawTrade.entry_price || rawTrade.price, 0)!,
+            // Optional numeric fields
+            pnl: safeNumber(rawTrade.pnl),
+            exit_price: safeNumber(rawTrade.exit_price),
+            risk_reward: safeNumber(rawTrade.risk_reward),
+            stop_loss: safeNumber(rawTrade.stop_loss),
+            take_profit: safeNumber(rawTrade.take_profit),
+            risk_amount: safeNumber(rawTrade.risk_amount),
+            fees: safeNumber(rawTrade.fees),
+          };
+
+          return createTrade(baseTradeData);
+        } catch (error) {
+          console.error(`Error processing trade ${rawTrade.id}:`, error);
+          // Return a sanitized version of the trade with required fields
+          return createTrade({
+            ...rawTrade,
+            quantity: 0,
+            price: 0,
+            total: 0,
+            entry_price: 0,
+            timestamp: rawTrade.timestamp || new Date().toISOString(),
+            entry_time:
+              rawTrade.entry_time ||
+              rawTrade.time ||
+              new Date().toISOString().split("T")[1].split(".")[0],
+            entry_timestamp:
+              rawTrade.entry_timestamp ||
+              rawTrade.timestamp ||
+              new Date().toISOString(),
+            status: "error" as TradeStatus,
+          });
+        }
+      });
     },
     enabled: !!user,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
