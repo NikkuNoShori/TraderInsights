@@ -171,12 +171,16 @@ export function TradeList({
                       >
                         <button
                           className="inline-flex items-center gap-1 hover:text-foreground"
-                          onClick={() => column.sortable && onSort(column.id as SortField)}
+                          onClick={() =>
+                            column.sortable && onSort(column.id as SortField)
+                          }
                           disabled={!column.sortable}
                         >
                           {column.label}
                           {column.sortable && (
-                            <span className="relative z-10">{getSortIcon(column.id as SortField)}</span>
+                            <span className="relative z-10">
+                              {getSortIcon(column.id as SortField)}
+                            </span>
                           )}
                         </button>
                       </th>
@@ -248,10 +252,15 @@ export function TradeList({
                       </tr>
                       {expandedTrades.has(trade.id) && (
                         <tr className="border-t border-border dark:border-dark-border bg-muted/50 dark:bg-dark-muted/50">
-                          <td colSpan={visibleColumnConfigs.length + 2} className="py-4 px-8">
+                          <td
+                            colSpan={visibleColumnConfigs.length + 2}
+                            className="py-4 px-8"
+                          >
                             <div className="space-y-4">
                               <div className="flex justify-between items-center">
-                                <h4 className="text-sm font-medium">Trade Details</h4>
+                                <h4 className="text-sm font-medium">
+                                  Trade Details
+                                </h4>
                                 {trade.notes && (
                                   <span className="text-xs text-muted-foreground">
                                     Has Notes
@@ -263,13 +272,27 @@ export function TradeList({
                                 <table className="w-full text-sm">
                                   <thead>
                                     <tr className="border-b border-border dark:border-dark-border">
-                                      <th className="text-left py-2 px-4 font-medium text-muted-foreground">Order Type</th>
-                                      <th className="text-left py-2 px-4 font-medium text-muted-foreground">Date</th>
-                                      <th className="text-left py-2 px-4 font-medium text-muted-foreground">Time</th>
-                                      <th className="text-right py-2 px-4 font-medium text-muted-foreground">Price</th>
-                                      <th className="text-right py-2 px-4 font-medium text-muted-foreground">Quantity</th>
-                                      <th className="text-right py-2 px-4 font-medium text-muted-foreground">Total</th>
-                                      <th className="text-center py-2 px-4 font-medium text-muted-foreground">Actions</th>
+                                      <th className="text-left py-2 px-4 font-medium text-muted-foreground">
+                                        Order Type
+                                      </th>
+                                      <th className="text-left py-2 px-4 font-medium text-muted-foreground">
+                                        Date
+                                      </th>
+                                      <th className="text-left py-2 px-4 font-medium text-muted-foreground">
+                                        Time
+                                      </th>
+                                      <th className="text-right py-2 px-4 font-medium text-muted-foreground">
+                                        Price
+                                      </th>
+                                      <th className="text-right py-2 px-4 font-medium text-muted-foreground">
+                                        Quantity
+                                      </th>
+                                      <th className="text-right py-2 px-4 font-medium text-muted-foreground">
+                                        Total
+                                      </th>
+                                      <th className="text-center py-2 px-4 font-medium text-muted-foreground">
+                                        Actions
+                                      </th>
                                     </tr>
                                   </thead>
                                   <tbody className="divide-y divide-border dark:divide-dark-border">
@@ -280,9 +303,13 @@ export function TradeList({
                                           Buy
                                         </span>
                                       </td>
-                                      <td className="py-3 px-4">{trade.entry_date || trade.date}</td>
                                       <td className="py-3 px-4">
-                                        {new Date(trade.entry_date || trade.date).toLocaleTimeString()}
+                                        {trade.entry_date || trade.date}
+                                      </td>
+                                      <td className="py-3 px-4">
+                                        {new Date(
+                                          trade.entry_date || trade.date,
+                                        ).toLocaleTimeString()}
                                       </td>
                                       <td className="py-3 px-4 text-right">
                                         ${trade.entry_price?.toFixed(2)}
@@ -291,7 +318,10 @@ export function TradeList({
                                         {trade.quantity}
                                       </td>
                                       <td className="py-3 px-4 text-right">
-                                        ${(trade.entry_price * trade.quantity).toFixed(2)}
+                                        $
+                                        {(
+                                          trade.entry_price * trade.quantity
+                                        ).toFixed(2)}
                                       </td>
                                       <td className="py-3 px-4 text-center">
                                         <Button
@@ -301,7 +331,9 @@ export function TradeList({
                                           className="h-6 w-6 p-0 hover:bg-muted dark:hover:bg-dark-muted"
                                         >
                                           <Edit className="h-3 w-3" />
-                                          <span className="sr-only">Edit Buy Order</span>
+                                          <span className="sr-only">
+                                            Edit Buy Order
+                                          </span>
                                         </Button>
                                       </td>
                                     </tr>
@@ -314,9 +346,15 @@ export function TradeList({
                                             Sell
                                           </span>
                                         </td>
-                                        <td className="py-3 px-4">{trade.exit_date || '-'}</td>
                                         <td className="py-3 px-4">
-                                          {trade.exit_date ? new Date(trade.exit_date).toLocaleTimeString() : '-'}
+                                          {trade.exit_date || "-"}
+                                        </td>
+                                        <td className="py-3 px-4">
+                                          {trade.exit_date
+                                            ? new Date(
+                                                trade.exit_date,
+                                              ).toLocaleTimeString()
+                                            : "-"}
                                         </td>
                                         <td className="py-3 px-4 text-right">
                                           ${trade.exit_price.toFixed(2)}
@@ -325,17 +363,24 @@ export function TradeList({
                                           {trade.quantity}
                                         </td>
                                         <td className="py-3 px-4 text-right">
-                                          ${(trade.exit_price * trade.quantity).toFixed(2)}
+                                          $
+                                          {(
+                                            trade.exit_price * trade.quantity
+                                          ).toFixed(2)}
                                         </td>
                                         <td className="py-3 px-4 text-center">
                                           <Button
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() => onEdit(trade, "sell")}
+                                            onClick={() =>
+                                              onEdit(trade, "sell")
+                                            }
                                             className="h-6 w-6 p-0 hover:bg-muted dark:hover:bg-dark-muted"
                                           >
                                             <Edit className="h-3 w-3" />
-                                            <span className="sr-only">Edit Sell Order</span>
+                                            <span className="sr-only">
+                                              Edit Sell Order
+                                            </span>
                                           </Button>
                                         </td>
                                       </tr>
@@ -343,26 +388,55 @@ export function TradeList({
                                   </tbody>
                                   <tfoot className="border-t border-border dark:border-dark-border">
                                     <tr>
-                                      <td colSpan={3} className="py-3 px-4 font-medium">Performance Summary</td>
-                                      <td colSpan={4} className="py-3 px-4 text-right">
+                                      <td
+                                        colSpan={3}
+                                        className="py-3 px-4 font-medium"
+                                      >
+                                        Performance Summary
+                                      </td>
+                                      <td
+                                        colSpan={4}
+                                        className="py-3 px-4 text-right"
+                                      >
                                         <div className="space-y-1">
                                           <div className="flex justify-between">
-                                            <span className="text-muted-foreground">P/L:</span>
-                                            <span className={trade.total >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
+                                            <span className="text-muted-foreground">
+                                              P/L:
+                                            </span>
+                                            <span
+                                              className={
+                                                trade.total >= 0
+                                                  ? "text-green-600 dark:text-green-400"
+                                                  : "text-red-600 dark:text-red-400"
+                                              }
+                                            >
                                               ${trade.total?.toFixed(2)}
                                             </span>
                                           </div>
                                           <div className="flex justify-between">
-                                            <span className="text-muted-foreground">Return:</span>
-                                            <span className={trade.total >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
+                                            <span className="text-muted-foreground">
+                                              Return:
+                                            </span>
+                                            <span
+                                              className={
+                                                trade.total >= 0
+                                                  ? "text-green-600 dark:text-green-400"
+                                                  : "text-red-600 dark:text-red-400"
+                                              }
+                                            >
                                               {trade.exit_price
                                                 ? `${(((trade.exit_price - trade.entry_price) / trade.entry_price) * 100).toFixed(2)}%`
-                                                : '-'}
+                                                : "-"}
                                             </span>
                                           </div>
                                           <div className="flex justify-between">
-                                            <span className="text-muted-foreground">Fees:</span>
-                                            <span>${trade.fees?.toFixed(2) || '0.00'}</span>
+                                            <span className="text-muted-foreground">
+                                              Fees:
+                                            </span>
+                                            <span>
+                                              $
+                                              {trade.fees?.toFixed(2) || "0.00"}
+                                            </span>
                                           </div>
                                         </div>
                                       </td>
@@ -373,7 +447,9 @@ export function TradeList({
 
                               {trade.notes && (
                                 <div className="mt-4 bg-card dark:bg-dark-card rounded-lg p-3 border border-border dark:border-dark-border">
-                                  <p className="text-muted-foreground font-medium mb-2">Notes</p>
+                                  <p className="text-muted-foreground font-medium mb-2">
+                                    Notes
+                                  </p>
                                   <p className="text-sm">{trade.notes}</p>
                                 </div>
                               )}

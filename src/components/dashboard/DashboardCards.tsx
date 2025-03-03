@@ -1,15 +1,26 @@
 import type { Trade } from "@/types/trade";
 import { useMemo } from "@/lib/react";
 import { StatsCard } from "./StatsCard";
-import { TrendingUp, TrendingDown, Activity, DollarSign, Receipt } from "lucide-react";
+import {
+  TrendingUp,
+  TrendingDown,
+  Activity,
+  DollarSign,
+  Receipt,
+} from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 import { useFilteredTrades } from "@/hooks/useFilteredTrades";
+import { WinRateChart } from "./WinRateChart";
+import { PnLChart } from "./PnLChart";
+import { TradeDistributionChart } from "./TradeDistributionChart";
+import type { TimeframeOption } from "@/components/ui/TimeframeSelector";
 
 interface DashboardCardsProps {
   trades: Trade[];
+  timeframe: TimeframeOption;
 }
 
-export function DashboardCards({ trades }: DashboardCardsProps) {
+export function DashboardCards({ trades, timeframe }: DashboardCardsProps) {
   const filteredTrades = useFilteredTrades(trades, "overview");
 
   const stats = useMemo(() => {
@@ -26,25 +37,30 @@ export function DashboardCards({ trades }: DashboardCardsProps) {
     // Calculate raw P&L without fees
     const rawPnL = filteredTrades.reduce((sum, trade) => {
       if (trade.exit_price && trade.entry_price) {
-        const tradePnL = trade.side === "Long"
-          ? (trade.exit_price - trade.entry_price) * trade.quantity
-          : (trade.entry_price - trade.exit_price) * trade.quantity;
+        const tradePnL =
+          trade.side === "Long"
+            ? (trade.exit_price - trade.entry_price) * trade.quantity
+            : (trade.entry_price - trade.exit_price) * trade.quantity;
         return sum + tradePnL;
       }
       return sum;
     }, 0);
 
     // Calculate total fees
-    const totalFees = filteredTrades.reduce((sum, trade) => sum + (trade.fees || 0), 0);
+    const totalFees = filteredTrades.reduce(
+      (sum, trade) => sum + (trade.fees || 0),
+      0,
+    );
 
     // Calculate net return (P&L - fees)
     const netReturn = rawPnL - totalFees;
 
     const winningTrades = filteredTrades.filter((trade) => {
       if (trade.exit_price && trade.entry_price) {
-        const tradePnL = trade.side === "Long"
-          ? (trade.exit_price - trade.entry_price) * trade.quantity
-          : (trade.entry_price - trade.exit_price) * trade.quantity;
+        const tradePnL =
+          trade.side === "Long"
+            ? (trade.exit_price - trade.entry_price) * trade.quantity
+            : (trade.entry_price - trade.exit_price) * trade.quantity;
         return tradePnL > 0;
       }
       return false;
@@ -64,47 +80,61 @@ export function DashboardCards({ trades }: DashboardCardsProps) {
     };
   }, [filteredTrades]);
 
-  if (filteredTrades.length === 0) {
-    return (
-      <div className="w-full max-w-[1400px] mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          <StatsCard
-            title="P&L"
-            value="--"
-            icon={TrendingUp}
-            subtitle="No trades yet"
-          />
-          <StatsCard
-            title="Total Fees"
-            value="--"
-            icon={Receipt}
-            subtitle="No trades yet"
-          />
-          <StatsCard
-            title="Net Return"
-            value="--"
-            icon={DollarSign}
-            subtitle="No trades yet"
-          />
-          <StatsCard
-            title="Win Rate"
-            value="--"
-            icon={Activity}
-            subtitle="No trades yet"
-          />
-          <StatsCard
-            title="Total Trades"
-            value="0"
-            icon={Activity}
-            subtitle="No trades yet"
-          />
+  const renderEmptyState = () => (
+    <div className="w-full max-w-[1400px] mx-auto space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <StatsCard
+          title="P&L"
+          value="--"
+          icon={TrendingUp}
+          subtitle="No trades yet"
+        />
+        <StatsCard
+          title="Total Fees"
+          value="--"
+          icon={Receipt}
+          subtitle="No trades yet"
+        />
+        <StatsCard
+          title="Net Return"
+          value="--"
+          icon={DollarSign}
+          subtitle="No trades yet"
+        />
+        <StatsCard
+          title="Win Rate"
+          value="--"
+          icon={Activity}
+          subtitle="No trades yet"
+        />
+        <StatsCard
+          title="Total Trades"
+          value="0"
+          icon={Activity}
+          subtitle="No trades yet"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
+          <h3 className="text-lg font-medium mb-4">Win Rate Over Time</h3>
+          <WinRateChart trades={[]} timeframe={timeframe} />
+        </div>
+        <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
+          <h3 className="text-lg font-medium mb-4">P&L Over Time</h3>
+          <PnLChart trades={[]} timeframe={timeframe} />
         </div>
       </div>
-    );
-  }
 
-  return (
-    <div className="w-full max-w-[1400px] mx-auto">
+      <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
+        <h3 className="text-lg font-medium mb-4">Trade Distribution</h3>
+        <TradeDistributionChart trades={[]} timeframe={timeframe} />
+      </div>
+    </div>
+  );
+
+  const renderStats = () => (
+    <div className="w-full max-w-[1400px] mx-auto space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         <StatsCard
           title="P&L"
@@ -139,6 +169,24 @@ export function DashboardCards({ trades }: DashboardCardsProps) {
           icon={Activity}
         />
       </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
+          <h3 className="text-lg font-medium mb-4">Win Rate Over Time</h3>
+          <WinRateChart trades={filteredTrades} timeframe={timeframe} />
+        </div>
+        <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
+          <h3 className="text-lg font-medium mb-4">P&L Over Time</h3>
+          <PnLChart trades={filteredTrades} timeframe={timeframe} />
+        </div>
+      </div>
+
+      <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
+        <h3 className="text-lg font-medium mb-4">Trade Distribution</h3>
+        <TradeDistributionChart trades={filteredTrades} timeframe={timeframe} />
+      </div>
     </div>
   );
+
+  return filteredTrades.length === 0 ? renderEmptyState() : renderStats();
 }

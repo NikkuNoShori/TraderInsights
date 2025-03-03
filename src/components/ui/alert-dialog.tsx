@@ -17,7 +17,7 @@ const AlertDialogOverlay = React.forwardRef<
       "fixed inset-0 z-50 bg-black/50 backdrop-blur-sm",
       "data-[state=open]:animate-in data-[state=closed]:animate-out",
       "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-      className
+      className,
     )}
     {...props}
     ref={ref}
@@ -44,7 +44,7 @@ const AlertDialogContent = React.forwardRef<
         "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
         "data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%]",
         "data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
-        className
+        className,
       )}
       {...props}
     />
@@ -59,7 +59,7 @@ const AlertDialogHeader = ({
   <div
     className={cn(
       "flex flex-col space-y-2 text-center sm:text-left",
-      className
+      className,
     )}
     {...props}
   />
@@ -73,7 +73,7 @@ const AlertDialogFooter = ({
   <div
     className={cn(
       "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
-      className
+      className,
     )}
     {...props}
   />
@@ -102,7 +102,8 @@ const AlertDialogDescription = React.forwardRef<
     {...props}
   />
 ));
-AlertDialogDescription.displayName = AlertDialogPrimitive.Description.displayName;
+AlertDialogDescription.displayName =
+  AlertDialogPrimitive.Description.displayName;
 
 const AlertDialogAction = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Action>,
@@ -116,7 +117,7 @@ const AlertDialogAction = React.forwardRef<
       "disabled:opacity-50 disabled:pointer-events-none",
       "bg-primary text-primary-foreground hover:bg-primary/90",
       "h-10 py-2 px-4",
-      className
+      className,
     )}
     {...props}
   />
@@ -136,7 +137,7 @@ const AlertDialogCancel = React.forwardRef<
       "border border-border hover:bg-accent hover:text-accent-foreground",
       "h-10 py-2 px-4",
       "mt-2 sm:mt-0",
-      className
+      className,
     )}
     {...props}
   />
@@ -153,4 +154,4 @@ export {
   AlertDialogDescription,
   AlertDialogAction,
   AlertDialogCancel,
-}; 
+};

@@ -20,7 +20,7 @@ import { FilterBar } from "@/components/trades/FilterBar";
 import { useFilteredTrades } from "@/hooks/useFilteredTrades";
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100, -1] as const;
-type PageSize = typeof PAGE_SIZE_OPTIONS[number];
+type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
 const DEFAULT_PAGE_SIZE = PAGE_SIZE_OPTIONS[0];
 
 export default function TradingJournal() {
@@ -29,7 +29,9 @@ export default function TradingJournal() {
     useTradeStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
-  const [selectedOrderType, setSelectedOrderType] = useState<"buy" | "sell" | undefined>();
+  const [selectedOrderType, setSelectedOrderType] = useState<
+    "buy" | "sell" | undefined
+  >();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<PageSize>(DEFAULT_PAGE_SIZE);
   const [sort, setSort] = useState<SortState>({
@@ -78,10 +80,15 @@ export default function TradingJournal() {
   };
 
   const sortedTrades = sortTrades(tradesWithCalculatedValues);
-  const totalPages = pageSize === -1 ? 1 : Math.ceil(sortedTrades.length / pageSize);
-  const paginatedTrades = pageSize === -1 
-    ? sortedTrades 
-    : sortedTrades.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const totalPages =
+    pageSize === -1 ? 1 : Math.ceil(sortedTrades.length / pageSize);
+  const paginatedTrades =
+    pageSize === -1
+      ? sortedTrades
+      : sortedTrades.slice(
+          (currentPage - 1) * pageSize,
+          currentPage * pageSize,
+        );
 
   const handleSort = (field: SortField) => {
     setSort((prev) => ({
@@ -101,7 +108,7 @@ export default function TradingJournal() {
     try {
       const now = new Date().toISOString();
       const completeTradeData = {
-          ...tradeData,
+        ...tradeData,
         created_at: selectedTrade?.created_at || now,
         updated_at: now,
       };

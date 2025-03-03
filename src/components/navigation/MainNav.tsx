@@ -319,7 +319,8 @@ export function MainNav() {
                     "group-hover:text-primary-700 dark:group-hover:text-primary-300",
                   )}
                 >
-                  Hey, {profile?.first_name || user?.email?.split("@")[0] || "there"}
+                  Hey,{" "}
+                  {profile?.first_name || user?.email?.split("@")[0] || "there"}
                 </span>
               )}
             </button>

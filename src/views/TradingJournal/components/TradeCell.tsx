@@ -20,18 +20,10 @@ export function TradeCell({ columnId, trade, value }: TradeCellProps) {
   // Default rendering based on column type
   switch (columnId) {
     case "date":
-      return (
-        <span className="font-medium">
-          {value}
-        </span>
-      );
+      return <span className="font-medium">{value}</span>;
 
     case "time":
-      return (
-        <span className="font-medium text-muted-foreground">
-          {value}
-        </span>
-      );
+      return <span className="font-medium text-muted-foreground">{value}</span>;
 
     case "broker_id":
       return (

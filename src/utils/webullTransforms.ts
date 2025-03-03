@@ -8,7 +8,7 @@ import type {
 } from "@/types/trade";
 
 export function transformWebullTrade(
-  webullTrade: WebullTrade
+  webullTrade: WebullTrade,
 ): CreateTradeData {
   // Map Webull action to our TradeSide
   const side: TradeSide = webullTrade.action === "BUY" ? "Long" : "Short";
@@ -59,14 +59,14 @@ export function transformWebullTrade(
 }
 
 export function transformWebullTrades(
-  webullTrades: WebullTrade[]
+  webullTrades: WebullTrade[],
 ): CreateTradeData[] {
   console.log("Starting trade transformation with trades:", webullTrades);
 
   // Sort all trades by createTime first
   const sortedTrades = [...webullTrades].sort(
     (a, b) =>
-      new Date(a.createTime).getTime() - new Date(b.createTime).getTime()
+      new Date(a.createTime).getTime() - new Date(b.createTime).getTime(),
   );
 
   // Group trades by symbol to find matching pairs
@@ -87,7 +87,7 @@ export function transformWebullTrades(
     const sellTrades = trades.filter((t) => t.action === "SELL");
 
     console.log(
-      `Found ${buyTrades.length} BUY trades and ${sellTrades.length} SELL trades for ${symbol}`
+      `Found ${buyTrades.length} BUY trades and ${sellTrades.length} SELL trades for ${symbol}`,
     );
 
     // Process each BUY trade
@@ -99,13 +99,13 @@ export function transformWebullTrades(
         (sell) =>
           (sell.filledQuantity || sell.quantity) ===
             (buyTrade.filledQuantity || buyTrade.quantity) &&
-          new Date(sell.createTime) > new Date(buyTrade.createTime)
+          new Date(sell.createTime) > new Date(buyTrade.createTime),
       );
 
       if (matchingSellIndex !== -1) {
         const matchingSellTrade = sellTrades[matchingSellIndex];
         console.log(
-          `Found matching SELL trade for BUY trade ${buyTrade.orderId} -> ${matchingSellTrade.orderId}`
+          `Found matching SELL trade for BUY trade ${buyTrade.orderId} -> ${matchingSellTrade.orderId}`,
         );
 
         // Set exit information

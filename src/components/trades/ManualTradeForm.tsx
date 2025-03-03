@@ -76,12 +76,14 @@ export function ManualTradeForm({
       side: (initialData?.side as TradeSide) || "Long",
       quantity: initialData?.quantity || undefined,
       price: initialData?.price || undefined,
-      entry_date: orderType === "sell" 
-        ? initialData?.exit_date 
-        : (initialData?.entry_date || new Date().toISOString().split("T")[0]),
-      entry_price: orderType === "sell"
-        ? initialData?.exit_price
-        : (initialData?.entry_price || undefined),
+      entry_date:
+        orderType === "sell"
+          ? initialData?.exit_date
+          : initialData?.entry_date || new Date().toISOString().split("T")[0],
+      entry_price:
+        orderType === "sell"
+          ? initialData?.exit_price
+          : initialData?.entry_price || undefined,
       exit_price: initialData?.exit_price,
       exit_date: initialData?.exit_date,
       notes: initialData?.notes || "",
@@ -104,11 +106,18 @@ export function ManualTradeForm({
         ...data,
         direction: data.side,
         total: data.quantity * data.price,
-        date: orderType === "sell" ? data.exit_date || datePart : data.entry_date,
+        date:
+          orderType === "sell" ? data.exit_date || datePart : data.entry_date,
         time: timePart.split(".")[0],
         timestamp: currentTime,
-        entry_time: orderType === "sell" ? initialData?.entry_time || "" : timePart.split(".")[0],
-        entry_timestamp: orderType === "sell" ? initialData?.entry_timestamp || currentTime : currentTime,
+        entry_time:
+          orderType === "sell"
+            ? initialData?.entry_time || ""
+            : timePart.split(".")[0],
+        entry_timestamp:
+          orderType === "sell"
+            ? initialData?.entry_timestamp || currentTime
+            : currentTime,
         status: orderType === "sell" ? "closed" : "open",
         option_details: isOption ? data.option_details : undefined,
       };
@@ -155,8 +164,8 @@ export function ManualTradeForm({
               )}
             </div>
 
-            <Select 
-              value={watch("type")} 
+            <Select
+              value={watch("type")}
               onValueChange={handleTypeChange}
               disabled={!!orderType}
             >
@@ -200,14 +209,19 @@ export function ManualTradeForm({
         )}
 
         <Input
-          {...register(orderType === "sell" ? "exit_price" : "entry_price", { valueAsNumber: true })}
+          {...register(orderType === "sell" ? "exit_price" : "entry_price", {
+            valueAsNumber: true,
+          })}
           type="number"
           step="0.01"
           placeholder={`${orderType === "sell" ? "Exit" : "Entry"} Price`}
         />
         {errors[orderType === "sell" ? "exit_price" : "entry_price"] && (
           <span className="text-xs text-red-500">
-            {errors[orderType === "sell" ? "exit_price" : "entry_price"]?.message}
+            {
+              errors[orderType === "sell" ? "exit_price" : "entry_price"]
+                ?.message
+            }
           </span>
         )}
 

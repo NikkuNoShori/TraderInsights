@@ -41,7 +41,10 @@ export default function ProfileSettings() {
         email: formData.email,
       };
 
-      const updatedProfile = await profileService.updateProfile(user.id, updates);
+      const updatedProfile = await profileService.updateProfile(
+        user.id,
+        updates,
+      );
 
       if (!updatedProfile) {
         throw new Error("Failed to update profile");

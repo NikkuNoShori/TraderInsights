@@ -26,15 +26,17 @@ export default function BrokerSettings() {
     setIsClearing(true);
     try {
       // Get all trades for this broker
-      const brokerTrades = trades.filter(trade => trade.broker_id === brokerId);
-      
+      const brokerTrades = trades.filter(
+        (trade) => trade.broker_id === brokerId,
+      );
+
       // Delete each trade
       for (const trade of brokerTrades) {
         await deleteTrade(trade.id);
       }
 
       // Clear from webull service if it's webull
-      if (brokerId === 'webull') {
+      if (brokerId === "webull") {
         webullService.clearTrades();
       }
 
@@ -93,7 +95,9 @@ export default function BrokerSettings() {
             <div className="p-4 border border-border dark:border-dark-border rounded-lg bg-background dark:bg-dark-bg">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-medium text-foreground dark:text-dark-text">Webull</h3>
+                  <h3 className="font-medium text-foreground dark:text-dark-text">
+                    Webull
+                  </h3>
                   <p className="text-sm text-muted-foreground dark:text-dark-muted">
                     Clear all imported Webull trade data
                   </p>
@@ -115,14 +119,14 @@ export default function BrokerSettings() {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Clear Webull Trades</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This will permanently delete all imported Webull trades. This
-                        action cannot be undone.
+                        This will permanently delete all imported Webull trades.
+                        This action cannot be undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={() => handleClearBrokerTrades('webull')}
+                        onClick={() => handleClearBrokerTrades("webull")}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       >
                         Clear Trades
@@ -137,7 +141,9 @@ export default function BrokerSettings() {
             <div className="p-4 border border-border dark:border-dark-border rounded-lg bg-muted/50 dark:bg-dark-muted/50">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-medium text-foreground dark:text-dark-text">All Trades</h3>
+                  <h3 className="font-medium text-foreground dark:text-dark-text">
+                    All Trades
+                  </h3>
                   <p className="text-sm text-muted-foreground dark:text-dark-muted">
                     Clear all trade data from all brokers
                   </p>
@@ -159,8 +165,8 @@ export default function BrokerSettings() {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Clear All Trades</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This will permanently delete all trades from all brokers. This
-                        action cannot be undone.
+                        This will permanently delete all trades from all
+                        brokers. This action cannot be undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -181,4 +187,4 @@ export default function BrokerSettings() {
       </div>
     </div>
   );
-} 
+}

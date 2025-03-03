@@ -74,7 +74,7 @@ class WebullService {
   }
 
   public async login(
-    credentials: WebullCredentials
+    credentials: WebullCredentials,
   ): Promise<WebullAuthResponse> {
     if (!this.webullClient) {
       await this.init();
@@ -149,13 +149,13 @@ class WebullService {
         // Filter out trades that are older than the last sync
         const newTrades = lastSync
           ? mockTrades.filter(
-              (trade) => new Date(trade.createTime) > new Date(lastSync)
+              (trade) => new Date(trade.createTime) > new Date(lastSync),
             )
           : mockTrades;
 
         console.log(
           "Generated new trades since last sync:",
-          JSON.stringify(newTrades, null, 2)
+          JSON.stringify(newTrades, null, 2),
         );
 
         // Update last sync time
@@ -173,7 +173,7 @@ class WebullService {
       // Filter out trades that are older than the last sync
       const newOrders = lastSync
         ? mappedOrders.filter(
-            (order) => new Date(order.createTime) > new Date(lastSync)
+            (order) => new Date(order.createTime) > new Date(lastSync),
           )
         : mappedOrders;
 
@@ -198,31 +198,32 @@ class WebullService {
     const existingWinRate =
       existingTrades.length > 0
         ? existingTrades.filter((trade) => {
-          const buyOrder = existingTrades.find(
-            (t) =>
-              t.symbol === trade.symbol &&
-              t.action === "BUY" &&
-              t.orderId.split("-")[2] === trade.orderId.split("-")[2]
-          );
-          const sellOrder = existingTrades.find(
-            (t) =>
-              t.symbol === trade.symbol &&
-              t.action === "SELL" &&
-              t.orderId.split("-")[2] === trade.orderId.split("-")[2]
-          );
+            const buyOrder = existingTrades.find(
+              (t) =>
+                t.symbol === trade.symbol &&
+                t.action === "BUY" &&
+                t.orderId.split("-")[2] === trade.orderId.split("-")[2],
+            );
+            const sellOrder = existingTrades.find(
+              (t) =>
+                t.symbol === trade.symbol &&
+                t.action === "SELL" &&
+                t.orderId.split("-")[2] === trade.orderId.split("-")[2],
+            );
 
-          if (!buyOrder || !sellOrder || trade.action !== "SELL") return false;
+            if (!buyOrder || !sellOrder || trade.action !== "SELL")
+              return false;
 
-          // For Long trades: sell price should be higher than buy price
-          // For Short trades: sell price should be lower than buy price
-          const isLongTrade = buyOrder.createTime < sellOrder.createTime;
-          const buyPrice = buyOrder.filledPrice || buyOrder.price || 0;
-          const sellPrice = sellOrder.filledPrice || sellOrder.price || 0;
+            // For Long trades: sell price should be higher than buy price
+            // For Short trades: sell price should be lower than buy price
+            const isLongTrade = buyOrder.createTime < sellOrder.createTime;
+            const buyPrice = buyOrder.filledPrice || buyOrder.price || 0;
+            const sellPrice = sellOrder.filledPrice || sellOrder.price || 0;
 
-          return isLongTrade
-            ? sellPrice > buyPrice // Long trade is profitable if sell > buy
-            : sellPrice < buyPrice; // Short trade is profitable if sell < buy
-        }).length /
+            return isLongTrade
+              ? sellPrice > buyPrice // Long trade is profitable if sell > buy
+              : sellPrice < buyPrice; // Short trade is profitable if sell < buy
+          }).length /
           (existingTrades.length / 2)
         : 0.5; // Default to 50% if no existing trades
 
@@ -249,11 +250,11 @@ class WebullService {
           ? entryPrice * (1 + Math.random() * 0.2) // Long winner: +0-20%
           : entryPrice * (1 - Math.random() * 0.05) // Long loser: -0-5%
         : isWinner
-        ? entryPrice * (1 - Math.random() * 0.2) // Short winner: -0-20%
-        : entryPrice * (1 + Math.random() * 0.05); // Short loser: +0-5%
+          ? entryPrice * (1 - Math.random() * 0.2) // Short winner: -0-20%
+          : entryPrice * (1 + Math.random() * 0.05); // Short loser: +0-5%
 
       const createTime = new Date(
-        Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
+        Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000,
       );
       const updateTime = new Date(createTime.getTime() + 1000 * 60 * 60 * 24); // 24 hours later
 
@@ -416,7 +417,7 @@ class WebullService {
       const orderType =
         orderTypes[Math.floor(Math.random() * orderTypes.length)];
       const createTime = new Date(
-        Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
+        Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000,
       );
 
       const mockTrade: WebullTrade = {
@@ -433,7 +434,7 @@ class WebullService {
         status: action === "BUY" ? "FILLED" : "PENDING",
         createTime: createTime.toISOString(),
         updateTime: new Date(
-          createTime.getTime() + Math.random() * 60 * 60 * 1000
+          createTime.getTime() + Math.random() * 60 * 60 * 1000,
         ).toISOString(),
         commission: Math.random() * 10,
         exchange: exchanges[Math.floor(Math.random() * exchanges.length)],
