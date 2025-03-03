@@ -1,77 +1,56 @@
+import { useDashboardStore, type CardType } from "@/stores/dashboardStore";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Settings } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { useDashboardStore, CARD_CONFIGS, type CardType } from "@/stores/dashboardStore";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuCheckboxItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface DashboardConfigProps {
   section: "dashboard" | "journal";
 }
 
-export function DashboardConfig({ section }: DashboardConfigProps) {
-  const { enabledCards, toggleCard, resetCards } = useDashboardStore();
+const CARD_LABELS: Record<CardType, string> = {
+  total_pnl: "Total P&L",
+  win_rate: "Win Rate",
+  profit_factor: "Profit Factor",
+  average_win: "Average Win",
+  average_loss: "Average Loss",
+  total_trades: "Total Trades",
+  max_drawdown_pct: "Max Drawdown",
+  recent_trades: "Recent Trades",
+  playbook: "Playbook",
+  active_trades: "Active Trades",
+};
 
-  const availableCards = Object.values(CARD_CONFIGS).filter(
-    (card) => card.section === section
-  );
+export function DashboardConfig({ section }: DashboardConfigProps) {
+  const { enabledCards, toggleCard } = useDashboardStore();
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="sm">
           <Settings className="h-4 w-4" />
-          <span>Configure Cards</span>
+          <span className="sr-only">Open dashboard settings</span>
         </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Configure Dashboard Cards</DialogTitle>
-        </DialogHeader>
-        <ScrollArea className="h-[400px] pr-4">
-          <div className="space-y-4">
-            <div className="space-y-4">
-              {availableCards.map((card) => (
-                <div key={card.id} className="flex items-start space-x-3">
-                  <Checkbox
-                    id={card.id}
-                    checked={enabledCards[section].includes(card.id)}
-                    onCheckedChange={() => toggleCard(section, card.id as CardType)}
-                  />
-                  <div className="space-y-1">
-                    <Label
-                      htmlFor={card.id}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      {card.title}
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      {card.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <Separator />
-            <div className="flex justify-end space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => resetCards(section)}
-              >
-                Reset to Default
-              </Button>
-            </div>
-          </div>
-        </ScrollArea>
-      </DialogContent>
-    </Dialog>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel>Dashboard Layout</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {Object.entries(CARD_LABELS).map(([id, label]) => (
+          <DropdownMenuCheckboxItem
+            key={id}
+            checked={enabledCards[section].includes(id as CardType)}
+            onCheckedChange={() => toggleCard(section, id as CardType)}
+          >
+            {label}
+          </DropdownMenuCheckboxItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

@@ -25,7 +25,7 @@ export default function Dashboard() {
         <TimeframeSelector value={timeframe} onValueChange={setTimeframe} className="w-32" />
       </div>
       <div className="space-y-6">
-        <DashboardCards trades={trades} timeframe={timeframe} />
+        <DashboardCards trades={trades} timeframe={timeframe} section="dashboard" />
       </div>
     </div>
   );

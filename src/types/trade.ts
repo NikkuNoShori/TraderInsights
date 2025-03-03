@@ -17,8 +17,8 @@ export interface BaseTrade {
   time: string;
   timestamp: string;
   symbol: string;
-  type: TradeType;
-  side: TradeSide;
+  type: "stock" | "option";
+  side: "Long" | "Short";
   direction: TradeSide;
   quantity: number;
   price: number;
@@ -32,6 +32,7 @@ export interface BaseTrade {
   exit_timestamp?: string;
   exit_price?: number;
   pnl?: number;
+  unrealized_pnl?: number;
   status: TradeStatus;
   notes?: string;
   setup_type?: string;
@@ -45,6 +46,8 @@ export interface BaseTrade {
   option_details?: OptionDetails;
   created_at: string;
   updated_at: string;
+  closed_at?: string;
+  playbook?: string;
 }
 
 // Main Trade type that includes all fields

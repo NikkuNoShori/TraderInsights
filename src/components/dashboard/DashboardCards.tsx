@@ -1,21 +1,14 @@
 import type { Trade } from "@/types/trade";
 import { useMemo } from "@/lib/react";
 import { StatsCard } from "./StatsCard";
-import {
-  TrendingUp,
-  TrendingDown,
-  Activity,
-  DollarSign,
-  Receipt,
-} from "lucide-react";
 import { formatCurrency, formatPercentage } from "@/utils/format";
 import { useFilteredTrades } from "@/hooks/useFilteredTrades";
-import { WinRateChart } from "./WinRateChart";
-import { PnLChart } from "./PnLChart";
-import { TradeDistributionChart } from "./TradeDistributionChart";
 import { DashboardConfig } from "./DashboardConfig";
 import { useDashboardStore, type CardType } from "@/stores/dashboardStore";
 import type { TimeframeOption } from "@/components/ui/TimeframeSelector";
+import { RecentTradesCard } from "./RecentTradesCard";
+import { PlaybookCard } from "./PlaybookCard";
+import { ActiveTradesCard } from "./ActiveTradesCard";
 
 interface DashboardCardsProps {
   trades: Trade[];
@@ -23,7 +16,7 @@ interface DashboardCardsProps {
   section: "dashboard" | "journal";
 }
 
-type StatCardType = "total_pnl" | "win_rate" | "profit_factor" | "largest_trade";
+type StatCardType = "total_pnl" | "win_rate" | "profit_factor" | "average_win" | "average_loss" | "total_trades" | "max_drawdown_pct";
 
 type StatCardData = {
   title: string;
@@ -35,7 +28,7 @@ type StatCardData = {
 
 export function DashboardCards({ trades, timeframe, section }: DashboardCardsProps) {
   const { stats, isLoading } = useFilteredTrades();
-  const enabledCards = useDashboardStore((state) => state.enabledCards[section]);
+  const enabledCards = useDashboardStore((state) => state.enabledCards[section] || []);
 
   const statCards = useMemo<Record<StatCardType, StatCardData>>(() => ({
     total_pnl: {
@@ -59,61 +52,43 @@ export function DashboardCards({ trades, timeframe, section }: DashboardCardsPro
       trend: stats.profitFactor > 1 ? "up" : "down",
       trendValue: formatCurrency(stats.averageWin),
     },
-    largest_trade: {
-      title: "Largest Trade",
-      value: formatCurrency(Math.max(Math.abs(stats.largestWin), Math.abs(stats.largestLoss))),
-      description: "Largest single trade P&L",
-      trend: stats.largestWin > Math.abs(stats.largestLoss) ? "up" : "down",
+    average_win: {
+      title: "Average Win",
+      value: formatCurrency(stats.averageWin),
+      description: "Average profit per winning trade",
+      trend: "up",
+      trendValue: formatCurrency(stats.averageWin),
+    },
+    average_loss: {
+      title: "Average Loss",
+      value: formatCurrency(stats.averageLoss),
+      description: "Average loss per losing trade",
+      trend: "down",
       trendValue: formatCurrency(stats.averageLoss),
+    },
+    total_trades: {
+      title: "Total Trades",
+      value: stats.totalTrades.toString(),
+      description: "Total number of trades",
+      trend: stats.totalTrades > 0 ? "up" : "down",
+      trendValue: `${formatPercentage(stats.winRate)} win rate`,
+    },
+    max_drawdown_pct: {
+      title: "Max Drawdown",
+      value: formatPercentage(stats.maxDrawdown),
+      description: "Maximum drawdown percentage",
+      trend: "down",
+      trendValue: formatCurrency(Math.abs(stats.maxDrawdown * stats.totalPnL)),
     },
   } as const), [stats]);
 
-  const renderEmptyState = () => (
+  const renderCards = () => (
     <div className="w-full max-w-[1200px] mx-auto space-y-4">
       <div className="flex justify-end">
         <DashboardConfig section={section} />
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-        {Object.entries(statCards).map(([id, card]) => (
-          enabledCards.includes(id as CardType) && (
-            <StatsCard
-              key={id}
-              {...card}
-              isLoading={true}
-            />
-          )
-        ))}
-      </div>
-
-      {enabledCards.includes("win_rate_chart") && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="bg-card dark:bg-dark-paper p-4 rounded-lg border border-border dark:border-dark-border">
-            <h3 className="text-lg font-medium mb-3">Win Rate Over Time</h3>
-            <WinRateChart trades={[]} timeframe={timeframe} />
-          </div>
-          {enabledCards.includes("pnl_chart") && (
-            <div className="bg-card dark:bg-dark-paper p-4 rounded-lg border border-border dark:border-dark-border">
-              <h3 className="text-lg font-medium mb-3">P&L Over Time</h3>
-              <PnLChart trades={[]} timeframe={timeframe} />
-            </div>
-          )}
-        </div>
-      )}
-
-      {enabledCards.includes("trade_distribution") && (
-        <div className="bg-card dark:bg-dark-paper p-4 rounded-lg border border-border dark:border-dark-border">
-          <h3 className="text-lg font-medium mb-3">Trade Distribution</h3>
-          <TradeDistributionChart trades={[]} timeframe={timeframe} />
-        </div>
-      )}
-    </div>
-  );
-
-  const renderStats = () => (
-    <div className="w-full max-w-[1200px] mx-auto space-y-4">
-      <div className="flex justify-end">
-        <DashboardConfig section={section} />
-      </div>
+      
+      {/* Stat Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {Object.entries(statCards).map(([id, card]) => (
           enabledCards.includes(id as CardType) && (
@@ -126,29 +101,22 @@ export function DashboardCards({ trades, timeframe, section }: DashboardCardsPro
         ))}
       </div>
 
-      {enabledCards.includes("win_rate_chart") && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="bg-card dark:bg-dark-paper p-4 rounded-lg border border-border dark:border-dark-border">
-            <h3 className="text-lg font-medium mb-3">Win Rate Over Time</h3>
-            <WinRateChart trades={trades} timeframe={timeframe} />
-          </div>
-          {enabledCards.includes("pnl_chart") && (
-            <div className="bg-card dark:bg-dark-paper p-4 rounded-lg border border-border dark:border-dark-border">
-              <h3 className="text-lg font-medium mb-3">P&L Over Time</h3>
-              <PnLChart trades={trades} timeframe={timeframe} />
-            </div>
-          )}
-        </div>
-      )}
+      {/* Feature Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {enabledCards.includes("recent_trades") && (
+          <RecentTradesCard trades={trades} timeframe={timeframe} />
+        )}
+        {enabledCards.includes("playbook") && (
+          <PlaybookCard trades={trades} />
+        )}
+      </div>
 
-      {enabledCards.includes("trade_distribution") && (
-        <div className="bg-card dark:bg-dark-paper p-4 rounded-lg border border-border dark:border-dark-border">
-          <h3 className="text-lg font-medium mb-3">Trade Distribution</h3>
-          <TradeDistributionChart trades={trades} timeframe={timeframe} />
-        </div>
+      {/* Full Width Cards */}
+      {enabledCards.includes("active_trades") && (
+        <ActiveTradesCard trades={trades.filter(t => !t.closed_at)} />
       )}
     </div>
   );
 
-  return trades.length === 0 ? renderEmptyState() : renderStats();
+  return renderCards();
 }

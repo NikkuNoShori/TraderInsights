@@ -1,47 +1,27 @@
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./select";
-import { cn } from "@/utils/cn";
+import { Button } from "@/components/ui/button";
 
-export type TimeframeOption = "1D" | "1W" | "1M" | "3M" | "YTD" | "1Y" | "ALL";
+export type TimeframeOption = "1D" | "1W" | "1M" | "3M" | "6M" | "1Y" | "ALL";
 
 interface TimeframeSelectorProps {
   value: TimeframeOption;
-  onValueChange: (value: TimeframeOption) => void;
-  className?: string;
+  onChange: (value: TimeframeOption) => void;
 }
 
-const OPTIONS: { value: TimeframeOption; label: string }[] = [
-  { value: "1D", label: "1 Day" },
-  { value: "1W", label: "1 Week" },
-  { value: "1M", label: "1 Month" },
-  { value: "3M", label: "3 Months" },
-  { value: "YTD", label: "Year to Date" },
-  { value: "1Y", label: "1 Year" },
-  { value: "ALL", label: "All Time" },
-];
+const timeframeOptions: TimeframeOption[] = ["1D", "1W", "1M", "3M", "6M", "1Y", "ALL"];
 
-export function TimeframeSelector({
-  value,
-  onValueChange,
-  className,
-}: TimeframeSelectorProps) {
+export function TimeframeSelector({ value, onChange }: TimeframeSelectorProps) {
   return (
-    <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger className={cn("w-[180px]", className)}>
-        <SelectValue placeholder="Select timeframe" />
-      </SelectTrigger>
-      <SelectContent>
-        {OPTIONS.map((option) => (
-          <SelectItem key={option.value} value={option.value}>
-            {option.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="flex items-center space-x-2">
+      {timeframeOptions.map((option) => (
+        <Button
+          key={option}
+          variant={value === option ? "default" : "ghost"}
+          size="sm"
+          onClick={() => onChange(option)}
+        >
+          {option}
+        </Button>
+      ))}
+    </div>
   );
 }

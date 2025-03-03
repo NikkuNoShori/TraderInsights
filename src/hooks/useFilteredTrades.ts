@@ -20,6 +20,18 @@ function calculateTradePnL(trade: Trade): number {
   return trade.side === "Short" ? -rawPnL : rawPnL;
 }
 
+interface TradeStats {
+  totalPnL: number;
+  winRate: number;
+  totalTrades: number;
+  profitFactor: number;
+  averageWin: number;
+  averageLoss: number;
+  largestWin: number;
+  largestLoss: number;
+  maxDrawdown: number;
+}
+
 export function useFilteredTrades() {
   const { data: trades = [], isLoading, error } = useTrades();
   const { filters, activeSection } = useFilterStore();
@@ -34,7 +46,7 @@ export function useFilteredTrades() {
   }, [trades, filters, activeSection]);
 
   // Calculate aggregated stats from filtered trades
-  const stats = useMemo(() => {
+  const stats = useMemo<TradeStats>(() => {
     // Ensure filteredTrades is an array
     if (!Array.isArray(filteredTrades) || filteredTrades.length === 0) {
       return {
@@ -46,40 +58,66 @@ export function useFilteredTrades() {
         averageLoss: 0,
         largestWin: 0,
         largestLoss: 0,
+        maxDrawdown: 0,
       };
     }
 
-    // Calculate P&L for each trade
-    const tradesWithPnL = filteredTrades.map((trade) => ({
-      ...trade,
-      calculatedPnL: calculateTradePnL(trade),
-    }));
+    const winningTrades = filteredTrades.filter(
+      (trade) => (trade.pnl || 0) > 0
+    );
+    const losingTrades = filteredTrades.filter((trade) => (trade.pnl || 0) < 0);
 
-    const wins = tradesWithPnL.filter((trade) => trade.calculatedPnL > 0);
-    const losses = tradesWithPnL.filter((trade) => trade.calculatedPnL < 0);
-
-    const totalPnL = tradesWithPnL.reduce(
-      (sum, trade) => sum + trade.calculatedPnL,
+    const totalPnL = filteredTrades.reduce(
+      (sum, trade) => sum + (trade.pnl || 0),
       0
     );
-    const winRate = (wins.length / tradesWithPnL.length) * 100;
+    const winRate = winningTrades.length / filteredTrades.length;
 
-    const totalWins = wins.reduce((sum, trade) => sum + trade.calculatedPnL, 0);
-    const totalLosses = Math.abs(
-      losses.reduce((sum, trade) => sum + trade.calculatedPnL, 0)
+    const grossProfit = winningTrades.reduce(
+      (sum, trade) => sum + (trade.pnl || 0),
+      0
     );
-    const profitFactor =
-      totalLosses === 0 ? totalWins : totalWins / totalLosses;
+    const grossLoss = Math.abs(
+      losingTrades.reduce((sum, trade) => sum + (trade.pnl || 0), 0)
+    );
+    const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : 0;
 
-    const averageWin = wins.length ? totalWins / wins.length : 0;
-    const averageLoss = losses.length ? totalLosses / losses.length : 0;
+    const averageWin =
+      winningTrades.length > 0 ? grossProfit / winningTrades.length : 0;
+    const averageLoss =
+      losingTrades.length > 0 ? grossLoss / losingTrades.length : 0;
 
-    const largestWin = wins.length
-      ? Math.max(...wins.map((t) => t.calculatedPnL))
-      : 0;
-    const largestLoss = losses.length
-      ? Math.min(...losses.map((t) => t.calculatedPnL))
-      : 0;
+    const largestWin = winningTrades.reduce(
+      (max, trade) => Math.max(max, trade.pnl || 0),
+      0
+    );
+    const largestLoss = losingTrades.reduce(
+      (min, trade) => Math.min(min, trade.pnl || 0),
+      0
+    );
+
+    // Calculate max drawdown
+    const sortedTrades = [...filteredTrades].sort(
+      (a, b) =>
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+
+    let maxDrawdown = 0;
+    let peak = 0;
+    let runningPnL = 0;
+
+    sortedTrades.forEach((trade) => {
+      runningPnL += trade.pnl || 0;
+
+      if (runningPnL > peak) {
+        peak = runningPnL;
+      }
+
+      const drawdown = peak - runningPnL;
+      if (drawdown > maxDrawdown) {
+        maxDrawdown = drawdown;
+      }
+    });
 
     return {
       totalPnL,
@@ -90,6 +128,7 @@ export function useFilteredTrades() {
       averageLoss,
       largestWin,
       largestLoss,
+      maxDrawdown: maxDrawdown / (peak > 0 ? peak : 1), // Convert to percentage
     };
   }, [filteredTrades]);
 
