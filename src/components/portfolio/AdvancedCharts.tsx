@@ -28,9 +28,7 @@ interface AdvancedChartsProps {
   trades: Trade[];
 }
 
-export function AdvancedCharts({
-  trades,
-}: AdvancedChartsProps) {
+export function AdvancedCharts({ trades }: AdvancedChartsProps) {
   const [selectedMetric, setSelectedMetric] = useState<
     "returns" | "drawdown" | "volatility"
   >("returns");
@@ -91,7 +89,8 @@ export function AdvancedCharts({
       minimumFractionDigits: 0,
     }).format(value);
 
-  const formatPercent = (value: number): string => `${Math.abs(value).toFixed(1)}%`;
+  const formatPercent = (value: number): string =>
+    `${Math.abs(value).toFixed(1)}%`;
 
   const renderChart = (): ReactElement => {
     switch (selectedMetric) {

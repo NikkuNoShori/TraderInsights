@@ -44,7 +44,7 @@ export const calculateTransactionROI = (trade: Trade): number => {
 
 export const calculateTransactionStatus = (
   transaction: Transaction,
-  order: TransactionOrder
+  order: TransactionOrder,
 ): Transaction => {
   // Since Transaction interface doesn't have orders array, we'll calculate based on current order
   const isEntryOrder =

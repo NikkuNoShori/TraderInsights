@@ -13,14 +13,24 @@ import type { Trade } from "@/types/trade";
 import { processTradeFile } from "@/lib/services/fileProcessing";
 import { toast } from "react-hot-toast";
 import { WebullImportForm } from "./WebullImportForm";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { transformBrokerTrade } from "@/utils/brokerTransforms";
 
 interface ImportTradeFormProps {
   onClose: () => void;
   onImportComplete: (trades: Partial<Trade>[]) => Promise<void>;
 }
 
-export function ImportTradeForm({ onClose, onImportComplete }: ImportTradeFormProps) {
+export function ImportTradeForm({
+  onClose,
+  onImportComplete,
+}: ImportTradeFormProps) {
   const { user } = useAuthStore();
   const [selectedBroker, setSelectedBroker] = useState<string>("");
   const [file, setFile] = useState<File | null>(null);
@@ -35,29 +45,36 @@ export function ImportTradeForm({ onClose, onImportComplete }: ImportTradeFormPr
   };
 
   const handleImport = async () => {
-    if (!file || !user) return;
+    if (!file || !user || !selectedBroker) return;
 
     setLoading(true);
     try {
       const result = await processTradeFile(file, (progress) => {
         setProgress(progress * 100);
       });
-      
-      // Add user_id and broker_id to each trade
-      const processedTrades = result.trades.map(trade => ({
-        ...trade,
-        user_id: user.id,
-        broker_id: selectedBroker,
-        created_at: new Date().toISOString(),
-      }));
+
+      // Transform trades based on the selected broker
+      const processedTrades = result.trades.map((trade) => {
+        const transformedTrade = transformBrokerTrade(trade, selectedBroker);
+        return {
+          ...transformedTrade,
+          user_id: user.id,
+          broker_id: selectedBroker,
+          created_at: new Date().toISOString(),
+        };
+      });
 
       await onImportComplete(processedTrades);
       setFile(null);
       onClose();
-      toast.success("Trades imported successfully");
+      toast.success(
+        `Successfully imported ${processedTrades.length} trades from ${selectedBroker}`,
+      );
     } catch (error) {
       console.error("Import error:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to import trades");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to import trades",
+      );
     } finally {
       setLoading(false);
       setProgress(0);
@@ -70,10 +87,7 @@ export function ImportTradeForm({ onClose, onImportComplete }: ImportTradeFormPr
         <label className="text-sm font-medium text-text-muted">
           Select Broker
         </label>
-        <Select
-          value={selectedBroker}
-          onValueChange={setSelectedBroker}
-        >
+        <Select value={selectedBroker} onValueChange={setSelectedBroker}>
           <SelectTrigger className="mt-1.5 bg-background border-border">
             <SelectValue placeholder="Choose a broker" />
           </SelectTrigger>
@@ -87,7 +101,10 @@ export function ImportTradeForm({ onClose, onImportComplete }: ImportTradeFormPr
       </div>
 
       {selectedBroker === "webull" ? (
-        <WebullImportForm onClose={onClose} onImportComplete={onImportComplete} />
+        <WebullImportForm
+          onClose={onClose}
+          onImportComplete={onImportComplete}
+        />
       ) : selectedBroker ? (
         <div className="space-y-4">
           <div>

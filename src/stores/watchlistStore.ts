@@ -143,7 +143,7 @@ export const useWatchlistStore = create<WatchlistState>()(
                   attempt: "retry",
                 });
               },
-            }
+            },
           );
 
           console.log("Successfully fetched quote:", {
@@ -257,7 +257,7 @@ export const useWatchlistStore = create<WatchlistState>()(
                     attempt: "retry",
                   });
                 },
-              }).catch(() => null) // Convert individual failures to null
+              }).catch(() => null), // Convert individual failures to null
           );
 
           const quotes = await Promise.all(quotesPromises);
@@ -304,6 +304,6 @@ export const useWatchlistStore = create<WatchlistState>()(
       partialize: (state) => ({
         symbols: state.symbols,
       }),
-    }
-  )
+    },
+  ),
 );

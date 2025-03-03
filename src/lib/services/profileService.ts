@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import type { UserProfile } from "@/types/auth";
+import type { UserProfile } from "@/types";
 
 export class ProfileService {
   async getProfile(userId: string): Promise<UserProfile | null> {
@@ -20,7 +20,7 @@ export class ProfileService {
 
   async updateProfile(
     userId: string,
-    updates: Partial<UserProfile>
+    updates: Partial<UserProfile>,
   ): Promise<UserProfile | null> {
     try {
       const { data, error } = await supabase
@@ -40,7 +40,7 @@ export class ProfileService {
 
   async updateUsername(
     userId: string,
-    username: string
+    username: string,
   ): Promise<UserProfile | null> {
     try {
       const { data: profile } = await supabase

@@ -165,7 +165,9 @@ export function StockChart({ data, type }: StockChartProps) {
             />
             <Bar
               dataKey="high"
-              shape={(props: unknown) => <CandlestickBar {...props as CandlestickBarProps} />}
+              shape={(props: unknown) => (
+                <CandlestickBar {...(props as CandlestickBarProps)} />
+              )}
             />
           </ComposedChart>
         );

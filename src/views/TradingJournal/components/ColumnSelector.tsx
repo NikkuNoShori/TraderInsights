@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui";
 import { Settings2 } from "lucide-react";
 import {
@@ -7,6 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
 import { TRADE_COLUMNS, TradeColumn } from "./TradeListColumns";
 
@@ -15,9 +16,12 @@ interface ColumnSelectorProps {
   onColumnToggle: (columnId: string) => void;
 }
 
-export function ColumnSelector({ visibleColumns, onColumnToggle }: ColumnSelectorProps) {
+export function ColumnSelector({
+  visibleColumns,
+  onColumnToggle,
+}: ColumnSelectorProps) {
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="ml-auto">
           <Settings2 className="h-4 w-4 mr-2" />
@@ -30,21 +34,16 @@ export function ColumnSelector({ visibleColumns, onColumnToggle }: ColumnSelecto
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         {TRADE_COLUMNS.map((column) => (
-          <DropdownMenuItem
+          <DropdownMenuCheckboxItem
             key={column.id}
-            onClick={() => onColumnToggle(column.id)}
-            className="flex items-center gap-2"
+            checked={visibleColumns.includes(column.id)}
+            onCheckedChange={() => onColumnToggle(column.id)}
+            onSelect={(e) => e.preventDefault()}
           >
-            <input
-              type="checkbox"
-              checked={visibleColumns.includes(column.id)}
-              onChange={() => {}}
-              className="h-4 w-4"
-            />
             {column.label}
-          </DropdownMenuItem>
+          </DropdownMenuCheckboxItem>
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
   );
-} 
+}

@@ -1,12 +1,13 @@
-import { Outlet } from "react-router-dom";
+import { type ReactNode } from "@/lib/react";
 import { Logo } from "@/components/ui";
 
 interface AuthLayoutProps {
   title: string;
   subtitle: string;
+  children?: ReactNode;
 }
 
-export function AuthLayout({ title, subtitle }: AuthLayoutProps) {
+export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
   return (
     <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-background dark:bg-dark-bg">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -21,7 +22,7 @@ export function AuthLayout({ title, subtitle }: AuthLayoutProps) {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-card dark:bg-dark-paper py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <Outlet />
+          {children}
         </div>
       </div>
     </div>

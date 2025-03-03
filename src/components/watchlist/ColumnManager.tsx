@@ -52,17 +52,19 @@ export function ColumnManager({
                   className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-md"
                 >
                   <div className="flex items-center space-x-3">
-                    <button 
+                    <button
                       className="cursor-move"
                       onDragStart={(e) => {
-                        e.dataTransfer.setData('text/plain', index.toString());
+                        e.dataTransfer.setData("text/plain", index.toString());
                       }}
                       onDragOver={(e) => {
                         e.preventDefault();
                       }}
                       onDrop={(e) => {
                         e.preventDefault();
-                        const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+                        const fromIndex = parseInt(
+                          e.dataTransfer.getData("text/plain"),
+                        );
                         if (onReorder && fromIndex !== index) {
                           onReorder(fromIndex, index);
                         }

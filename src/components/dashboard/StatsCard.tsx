@@ -26,33 +26,33 @@ export function StatsCard({
 }: StatsCardProps) {
   if (isLoading) {
     return (
-      <Card className={cn("p-6", className)}>
-        <Skeleton className="h-4 w-24 mb-4" />
-        <Skeleton className="h-8 w-32 mb-2" />
-        <Skeleton className="h-4 w-20" />
+      <Card className={cn("p-4", className)}>
+        <Skeleton className="h-3 w-20 mb-3" />
+        <Skeleton className="h-6 w-24 mb-2" />
+        <Skeleton className="h-3 w-16" />
       </Card>
     );
   }
 
   return (
-    <Card className={cn("p-6", className)}>
+    <Card className={cn("p-4", className)}>
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
-        <Icon className="h-4 w-4 text-muted-foreground" />
+        <h3 className="text-xs font-medium text-muted-foreground">{title}</h3>
+        <Icon className="h-3.5 w-3.5 text-muted-foreground" />
       </div>
 
-      <div className="mt-2 flex items-baseline">
+      <div className="mt-1.5 flex items-baseline">
         <div className="truncate">
-          <div className="text-2xl font-semibold">{value}</div>
+          <div className="text-xl font-semibold">{value}</div>
           {trend && (
             <div
               className={cn(
-                "inline-flex items-center text-sm font-medium",
+                "inline-flex items-center text-xs font-medium",
                 trendDirection === "up"
                   ? "text-emerald-600 dark:text-emerald-400"
                   : trendDirection === "down"
-                  ? "text-rose-600 dark:text-rose-400"
-                  : "text-muted-foreground"
+                    ? "text-rose-600 dark:text-rose-400"
+                    : "text-muted-foreground",
               )}
             >
               {trend}
@@ -62,7 +62,7 @@ export function StatsCard({
       </div>
 
       {subtitle && (
-        <div className="mt-2 text-sm text-muted-foreground">{subtitle}</div>
+        <div className="mt-1.5 text-xs text-muted-foreground">{subtitle}</div>
       )}
     </Card>
   );

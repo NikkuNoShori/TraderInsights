@@ -36,7 +36,7 @@ export class ErrorTrackingService {
       componentName?: string;
       userId?: string;
       additionalData?: Record<string, unknown>;
-    }
+    },
   ) {
     const errorLog: ErrorLog = {
       id: Math.random().toString(36).substring(2),

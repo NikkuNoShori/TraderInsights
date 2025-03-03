@@ -1,5 +1,10 @@
 import { useDashboardStore } from "@/stores/dashboardStore";
-import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui";
 
 export function DashboardProfileSelect() {
   const { profiles, currentProfileId, setCurrentProfile } = useDashboardStore();

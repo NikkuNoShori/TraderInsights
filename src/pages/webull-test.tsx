@@ -1,4 +1,4 @@
-import { WebullTest } from '@/components/webull/WebullTest';
+import { WebullTest } from "@/components/webull/WebullTest";
 
 export default function WebullTestPage() {
   return (
@@ -7,4 +7,4 @@ export default function WebullTestPage() {
       <WebullTest />
     </div>
   );
-} 
+}

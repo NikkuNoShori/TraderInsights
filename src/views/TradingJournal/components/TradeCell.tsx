@@ -9,18 +9,27 @@ interface TradeCellProps {
 }
 
 export function TradeCell({ columnId, trade, value }: TradeCellProps) {
-  const column = TRADE_COLUMNS.find(col => col.id === columnId);
+  const column = TRADE_COLUMNS.find((col) => col.id === columnId);
   if (!column) return null;
 
-  const renderedValue = column.renderCell ? column.renderCell(value, trade) : value;
+  // If the column has a custom render function, use it
+  if (column.renderCell) {
+    return <div>{column.renderCell(value, trade)}</div>;
+  }
 
+  // Default rendering based on column type
   switch (columnId) {
     case "date":
+      return <span className="font-medium">{value}</span>;
+
+    case "time":
+      return <span className="font-medium text-muted-foreground">{value}</span>;
+
+    case "broker_id":
       return (
-        <div>
-          <div>{trade.date}</div>
-          <div className="text-sm text-muted-foreground">{trade.time}</div>
-        </div>
+        <span className="inline-block px-2 py-1 rounded-md text-sm font-medium bg-muted/50 text-muted-foreground">
+          {value || "-"}
+        </span>
       );
 
     case "side":
@@ -30,7 +39,7 @@ export function TradeCell({ columnId, trade, value }: TradeCellProps) {
             "inline-block px-2 py-1 rounded-md text-sm font-medium",
             value === "Long"
               ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-              : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+              : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
           )}
         >
           {value}
@@ -38,16 +47,18 @@ export function TradeCell({ columnId, trade, value }: TradeCellProps) {
       );
 
     case "quantity":
-      return <span className="font-medium">{renderedValue}</span>;
+      return <span className="font-medium">{value?.toLocaleString()}</span>;
 
     case "entry_price":
     case "exit_price":
     case "take_profit":
     case "stop_loss":
-      return <span className="font-medium">{renderedValue}</span>;
+      return <span className="font-medium">{value || "-"}</span>;
 
     case "pnl":
-      if (trade.status !== "closed" || value === undefined) return <span>-</span>;
+      if (trade.status !== "closed" || value === undefined) {
+        return <span>-</span>;
+      }
       return (
         <span
           className={cn(
@@ -55,11 +66,12 @@ export function TradeCell({ columnId, trade, value }: TradeCellProps) {
             value > 0
               ? "text-green-600 dark:text-green-400"
               : value < 0
-              ? "text-red-600 dark:text-red-400"
-              : "text-muted-foreground"
+                ? "text-red-600 dark:text-red-400"
+                : "text-muted-foreground",
           )}
         >
-          {renderedValue}
+          {value > 0 ? "+" : ""}
+          {value}
         </span>
       );
 
@@ -70,24 +82,32 @@ export function TradeCell({ columnId, trade, value }: TradeCellProps) {
             "inline-block px-2 py-1 rounded-md text-sm font-medium",
             value === "closed"
               ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-              : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300"
+              : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300",
           )}
         >
-          {renderedValue}
+          {value.charAt(0).toUpperCase() + value.slice(1)}
         </span>
       );
 
     case "fees":
     case "risk_amount":
-      return <span className="font-medium text-muted-foreground">{renderedValue}</span>;
+      return (
+        <span className="font-medium text-muted-foreground">
+          {value || "-"}
+        </span>
+      );
 
     case "total":
-      return <span className="font-medium">{renderedValue}</span>;
+      return <span className="font-medium">{value || "-"}</span>;
 
     case "notes":
-      return <span className="text-sm text-muted-foreground line-clamp-1">{renderedValue}</span>;
+      return (
+        <span className="text-sm text-muted-foreground line-clamp-1">
+          {value || "-"}
+        </span>
+      );
 
     default:
-      return <span>{renderedValue}</span>;
+      return <span>{value}</span>;
   }
-} 
+}

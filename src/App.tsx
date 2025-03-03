@@ -1,4 +1,10 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  Outlet,
+} from "react-router-dom";
 import { Layout } from "./components/layout/Layout";
 import Dashboard from "./views/Dashboard";
 import TradingJournal from "./views/TradingJournal";
@@ -29,13 +35,23 @@ export default function App() {
   return (
     <AppProvider>
       <StoreProvider>
-        <Router>
+        <Router
+          future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+        >
           <Routes>
             {/* Public routes */}
             <Route index element={<LandingPage />} />
 
             {/* Auth routes */}
-            <Route path="/auth" element={<AuthLayout title="Welcome to Trading Insights" subtitle="Sign in to your account" />}>
+            <Route
+              path="/auth"
+              element={
+                <AuthLayout
+                  title="Welcome to Trading Insights"
+                  subtitle="Sign in to your account"
+                />
+              }
+            >
               <Route index element={<Navigate to="login" replace />} />
               <Route path="login" element={<Login />} />
               <Route path="request-reset" element={<RequestPasswordReset />} />
@@ -50,7 +66,7 @@ export default function App() {
               <Route path="journal/:id" element={<TradeDetails />} />
               <Route path="performance" element={<Performance />} />
               <Route path="settings/*" element={<Settings />} />
-              
+
               {/* Coming Soon Features */}
               <Route path="watchlist" element={<ComingSoon />} />
               <Route path="portfolios" element={<ComingSoon />} />

@@ -12,7 +12,7 @@ export default function ComingSoon() {
         <div className="flex justify-center mb-6">
           <Construction className="h-16 w-16 text-primary" />
         </div>
-        
+
         <PageHeader
           title="Coming Soon"
           subtitle="This feature is currently under development"
@@ -20,7 +20,8 @@ export default function ComingSoon() {
         />
 
         <p className="mt-4 text-muted-foreground">
-          We're working hard to bring you this exciting new feature. Stay tuned for updates!
+          We're working hard to bring you this exciting new feature. Stay tuned
+          for updates!
         </p>
 
         <div className="mt-8">
@@ -35,4 +36,4 @@ export default function ComingSoon() {
       </div>
     </div>
   );
-} 
+}

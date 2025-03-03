@@ -1,6 +1,7 @@
 import { type ReactNode } from "@/lib/react";
 import { MainNav } from "@/components/navigation/MainNav";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { useNavStore } from "@/stores/navStore";
 import clsx from "clsx";
 
 interface LayoutProps {
@@ -8,20 +9,20 @@ interface LayoutProps {
 }
 
 export function Layout({ children }: LayoutProps) {
+  const { isCollapsed } = useNavStore();
+
   return (
     <div className="min-h-screen bg-background dark:bg-dark-bg flex">
       <MainNav />
-
-      <main
+      <div
         className={clsx(
-          "flex-1 transition-all duration-300",
-          "ml-[80px] lg:ml-[250px]", // Adjust margin based on nav width
+          "flex-1 transition-all duration-300 ease-in-out overflow-x-hidden",
+          "p-6",
+          isCollapsed ? "ml-[80px]" : "ml-[250px]", // Adjust margin based on nav width
         )}
       >
-        <ErrorBoundary>
-          {children}
-        </ErrorBoundary>
-      </main>
+        <ErrorBoundary>{children}</ErrorBoundary>
+      </div>
     </div>
   );
 }

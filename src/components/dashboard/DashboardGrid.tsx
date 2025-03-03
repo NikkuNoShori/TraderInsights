@@ -16,4 +16,4 @@ export function DashboardGrid({ children, columns = 3 }: DashboardGridProps) {
       {children}
     </div>
   );
-} 
+}

@@ -11,10 +11,10 @@ export function Label({ children, className, ...props }: LabelProps) {
       {...props}
       className={clsx(
         "text-sm font-medium text-gray-700 dark:text-gray-300",
-        className
+        className,
       )}
     >
       {children}
     </label>
   );
-} 
+}

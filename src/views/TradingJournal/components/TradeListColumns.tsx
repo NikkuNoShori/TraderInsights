@@ -1,8 +1,16 @@
 import { Trade } from "@/types/trade";
 import { formatTradeValue } from "@/utils/trade";
+import React from "react";
+
+const BROKER_NAMES: Record<string, string> = {
+  webull: "Webull",
+  schwab: "Charles Schwab",
+  td: "TD Ameritrade",
+  ibkr: "Interactive Brokers",
+};
 
 export interface TradeColumn {
-  id: string;
+  id: keyof Trade | string;
   label: string;
   accessor: keyof Trade | ((trade: Trade) => any);
   sortable: boolean;
@@ -18,12 +26,23 @@ export const TRADE_COLUMNS: TradeColumn[] = [
     accessor: "date",
     sortable: true,
     defaultVisible: true,
-    renderCell: (value, trade) => (
-      <div>
-        <div>{value}</div>
-        <div className="text-sm text-muted-foreground">{trade.time}</div>
-      </div>
-    ),
+    renderCell: (value) => value,
+  },
+  {
+    id: "time",
+    label: "Time",
+    accessor: "time",
+    sortable: true,
+    defaultVisible: true,
+    renderCell: (value) => value,
+  },
+  {
+    id: "broker_id",
+    label: "Broker",
+    accessor: "broker_id",
+    sortable: true,
+    defaultVisible: true,
+    renderCell: (value) => BROKER_NAMES[value as string] || value || "-",
   },
   {
     id: "symbol",
@@ -38,17 +57,6 @@ export const TRADE_COLUMNS: TradeColumn[] = [
     accessor: "side",
     sortable: true,
     defaultVisible: true,
-    renderCell: (value) => (
-      <span
-        className={`inline-block px-2 py-1 rounded-md text-sm font-medium ${
-          value === "Long"
-            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-            : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
-        }`}
-      >
-        {value}
-      </span>
-    ),
   },
   {
     id: "quantity",
@@ -56,9 +64,7 @@ export const TRADE_COLUMNS: TradeColumn[] = [
     accessor: "quantity",
     sortable: true,
     defaultVisible: true,
-    renderCell: (value) => (
-      <span className="font-medium">{value.toLocaleString()}</span>
-    ),
+    renderCell: (value) => value.toLocaleString(),
   },
   {
     id: "entry_price",
@@ -66,11 +72,7 @@ export const TRADE_COLUMNS: TradeColumn[] = [
     accessor: "entry_price",
     sortable: true,
     defaultVisible: true,
-    renderCell: (value) => (
-      <span className="font-medium">
-        {value ? formatTradeValue(value) : "-"}
-      </span>
-    ),
+    renderCell: (value) => (value ? formatTradeValue(value) : "-"),
   },
   {
     id: "exit_price",
@@ -78,11 +80,7 @@ export const TRADE_COLUMNS: TradeColumn[] = [
     accessor: "exit_price",
     sortable: true,
     defaultVisible: true,
-    renderCell: (value) => (
-      <span className="font-medium">
-        {value ? formatTradeValue(value) : "-"}
-      </span>
-    ),
+    renderCell: (value) => (value ? formatTradeValue(value) : "-"),
   },
   {
     id: "pnl",
@@ -93,15 +91,7 @@ export const TRADE_COLUMNS: TradeColumn[] = [
     renderCell: (value, trade) => {
       if (trade.status !== "closed" || value === undefined) return "-";
       return (
-        <span
-          className={`font-medium ${
-            value > 0
-              ? "text-green-600 dark:text-green-400"
-              : value < 0
-              ? "text-red-600 dark:text-red-400"
-              : "text-muted-foreground"
-          }`}
-        >
+        <span className={value > 0 ? "text-green-600" : "text-red-600"}>
           {value > 0 ? "+" : ""}
           {formatTradeValue(value)}
         </span>
@@ -114,17 +104,7 @@ export const TRADE_COLUMNS: TradeColumn[] = [
     accessor: "status",
     sortable: true,
     defaultVisible: true,
-    renderCell: (value) => (
-      <span
-        className={`inline-block px-2 py-1 rounded-md text-sm font-medium ${
-          value === "closed"
-            ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-            : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300"
-        }`}
-      >
-        {value.charAt(0).toUpperCase() + value.slice(1)}
-      </span>
-    ),
+    renderCell: (value) => value.charAt(0).toUpperCase() + value.slice(1),
   },
   {
     id: "fees",
@@ -132,11 +112,7 @@ export const TRADE_COLUMNS: TradeColumn[] = [
     accessor: "fees",
     sortable: true,
     defaultVisible: false,
-    renderCell: (value) => (
-      <span className="font-medium text-muted-foreground">
-        {value ? formatTradeValue(value) : "-"}
-      </span>
-    ),
+    renderCell: (value) => (value ? formatTradeValue(value) : "-"),
   },
   {
     id: "total",
@@ -144,11 +120,7 @@ export const TRADE_COLUMNS: TradeColumn[] = [
     accessor: "total",
     sortable: true,
     defaultVisible: false,
-    renderCell: (value) => (
-      <span className="font-medium">
-        {value ? formatTradeValue(value) : "-"}
-      </span>
-    ),
+    renderCell: (value) => (value ? formatTradeValue(value) : "-"),
   },
   {
     id: "notes",
@@ -156,11 +128,7 @@ export const TRADE_COLUMNS: TradeColumn[] = [
     accessor: "notes",
     sortable: false,
     defaultVisible: false,
-    renderCell: (value) => (
-      <span className="text-sm text-muted-foreground line-clamp-1">
-        {value || "-"}
-      </span>
-    ),
+    renderCell: (value) => value || "-",
   },
   {
     id: "risk_amount",
@@ -168,11 +136,7 @@ export const TRADE_COLUMNS: TradeColumn[] = [
     accessor: "risk_amount",
     sortable: true,
     defaultVisible: false,
-    renderCell: (value) => (
-      <span className="font-medium text-muted-foreground">
-        {value ? formatTradeValue(value) : "-"}
-      </span>
-    ),
+    renderCell: (value) => (value ? formatTradeValue(value) : "-"),
   },
   {
     id: "take_profit",
@@ -180,11 +144,7 @@ export const TRADE_COLUMNS: TradeColumn[] = [
     accessor: "take_profit",
     sortable: true,
     defaultVisible: false,
-    renderCell: (value) => (
-      <span className="font-medium">
-        {value ? formatTradeValue(value) : "-"}
-      </span>
-    ),
+    renderCell: (value) => (value ? formatTradeValue(value) : "-"),
   },
   {
     id: "stop_loss",
@@ -192,10 +152,6 @@ export const TRADE_COLUMNS: TradeColumn[] = [
     accessor: "stop_loss",
     sortable: true,
     defaultVisible: false,
-    renderCell: (value) => (
-      <span className="font-medium">
-        {value ? formatTradeValue(value) : "-"}
-      </span>
-    ),
+    renderCell: (value) => (value ? formatTradeValue(value) : "-"),
   },
-]; 
+];

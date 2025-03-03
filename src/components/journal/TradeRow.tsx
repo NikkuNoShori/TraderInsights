@@ -66,7 +66,12 @@ export function TradeRow({ trade, onDelete, onEdit }: TradeRowProps) {
 
         {/* Symbol and Type */}
         <div className="flex items-center space-x-3">
-          <span className={cn("px-2 py-1 text-xs rounded", getSideStyles(trade.side))}>
+          <span
+            className={cn(
+              "px-2 py-1 text-xs rounded",
+              getSideStyles(trade.side),
+            )}
+          >
             {trade.side}
           </span>
           <span className="font-medium">{trade.symbol}</span>
@@ -91,9 +96,9 @@ export function TradeRow({ trade, onDelete, onEdit }: TradeRowProps) {
             <div
               className={cn(
                 "text-sm font-medium",
-                trade.pnl >= 0 
-                  ? "text-emerald-600 dark:text-emerald-400" 
-                  : "text-rose-600 dark:text-rose-400"
+                trade.pnl >= 0
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-rose-600 dark:text-rose-400",
               )}
             >
               {formatCurrency(trade.pnl)}

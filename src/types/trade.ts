@@ -9,21 +9,27 @@ export interface OptionDetails {
   contract_type: "call" | "put";
 }
 
-export interface Trade {
+export interface BaseTrade {
   id: string;
   user_id: string;
+  broker_id?: string;
   date: string;
   time: string;
+  timestamp: string;
   symbol: string;
   type: TradeType;
   side: TradeSide;
-  direction: TradeSide; // Alias for side for backward compatibility
+  direction: TradeSide;
   quantity: number;
   price: number;
   total: number;
   entry_date: string;
+  entry_time: string;
+  entry_timestamp: string;
   entry_price: number;
   exit_date?: string;
+  exit_time?: string;
+  exit_timestamp?: string;
   exit_price?: number;
   pnl?: number;
   status: TradeStatus;
@@ -41,16 +47,64 @@ export interface Trade {
   updated_at: string;
 }
 
+// Main Trade type that includes all fields
+export type Trade = BaseTrade;
+
+// Type for creating a new trade
+export type CreateTradeData = Omit<
+  Trade,
+  "id" | "user_id" | "created_at" | "updated_at"
+>;
+
+// Type for updating an existing trade
+export type UpdateTradeData = Partial<CreateTradeData>;
+
+// Type for portfolio trades (simplified version)
+export type PortfolioTrade = Pick<
+  Trade,
+  | "id"
+  | "symbol"
+  | "type"
+  | "side"
+  | "quantity"
+  | "price"
+  | "date"
+  | "fees"
+  | "notes"
+> & {
+  portfolio_id: string;
+};
+
+// Type for database trades (simplified version)
+export type DatabaseTrade = Pick<
+  Trade,
+  | "id"
+  | "user_id"
+  | "symbol"
+  | "entry_price"
+  | "exit_price"
+  | "quantity"
+  | "side"
+  | "entry_date"
+  | "exit_date"
+  | "pnl"
+  | "notes"
+  | "created_at"
+  | "updated_at"
+>;
+
 export interface TradeFilters {
+  brokers?: string[];
   dateRange?: [Date, Date];
   symbols?: string[];
-  types?: string[];
-  sides?: ("Long" | "Short")[];
-  status?: ("pending" | "open" | "closed")[];
+  types?: TradeType[];
+  sides?: TradeSide[];
+  status?: TradeStatus[];
   minPnl?: number;
   maxPnl?: number;
   setupTypes?: string[];
   strategies?: string[];
+  winLoss?: "win" | "loss";
 }
 
 export interface TradeStats {
@@ -69,15 +123,6 @@ export interface TradeStats {
   sharpeRatio?: number;
   maxDrawdown: number;
 }
-
-export type CreateTradeData = Omit<
-  Trade,
-  "id" | "user_id" | "created_at" | "updated_at"
-> & {
-  total?: number;
-};
-
-export type UpdateTradeData = Partial<CreateTradeData>;
 
 export function formatTradeValue(value: number): string {
   return new Intl.NumberFormat("en-US", {

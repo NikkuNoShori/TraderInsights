@@ -14,7 +14,13 @@ export function ThemeToggle({ showLabel, className }: ThemeToggleProps) {
     <Button
       variant="ghost"
       size="sm"
-      onClick={() => setTheme(document.documentElement.classList.contains("dark") ? "light" : "dark")}
+      onClick={() =>
+        setTheme(
+          document.documentElement.classList.contains("dark")
+            ? "light"
+            : "dark",
+        )
+      }
       className={className}
     >
       <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />

@@ -128,8 +128,9 @@ export default function Settings() {
                 className="w-full"
               />
               <p className="text-sm text-text-muted mt-1">
-                Username must be 3-20 characters and contain only letters, numbers, and underscores.
-                You have {profile.username_changes_remaining} changes remaining.
+                Username must be 3-20 characters and contain only letters,
+                numbers, and underscores. You have{" "}
+                {profile.username_changes_remaining} changes remaining.
               </p>
             </div>
 
@@ -141,4 +142,4 @@ export default function Settings() {
       </div>
     </div>
   );
-} 
+}

@@ -7,6 +7,7 @@ import { ArrowLeft, Edit, Trash } from "lucide-react";
 import { TradeModal } from "@/components/trades/TradeModal";
 import { toast } from "react-hot-toast";
 import type { Trade } from "@/types/trade";
+import { formatDate, formatCurrency } from "@/types/trade";
 
 export default function TradeDetails() {
   const { id: tradeId } = useParams();
@@ -15,11 +16,11 @@ export default function TradeDetails() {
   const { trades, deleteTrade, fetchTrades } = useTradeStore();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Fetch trades if not already in store
   useEffect(() => {
     async function loadTrades() {
-      if (user && (!trades.length || !trades.find(t => t.id === tradeId))) {
+      if (user && (!trades.length || !trades.find((t) => t.id === tradeId))) {
         setIsLoading(true);
         try {
           await fetchTrades(user.id);
@@ -35,7 +36,7 @@ export default function TradeDetails() {
   }, [user, tradeId, trades.length, fetchTrades]);
 
   // Find the trade in the store
-  const trade = trades.find(t => t.id === tradeId);
+  const trade = trades.find((t) => t.id === tradeId);
 
   const handleDelete = async () => {
     if (!trade) return;
@@ -138,11 +139,13 @@ export default function TradeDetails() {
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
             <div>
               <dt className="text-xs text-muted-foreground">Side</dt>
-              <dd className={`text-sm font-medium ${
-                trade.side === "Long"
-                  ? "text-green-600 dark:text-green-400"
-                  : "text-red-600 dark:text-red-400"
-              }`}>
+              <dd
+                className={`text-sm font-medium ${
+                  trade.side === "Long"
+                    ? "text-green-600 dark:text-green-400"
+                    : "text-red-600 dark:text-red-400"
+                }`}
+              >
                 {trade.side}
               </dd>
             </div>
@@ -159,13 +162,13 @@ export default function TradeDetails() {
               <dd className="text-sm font-medium capitalize">{trade.status}</dd>
             </div>
             <div>
-              <dt className="text-xs text-muted-foreground">Entry Price</dt>
-              <dd className="text-sm font-medium">${trade.entry_price?.toFixed(2)}</dd>
+              <dt className="text-xs text-muted-foreground">Entry Date</dt>
+              <dd className="text-sm font-medium">{formatDate(trade.entry_date)}</dd>
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">Exit Price</dt>
               <dd className="text-sm font-medium">
-                {trade.exit_price ? `$${trade.exit_price.toFixed(2)}` : '-'}
+                {trade.exit_price ? `$${trade.exit_price.toFixed(2)}` : "-"}
               </dd>
             </div>
           </div>
@@ -177,22 +180,28 @@ export default function TradeDetails() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <dt className="text-xs text-muted-foreground">Total Value</dt>
-              <dd className="text-sm font-medium">${trade.total?.toFixed(2)}</dd>
+              <dd className="text-sm font-medium">
+                ${trade.total?.toFixed(2)}
+              </dd>
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">P&L</dt>
-              <dd className={`text-sm font-medium ${
-                trade.pnl && trade.pnl > 0 
-                  ? "text-green-600 dark:text-green-400" 
-                  : "text-red-600 dark:text-red-400"
-              }`}>
-                {trade.pnl ? `$${trade.pnl.toFixed(2)}` : 'N/A'}
+              <dd
+                className={`text-sm font-medium ${
+                  trade.pnl && trade.pnl > 0
+                    ? "text-green-600 dark:text-green-400"
+                    : "text-red-600 dark:text-red-400"
+                }`}
+              >
+                {trade.pnl ? `$${trade.pnl.toFixed(2)}` : "N/A"}
               </dd>
             </div>
             {trade.fees !== undefined && (
               <div>
                 <dt className="text-xs text-muted-foreground">Fees</dt>
-                <dd className="text-sm font-medium">${trade.fees.toFixed(2)}</dd>
+                <dd className="text-sm font-medium">
+                  ${trade.fees.toFixed(2)}
+                </dd>
               </div>
             )}
           </div>
@@ -204,14 +213,10 @@ export default function TradeDetails() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <dt className="text-xs text-muted-foreground">Broker</dt>
-              <dd className="text-sm font-medium capitalize">{trade.broker_id || 'Manual Entry'}</dd>
+              <dd className="text-sm font-medium capitalize">
+                {trade.broker_id || "Manual Entry"}
+              </dd>
             </div>
-            {trade.orderId && (
-              <div>
-                <dt className="text-xs text-muted-foreground">Order ID</dt>
-                <dd className="text-sm font-medium">{trade.orderId}</dd>
-              </div>
-            )}
           </div>
         </div>
 
@@ -219,9 +224,20 @@ export default function TradeDetails() {
         {trade.notes && (
           <div className="col-span-12 bg-card dark:bg-dark-card rounded-lg p-4 border border-border dark:border-dark-border">
             <h2 className="text-sm font-semibold mb-2">Notes</h2>
-            <p className="text-sm whitespace-pre-wrap text-muted-foreground">{trade.notes}</p>
+            <p className="text-sm whitespace-pre-wrap text-muted-foreground">
+              {trade.notes}
+            </p>
           </div>
         )}
+
+        {/* Remove or update the orderId section */}
+        {/* If orderId is needed, we should add it to the BaseTrade interface */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <dt className="text-sm text-muted-foreground">Entry Price</dt>
+            <dd className="text-sm font-medium">{formatCurrency(trade.entry_price)}</dd>
+          </div>
+        </div>
       </div>
 
       <TradeModal
@@ -233,4 +249,4 @@ export default function TradeDetails() {
       />
     </div>
   );
-} 
+}

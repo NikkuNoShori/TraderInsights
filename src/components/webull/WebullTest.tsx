@@ -1,34 +1,38 @@
-import { useState } from 'react';
-import { webullService, type WebullTrade } from '@/services/webullService';
-import type { WebullAuthResponse } from 'webull-api-node';
+import { useState } from "react";
+import { webullService, type WebullTrade } from "@/services/webullService";
+import type { WebullAuthResponse } from "webull-api-node";
 
 export function WebullTest() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [authResponse, setAuthResponse] = useState<WebullAuthResponse | null>(null);
+  const [authResponse, setAuthResponse] = useState<WebullAuthResponse | null>(
+    null,
+  );
   const [trades, setTrades] = useState<WebullTrade[]>([]);
 
   const handleConnect = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Initialize the client
       await webullService.init();
-      
+
       // Login with credentials from environment variables
       const auth = await webullService.login({
         username: import.meta.env.VITE_WEBULL_USERNAME,
         password: import.meta.env.VITE_WEBULL_PASSWORD,
       });
-      
+
       setAuthResponse(auth);
-      
+
       // Fetch trades
       const fetchedTrades = await webullService.fetchTrades();
       setTrades(fetchedTrades);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to connect to Webull');
+      setError(
+        err instanceof Error ? err.message : "Failed to connect to Webull",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -37,13 +41,15 @@ export function WebullTest() {
   const handleDisconnect = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       await webullService.logout();
       setAuthResponse(null);
       setTrades([]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to disconnect from Webull');
+      setError(
+        err instanceof Error ? err.message : "Failed to disconnect from Webull",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -57,9 +63,9 @@ export function WebullTest() {
           disabled={isLoading || !!authResponse}
           className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
         >
-          {isLoading ? 'Connecting...' : 'Connect to Webull'}
+          {isLoading ? "Connecting..." : "Connect to Webull"}
         </button>
-        
+
         <button
           onClick={handleDisconnect}
           disabled={isLoading || !authResponse}
@@ -78,7 +84,10 @@ export function WebullTest() {
       {authResponse && (
         <div className="p-4 bg-green-100 border border-green-400 text-green-700 rounded">
           <h3 className="font-bold">Connected to Webull</h3>
-          <p>Token expires in: {new Date(authResponse.tokenExpiry).toLocaleString()}</p>
+          <p>
+            Token expires in:{" "}
+            {new Date(authResponse.tokenExpiry).toLocaleString()}
+          </p>
         </div>
       )}
 
@@ -102,8 +111,12 @@ export function WebullTest() {
                   <tr key={trade.orderId}>
                     <td className="px-4 py-2 border">{trade.symbol}</td>
                     <td className="px-4 py-2 border">{trade.action}</td>
-                    <td className="px-4 py-2 border">{trade.filledQuantity || trade.quantity}</td>
-                    <td className="px-4 py-2 border">${trade.filledPrice || trade.price}</td>
+                    <td className="px-4 py-2 border">
+                      {trade.filledQuantity || trade.quantity}
+                    </td>
+                    <td className="px-4 py-2 border">
+                      ${trade.filledPrice || trade.price}
+                    </td>
                     <td className="px-4 py-2 border">{trade.status}</td>
                     <td className="px-4 py-2 border">
                       {new Date(trade.createTime).toLocaleString()}
@@ -117,4 +130,4 @@ export function WebullTest() {
       )}
     </div>
   );
-} 
+}

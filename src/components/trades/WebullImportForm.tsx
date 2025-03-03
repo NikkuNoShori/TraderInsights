@@ -13,7 +13,10 @@ interface WebullImportFormProps {
   onImportComplete: (trades: Partial<Trade>[]) => Promise<void>;
 }
 
-export function WebullImportForm({ onClose, onImportComplete }: WebullImportFormProps) {
+export function WebullImportForm({
+  onClose,
+  onImportComplete,
+}: WebullImportFormProps) {
   const { user } = useAuthStore();
   const { fetchTrades } = useTradeStore();
   const [username, setUsername] = useState("");
@@ -39,31 +42,38 @@ export function WebullImportForm({ onClose, onImportComplete }: WebullImportForm
       setImportStatus("Fetching trades from Webull...");
       const webullTrades = await webullService.fetchTrades();
       console.log("Fetched trades from Webull:", webullTrades);
-      
+
       // Transform to our trade format
       setImportStatus("Processing trades...");
-      const processedTrades = transformWebullTrades(webullTrades).map(trade => ({
-        ...trade,
-        user_id: user.id,
-        broker_id: "webull",
-        created_at: new Date().toISOString(),
-      }));
+      const processedTrades = transformWebullTrades(webullTrades).map(
+        (trade) => ({
+          ...trade,
+          user_id: user.id,
+          broker_id: "webull",
+          created_at: new Date().toISOString(),
+        }),
+      );
       console.log("Processed trades:", processedTrades);
 
       // Import trades
       setImportStatus("Saving trades...");
       await onImportComplete(processedTrades);
       console.log("Trades saved successfully");
-      
+
       // Refresh the trades list
       await fetchTrades(user.id);
       console.log("Trades list refreshed");
-      
-      toast.success(`Successfully imported ${processedTrades.length} trades from Webull`);
+
+      toast.success(
+        `Successfully imported ${processedTrades.length} trades from Webull`,
+      );
       onClose();
     } catch (error) {
       console.error("Webull import error:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to import trades from Webull";
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to import trades from Webull";
       toast.error(errorMessage);
       setImportStatus(`Error: ${errorMessage}`);
     } finally {
@@ -107,9 +117,7 @@ export function WebullImportForm({ onClose, onImportComplete }: WebullImportForm
         </div>
 
         {importStatus && (
-          <div className="text-sm text-text-muted mt-2">
-            {importStatus}
-          </div>
+          <div className="text-sm text-text-muted mt-2">{importStatus}</div>
         )}
       </div>
 
@@ -131,4 +139,4 @@ export function WebullImportForm({ onClose, onImportComplete }: WebullImportForm
       </div>
     </div>
   );
-} 
+}

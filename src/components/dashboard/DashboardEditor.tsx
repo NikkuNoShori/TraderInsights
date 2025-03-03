@@ -1,7 +1,12 @@
 import { Plus, Save } from "lucide-react";
 import { useState, useEffect } from "@/lib/react";
 import { Button } from "@/components/ui";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui";
 import { Card } from "@/components/ui";
 import {
   Select,
@@ -24,7 +29,13 @@ interface DashboardEditorProps {
 }
 
 // Simple Label component
-function Label({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) {
+function Label({
+  children,
+  htmlFor,
+}: {
+  children: React.ReactNode;
+  htmlFor?: string;
+}) {
   return (
     <label
       htmlFor={htmlFor}
@@ -50,7 +61,7 @@ export function DashboardEditor({ isOpen, onClose }: DashboardEditorProps) {
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [profileName, setProfileName] = useState("");
   const [selectedCards, setSelectedCards] = useState<Set<DashboardCardType>>(
-    new Set(currentProfile?.enabledCards || [])
+    new Set(currentProfile?.enabledCards || []),
   );
 
   // Reset state when dialog opens
@@ -131,7 +142,9 @@ export function DashboardEditor({ isOpen, onClose }: DashboardEditorProps) {
       onClose();
     } catch (error) {
       console.error("Error saving dashboard:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to save dashboard");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to save dashboard",
+      );
     }
   };
 

@@ -5,15 +5,21 @@ import { clsx } from "clsx";
 const themes: Array<{ name: Theme; label: string; color: string }> = [
   { name: "light", label: "Light Mode", color: "bg-gray-100" },
   { name: "dark", label: "Dark Mode", color: "bg-gray-900" },
-  { name: "system", label: "System", color: "bg-gradient-to-r from-gray-100 to-gray-900" }
+  {
+    name: "system",
+    label: "System",
+    color: "bg-gradient-to-r from-gray-100 to-gray-900",
+  },
 ];
 
 export function ThemeSelector() {
   const { theme: currentTheme, setTheme } = useThemeStore();
-  
+
   const getThemeClass = () => {
     if (currentTheme === "system") {
-      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      return window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
     }
     return currentTheme;
   };

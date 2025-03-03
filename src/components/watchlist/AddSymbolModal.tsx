@@ -35,7 +35,9 @@ export function AddSymbolModal({
       onClose();
     } catch (error) {
       console.error("Failed to add symbol:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to add symbol");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to add symbol",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -70,10 +72,7 @@ export function AddSymbolModal({
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={!symbol.trim() || isLoading}
-            >
+            <Button type="submit" disabled={!symbol.trim() || isLoading}>
               {isLoading ? "Adding..." : "Add Symbol"}
             </Button>
           </div>

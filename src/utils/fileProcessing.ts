@@ -39,7 +39,7 @@ export const processExcel = async (file: File): Promise<ProcessedTradeData> => {
             }
             return acc;
           },
-          {}
+          {},
         );
 
         const sanitizedTrade = sanitizeTradeData(trade);
@@ -50,7 +50,7 @@ export const processExcel = async (file: File): Promise<ProcessedTradeData> => {
         errors.push(
           `Row ${rowNumber}: ${
             error instanceof Error ? error.message : "Invalid data"
-          }`
+          }`,
         );
       }
     });
@@ -60,7 +60,7 @@ export const processExcel = async (file: File): Promise<ProcessedTradeData> => {
     throw new TradeImportError(
       `Failed to process Excel file: ${
         error instanceof Error ? error.message : "Unknown error"
-      }`
+      }`,
     );
   }
 };
@@ -85,7 +85,7 @@ export const processCsv = async (file: File): Promise<ProcessedTradeData> => {
               errors.push(
                 `Row ${index + 2}: ${
                   error instanceof Error ? error.message : "Invalid data"
-                }`
+                }`,
               );
             }
           });
@@ -94,7 +94,7 @@ export const processCsv = async (file: File): Promise<ProcessedTradeData> => {
         },
         error: (error: Error) => {
           reject(
-            new TradeImportError(`Failed to parse CSV file: ${error.message}`)
+            new TradeImportError(`Failed to parse CSV file: ${error.message}`),
           );
         },
       });
@@ -103,7 +103,7 @@ export const processCsv = async (file: File): Promise<ProcessedTradeData> => {
     throw new TradeImportError(
       `Failed to process CSV file: ${
         error instanceof Error ? error.message : "Unknown error"
-      }`
+      }`,
     );
   }
 };

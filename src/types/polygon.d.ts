@@ -7,7 +7,7 @@ declare module "@polygon.io/client-js" {
         multiplier: number,
         timespan: string,
         from: string,
-        to: string
+        to: string,
       ): Promise<any>;
     };
     reference: {

@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { User, Palette, Bell, Shield } from "lucide-react";
+import { User, Palette, Bell, Shield, BarChart3 } from "lucide-react";
 import { clsx } from "clsx";
 
 const settingsLinks = [
@@ -8,6 +8,12 @@ const settingsLinks = [
     label: "Profile",
     icon: User,
     description: "Manage your personal information",
+  },
+  {
+    to: "/app/settings/brokers",
+    label: "Brokers",
+    icon: BarChart3,
+    description: "Manage connected trading accounts",
   },
   {
     to: "/app/settings/security",

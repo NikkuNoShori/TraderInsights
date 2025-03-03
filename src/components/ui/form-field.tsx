@@ -3,17 +3,17 @@ import { Select, SelectTrigger, SelectContent, SelectItem } from "./select";
 import { cn } from "@/lib/utils";
 import { type ChangeEvent } from "react";
 
-type FormFieldBaseProps = Omit<InputProps, 'type' | 'onChange' | 'value'>;
+type FormFieldBaseProps = Omit<InputProps, "type" | "onChange" | "value">;
 
 interface FormFieldSelectProps extends FormFieldBaseProps {
-  type: 'select';
+  type: "select";
   options: { value: string; label: string }[];
   value?: string;
   onChange?: (value: string) => void;
 }
 
 interface FormFieldInputProps extends FormFieldBaseProps {
-  type?: Exclude<string, 'select'>;
+  type?: Exclude<string, "select">;
   options?: never;
   value?: string | number;
   onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
@@ -43,14 +43,13 @@ export const FormField: React.FC<FormFieldProps> = ({
     return (
       <div className="mb-4">
         <label className="block text-sm font-medium mb-1">{label}</label>
-        <Select 
-          value={value?.toString()} 
+        <Select
+          value={value?.toString()}
           onValueChange={(val) => onChange?.(val)}
         >
           <SelectTrigger className={inputClasses}>
             <span>
-              {options.find((opt) => opt.value === value)?.label ||
-                "Select..."}
+              {options.find((opt) => opt.value === value)?.label || "Select..."}
             </span>
           </SelectTrigger>
           <SelectContent>
@@ -69,12 +68,12 @@ export const FormField: React.FC<FormFieldProps> = ({
   return (
     <div className="mb-4">
       <label className="block text-sm font-medium mb-1">{label}</label>
-      <Input 
-        type={type} 
-        className={inputClasses} 
-        value={value} 
-        onChange={onChange as FormFieldInputProps['onChange']}
-        {...props} 
+      <Input
+        type={type}
+        className={inputClasses}
+        value={value}
+        onChange={onChange as FormFieldInputProps["onChange"]}
+        {...props}
       />
       {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
     </div>

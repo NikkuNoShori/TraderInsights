@@ -22,6 +22,7 @@ export interface WebullTrade extends WebullOrder {
   createTime: string;
   updateTime: string;
   commission?: number;
+  fees?: number;
 }
 
 // Local storage keys
@@ -30,6 +31,7 @@ const STORAGE_KEYS = {
   AUTH: "webull_auth",
   POSITIONS: "webull_positions",
   ORDERS: "webull_orders",
+  LAST_SYNC: "webull_last_sync",
 } as const;
 
 class WebullService {
@@ -72,7 +74,7 @@ class WebullService {
   }
 
   public async login(
-    credentials: WebullCredentials
+    credentials: WebullCredentials,
   ): Promise<WebullAuthResponse> {
     if (!this.webullClient) {
       await this.init();
@@ -136,18 +138,49 @@ class WebullService {
 
     try {
       console.log("Fetching trades from Webull...");
+      const lastSync = this.getLastSyncTime();
+      console.log("Last sync time:", lastSync);
+
       // In development, generate some mock trades
       if (process.env.NODE_ENV === "development") {
+        console.log("Generating mock trades in development mode...");
         const mockTrades = await this.generateMockTrades(5);
-        console.log("Generated mock trades:", mockTrades);
-        return mockTrades;
+
+        // Filter out trades that are older than the last sync
+        const newTrades = lastSync
+          ? mockTrades.filter(
+              (trade) => new Date(trade.createTime) > new Date(lastSync),
+            )
+          : mockTrades;
+
+        console.log(
+          "Generated new trades since last sync:",
+          JSON.stringify(newTrades, null, 2),
+        );
+
+        // Update last sync time
+        this.updateLastSyncTime();
+
+        return newTrades;
       }
 
       const orders = await this.webullClient.getOrders();
-      return orders.map((order) => ({
+      const mappedOrders = orders.map((order) => ({
         ...order,
         exchange: "UNKNOWN",
       }));
+
+      // Filter out trades that are older than the last sync
+      const newOrders = lastSync
+        ? mappedOrders.filter(
+            (order) => new Date(order.createTime) > new Date(lastSync),
+          )
+        : mappedOrders;
+
+      // Update last sync time
+      this.updateLastSyncTime();
+
+      return newOrders;
     } catch (error) {
       console.error("Failed to fetch trades from Webull:", error);
       throw new Error("Failed to fetch trades from Webull");
@@ -155,39 +188,164 @@ class WebullService {
   }
 
   private async generateMockTrades(count: number = 5): Promise<WebullTrade[]> {
+    console.log(`Generating ${count} mock trade pairs...`);
     const symbols = ["AAPL", "GOOGL", "MSFT", "AMZN", "META"];
-    const actions: Array<"BUY" | "SELL"> = ["BUY", "SELL"];
     const exchanges = ["NASDAQ", "NYSE"];
     const trades: WebullTrade[] = [];
 
+    // Get existing trades to calculate current win rate
+    const existingTrades = await this.getTrades();
+    const existingWinRate =
+      existingTrades.length > 0
+        ? existingTrades.filter((trade) => {
+            const buyOrder = existingTrades.find(
+              (t) =>
+                t.symbol === trade.symbol &&
+                t.action === "BUY" &&
+                t.orderId.split("-")[2] === trade.orderId.split("-")[2],
+            );
+            const sellOrder = existingTrades.find(
+              (t) =>
+                t.symbol === trade.symbol &&
+                t.action === "SELL" &&
+                t.orderId.split("-")[2] === trade.orderId.split("-")[2],
+            );
+
+            if (!buyOrder || !sellOrder || trade.action !== "SELL")
+              return false;
+
+            // For Long trades: sell price should be higher than buy price
+            // For Short trades: sell price should be lower than buy price
+            const isLongTrade = buyOrder.createTime < sellOrder.createTime;
+            const buyPrice = buyOrder.filledPrice || buyOrder.price || 0;
+            const sellPrice = sellOrder.filledPrice || sellOrder.price || 0;
+
+            return isLongTrade
+              ? sellPrice > buyPrice // Long trade is profitable if sell > buy
+              : sellPrice < buyPrice; // Short trade is profitable if sell < buy
+          }).length /
+          (existingTrades.length / 2)
+        : 0.5; // Default to 50% if no existing trades
+
+    console.log(`Current win rate: ${existingWinRate * 100}%`);
+
+    // Generate pairs of trades (BUY and SELL) for each count
     for (let i = 0; i < count; i++) {
-      const action = actions[Math.floor(Math.random() * actions.length)];
+      console.log(`Generating trade pair ${i + 1}...`);
       const symbol = symbols[Math.floor(Math.random() * symbols.length)];
       const quantity = Math.floor(Math.random() * 100) + 1;
-      const price = Math.random() * 1000 + 10;
-      const createTime = new Date(
-        Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
-      );
+      const entryPrice = Math.random() * 1000 + 10;
 
-      trades.push({
-        orderId: `mock-${Date.now()}-${i}`,
-        symbol,
-        action,
-        orderType: "MARKET",
-        timeInForce: "DAY",
-        quantity,
-        filledQuantity: quantity,
-        price,
-        filledPrice: price,
-        status: "FILLED",
-        createTime: createTime.toISOString(),
-        updateTime: new Date(createTime.getTime() + 1000 * 60).toISOString(),
-        commission: Math.random() * 5,
-        exchange: exchanges[Math.floor(Math.random() * exchanges.length)],
-      });
+      // Determine if this should be a winning trade based on current win rate
+      const targetWinRate = 0.6; // We want to maintain around 60% win rate
+      const winProbability = existingWinRate < targetWinRate ? 0.7 : 0.5;
+      const isWinner = Math.random() < winProbability;
+
+      // Randomly decide if this is a Long or Short trade
+      const isLongTrade = Math.random() > 0.3; // 70% chance of long trade
+
+      // Calculate exit price based on trade direction and win/loss status
+      const exitPrice = isLongTrade
+        ? isWinner
+          ? entryPrice * (1 + Math.random() * 0.2) // Long winner: +0-20%
+          : entryPrice * (1 - Math.random() * 0.05) // Long loser: -0-5%
+        : isWinner
+          ? entryPrice * (1 - Math.random() * 0.2) // Short winner: -0-20%
+          : entryPrice * (1 + Math.random() * 0.05); // Short loser: +0-5%
+
+      const createTime = new Date(
+        Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000,
+      );
+      const updateTime = new Date(createTime.getTime() + 1000 * 60 * 60 * 24); // 24 hours later
+
+      if (isLongTrade) {
+        // For Long trades: BUY first, then SELL
+        const buyOrder: WebullTrade = {
+          orderId: `mock-${Date.now()}-${i}-buy`,
+          symbol,
+          action: "BUY",
+          orderType: "MARKET",
+          timeInForce: "DAY",
+          quantity,
+          filledQuantity: quantity,
+          price: entryPrice,
+          filledPrice: entryPrice,
+          status: "FILLED",
+          createTime: createTime.toISOString(),
+          updateTime: createTime.toISOString(),
+          commission: Math.random() * 5,
+          exchange: exchanges[Math.floor(Math.random() * exchanges.length)],
+        };
+        trades.push(buyOrder);
+
+        const sellOrder: WebullTrade = {
+          orderId: `mock-${Date.now()}-${i}-sell`,
+          symbol,
+          action: "SELL",
+          orderType: "MARKET",
+          timeInForce: "DAY",
+          quantity,
+          filledQuantity: quantity,
+          price: exitPrice,
+          filledPrice: exitPrice,
+          status: "FILLED",
+          createTime: updateTime.toISOString(),
+          updateTime: updateTime.toISOString(),
+          commission: Math.random() * 5,
+          exchange: exchanges[Math.floor(Math.random() * exchanges.length)],
+        };
+        trades.push(sellOrder);
+      } else {
+        // For Short trades: SELL first, then BUY
+        const sellOrder: WebullTrade = {
+          orderId: `mock-${Date.now()}-${i}-sell`,
+          symbol,
+          action: "SELL",
+          orderType: "MARKET",
+          timeInForce: "DAY",
+          quantity,
+          filledQuantity: quantity,
+          price: entryPrice,
+          filledPrice: entryPrice,
+          status: "FILLED",
+          createTime: createTime.toISOString(),
+          updateTime: createTime.toISOString(),
+          commission: Math.random() * 5,
+          exchange: exchanges[Math.floor(Math.random() * exchanges.length)],
+        };
+        trades.push(sellOrder);
+
+        const buyOrder: WebullTrade = {
+          orderId: `mock-${Date.now()}-${i}-buy`,
+          symbol,
+          action: "BUY",
+          orderType: "MARKET",
+          timeInForce: "DAY",
+          quantity,
+          filledQuantity: quantity,
+          price: exitPrice,
+          filledPrice: exitPrice,
+          status: "FILLED",
+          createTime: updateTime.toISOString(),
+          updateTime: updateTime.toISOString(),
+          commission: Math.random() * 5,
+          exchange: exchanges[Math.floor(Math.random() * exchanges.length)],
+        };
+        trades.push(buyOrder);
+      }
     }
 
+    console.log(`Generated ${trades.length} total trades`);
     return trades;
+  }
+
+  // Sync state management
+  private getLastSyncTime(): string | null {
+    return localStorage.getItem(STORAGE_KEYS.LAST_SYNC);
+  }
+
+  private updateLastSyncTime(): void {
+    localStorage.setItem(STORAGE_KEYS.LAST_SYNC, new Date().toISOString());
   }
 
   // Local storage trade methods
@@ -259,7 +417,7 @@ class WebullService {
       const orderType =
         orderTypes[Math.floor(Math.random() * orderTypes.length)];
       const createTime = new Date(
-        Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
+        Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000,
       );
 
       const mockTrade: WebullTrade = {
@@ -276,7 +434,7 @@ class WebullService {
         status: action === "BUY" ? "FILLED" : "PENDING",
         createTime: createTime.toISOString(),
         updateTime: new Date(
-          createTime.getTime() + Math.random() * 60 * 60 * 1000
+          createTime.getTime() + Math.random() * 60 * 60 * 1000,
         ).toISOString(),
         commission: Math.random() * 10,
         exchange: exchanges[Math.floor(Math.random() * exchanges.length)],

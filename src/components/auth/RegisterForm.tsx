@@ -43,7 +43,9 @@ export function RegisterForm() {
         label="Email"
         required
         value={email}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+          setEmail(e.target.value)
+        }
         autoComplete="email"
         className="mt-1"
       />
@@ -54,7 +56,9 @@ export function RegisterForm() {
         label="Password"
         required
         value={password}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+          setPassword(e.target.value)
+        }
         autoComplete="new-password"
         className="mt-1"
       />
@@ -65,7 +69,9 @@ export function RegisterForm() {
         label="Confirm Password"
         required
         value={confirmPassword}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
+        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+          setConfirmPassword(e.target.value)
+        }
         autoComplete="new-password"
         className="mt-1"
       />
