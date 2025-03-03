@@ -5,6 +5,7 @@ import {
   type WebullCredentials,
   type WebullAuthResponse,
 } from "@/lib/webull/client";
+import { config } from "@/config";
 
 // Types for Webull data
 export interface WebullTrade extends WebullOrder {
@@ -74,7 +75,7 @@ class WebullService {
   }
 
   public async login(
-    credentials: WebullCredentials,
+    credentials: WebullCredentials
   ): Promise<WebullAuthResponse> {
     if (!this.webullClient) {
       await this.init();
@@ -132,6 +133,15 @@ class WebullService {
 
   // API Trade methods
   public async fetchTrades(): Promise<WebullTrade[]> {
+    console.log("[WebullService] Fetching trades");
+
+    if (!config.isProduction) {
+      console.log(
+        "[WebullService] In development mode - returning empty trades array"
+      );
+      return [];
+    }
+
     if (!this.webullClient) {
       throw new Error("Webull client not initialized");
     }
@@ -140,29 +150,6 @@ class WebullService {
       console.log("Fetching trades from Webull...");
       const lastSync = this.getLastSyncTime();
       console.log("Last sync time:", lastSync);
-
-      // In development, generate some mock trades
-      if (process.env.NODE_ENV === "development") {
-        console.log("Generating mock trades in development mode...");
-        const mockTrades = await this.generateMockTrades(5);
-
-        // Filter out trades that are older than the last sync
-        const newTrades = lastSync
-          ? mockTrades.filter(
-              (trade) => new Date(trade.createTime) > new Date(lastSync),
-            )
-          : mockTrades;
-
-        console.log(
-          "Generated new trades since last sync:",
-          JSON.stringify(newTrades, null, 2),
-        );
-
-        // Update last sync time
-        this.updateLastSyncTime();
-
-        return newTrades;
-      }
 
       const orders = await this.webullClient.getOrders();
       const mappedOrders = orders.map((order) => ({
@@ -173,7 +160,7 @@ class WebullService {
       // Filter out trades that are older than the last sync
       const newOrders = lastSync
         ? mappedOrders.filter(
-            (order) => new Date(order.createTime) > new Date(lastSync),
+            (order) => new Date(order.createTime) > new Date(lastSync)
           )
         : mappedOrders;
 
@@ -202,13 +189,13 @@ class WebullService {
               (t) =>
                 t.symbol === trade.symbol &&
                 t.action === "BUY" &&
-                t.orderId.split("-")[2] === trade.orderId.split("-")[2],
+                t.orderId.split("-")[2] === trade.orderId.split("-")[2]
             );
             const sellOrder = existingTrades.find(
               (t) =>
                 t.symbol === trade.symbol &&
                 t.action === "SELL" &&
-                t.orderId.split("-")[2] === trade.orderId.split("-")[2],
+                t.orderId.split("-")[2] === trade.orderId.split("-")[2]
             );
 
             if (!buyOrder || !sellOrder || trade.action !== "SELL")
@@ -250,11 +237,11 @@ class WebullService {
           ? entryPrice * (1 + Math.random() * 0.2) // Long winner: +0-20%
           : entryPrice * (1 - Math.random() * 0.05) // Long loser: -0-5%
         : isWinner
-          ? entryPrice * (1 - Math.random() * 0.2) // Short winner: -0-20%
-          : entryPrice * (1 + Math.random() * 0.05); // Short loser: +0-5%
+        ? entryPrice * (1 - Math.random() * 0.2) // Short winner: -0-20%
+        : entryPrice * (1 + Math.random() * 0.05); // Short loser: +0-5%
 
       const createTime = new Date(
-        Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000,
+        Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
       );
       const updateTime = new Date(createTime.getTime() + 1000 * 60 * 60 * 24); // 24 hours later
 
@@ -417,7 +404,7 @@ class WebullService {
       const orderType =
         orderTypes[Math.floor(Math.random() * orderTypes.length)];
       const createTime = new Date(
-        Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000,
+        Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
       );
 
       const mockTrade: WebullTrade = {
@@ -434,7 +421,7 @@ class WebullService {
         status: action === "BUY" ? "FILLED" : "PENDING",
         createTime: createTime.toISOString(),
         updateTime: new Date(
-          createTime.getTime() + Math.random() * 60 * 60 * 1000,
+          createTime.getTime() + Math.random() * 60 * 60 * 1000
         ).toISOString(),
         commission: Math.random() * 10,
         exchange: exchanges[Math.floor(Math.random() * exchanges.length)],

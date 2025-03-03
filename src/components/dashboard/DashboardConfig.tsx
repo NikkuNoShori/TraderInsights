@@ -1,73 +1,77 @@
-import type { DashboardCardType } from "@/types/dashboard";
-import { Button } from "@/components/ui";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Settings } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { useDashboardStore, CARD_CONFIGS, type CardType } from "@/stores/dashboardStore";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 
 interface DashboardConfigProps {
-  enabledCards: DashboardCardType[];
-  onChange: (cards: DashboardCardType[]) => void;
-  onClose: () => void;
+  section: "dashboard" | "journal";
 }
 
-interface CardOption {
-  type: DashboardCardType;
-  label: string;
-}
+export function DashboardConfig({ section }: DashboardConfigProps) {
+  const { enabledCards, toggleCard, resetCards } = useDashboardStore();
 
-const AVAILABLE_CARDS: readonly CardOption[] = [
-  { type: "total_pnl", label: "Total P&L" },
-  { type: "win_rate", label: "Win Rate" },
-  { type: "profit_factor", label: "Profit Factor" },
-  { type: "average_win", label: "Average Win" },
-  { type: "active_trades", label: "Active Trades" },
-  { type: "total_trades", label: "Total Trades" },
-] as const;
+  const availableCards = Object.values(CARD_CONFIGS).filter(
+    (card) => card.section === section
+  );
 
-export function DashboardConfig({
-  enabledCards,
-  onChange,
-  onClose,
-}: DashboardConfigProps) {
   return (
-    <div className="fixed inset-0 bg-background/50 flex items-center justify-center">
-      <div className="bg-card p-6 rounded-lg w-full max-w-2xl border border-border">
-        <h2 className="text-lg font-semibold mb-4 text-text-primary">
-          Configure Dashboard
-        </h2>
-
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-sm font-medium mb-2 text-text-secondary">
-              Enabled Cards
-            </h3>
-            <div className="grid grid-cols-2 gap-2">
-              {AVAILABLE_CARDS.map((card) => (
-                <label key={card.type} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={enabledCards.includes(card.type)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        onChange([...enabledCards, card.type]);
-                      } else {
-                        onChange(enabledCards.filter((c) => c !== card.type));
-                      }
-                    }}
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-2">
+          <Settings className="h-4 w-4" />
+          <span>Configure Cards</span>
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Configure Dashboard Cards</DialogTitle>
+        </DialogHeader>
+        <ScrollArea className="h-[400px] pr-4">
+          <div className="space-y-4">
+            <div className="space-y-4">
+              {availableCards.map((card) => (
+                <div key={card.id} className="flex items-start space-x-3">
+                  <Checkbox
+                    id={card.id}
+                    checked={enabledCards[section].includes(card.id)}
+                    onCheckedChange={() => toggleCard(section, card.id as CardType)}
                   />
-                  <span className="text-text-muted">{card.label}</span>
-                </label>
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor={card.id}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {card.title}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      {card.description}
+                    </p>
+                  </div>
+                </div>
               ))}
             </div>
+            <Separator />
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => resetCards(section)}
+              >
+                Reset to Default
+              </Button>
+            </div>
           </div>
-        </div>
-
-        <div className="mt-6 flex justify-end space-x-2">
-          <Button variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button variant="default" onClick={onClose}>
-            Done
-          </Button>
-        </div>
-      </div>
-    </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
   );
 }

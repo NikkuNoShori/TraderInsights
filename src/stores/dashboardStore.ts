@@ -9,6 +9,75 @@ import {
   DEFAULT_ENABLED_CARDS,
 } from "../config/dashboardTheme";
 
+export type CardType =
+  | "total_pnl"
+  | "win_rate"
+  | "profit_factor"
+  | "largest_trade"
+  | "win_rate_chart"
+  | "pnl_chart"
+  | "trade_distribution";
+
+export interface CardConfig {
+  id: CardType;
+  title: string;
+  description: string;
+  section: "dashboard" | "journal";
+  defaultEnabled: boolean;
+}
+
+export const CARD_CONFIGS: Record<CardType, CardConfig> = {
+  total_pnl: {
+    id: "total_pnl",
+    title: "Total P&L",
+    description: "Total profit/loss across all trades",
+    section: "dashboard",
+    defaultEnabled: true,
+  },
+  win_rate: {
+    id: "win_rate",
+    title: "Win Rate",
+    description: "Percentage of winning trades",
+    section: "dashboard",
+    defaultEnabled: true,
+  },
+  profit_factor: {
+    id: "profit_factor",
+    title: "Profit Factor",
+    description: "Ratio of gross profit to gross loss",
+    section: "dashboard",
+    defaultEnabled: true,
+  },
+  largest_trade: {
+    id: "largest_trade",
+    title: "Largest Trade",
+    description: "Largest single trade P&L",
+    section: "dashboard",
+    defaultEnabled: true,
+  },
+  win_rate_chart: {
+    id: "win_rate_chart",
+    title: "Win Rate Chart",
+    description: "Win rate trend over time",
+    section: "dashboard",
+    defaultEnabled: true,
+  },
+  pnl_chart: {
+    id: "pnl_chart",
+    title: "P&L Chart",
+    description: "Profit/Loss trend over time",
+    section: "dashboard",
+    defaultEnabled: true,
+  },
+  trade_distribution: {
+    id: "trade_distribution",
+    title: "Trade Distribution",
+    description: "Distribution of trades by performance",
+    section: "dashboard",
+    defaultEnabled: true,
+  },
+};
+
 interface DashboardState {
   currentProfileId: string;
   currentProfile: DashboardProfile | null;
@@ -17,6 +86,9 @@ interface DashboardState {
   isEditing: boolean;
   isLoading: boolean;
   error: Error | null;
+  enabledCards: Record<"dashboard" | "journal", CardType[]>;
+  toggleCard: (section: "dashboard" | "journal", cardType: CardType) => void;
+  resetCards: (section: "dashboard" | "journal") => void;
 }
 
 interface DashboardActions {
@@ -45,6 +117,14 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
       isEditing: false,
       isLoading: false,
       error: null,
+      enabledCards: {
+        dashboard: Object.values(CARD_CONFIGS)
+          .filter((card) => card.section === "dashboard" && card.defaultEnabled)
+          .map((card) => card.id),
+        journal: Object.values(CARD_CONFIGS)
+          .filter((card) => card.section === "journal" && card.defaultEnabled)
+          .map((card) => card.id),
+      },
 
       // Actions
       setIsEditing: (editing) => set({ isEditing: editing }),
@@ -100,7 +180,7 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
           if (userId) {
             localStorage.setItem(
               `dashboard-layout-${userId}`,
-              JSON.stringify(get().layouts),
+              JSON.stringify(get().layouts)
             );
           }
         } catch (error) {
@@ -163,7 +243,7 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
           if (error) throw error;
 
           const profiles = get().profiles.map((p) =>
-            p.id === profileId ? { ...p, ...data } : p,
+            p.id === profileId ? { ...p, ...data } : p
           );
 
           set({ profiles, isLoading: false });
@@ -235,10 +315,35 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
         if (userId) {
           localStorage.setItem(
             `dashboard-layout-${userId}`,
-            JSON.stringify(newLayouts),
+            JSON.stringify(newLayouts)
           );
         }
       },
+
+      toggleCard: (section, cardType) =>
+        set((state) => {
+          const currentCards = state.enabledCards[section];
+          const isEnabled = currentCards.includes(cardType);
+
+          return {
+            enabledCards: {
+              ...state.enabledCards,
+              [section]: isEnabled
+                ? currentCards.filter((id) => id !== cardType)
+                : [...currentCards, cardType],
+            },
+          };
+        }),
+
+      resetCards: (section) =>
+        set((state) => ({
+          enabledCards: {
+            ...state.enabledCards,
+            [section]: Object.values(CARD_CONFIGS)
+              .filter((card) => card.section === section && card.defaultEnabled)
+              .map((card) => card.id),
+          },
+        })),
     }),
     {
       name: "dashboard-storage",
@@ -246,6 +351,6 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
         currentProfileId: state.currentProfileId,
         layouts: state.layouts,
       }),
-    },
-  ),
+    }
+  )
 );

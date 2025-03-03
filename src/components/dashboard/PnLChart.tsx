@@ -8,11 +8,13 @@ import {
   CartesianGrid,
   Legend,
   ReferenceLine,
+  Brush,
+  ReferenceArea,
 } from "recharts";
 import type { Trade } from "@/types/trade";
 import type { TimeframeOption } from "@/components/ui/TimeframeSelector";
 import { formatCurrency } from "@/utils/formatters";
-import { useMemo } from "@/lib/react";
+import { useMemo, useState, useCallback } from "@/lib/react";
 import {
   format,
   startOfDay,
@@ -27,6 +29,8 @@ import {
   addHours,
 } from "date-fns";
 import { useTimeframeFilteredTrades } from "@/hooks/useTimeframeFilteredTrades";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
 
 interface PnLChartProps {
   trades: Trade[];
@@ -40,19 +44,25 @@ interface PnLData {
   trades: number;
 }
 
+interface ZoomDomain {
+  start: string;
+  end: string;
+}
+
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload || !payload.length) return null;
 
   return (
-    <div className="bg-card dark:bg-dark-paper border border-border rounded-md p-2 text-sm">
-      <div className="font-medium">Date: {label}</div>
+    <div className="bg-card dark:bg-dark-paper border border-border dark:border-dark-border rounded-lg shadow-lg p-3 backdrop-blur-sm">
+      <div className="font-medium mb-1">{label}</div>
       {payload.map((item: any, index: number) => (
-        <div key={index} style={{ color: item.color }}>
-          {item.name}: {formatCurrency(item.value)}
+        <div key={index} className="flex items-center gap-2 py-0.5">
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+          <span className="font-medium">{item.name}:</span>
+          <span>{formatCurrency(item.value)}</span>
           {item.name === "Period P&L" && (
-            <span className="text-xs ml-1">
-              ({item.payload.trades} trade{item.payload.trades !== 1 ? "s" : ""}
-              )
+            <span className="text-xs text-muted-foreground ml-1">
+              ({item.payload.trades} trade{item.payload.trades !== 1 ? "s" : ""})
             </span>
           )}
         </div>
@@ -63,6 +73,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export function PnLChart({ trades, timeframe }: PnLChartProps) {
   const timeframeFilteredTrades = useTimeframeFilteredTrades(trades, timeframe);
+  const [zoomDomain, setZoomDomain] = useState<ZoomDomain | null>(null);
+  const [brushDomain, setBrushDomain] = useState<ZoomDomain | null>(null);
 
   const chartData = useMemo(() => {
     if (!timeframeFilteredTrades.length) return [];
@@ -170,6 +182,26 @@ export function PnLChart({ trades, timeframe }: PnLChartProps) {
     });
   }, [timeframeFilteredTrades, timeframe]);
 
+  const handleExport = useCallback(() => {
+    const csvContent = [
+      ["Date", "Period P&L", "Cumulative P&L", "Trades"],
+      ...chartData.map(d => [d.date, d.pnl, d.cumulativePnL, d.trades]),
+    ].map(row => row.join(",")).join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `pnl_data_${timeframe}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }, [chartData, timeframe]);
+
+  const handleZoomOut = useCallback(() => {
+    setZoomDomain(null);
+    setBrushDomain(null);
+  }, []);
+
   if (!timeframeFilteredTrades.length) {
     return (
       <div className="h-[300px] flex items-center justify-center text-muted-foreground">
@@ -186,51 +218,125 @@ export function PnLChart({ trades, timeframe }: PnLChartProps) {
     );
   }
 
-  const minValue = Math.min(
-    0,
-    ...chartData.map((d) => Math.min(d.pnl, d.cumulativePnL)),
-  );
-  const maxValue = Math.max(
-    ...chartData.map((d) => Math.max(d.pnl, d.cumulativePnL)),
-  );
-  const padding = Math.max((maxValue - minValue) * 0.1, 100); // Ensure minimum padding
+  const minValue = Math.min(0, ...chartData.map((d) => Math.min(d.pnl, d.cumulativePnL)));
+  const maxValue = Math.max(...chartData.map((d) => Math.max(d.pnl, d.cumulativePnL)));
+  const padding = Math.max((maxValue - minValue) * 0.1, 100);
 
   return (
-    <div className="h-[300px]">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis
-            dataKey="date"
-            tick={{ fontSize: 12 }}
-            interval="preserveStartEnd"
-          />
-          <YAxis
-            tickFormatter={formatCurrency}
-            domain={[minValue - padding, maxValue + padding]}
-            tick={{ fontSize: 12 }}
-          />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend />
-          <ReferenceLine y={0} stroke="var(--border)" strokeDasharray="3 3" />
-          <Line
-            name="Period P&L"
-            type="monotone"
-            dataKey="pnl"
-            stroke="var(--primary)"
-            dot={false}
-            strokeWidth={2}
-          />
-          <Line
-            name="Cumulative P&L"
-            type="monotone"
-            dataKey="cumulativePnL"
-            stroke="var(--success)"
-            dot={false}
-            strokeWidth={2}
-          />
-        </LineChart>
-      </ResponsiveContainer>
+    <div className="space-y-4">
+      <div className="flex justify-end gap-2">
+        {(zoomDomain || brushDomain) && (
+          <Button variant="outline" size="sm" onClick={handleZoomOut}>
+            Reset Zoom
+          </Button>
+        )}
+        <Button variant="outline" size="sm" onClick={handleExport}>
+          <Download className="h-4 w-4 mr-2" />
+          Export
+        </Button>
+      </div>
+      <div className="h-[300px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart
+            data={chartData}
+            onMouseDown={(e) => {
+              if (e && typeof e.activeLabel === "string") {
+                setZoomDomain({ start: e.activeLabel, end: e.activeLabel });
+              }
+            }}
+            onMouseMove={(e) => {
+              if (zoomDomain && e && typeof e.activeLabel === "string") {
+                setZoomDomain({ ...zoomDomain, end: e.activeLabel });
+              }
+            }}
+            onMouseUp={() => {
+              if (zoomDomain) {
+                setBrushDomain(zoomDomain);
+                setZoomDomain(null);
+              }
+            }}
+          >
+            <defs>
+              <linearGradient id="pnlGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.1} />
+                <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="cumulativeGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="var(--success)" stopOpacity={0.1} />
+                <stop offset="95%" stopColor="var(--success)" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.2} />
+            <XAxis
+              dataKey="date"
+              tick={{ fontSize: 12 }}
+              interval="preserveStartEnd"
+              domain={brushDomain ? [brushDomain.start, brushDomain.end] : ["auto", "auto"]}
+            />
+            <YAxis
+              tickFormatter={formatCurrency}
+              domain={[minValue - padding, maxValue + padding]}
+              tick={{ fontSize: 12 }}
+            />
+            <Tooltip
+              content={<CustomTooltip />}
+              cursor={{ stroke: "var(--border)", strokeWidth: 1 }}
+            />
+            <Legend
+              wrapperStyle={{ paddingTop: "8px" }}
+              formatter={(value) => <span className="text-sm">{value}</span>}
+            />
+            <ReferenceLine y={0} stroke="var(--border)" strokeDasharray="3 3" />
+            {zoomDomain && (
+              <ReferenceArea
+                x1={zoomDomain.start}
+                x2={zoomDomain.end}
+                strokeOpacity={0.3}
+                fill="var(--primary)"
+                fillOpacity={0.1}
+              />
+            )}
+            <Line
+              name="Period P&L"
+              type="monotone"
+              dataKey="pnl"
+              stroke="var(--primary)"
+              fill="url(#pnlGradient)"
+              dot={false}
+              strokeWidth={2}
+              activeDot={{ r: 6, strokeWidth: 2 }}
+              animationDuration={500}
+            />
+            <Line
+              name="Cumulative P&L"
+              type="monotone"
+              dataKey="cumulativePnL"
+              stroke="var(--success)"
+              fill="url(#cumulativeGradient)"
+              dot={false}
+              strokeWidth={2}
+              activeDot={{ r: 6, strokeWidth: 2 }}
+              animationDuration={500}
+            />
+            <Brush
+              dataKey="date"
+              height={30}
+              stroke="var(--border)"
+              fill="var(--background)"
+              startIndex={0}
+              endIndex={chartData.length - 1}
+              onChange={({ startIndex, endIndex }) => {
+                if (typeof startIndex === "number" && typeof endIndex === "number") {
+                  setBrushDomain({
+                    start: chartData[startIndex].date,
+                    end: chartData[endIndex].date,
+                  });
+                }
+              }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }

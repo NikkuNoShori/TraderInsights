@@ -1,7 +1,7 @@
 import { useState } from "@/lib/react";
-import { StockChart } from "@/components/StockChart";
+import { StockChart } from "@/components/charts/StockChart";
 import { generateMockStockData } from "@/utils/mockData";
-import type { ChartType } from "@/components/ChartTypeSelector";
+import type { ChartType } from "@/components/charts/ChartTypeSelector";
 
 export default function Stocks() {
   const [chartType] = useState<ChartType>("area");

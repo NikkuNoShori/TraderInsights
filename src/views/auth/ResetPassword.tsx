@@ -4,7 +4,7 @@ import { toast } from "react-hot-toast";
 import { supabase } from "@/lib/supabase";
 import { validatePassword } from "@/utils/validation";
 import { FormInput } from "@/components/ui";
-import { LoadingButton } from "@/components/LoadingButton";
+import { LoadingButton } from "@/components/ui/LoadingButton";
 
 export default function ResetPassword() {
   const navigate = useNavigate();

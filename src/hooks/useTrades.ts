@@ -48,35 +48,37 @@ interface RawTradeData {
   updated_at: string;
 }
 
-const MOCK_TRADES: Trade[] = [
+export const MOCK_TRADES: Trade[] = [
   createTrade({
     id: "dev-trade-1",
     user_id: "dev-123",
-    broker_id: "mock-broker",
-    date: new Date().toISOString().split("T")[0],
-    time: new Date().toISOString().split("T")[1].split(".")[0],
-    timestamp: new Date().toISOString(),
+    broker_id: "webull",
+    date: "2024-03-15",
+    time: "09:30:00",
+    timestamp: "2024-03-15T09:30:00Z",
     symbol: "AAPL",
     type: "stock",
     side: "Long",
     quantity: 100,
-    price: 150.0,
-    total: 15000.0,
-    entry_date: new Date().toISOString().split("T")[0],
-    entry_time: new Date().toISOString().split("T")[1].split(".")[0],
-    entry_timestamp: new Date().toISOString(),
-    entry_price: 150.0,
-    exit_price: 155.0,
-    pnl: 500.0,
+    price: 150,
+    total: 15000,
+    entry_date: "2024-03-15",
+    entry_time: "09:30:00",
+    entry_timestamp: "2024-03-15T09:30:00Z",
+    entry_price: 150,
+    exit_price: 155,
+    exit_date: "2024-03-15",
+    exit_time: "16:00:00",
+    exit_timestamp: "2024-03-15T16:00:00Z",
+    pnl: 500,
     status: "closed",
-    notes: "Mock trade for development",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    created_at: "2024-03-15T09:30:00Z",
+    updated_at: "2024-03-15T16:00:00Z",
   }),
   createTrade({
     id: "dev-trade-2",
     user_id: "dev-123",
-    broker_id: "mock-broker",
+    broker_id: "webull",
     date: new Date(Date.now() - 86400000).toISOString().split("T")[0],
     time: new Date(Date.now() - 86400000)
       .toISOString()
@@ -103,6 +105,126 @@ const MOCK_TRADES: Trade[] = [
     created_at: new Date(Date.now() - 86400000).toISOString(),
     updated_at: new Date(Date.now() - 86400000).toISOString(),
   }),
+  // Add more diverse mock trades
+  createTrade({
+    id: "dev-trade-3",
+    user_id: "dev-123",
+    broker_id: "webull",
+    date: new Date(Date.now() - 172800000).toISOString().split("T")[0],
+    time: new Date(Date.now() - 172800000)
+      .toISOString()
+      .split("T")[1]
+      .split(".")[0],
+    timestamp: new Date(Date.now() - 172800000).toISOString(),
+    symbol: "MSFT",
+    type: "stock",
+    side: "Short",
+    quantity: 75,
+    price: 300.0,
+    total: 22500.0,
+    entry_date: new Date(Date.now() - 172800000).toISOString().split("T")[0],
+    entry_time: new Date(Date.now() - 172800000)
+      .toISOString()
+      .split("T")[1]
+      .split(".")[0],
+    entry_timestamp: new Date(Date.now() - 172800000).toISOString(),
+    entry_price: 300.0,
+    exit_price: 290.0,
+    pnl: 750.0,
+    status: "closed",
+    notes: "Short trade example",
+    created_at: new Date(Date.now() - 172800000).toISOString(),
+    updated_at: new Date(Date.now() - 172800000).toISOString(),
+  }),
+  createTrade({
+    id: "dev-trade-4",
+    user_id: "dev-123",
+    broker_id: "webull",
+    date: new Date(Date.now() - 259200000).toISOString().split("T")[0],
+    time: new Date(Date.now() - 259200000)
+      .toISOString()
+      .split("T")[1]
+      .split(".")[0],
+    timestamp: new Date(Date.now() - 259200000).toISOString(),
+    symbol: "AMD",
+    type: "stock",
+    side: "Long",
+    quantity: 200,
+    price: 90.0,
+    total: 18000.0,
+    entry_date: new Date(Date.now() - 259200000).toISOString().split("T")[0],
+    entry_time: new Date(Date.now() - 259200000)
+      .toISOString()
+      .split("T")[1]
+      .split(".")[0],
+    entry_timestamp: new Date(Date.now() - 259200000).toISOString(),
+    entry_price: 90.0,
+    exit_price: 85.0,
+    pnl: -1000.0,
+    status: "closed",
+    notes: "Loss trade example",
+    created_at: new Date(Date.now() - 259200000).toISOString(),
+    updated_at: new Date(Date.now() - 259200000).toISOString(),
+  }),
+  createTrade({
+    id: "dev-trade-5",
+    user_id: "dev-123",
+    broker_id: "webull",
+    date: new Date(Date.now() - 345600000).toISOString().split("T")[0],
+    time: new Date(Date.now() - 345600000)
+      .toISOString()
+      .split("T")[1]
+      .split(".")[0],
+    timestamp: new Date(Date.now() - 345600000).toISOString(),
+    symbol: "NVDA",
+    type: "stock",
+    side: "Long",
+    quantity: 30,
+    price: 400.0,
+    total: 12000.0,
+    entry_date: new Date(Date.now() - 345600000).toISOString().split("T")[0],
+    entry_time: new Date(Date.now() - 345600000)
+      .toISOString()
+      .split("T")[1]
+      .split(".")[0],
+    entry_timestamp: new Date(Date.now() - 345600000).toISOString(),
+    entry_price: 400.0,
+    exit_price: 420.0,
+    pnl: 600.0,
+    status: "closed",
+    notes: "Small position size trade",
+    created_at: new Date(Date.now() - 345600000).toISOString(),
+    updated_at: new Date(Date.now() - 345600000).toISOString(),
+  }),
+  // Add some open trades
+  createTrade({
+    id: "dev-trade-6",
+    user_id: "dev-123",
+    broker_id: "webull",
+    date: new Date(Date.now() - 432000000).toISOString().split("T")[0],
+    time: new Date(Date.now() - 432000000)
+      .toISOString()
+      .split("T")[1]
+      .split(".")[0],
+    timestamp: new Date(Date.now() - 432000000).toISOString(),
+    symbol: "META",
+    type: "stock",
+    side: "Long",
+    quantity: 50,
+    price: 300.0,
+    total: 15000.0,
+    entry_date: new Date(Date.now() - 432000000).toISOString().split("T")[0],
+    entry_time: new Date(Date.now() - 432000000)
+      .toISOString()
+      .split("T")[1]
+      .split(".")[0],
+    entry_timestamp: new Date(Date.now() - 432000000).toISOString(),
+    entry_price: 300.0,
+    status: "open",
+    notes: "Open position example",
+    created_at: new Date(Date.now() - 432000000).toISOString(),
+    updated_at: new Date(Date.now() - 432000000).toISOString(),
+  }),
 ];
 
 interface TradeError extends Error {
@@ -127,9 +249,21 @@ export function useTrades() {
         throw new Error("User is not authenticated");
       }
 
+      console.log("[useTrades] Current user:", {
+        id: user.id,
+        email: user.email,
+        isDev: !config.isProduction,
+      });
+
       // Return mock data in development mode
-      if (!config.isProduction && user.id === "dev-123") {
-        return MOCK_TRADES;
+      if (!config.isProduction) {
+        // Create mock trades with the actual user ID
+        const mockTradesWithUserId = MOCK_TRADES.map((trade) => ({
+          ...trade,
+          user_id: user.id, // Use actual user ID
+        }));
+        console.log("[useTrades] Using mock trades with user ID:", user.id);
+        return mockTradesWithUserId;
       }
 
       const { data, error } = await supabase

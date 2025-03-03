@@ -13,7 +13,7 @@ import Settings from "./views/settings/Settings";
 import Login from "./views/auth/Login";
 import RequestPasswordReset from "./views/auth/RequestPasswordReset";
 import ResetPassword from "./views/auth/ResetPassword";
-import { AuthGuard } from "./components/AuthGuard";
+import { AuthGuard } from "./components/auth/AuthGuard";
 import { AuthLayout } from "./components/auth/AuthLayout";
 import { AppProvider } from "./providers/AppProvider";
 import { StoreProvider } from "./providers/StoreProvider";
@@ -49,7 +49,9 @@ export default function App() {
                 <AuthLayout
                   title="Welcome to Trading Insights"
                   subtitle="Sign in to your account"
-                />
+                >
+                  <Outlet />
+                </AuthLayout>
               }
             >
               <Route index element={<Navigate to="login" replace />} />

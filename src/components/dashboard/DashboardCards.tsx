@@ -8,185 +8,147 @@ import {
   DollarSign,
   Receipt,
 } from "lucide-react";
-import { formatCurrency } from "@/utils/formatters";
+import { formatCurrency, formatPercentage } from "@/utils/format";
 import { useFilteredTrades } from "@/hooks/useFilteredTrades";
 import { WinRateChart } from "./WinRateChart";
 import { PnLChart } from "./PnLChart";
 import { TradeDistributionChart } from "./TradeDistributionChart";
+import { DashboardConfig } from "./DashboardConfig";
+import { useDashboardStore, type CardType } from "@/stores/dashboardStore";
 import type { TimeframeOption } from "@/components/ui/TimeframeSelector";
 
 interface DashboardCardsProps {
   trades: Trade[];
   timeframe: TimeframeOption;
+  section: "dashboard" | "journal";
 }
 
-export function DashboardCards({ trades, timeframe }: DashboardCardsProps) {
-  const filteredTrades = useFilteredTrades(trades, "overview");
+type StatCardType = "total_pnl" | "win_rate" | "profit_factor" | "largest_trade";
 
-  const stats = useMemo(() => {
-    if (filteredTrades.length === 0) {
-      return {
-        rawPnL: 0,
-        totalFees: 0,
-        netReturn: 0,
-        winRate: 0,
-        totalTrades: 0,
-      };
-    }
+type StatCardData = {
+  title: string;
+  value: string;
+  description: string;
+  trend: "up" | "down";
+  trendValue: string;
+};
 
-    // Calculate raw P&L without fees
-    const rawPnL = filteredTrades.reduce((sum, trade) => {
-      if (trade.exit_price && trade.entry_price) {
-        const tradePnL =
-          trade.side === "Long"
-            ? (trade.exit_price - trade.entry_price) * trade.quantity
-            : (trade.entry_price - trade.exit_price) * trade.quantity;
-        return sum + tradePnL;
-      }
-      return sum;
-    }, 0);
+export function DashboardCards({ trades, timeframe, section }: DashboardCardsProps) {
+  const { stats, isLoading } = useFilteredTrades();
+  const enabledCards = useDashboardStore((state) => state.enabledCards[section]);
 
-    // Calculate total fees
-    const totalFees = filteredTrades.reduce(
-      (sum, trade) => sum + (trade.fees || 0),
-      0,
-    );
-
-    // Calculate net return (P&L - fees)
-    const netReturn = rawPnL - totalFees;
-
-    const winningTrades = filteredTrades.filter((trade) => {
-      if (trade.exit_price && trade.entry_price) {
-        const tradePnL =
-          trade.side === "Long"
-            ? (trade.exit_price - trade.entry_price) * trade.quantity
-            : (trade.entry_price - trade.exit_price) * trade.quantity;
-        return tradePnL > 0;
-      }
-      return false;
-    });
-
-    const winRate =
-      filteredTrades.length > 0
-        ? (winningTrades.length / filteredTrades.length) * 100
-        : 0;
-
-    return {
-      rawPnL,
-      totalFees,
-      netReturn,
-      winRate,
-      totalTrades: filteredTrades.length,
-    };
-  }, [filteredTrades]);
+  const statCards = useMemo<Record<StatCardType, StatCardData>>(() => ({
+    total_pnl: {
+      title: "Total P&L",
+      value: formatCurrency(stats.totalPnL),
+      description: "Total profit/loss across all trades",
+      trend: stats.totalPnL > 0 ? "up" : "down",
+      trendValue: formatPercentage(Math.abs(stats.totalPnL / 100)),
+    },
+    win_rate: {
+      title: "Win Rate",
+      value: formatPercentage(stats.winRate),
+      description: "Percentage of winning trades",
+      trend: stats.winRate > 50 ? "up" : "down",
+      trendValue: `${stats.totalTrades} trades`,
+    },
+    profit_factor: {
+      title: "Profit Factor",
+      value: stats.profitFactor.toFixed(2),
+      description: "Ratio of gross profit to gross loss",
+      trend: stats.profitFactor > 1 ? "up" : "down",
+      trendValue: formatCurrency(stats.averageWin),
+    },
+    largest_trade: {
+      title: "Largest Trade",
+      value: formatCurrency(Math.max(Math.abs(stats.largestWin), Math.abs(stats.largestLoss))),
+      description: "Largest single trade P&L",
+      trend: stats.largestWin > Math.abs(stats.largestLoss) ? "up" : "down",
+      trendValue: formatCurrency(stats.averageLoss),
+    },
+  } as const), [stats]);
 
   const renderEmptyState = () => (
-    <div className="w-full max-w-[1400px] mx-auto space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-        <StatsCard
-          title="P&L"
-          value="--"
-          icon={TrendingUp}
-          subtitle="No trades yet"
-        />
-        <StatsCard
-          title="Total Fees"
-          value="--"
-          icon={Receipt}
-          subtitle="No trades yet"
-        />
-        <StatsCard
-          title="Net Return"
-          value="--"
-          icon={DollarSign}
-          subtitle="No trades yet"
-        />
-        <StatsCard
-          title="Win Rate"
-          value="--"
-          icon={Activity}
-          subtitle="No trades yet"
-        />
-        <StatsCard
-          title="Total Trades"
-          value="0"
-          icon={Activity}
-          subtitle="No trades yet"
-        />
+    <div className="w-full max-w-[1200px] mx-auto space-y-4">
+      <div className="flex justify-end">
+        <DashboardConfig section={section} />
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        {Object.entries(statCards).map(([id, card]) => (
+          enabledCards.includes(id as CardType) && (
+            <StatsCard
+              key={id}
+              {...card}
+              isLoading={true}
+            />
+          )
+        ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
-          <h3 className="text-lg font-medium mb-4">Win Rate Over Time</h3>
-          <WinRateChart trades={[]} timeframe={timeframe} />
+      {enabledCards.includes("win_rate_chart") && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="bg-card dark:bg-dark-paper p-4 rounded-lg border border-border dark:border-dark-border">
+            <h3 className="text-lg font-medium mb-3">Win Rate Over Time</h3>
+            <WinRateChart trades={[]} timeframe={timeframe} />
+          </div>
+          {enabledCards.includes("pnl_chart") && (
+            <div className="bg-card dark:bg-dark-paper p-4 rounded-lg border border-border dark:border-dark-border">
+              <h3 className="text-lg font-medium mb-3">P&L Over Time</h3>
+              <PnLChart trades={[]} timeframe={timeframe} />
+            </div>
+          )}
         </div>
-        <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
-          <h3 className="text-lg font-medium mb-4">P&L Over Time</h3>
-          <PnLChart trades={[]} timeframe={timeframe} />
-        </div>
-      </div>
+      )}
 
-      <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
-        <h3 className="text-lg font-medium mb-4">Trade Distribution</h3>
-        <TradeDistributionChart trades={[]} timeframe={timeframe} />
-      </div>
+      {enabledCards.includes("trade_distribution") && (
+        <div className="bg-card dark:bg-dark-paper p-4 rounded-lg border border-border dark:border-dark-border">
+          <h3 className="text-lg font-medium mb-3">Trade Distribution</h3>
+          <TradeDistributionChart trades={[]} timeframe={timeframe} />
+        </div>
+      )}
     </div>
   );
 
   const renderStats = () => (
-    <div className="w-full max-w-[1400px] mx-auto space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-        <StatsCard
-          title="P&L"
-          value={formatCurrency(stats.rawPnL)}
-          icon={stats.rawPnL >= 0 ? TrendingUp : TrendingDown}
-          trend={formatCurrency(Math.abs(stats.rawPnL))}
-          trendDirection={stats.rawPnL >= 0 ? "up" : "down"}
-        />
-        <StatsCard
-          title="Total Fees"
-          value={formatCurrency(stats.totalFees)}
-          icon={Receipt}
-          className="text-muted-foreground"
-        />
-        <StatsCard
-          title="Net Return"
-          value={formatCurrency(stats.netReturn)}
-          icon={DollarSign}
-          trend={formatCurrency(Math.abs(stats.netReturn))}
-          trendDirection={stats.netReturn >= 0 ? "up" : "down"}
-        />
-        <StatsCard
-          title="Win Rate"
-          value={`${stats.winRate.toFixed(1)}%`}
-          icon={Activity}
-          trend={`${stats.winRate.toFixed(1)}%`}
-          trendDirection={stats.winRate >= 50 ? "up" : "down"}
-        />
-        <StatsCard
-          title="Total Trades"
-          value={stats.totalTrades.toString()}
-          icon={Activity}
-        />
+    <div className="w-full max-w-[1200px] mx-auto space-y-4">
+      <div className="flex justify-end">
+        <DashboardConfig section={section} />
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        {Object.entries(statCards).map(([id, card]) => (
+          enabledCards.includes(id as CardType) && (
+            <StatsCard
+              key={id}
+              {...card}
+              isLoading={isLoading}
+            />
+          )
+        ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
-          <h3 className="text-lg font-medium mb-4">Win Rate Over Time</h3>
-          <WinRateChart trades={filteredTrades} timeframe={timeframe} />
+      {enabledCards.includes("win_rate_chart") && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="bg-card dark:bg-dark-paper p-4 rounded-lg border border-border dark:border-dark-border">
+            <h3 className="text-lg font-medium mb-3">Win Rate Over Time</h3>
+            <WinRateChart trades={trades} timeframe={timeframe} />
+          </div>
+          {enabledCards.includes("pnl_chart") && (
+            <div className="bg-card dark:bg-dark-paper p-4 rounded-lg border border-border dark:border-dark-border">
+              <h3 className="text-lg font-medium mb-3">P&L Over Time</h3>
+              <PnLChart trades={trades} timeframe={timeframe} />
+            </div>
+          )}
         </div>
-        <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
-          <h3 className="text-lg font-medium mb-4">P&L Over Time</h3>
-          <PnLChart trades={filteredTrades} timeframe={timeframe} />
-        </div>
-      </div>
+      )}
 
-      <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
-        <h3 className="text-lg font-medium mb-4">Trade Distribution</h3>
-        <TradeDistributionChart trades={filteredTrades} timeframe={timeframe} />
-      </div>
+      {enabledCards.includes("trade_distribution") && (
+        <div className="bg-card dark:bg-dark-paper p-4 rounded-lg border border-border dark:border-dark-border">
+          <h3 className="text-lg font-medium mb-3">Trade Distribution</h3>
+          <TradeDistributionChart trades={trades} timeframe={timeframe} />
+        </div>
+      )}
     </div>
   );
 
-  return filteredTrades.length === 0 ? renderEmptyState() : renderStats();
+  return trades.length === 0 ? renderEmptyState() : renderStats();
 }

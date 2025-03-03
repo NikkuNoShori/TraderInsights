@@ -79,13 +79,16 @@ export const useFilterStore = create<FilterState>()(
         })),
 
       clearAllFilters: () =>
-        set({
+        set((state) => ({
           filters: {
             overview: { ...defaultFilters },
             journal: { ...defaultFilters },
             performance: { ...defaultFilters },
           },
-        }),
+          // Reset other state as well
+          activeSection: "journal",
+          sessionId: generateSessionId(),
+        })),
 
       toggleBroker: (brokerId) =>
         set((state) => {
@@ -230,6 +233,6 @@ export const useFilterStore = create<FilterState>()(
           state.sessionId = generateSessionId();
         }
       },
-    },
-  ),
+    }
+  )
 );

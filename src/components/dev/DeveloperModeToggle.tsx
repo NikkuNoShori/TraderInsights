@@ -1,6 +1,6 @@
 import { useDeveloperStore } from "@/stores/developerStore";
-import { Switch } from "./ui/switch";
-import { Label } from "./ui/label";
+import { Switch } from "../ui/switch";
+import { Label } from "../ui/label";
 
 export function DeveloperModeToggle() {
   const { isDeveloperMode, setDeveloperMode } = useDeveloperStore();

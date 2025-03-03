@@ -1,6 +1,6 @@
 import { type ReactNode } from "@/lib/react";
 import { MainNav } from "@/components/navigation/MainNav";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ErrorBoundary } from "@/components/error/ErrorBoundary";
 import { useNavStore } from "@/stores/navStore";
 import clsx from "clsx";
 

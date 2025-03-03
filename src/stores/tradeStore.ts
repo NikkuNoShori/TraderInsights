@@ -78,6 +78,13 @@ export const useTradeStore = create<TradeState & TradeActions>((set, get) => ({
     const state = get();
     const now = Date.now();
 
+    console.log("[TradeStore] Fetching trades for user:", {
+      userId,
+      isDev: !config.isProduction,
+      force,
+      hasCachedData: state.trades.length > 0,
+    });
+
     // Return cached data if:
     // 1. We have data
     // 2. It's for the same user
@@ -90,25 +97,25 @@ export const useTradeStore = create<TradeState & TradeActions>((set, get) => ({
       state.lastFetch &&
       now - state.lastFetch < CACHE_DURATION
     ) {
-      if (process.env.NODE_ENV === "development") {
-        console.debug("[TradeStore] Using cached trades");
-      }
+      console.log("[TradeStore] Using cached trades:", state.trades.length);
       return;
     }
 
     set({ isLoading: true, error: null });
     try {
       if (!config.isProduction) {
-        const trades = getStoredTrades()
-          .filter((t) => t.user_id === userId)
-          .map(addPnLToTrade);
-        if (process.env.NODE_ENV === "development") {
-          console.debug("[TradeStore] Fetched trades from localStorage");
-        }
+        // Use mock trades from useTrades with the actual user ID
+        const { MOCK_TRADES } = await import("@/hooks/useTrades");
+        const mockTradesWithUserId = MOCK_TRADES.map((trade) => ({
+          ...trade,
+          user_id: userId,
+        }));
+        console.log("[TradeStore] Setting mock trades for user:", userId);
         set({
-          trades,
+          trades: mockTradesWithUserId.map(addPnLToTrade),
           lastFetch: now,
           currentUserId: userId,
+          isLoading: false,
         });
         return;
       }
@@ -120,8 +127,12 @@ export const useTradeStore = create<TradeState & TradeActions>((set, get) => ({
         .order("date", { ascending: false });
 
       if (error) throw error;
+
+      const trades = (data || []).map(addPnLToTrade);
+      console.log("[TradeStore] Setting trades from Supabase:", trades.length);
+
       set({
-        trades: (data || []).map(addPnLToTrade),
+        trades,
         lastFetch: now,
         currentUserId: userId,
       });

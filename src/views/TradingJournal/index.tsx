@@ -25,7 +25,7 @@ const DEFAULT_PAGE_SIZE = PAGE_SIZE_OPTIONS[0];
 
 export default function TradingJournal() {
   const { user } = useAuthStore();
-  const { trades, isLoading, fetchTrades, addTrade, updateTrade, deleteTrade } =
+  const { isLoading, fetchTrades, addTrade, updateTrade, deleteTrade } =
     useTradeStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
@@ -39,15 +39,14 @@ export default function TradingJournal() {
     direction: "desc",
   });
 
-  // Get filtered trades
-  const filteredTrades = useFilteredTrades(trades, "journal");
+  const clearAllFilters = useFilterStore((state) => state.clearAllFilters);
 
-  // Calculate derived values for each trade
-  const tradesWithCalculatedValues = filteredTrades.map((trade) => ({
-    ...trade,
-    total: trade.quantity * (trade.entry_price || 0),
-    pnl: calculatePnL(trade),
-  }));
+  useEffect(() => {
+    clearAllFilters();
+  }, []);
+
+  // Get filtered trades
+  const { trades: filteredTrades, stats } = useFilteredTrades();
 
   // Sort trades
   const sortTrades = (unsortedTrades: Trade[]) => {
@@ -79,7 +78,7 @@ export default function TradingJournal() {
     });
   };
 
-  const sortedTrades = sortTrades(tradesWithCalculatedValues);
+  const sortedTrades = sortTrades(filteredTrades);
   const totalPages =
     pageSize === -1 ? 1 : Math.ceil(sortedTrades.length / pageSize);
   const paginatedTrades =
@@ -166,7 +165,7 @@ export default function TradingJournal() {
 
         <div className="space-y-6">
           <FilterBar section="journal" />
-          <TradeStats trades={trades} />
+          <TradeStats stats={stats} />
         </div>
 
         <TradeModal

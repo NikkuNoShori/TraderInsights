@@ -11,6 +11,7 @@ export * from "./FormSelect";
 export * from "./Highlight";
 export * from "./input";
 export * from "./label";
+export * from "./LoadingButton";
 export * from "./LoadingScreen";
 export * from "./LoadingSpinner";
 export * from "./Logo";

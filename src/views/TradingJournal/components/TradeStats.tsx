@@ -1,34 +1,22 @@
 import { Trade } from "@/types/trade";
-import { formatTradeValue, formatPercent, calculatePnL } from "@/utils/trade";
-import { useFilteredTrades } from "@/hooks/useFilteredTrades";
+import { formatTradeValue, formatPercent } from "@/utils/trade";
 
-interface TradeStatsProps {
-  trades: Trade[];
+interface TradeStats {
+  totalPnL: number;
+  winRate: number;
+  totalTrades: number;
+  profitFactor: number;
+  averageWin: number;
+  averageLoss: number;
+  largestWin: number;
+  largestLoss: number;
 }
 
-export function TradeStats({ trades }: TradeStatsProps) {
-  const filteredTrades = useFilteredTrades(trades, "journal");
+interface TradeStatsProps {
+  stats: TradeStats;
+}
 
-  // Calculate total P&L
-  const totalPnL = filteredTrades.reduce((sum, trade) => {
-    const pnl = calculatePnL(trade);
-    return sum + (pnl ?? 0);
-  }, 0);
-
-  // Calculate win rate from trades with PnL
-  const tradesWithPnL = filteredTrades.filter(
-    (trade) => calculatePnL(trade) !== undefined,
-  );
-  const winningTrades = tradesWithPnL.filter((trade) => {
-    const pnl = calculatePnL(trade);
-    return pnl !== undefined && pnl > 0;
-  });
-  const winRate =
-    tradesWithPnL.length > 0 ? winningTrades.length / tradesWithPnL.length : 0;
-
-  // Get total number of trades
-  const totalTrades = filteredTrades.length;
-
+export function TradeStats({ stats }: TradeStatsProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div className="bg-card dark:bg-dark-card rounded-lg p-4 border border-border dark:border-dark-border">
@@ -37,16 +25,16 @@ export function TradeStats({ trades }: TradeStatsProps) {
         </h3>
         <div className="flex items-baseline">
           <span
-            className={`text-2xl font-bold ${totalPnL >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
+            className={`text-2xl font-bold ${stats.totalPnL >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
           >
-            {totalPnL >= 0 ? "+" : ""}
-            {formatTradeValue(totalPnL)}
+            {stats.totalPnL >= 0 ? "+" : ""}
+            {formatTradeValue(stats.totalPnL)}
           </span>
-          {totalPnL !== 0 && (
+          {stats.totalPnL !== 0 && (
             <span
-              className={`ml-2 text-sm ${totalPnL >= 0 ? "text-green-600/70 dark:text-green-400/70" : "text-red-600/70 dark:text-red-400/70"}`}
+              className={`ml-2 text-sm ${stats.totalPnL >= 0 ? "text-green-600/70 dark:text-green-400/70" : "text-red-600/70 dark:text-red-400/70"}`}
             >
-              {formatTradeValue(Math.abs(totalPnL))}
+              {formatTradeValue(Math.abs(stats.totalPnL))}
             </span>
           )}
         </div>
@@ -57,30 +45,26 @@ export function TradeStats({ trades }: TradeStatsProps) {
           Win Rate
         </h3>
         <div className="flex items-baseline">
-          <span
-            className={`text-2xl font-bold ${winRate >= 0.5 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
-          >
-            {formatPercent(winRate)}
+          <span className="text-2xl font-bold">
+            {formatPercent(stats.winRate)}
           </span>
           <span className="ml-2 text-sm text-muted-foreground">
-            {`${winningTrades.length}/${tradesWithPnL.length} trades`}
+            {stats.totalTrades} trades
           </span>
         </div>
       </div>
 
       <div className="bg-card dark:bg-dark-card rounded-lg p-4 border border-border dark:border-dark-border">
         <h3 className="text-sm font-medium text-muted-foreground mb-1">
-          Total Trades
+          Profit Factor
         </h3>
         <div className="flex items-baseline">
-          <span className="text-2xl font-bold text-foreground">
-            {totalTrades}
+          <span className="text-2xl font-bold">
+            {stats.profitFactor.toFixed(2)}
           </span>
-          {tradesWithPnL.length < totalTrades && (
-            <span className="ml-2 text-sm text-muted-foreground">
-              ({tradesWithPnL.length} with P&L)
-            </span>
-          )}
+          <span className="ml-2 text-sm text-muted-foreground">
+            Avg Win: {formatTradeValue(stats.averageWin)}
+          </span>
         </div>
       </div>
     </div>

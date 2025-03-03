@@ -7,10 +7,12 @@ import {
   ResponsiveContainer,
   CartesianGrid,
   Legend,
+  Brush,
+  Cell,
 } from "recharts";
 import type { Trade } from "@/types/trade";
 import type { TimeframeOption } from "@/components/ui/TimeframeSelector";
-import { useMemo } from "@/lib/react";
+import { useMemo, useState, useCallback } from "@/lib/react";
 import {
   format,
   startOfDay,
@@ -25,6 +27,8 @@ import {
   addHours,
 } from "date-fns";
 import { useTimeframeFilteredTrades } from "@/hooks/useTimeframeFilteredTrades";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
 
 interface WinRateChartProps {
   trades: Trade[];
@@ -39,6 +43,11 @@ interface WinRateData {
   total: number;
 }
 
+interface ZoomDomain {
+  start: string;
+  end: string;
+}
+
 const formatTooltip = (value: number) => `${(value * 100).toFixed(1)}%`;
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -46,18 +55,35 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
   const data = payload[0].payload;
   return (
-    <div className="bg-card dark:bg-dark-paper border border-border rounded-md p-2 text-sm">
-      <div className="font-medium">Date: {label}</div>
-      <div>Win Rate: {formatTooltip(data.winRate)}</div>
-      <div>Wins: {data.wins}</div>
-      <div>Losses: {data.losses}</div>
-      <div>Total Trades: {data.total}</div>
+    <div className="bg-card dark:bg-dark-paper border border-border dark:border-dark-border rounded-lg shadow-lg p-3 backdrop-blur-sm">
+      <div className="font-medium mb-1">{label}</div>
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-primary/80" />
+          <span className="font-medium">Win Rate:</span>
+          <span>{formatTooltip(data.winRate)}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-success/80" />
+          <span className="font-medium">Wins:</span>
+          <span>{data.wins}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-destructive/80" />
+          <span className="font-medium">Losses:</span>
+          <span>{data.losses}</span>
+        </div>
+        <div className="text-xs text-muted-foreground mt-1">
+          Total Trades: {data.total}
+        </div>
+      </div>
     </div>
   );
 };
 
 export function WinRateChart({ trades, timeframe }: WinRateChartProps) {
   const timeframeFilteredTrades = useTimeframeFilteredTrades(trades, timeframe);
+  const [brushDomain, setBrushDomain] = useState<ZoomDomain | null>(null);
 
   const chartData = useMemo(() => {
     if (!timeframeFilteredTrades.length) return [];
@@ -162,6 +188,31 @@ export function WinRateChart({ trades, timeframe }: WinRateChartProps) {
     });
   }, [timeframeFilteredTrades, timeframe]);
 
+  const handleExport = useCallback(() => {
+    const csvContent = [
+      ["Date", "Win Rate", "Wins", "Losses", "Total Trades"],
+      ...chartData.map(d => [
+        d.date,
+        formatTooltip(d.winRate),
+        d.wins,
+        d.losses,
+        d.total
+      ]),
+    ].map(row => row.join(",")).join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `winrate_data_${timeframe}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }, [chartData, timeframe]);
+
+  const handleResetZoom = useCallback(() => {
+    setBrushDomain(null);
+  }, []);
+
   if (!timeframeFilteredTrades.length) {
     return (
       <div className="h-[300px] flex items-center justify-center text-muted-foreground">
@@ -182,30 +233,80 @@ export function WinRateChart({ trades, timeframe }: WinRateChartProps) {
   const yAxisDomain = [0, Math.max(1, Math.ceil(maxWinRate * 10) / 10)];
 
   return (
-    <div className="h-[300px]">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis
-            dataKey="date"
-            tick={{ fontSize: 12 }}
-            interval="preserveStartEnd"
-          />
-          <YAxis
-            tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
-            domain={yAxisDomain}
-            tick={{ fontSize: 12 }}
-          />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend />
-          <Bar
-            name="Win Rate"
-            dataKey="winRate"
-            fill="var(--primary)"
-            radius={[4, 4, 0, 0]}
-          />
-        </BarChart>
-      </ResponsiveContainer>
+    <div className="space-y-4">
+      <div className="flex justify-end gap-2">
+        {brushDomain && (
+          <Button variant="outline" size="sm" onClick={handleResetZoom}>
+            Reset Zoom
+          </Button>
+        )}
+        <Button variant="outline" size="sm" onClick={handleExport}>
+          <Download className="h-4 w-4 mr-2" />
+          Export
+        </Button>
+      </div>
+      <div className="h-[300px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={chartData}>
+            <defs>
+              <linearGradient id="winRateGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="var(--primary)" stopOpacity={0.4} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.2} />
+            <XAxis
+              dataKey="date"
+              tick={{ fontSize: 12 }}
+              interval="preserveStartEnd"
+              domain={brushDomain ? [brushDomain.start, brushDomain.end] : ["auto", "auto"]}
+            />
+            <YAxis
+              tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
+              domain={yAxisDomain}
+              tick={{ fontSize: 12 }}
+            />
+            <Tooltip
+              content={<CustomTooltip />}
+              cursor={{ fill: "var(--muted)", opacity: 0.1 }}
+            />
+            <Legend
+              wrapperStyle={{ paddingTop: "8px" }}
+              formatter={(value) => <span className="text-sm">{value}</span>}
+            />
+            <Bar
+              name="Win Rate"
+              dataKey="winRate"
+              fill="url(#winRateGradient)"
+              radius={[4, 4, 0, 0]}
+              animationDuration={500}
+            >
+              {chartData.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={entry.winRate >= 0.5 ? "url(#winRateGradient)" : "var(--muted)"}
+                />
+              ))}
+            </Bar>
+            <Brush
+              dataKey="date"
+              height={30}
+              stroke="var(--border)"
+              fill="var(--background)"
+              startIndex={0}
+              endIndex={chartData.length - 1}
+              onChange={({ startIndex, endIndex }) => {
+                if (typeof startIndex === "number" && typeof endIndex === "number") {
+                  setBrushDomain({
+                    start: chartData[startIndex].date,
+                    end: chartData[endIndex].date,
+                  });
+                }
+              }}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }

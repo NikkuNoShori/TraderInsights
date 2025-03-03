@@ -4,7 +4,7 @@ import { toast } from "react-hot-toast";
 import { apiClient } from "@/lib/services/apiClient";
 import { validateEmail } from "@/utils/validation";
 import { FormInput } from "@/components/ui";
-import { LoadingButton } from "@/components/LoadingButton";
+import { LoadingButton } from "@/components/ui/LoadingButton";
 
 export default function RequestPasswordReset() {
   const [email, setEmail] = useState("");

@@ -31,7 +31,7 @@ export function FilterBar({ section }: FilterBarProps) {
     setActiveSection(section);
   }, [section, setActiveSection]);
 
-  const currentFilters = filters[section];
+  const currentFilters = filters[section] || { brokers: [] };
 
   const activeFilterCount = Object.values(currentFilters).filter((value) =>
     Array.isArray(value) ? value.length > 0 : value !== undefined,
