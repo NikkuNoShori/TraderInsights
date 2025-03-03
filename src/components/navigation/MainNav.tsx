@@ -81,7 +81,7 @@ export function MainNav() {
   });
 
   const userMenuRef = useRef<HTMLDivElement>(null);
-  const { user, signOut } = useAuthStore();
+  const { user, profile, signOut } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -319,9 +319,7 @@ export function MainNav() {
                     "group-hover:text-primary-700 dark:group-hover:text-primary-300",
                   )}
                 >
-                  {user?.user_metadata?.full_name ||
-                    user?.email?.split("@")[0] ||
-                    "Profile"}
+                  Hey, {profile?.first_name || user?.email?.split("@")[0] || "there"}
                 </span>
               )}
             </button>
@@ -381,7 +379,7 @@ export function MainNav() {
                   onClick={handleSettingsClick}
                   className="flex items-center space-x-2 w-full p-2 text-sm rounded-md
                              text-muted-foreground hover:text-foreground
-                             hover:bg-primary-50 dark:hover:bg-primary-900/10 
+                             hover:bg-muted/50 dark:hover:bg-dark-muted/50
                              transition-colors duration-150"
                 >
                   <Settings className="h-4 w-4" />
@@ -391,9 +389,9 @@ export function MainNav() {
                 <button
                   onClick={handleLogout}
                   className="flex items-center space-x-2 w-full p-2 text-sm rounded-md
-                             text-red-600 dark:text-red-400
-                             hover:bg-red-50 dark:hover:bg-red-900/10 
-                             hover:text-red-700 dark:hover:text-red-300
+                             text-destructive dark:text-destructive
+                             hover:bg-muted/50 dark:hover:bg-dark-muted/50
+                             hover:text-destructive dark:hover:text-destructive
                              transition-colors duration-150"
                 >
                   <LogOut className="h-4 w-4" />

@@ -65,21 +65,21 @@ export default function NotificationSettings() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-sm">
-      <div className="divide-y divide-gray-200 dark:divide-gray-700">
+    <div className="max-w-3xl mx-auto bg-card dark:bg-dark-paper rounded-lg border border-border dark:border-dark-border">
+      <div className="divide-y divide-border dark:divide-border">
         <div className="px-8 py-6">
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-2xl font-semibold text-foreground dark:text-dark-text">
             Notification Preferences
           </h2>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-2 text-sm text-muted-foreground dark:text-dark-muted">
             Choose what updates you want to receive
           </p>
         </div>
 
         <div className="px-8 py-6">
-          <div className="space-y-6">
+          <div className="space-y-4">
             {notificationSettings.map(({ id, label, description }) => (
-              <div key={id} className="flex items-start">
+              <div key={id} className="flex items-start space-x-4">
                 <div className="flex items-center h-6">
                   <button
                     type="button"
@@ -87,10 +87,10 @@ export default function NotificationSettings() {
                     aria-checked={settings[id]}
                     onClick={() => toggleSetting(id)}
                     className={clsx(
-                      "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2",
+                      "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2",
                       settings[id]
-                        ? "bg-primary-500"
-                        : "bg-gray-200 dark:bg-gray-700",
+                        ? "bg-primary dark:bg-primary"
+                        : "bg-muted dark:bg-dark-muted",
                     )}
                   >
                     <span className="sr-only">{label}</span>
@@ -102,11 +102,11 @@ export default function NotificationSettings() {
                     />
                   </button>
                 </div>
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                <div className="flex-grow">
+                  <p className="text-sm font-medium text-foreground dark:text-dark-text">
                     {label}
                   </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-sm text-muted-foreground dark:text-dark-muted">
                     {description}
                   </p>
                 </div>

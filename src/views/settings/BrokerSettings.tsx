@@ -76,99 +76,105 @@ export default function BrokerSettings() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold mb-2">Connected Brokers</h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          Manage your connected trading accounts and data
-        </p>
+    <div className="max-w-3xl mx-auto bg-card dark:bg-dark-paper rounded-lg border border-border dark:border-dark-border">
+      <div className="divide-y divide-border dark:divide-border">
+        <div className="px-8 py-6">
+          <h2 className="text-2xl font-semibold text-foreground dark:text-dark-text">
+            Connected Brokers
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground dark:text-dark-muted">
+            Manage your connected trading accounts and data
+          </p>
+        </div>
 
-        <div className="space-y-4">
-          {/* Webull Section */}
-          <div className="p-4 border border-border rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-medium">Webull</h3>
-                <p className="text-sm text-muted-foreground">
-                  Clear all imported Webull trade data
-                </p>
-              </div>
+        <div className="px-8 py-6">
+          <div className="space-y-4">
+            {/* Webull Section */}
+            <div className="p-4 border border-border dark:border-dark-border rounded-lg bg-background dark:bg-dark-bg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium text-foreground dark:text-dark-text">Webull</h3>
+                  <p className="text-sm text-muted-foreground dark:text-dark-muted">
+                    Clear all imported Webull trade data
+                  </p>
+                </div>
 
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    disabled={isClearing}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    {isClearing ? "Clearing..." : "Clear Trades"}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Clear Webull Trades</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will permanently delete all imported Webull trades. This
-                      action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => handleClearBrokerTrades('webull')}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      disabled={isClearing}
                     >
-                      Clear Trades
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {isClearing ? "Clearing..." : "Clear Trades"}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Clear Webull Trades</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete all imported Webull trades. This
+                        action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleClearBrokerTrades('webull')}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Clear Trades
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </div>
-          </div>
 
-          {/* Clear All Trades Section */}
-          <div className="p-4 border border-border rounded-lg bg-muted/50">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-medium">All Trades</h3>
-                <p className="text-sm text-muted-foreground">
-                  Clear all trade data from all brokers
-                </p>
-              </div>
+            {/* All Trades Section */}
+            <div className="p-4 border border-border dark:border-dark-border rounded-lg bg-muted/50 dark:bg-dark-muted/50">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium text-foreground dark:text-dark-text">All Trades</h3>
+                  <p className="text-sm text-muted-foreground dark:text-dark-muted">
+                    Clear all trade data from all brokers
+                  </p>
+                </div>
 
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    disabled={isClearing}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    {isClearing ? "Clearing..." : "Clear All Trades"}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Clear All Trades</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will permanently delete all trades from all brokers. This
-                      action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleClearAllTrades}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      disabled={isClearing}
                     >
-                      Clear All Trades
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {isClearing ? "Clearing..." : "Clear All Trades"}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Clear All Trades</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete all trades from all brokers. This
+                        action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleClearAllTrades}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Clear All Trades
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </div>
           </div>
         </div>

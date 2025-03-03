@@ -13,6 +13,16 @@ export function DashboardCards({ trades }: DashboardCardsProps) {
   const filteredTrades = useFilteredTrades(trades, "overview");
 
   const stats = useMemo(() => {
+    if (filteredTrades.length === 0) {
+      return {
+        rawPnL: 0,
+        totalFees: 0,
+        netReturn: 0,
+        winRate: 0,
+        totalTrades: 0,
+      };
+    }
+
     // Calculate raw P&L without fees
     const rawPnL = filteredTrades.reduce((sum, trade) => {
       if (trade.exit_price && trade.entry_price) {
@@ -53,6 +63,45 @@ export function DashboardCards({ trades }: DashboardCardsProps) {
       totalTrades: filteredTrades.length,
     };
   }, [filteredTrades]);
+
+  if (filteredTrades.length === 0) {
+    return (
+      <div className="w-full max-w-[1400px] mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <StatsCard
+            title="P&L"
+            value="--"
+            icon={TrendingUp}
+            subtitle="No trades yet"
+          />
+          <StatsCard
+            title="Total Fees"
+            value="--"
+            icon={Receipt}
+            subtitle="No trades yet"
+          />
+          <StatsCard
+            title="Net Return"
+            value="--"
+            icon={DollarSign}
+            subtitle="No trades yet"
+          />
+          <StatsCard
+            title="Win Rate"
+            value="--"
+            icon={Activity}
+            subtitle="No trades yet"
+          />
+          <StatsCard
+            title="Total Trades"
+            value="0"
+            icon={Activity}
+            subtitle="No trades yet"
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-[1400px] mx-auto">
