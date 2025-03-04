@@ -1,6 +1,5 @@
 import type { TimeframeOption } from "@/components/ui/TimeframeSelector";
 import {
-  format,
   startOfDay,
   endOfDay,
   eachDayOfInterval,

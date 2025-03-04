@@ -1,5 +1,5 @@
 import { useMemo } from "@/lib/react";
-import type { Trade, BaseTrade } from "@/types/trade";
+import type { Trade } from "@/types/trade";
 import type { Trade as PortfolioTrade } from "@/types/portfolio";
 
 export interface NormalizedTrade {

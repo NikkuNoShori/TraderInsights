@@ -1,6 +1,5 @@
 import { useEffect, useState } from "@/lib/react";
 import { DashboardCards } from "@/components/dashboard/DashboardCards";
-import { WelcomeSection } from "@/components/dashboard/WelcomeSection";
 import { useAuthStore } from "@/stores/authStore";
 import { useTradeStore } from "@/stores/tradeStore";
 import { TimeframeSelector } from "@/components/ui/TimeframeSelector";

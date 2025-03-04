@@ -1,7 +1,6 @@
 import { useState } from "@/lib/react";
 import { useAuthStore } from "@/stores/authStore";
 import { Button } from "@/components/ui";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -13,13 +12,6 @@ import type { Trade } from "@/types/trade";
 import { processTradeFile } from "@/lib/services/fileProcessing";
 import { toast } from "react-hot-toast";
 import { WebullImportForm } from "./WebullImportForm";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { transformBrokerTrade } from "@/utils/brokerTransforms";
 
 interface ImportTradeFormProps {

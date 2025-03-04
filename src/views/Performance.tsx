@@ -92,7 +92,7 @@ export default function Performance() {
         <h3 className="text-base font-medium text-text-primary mb-4">
           Advanced Performance Analysis
         </h3>
-        <PerformanceCharts trades={filteredTrades} />
+        <PerformanceCharts trades={filteredTrades} timeframe="1M" />
       </div>
 
       {/* Charts Section */}

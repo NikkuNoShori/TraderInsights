@@ -10,8 +10,8 @@ import {
   ArrowDown,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { TRADE_COLUMNS, TradeColumn } from "./TradeListColumns";
+import { useState } from "react";
+import { TRADE_COLUMNS } from "./TradeListColumns";
 import { ColumnSelector } from "./ColumnSelector";
 import { TradeCell } from "./TradeCell";
 import React from "react";

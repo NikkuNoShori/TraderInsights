@@ -1,33 +1,43 @@
-import { useState, useEffect } from "@/lib/react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/stores/authStore";
 import { profileService } from "@/lib/services/profileService";
-import { FormInput } from "@/components/ui";
-import { Button } from "@/components/ui/button";
 import { toast } from "react-hot-toast";
-import { PageHeader } from "@/components/ui";
-import type { UserProfile } from "@/types";
+
+interface UserProfile {
+  first_name: string;
+  last_name: string;
+  email: string;
+}
 
 export default function ProfileSettings() {
-  const navigate = useNavigate();
-  const { user, profile, setProfile } = useAuthStore();
+  const { user, profile: userProfile, setProfile } = useAuthStore();
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: user?.email || "",
+  const [formData, setFormData] = useState<UserProfile>({
+    first_name: userProfile?.first_name || "",
+    last_name: userProfile?.last_name || "",
+    email: user?.email || ""
   });
 
   // Load initial profile data
   useEffect(() => {
-    if (profile) {
+    if (userProfile) {
       setFormData({
-        firstName: profile.first_name || "",
-        lastName: profile.last_name || "",
-        email: profile.email || user?.email || "",
+        first_name: userProfile.first_name || "",
+        last_name: userProfile.last_name || "",
+        email: user?.email || ""
       });
     }
-  }, [profile, user]);
+  }, [userProfile, user]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, field: keyof UserProfile) => {
+    setFormData((prev: UserProfile) => ({
+      ...prev,
+      [field]: e.target.value
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,8 +46,8 @@ export default function ProfileSettings() {
     setLoading(true);
     try {
       const updates: Partial<UserProfile> = {
-        first_name: formData.firstName,
-        last_name: formData.lastName,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
         email: formData.email,
       };
 
@@ -79,29 +89,31 @@ export default function ProfileSettings() {
         <form onSubmit={handleSubmit} className="px-8 py-6">
           <div className="space-y-6">
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              <FormInput
-                label="First Name"
-                value={formData.firstName}
-                onChange={(e) =>
-                  setFormData({ ...formData, firstName: e.target.value })
-                }
-              />
-              <FormInput
-                label="Last Name"
-                value={formData.lastName}
-                onChange={(e) =>
-                  setFormData({ ...formData, lastName: e.target.value })
-                }
-              />
-              <FormInput
-                label="Email"
-                type="email"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                className="sm:col-span-2"
-              />
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  value={formData.first_name}
+                  onChange={(e) => handleInputChange(e, "first_name")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  value={formData.last_name}
+                  onChange={(e) => handleInputChange(e, "last_name")}
+                />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange(e, "email")}
+                />
+              </div>
             </div>
 
             <div className="flex justify-end">

@@ -28,17 +28,6 @@ import {
 } from "../charts/ChartComponents";
 import { useTradeCalculations } from "@/hooks/useTradeCalculations";
 
-interface ChartData {
-  date: string;
-  pnl: number;
-  cumulativePnL: number;
-  drawdown: number;
-  trades: number;
-  winRate: number;
-  avgWin: number;
-  avgLoss: number;
-}
-
 interface PerformanceChartsProps {
   trades: (Trade | PortfolioTrade)[];
   timeframe: TimeframeOption;
@@ -50,7 +39,7 @@ export function PerformanceCharts({ trades, timeframe }: PerformanceChartsProps)
   const processData = useMemo(() => {
     if (!normalizedTrades.length) return [];
 
-    const { start, end, dateFormat, intervals } = getTimeframeConfig(timeframe);
+    const { dateFormat, intervals } = getTimeframeConfig(timeframe);
 
     let cumulativePnL = 0;
     let peak = 0;

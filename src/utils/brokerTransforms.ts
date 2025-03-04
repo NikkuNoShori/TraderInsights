@@ -1,5 +1,5 @@
 import { transformWebullTrade } from "./webullTransforms";
-import type { Trade, TradeType, TradeSide, TradeStatus } from "@/types/trade";
+import type { Trade } from "@/types/trade";
 
 // Common date/time parsing utility
 export function parseDateTime(

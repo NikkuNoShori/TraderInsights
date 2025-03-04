@@ -31,14 +31,6 @@ interface WinRateChartProps {
   timeframe: TimeframeOption;
 }
 
-interface WinRateData {
-  date: string;
-  winRate: number;
-  wins: number;
-  losses: number;
-  total: number;
-}
-
 const formatTooltip = (value: number) => `${(value * 100).toFixed(1)}%`;
 
 const CustomTooltip = ({ active, payload, label }: any) => {

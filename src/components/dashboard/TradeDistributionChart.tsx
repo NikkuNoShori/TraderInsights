@@ -74,7 +74,6 @@ const CustomLegend = ({ payload }: any) => {
 
 export function TradeDistributionChart({
   trades,
-  timeframe,
 }: TradeDistributionChartProps) {
   const filteredTrades = useFilteredTrades(trades, "performance");
 
@@ -90,7 +89,6 @@ export function TradeDistributionChart({
     const categories = filteredTrades.reduce(
       (acc, trade) => {
         const pnl = trade.pnl || 0;
-        const absPnL = Math.abs(pnl);
 
         let category;
         if (pnl > avgPnL * 2) category = "bigWin";

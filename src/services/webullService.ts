@@ -57,10 +57,7 @@ class WebullService {
     try {
       const deviceId =
         localStorage.getItem("webull_device_id") || this.generateDeviceId();
-      this.webullClient = new webull({
-        deviceId,
-        deviceName: "TraderInsights Web",
-      });
+      this.webullClient = new webull();
 
       // Store device ID for future use
       localStorage.setItem("webull_device_id", deviceId);

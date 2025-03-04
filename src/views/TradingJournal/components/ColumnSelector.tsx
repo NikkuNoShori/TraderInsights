@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Button } from "@/components/ui";
 import { Settings2 } from "lucide-react";
 import {
@@ -9,7 +8,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
-import { TRADE_COLUMNS, TradeColumn } from "./TradeListColumns";
+import { TRADE_COLUMNS } from "./TradeListColumns";
 
 interface ColumnSelectorProps {
   visibleColumns: string[];

@@ -1,23 +1,21 @@
-import { useState, useEffect } from "@/lib/react";
+import { useState } from "@/lib/react";
 import { toast } from "react-hot-toast";
+import { Trade } from "@/types/trade";
+import { TradeList } from "./components/TradeList";
+import { FilterBar } from "@/components/trades/FilterBar";
+import { useFilteredTrades } from "@/hooks/useFilteredTrades";
 import {
-  TradeList,
   SortField,
-  SortDirection,
   SortState,
 } from "./components/TradeList";
 import { TradeStats } from "./components/TradeStats";
 import { Button } from "@/components/ui";
 import { Plus } from "lucide-react";
-import { Trade, CreateTradeData } from "@/types/trade";
+import { CreateTradeData } from "@/types/trade";
 import { TradeModal } from "@/components/trades/TradeModal";
 import { useTradeStore } from "@/stores/tradeStore";
 import { useAuthStore } from "@/stores/authStore";
-import { useFilterStore } from "@/stores/filterStore";
 import { calculatePnL } from "@/utils/trade";
-import { TRADE_COLUMNS } from "./components/TradeListColumns";
-import { FilterBar } from "@/components/trades/FilterBar";
-import { useFilteredTrades } from "@/hooks/useFilteredTrades";
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100, -1] as const;
 type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];

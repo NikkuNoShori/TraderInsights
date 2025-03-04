@@ -33,13 +33,6 @@ interface PnLChartProps {
   timeframe: TimeframeOption;
 }
 
-interface PnLData {
-  date: string;
-  pnl: number;
-  cumulativePnL: number;
-  trades: number;
-}
-
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload || !payload.length) return null;
 
