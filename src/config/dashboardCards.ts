@@ -8,7 +8,8 @@ import { RecentTradesCard } from "@/components/dashboard/RecentTradesCard";
 import type { Layout } from "react-grid-layout";
 import {
   DEFAULT_DASHBOARD_LAYOUT,
-  DEFAULT_ENABLED_CARDS,
+  CARD_TYPES,
+  type CardType,
 } from "./dashboardTheme";
 
 interface DashboardCardConfig extends DashboardCard {
@@ -75,10 +76,8 @@ export const DASHBOARD_CARDS: Record<DashboardCardType, DashboardCardConfig> = {
 };
 
 export function getDefaultDashboardConfig(): DashboardConfig {
-  const defaultLayouts = DEFAULT_ENABLED_CARDS.map((cardType) =>
-    DEFAULT_DASHBOARD_LAYOUT.find(
-      (layout) => layout.i === cardType.replace("_", "-"),
-    ),
+  const defaultLayouts = CARD_TYPES.map((cardType: CardType) =>
+    DEFAULT_DASHBOARD_LAYOUT.find((layout: Layout) => layout.i === cardType)
   ).filter((layout): layout is Layout => layout !== null);
 
   const now = new Date().toISOString();
@@ -90,11 +89,11 @@ export function getDefaultDashboardConfig(): DashboardConfig {
         id: "default",
         name: "Default Dashboard",
         layouts: defaultLayouts,
-        enabledCards: DEFAULT_ENABLED_CARDS,
+        enabledCards: [...CARD_TYPES],
         createdAt: now,
         updatedAt: now,
       },
     ],
-    enabledCards: DEFAULT_ENABLED_CARDS,
+    enabledCards: [...CARD_TYPES],
   };
 }

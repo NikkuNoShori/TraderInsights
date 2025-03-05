@@ -1,3 +1,5 @@
+import type { TimeframeOption } from "@/components/ui/TimeframeSelector";
+
 export type TradeType = "stock" | "option" | "crypto" | "forex";
 export type TradeSide = "Long" | "Short";
 export type TradeStatus = "open" | "closed" | "pending";
@@ -105,6 +107,7 @@ export interface TradeFilters {
   setupTypes?: string[];
   strategies?: string[];
   winLoss?: "win" | "loss";
+  timeframe?: TimeframeOption;
 }
 
 export interface TradeStats {

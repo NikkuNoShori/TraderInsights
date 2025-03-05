@@ -7,14 +7,12 @@ import {
   Legend,
 } from "recharts";
 import type { Trade } from "@/types/trade";
-import type { TimeframeOption } from "@/components/ui/TimeframeSelector";
 import { useMemo } from "@/lib/react";
 import { formatCurrency, formatPercent } from "@/utils/formatters";
 import { useFilteredTrades } from "@/hooks/useFilteredTrades";
 
 interface TradeDistributionChartProps {
   trades: Trade[];
-  timeframe: TimeframeOption;
 }
 
 interface TradeDistributionData {
@@ -75,7 +73,7 @@ const CustomLegend = ({ payload }: any) => {
 export function TradeDistributionChart({
   trades,
 }: TradeDistributionChartProps) {
-  const filteredTrades = useFilteredTrades(trades, "performance");
+  const filteredTrades = useFilteredTrades(trades);
 
   const chartData = useMemo(() => {
     if (!filteredTrades.length) return [];

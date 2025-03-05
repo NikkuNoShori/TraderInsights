@@ -7,7 +7,7 @@ interface TradeStatsProps {
 }
 
 export function TradeStats({ trades }: TradeStatsProps) {
-  const filteredTrades = useFilteredTrades(trades, "journal");
+  const filteredTrades = useFilteredTrades(trades);
 
   // Calculate total P&L
   const totalPnL = filteredTrades.reduce((sum, trade) => {
@@ -31,7 +31,7 @@ export function TradeStats({ trades }: TradeStatsProps) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div className="bg-card dark:bg-dark-card rounded-lg p-4 border border-border dark:border-dark-border">
+      <div className="bg-card rounded-lg p-4 border border-default">
         <h3 className="text-sm font-medium text-muted-foreground mb-1">
           Total P&L
         </h3>
@@ -52,7 +52,7 @@ export function TradeStats({ trades }: TradeStatsProps) {
         </div>
       </div>
 
-      <div className="bg-card dark:bg-dark-card rounded-lg p-4 border border-border dark:border-dark-border">
+      <div className="bg-card rounded-lg p-4 border border-default">
         <h3 className="text-sm font-medium text-muted-foreground mb-1">
           Win Rate
         </h3>
@@ -68,7 +68,7 @@ export function TradeStats({ trades }: TradeStatsProps) {
         </div>
       </div>
 
-      <div className="bg-card dark:bg-dark-card rounded-lg p-4 border border-border dark:border-dark-border">
+      <div className="bg-card rounded-lg p-4 border border-default">
         <h3 className="text-sm font-medium text-muted-foreground mb-1">
           Total Trades
         </h3>

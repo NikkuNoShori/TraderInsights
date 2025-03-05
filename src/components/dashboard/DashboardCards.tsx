@@ -21,7 +21,7 @@ interface DashboardCardsProps {
 }
 
 export function DashboardCards({ trades, timeframe }: DashboardCardsProps) {
-  const filteredTrades = useFilteredTrades(trades, "overview");
+  const filteredTrades = useFilteredTrades(trades);
 
   const stats = useMemo(() => {
     if (filteredTrades.length === 0) {
@@ -128,7 +128,7 @@ export function DashboardCards({ trades, timeframe }: DashboardCardsProps) {
 
       <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
         <h3 className="text-lg font-medium mb-4">Trade Distribution</h3>
-        <TradeDistributionChart trades={[]} timeframe={timeframe} />
+        <TradeDistributionChart trades={[]} />
       </div>
     </div>
   );
@@ -183,7 +183,7 @@ export function DashboardCards({ trades, timeframe }: DashboardCardsProps) {
 
       <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
         <h3 className="text-lg font-medium mb-4">Trade Distribution</h3>
-        <TradeDistributionChart trades={filteredTrades} timeframe={timeframe} />
+        <TradeDistributionChart trades={filteredTrades} />
       </div>
     </div>
   );

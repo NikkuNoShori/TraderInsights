@@ -35,7 +35,7 @@ interface TradeStats {
 }
 
 export function TradeStatistics({ trades, isLoading }: TradeStatisticsProps) {
-  const filteredTrades = useFilteredTrades(trades, "performance");
+  const filteredTrades = useFilteredTrades(trades);
 
   const stats = useMemo((): TradeStats => {
     // Basic Statistics

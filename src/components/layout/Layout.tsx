@@ -12,7 +12,7 @@ export function Layout({ children }: LayoutProps) {
   const { isCollapsed } = useNavStore();
 
   return (
-    <div className="min-h-screen bg-background dark:bg-dark-bg flex">
+    <div className="min-h-screen bg-default flex">
       <MainNav />
       <div
         className={clsx(

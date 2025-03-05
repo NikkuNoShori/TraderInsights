@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from "@/lib/react";
 import { useAuthStore } from "@/stores/authStore";
 import { supabase } from "@/lib/supabase";
+import { ThemeProvider } from "./ThemeProvider";
 
 interface StoreProviderProps {
   children: ReactNode;
@@ -38,5 +39,5 @@ export function StoreProvider({ children }: StoreProviderProps) {
     };
   }, [handleAuthStateChange, setInitialized]);
 
-  return children;
+  return <ThemeProvider>{children}</ThemeProvider>;
 }

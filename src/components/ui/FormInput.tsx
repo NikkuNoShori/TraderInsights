@@ -39,9 +39,9 @@ export function FormInput({
   return (
     <div className="relative">
       {label && (
-        <label className="block text-sm font-medium mb-2 text-foreground">
+        <label className="block text-sm font-medium mb-2 text-default">
           {label}
-          {props.required && <span className="text-destructive ml-1">*</span>}
+          {props.required && <span className="text-error ml-1">*</span>}
         </label>
       )}
 
@@ -50,27 +50,27 @@ export function FormInput({
           autoComplete={getAutoComplete()}
           type={type}
           className={clsx(
-            "block w-full rounded-lg text-sm transition-all duration-200",
-            "min-h-[42px] px-3.5 py-2",
-            "bg-background dark:bg-dark-bg",
-            "text-foreground",
-            "border border-input",
-            "placeholder:text-muted-foreground",
+            "block w-full rounded-lg text-sm transition-colors duration-200",
+            "min-h-[42px] px-4 py-2.5",
+            "bg-card",
+            "text-default",
+            "border border-border",
+            "placeholder:text-muted",
 
             // Hover state
             "hover:border-primary/50",
 
             // Focus state
-            "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary",
+            "focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
 
             // Disabled state
-            props.disabled && ["opacity-60 cursor-not-allowed", "bg-muted"],
+            props.disabled && ["opacity-60 cursor-not-allowed"],
 
             // Error state
             error && [
-              "border-destructive",
-              "focus:ring-destructive/20",
-              "focus:border-destructive",
+              "border-error",
+              "focus:ring-error/20",
+              "focus:border-error",
             ],
 
             className,
@@ -84,7 +84,7 @@ export function FormInput({
         <div
           className={clsx(
             "mt-2 text-xs",
-            error ? "text-destructive" : "text-muted-foreground",
+            error ? "text-error" : "text-muted",
           )}
         >
           {error && (

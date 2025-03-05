@@ -20,8 +20,11 @@ import { StoreProvider } from "./providers/StoreProvider";
 import LandingPage from "./views/LandingPage";
 import Performance from "./views/Performance";
 import ComingSoon from "./views/ComingSoon";
+import { useResetFilters } from "./hooks/useResetFilters";
 
 function ProtectedLayout() {
+  useResetFilters();
+  
   return (
     <AuthGuard>
       <Layout>
@@ -43,19 +46,11 @@ export default function App() {
             <Route index element={<LandingPage />} />
 
             {/* Auth routes */}
-            <Route
-              path="/auth"
-              element={
-                <AuthLayout
-                  title="Welcome to Trading Insights"
-                  subtitle="Sign in to your account"
-                />
-              }
-            >
-              <Route index element={<Navigate to="login" replace />} />
+            <Route path="/auth">
               <Route path="login" element={<Login />} />
               <Route path="request-reset" element={<RequestPasswordReset />} />
               <Route path="reset-password" element={<ResetPassword />} />
+              <Route index element={<Navigate to="login" replace />} />
             </Route>
 
             {/* Protected routes */}

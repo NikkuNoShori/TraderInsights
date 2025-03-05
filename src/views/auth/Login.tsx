@@ -6,6 +6,7 @@ import { FormInput } from "@/components/ui/FormInput";
 import { LoadingButton } from "@/components/LoadingButton";
 import { useAuthStore } from "@/stores/authStore";
 import { clearDeveloperMode } from "@/lib/utils/auth";
+import { Logo } from "@/components/ui";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -89,9 +90,17 @@ export default function Login() {
   };
 
   return (
-    <div className="w-full max-w-md">
-      <div className="bg-white dark:bg-gray-800 py-8 px-4 shadow sm:rounded-lg sm:px-10">
-        <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="auth-container">
+      <div className="auth-header">
+        <Logo className="h-12 w-auto mb-4" />
+        <h1 className="auth-title">Welcome to Trading Insights</h1>
+        <p className="auth-subtitle">
+          {isSignUp ? "Create your account" : "Sign in to your account"}
+        </p>
+      </div>
+
+      <div className="auth-card">
+        <form onSubmit={handleSubmit} className="auth-form">
           <FormInput
             type="email"
             label="Email"
@@ -113,16 +122,16 @@ export default function Login() {
           />
 
           {error && (
-            <div className="text-sm text-red-600 dark:text-red-400">
+            <div className="text-sm text-error">
               {error.message}
             </div>
           )}
 
-          <div className="flex flex-col items-center gap-4">
+          <div className="space-y-4">
             <LoadingButton
               type="submit"
               isLoading={isLoading}
-              className="w-full px-4 py-2 text-sm flex items-center justify-center"
+              className="w-full bg-primary text-primary-foreground hover:opacity-90"
             >
               {isSignUp ? "Create Account" : "Sign In"}
             </LoadingButton>
@@ -133,7 +142,7 @@ export default function Login() {
                 setIsSignUp(!isSignUp);
                 resetState();
               }}
-              className="text-sm text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+              className="w-full text-sm text-muted hover:text-default transition-colors"
             >
               {isSignUp
                 ? "Already have an account? Sign in"
@@ -144,7 +153,7 @@ export default function Login() {
               <button
                 type="button"
                 onClick={() => navigate("/auth/request-reset")}
-                className="text-sm text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                className="w-full text-sm text-muted hover:text-default transition-colors"
               >
                 Forgot your password?
               </button>

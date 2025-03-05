@@ -1,4 +1,5 @@
 @import "@fortawesome/fontawesome-svg-core/styles.css";
+@import "./styles/theme.css";
 
 @tailwind base;
 @tailwind components;
@@ -6,54 +7,53 @@
 
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900 dark:bg-dark-bg dark:text-dark-text;
+    @apply bg-default text-default;
   }
 }
 
 @layer components {
   .card {
-    @apply bg-white border border-gray-200 rounded-lg shadow-sm 
-           dark:bg-dark-paper dark:border-dark-border;
+    @apply bg-card border border-default rounded-lg shadow-sm;
   }
 
   .btn-primary {
-    @apply px-4 py-2 bg-primary-600 text-white rounded-md 
-           hover:bg-primary-700 focus:ring-2 focus:ring-primary-500 
-           dark:bg-primary-500 dark:hover:bg-primary-600;
+    @apply px-4 py-2 bg-profit text-white rounded-md 
+           hover:opacity-90 focus:ring-2 focus:ring-profit/50
+           transition-colors;
   }
 
   .input {
-    @apply block w-full rounded-md border-gray-300 shadow-sm 
-           focus:border-primary-500 focus:ring-primary-500
-           dark:bg-dark-paper/50 dark:border-dark-border dark:text-dark-text
-           hover:border-gray-400 dark:hover:border-dark-border/80
+    @apply block w-full rounded-md border-default shadow-sm 
+           focus:border-profit focus:ring-profit/50
+           bg-input-bg text-input-text
+           hover:border-hover
            transition-colors;
   }
 
   .heading-1 {
-    @apply text-2xl font-bold text-gray-900 dark:text-dark-text;
+    @apply text-2xl font-bold text-default;
   }
 
   .heading-2 {
-    @apply text-xl font-semibold text-gray-900 dark:text-dark-text;
+    @apply text-xl font-semibold text-default;
   }
 
   .heading-3 {
-    @apply text-lg font-medium text-gray-900 dark:text-dark-text;
+    @apply text-lg font-medium text-default;
   }
 
   .text-body {
-    @apply text-gray-700 dark:text-dark-text;
+    @apply text-default;
   }
 
   .text-muted {
-    @apply text-gray-500 dark:text-dark-muted;
+    @apply text-muted;
   }
 
   .select {
-    @apply block w-full rounded-md border-gray-300 dark:border-dark-border 
-           bg-white dark:bg-dark-paper text-gray-900 dark:text-dark-text
-           focus:ring-primary-500 focus:border-primary-500;
+    @apply block w-full rounded-md border-default
+           bg-input-bg text-input-text
+           focus:ring-profit/50 focus:border-profit;
   }
 
   .badge {
@@ -61,18 +61,14 @@
   }
 
   .badge-success {
-    @apply bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400;
+    @apply bg-success/10 text-success;
   }
 
   .badge-error {
-    @apply bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400;
+    @apply bg-error/10 text-error;
   }
 
   .badge-warning {
-    @apply bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400;
-  }
-
-  .badge-info {
-    @apply bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400;
+    @apply bg-warning/10 text-warning;
   }
 }
