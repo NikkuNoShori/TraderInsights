@@ -13,18 +13,24 @@ import { TRADE_COLUMNS } from "./TradeListColumns";
 interface ColumnSelectorProps {
   visibleColumns: string[];
   onColumnToggle: (columnId: string) => void;
+  columns?: readonly { id: string; label: string; defaultVisible?: boolean }[];
+  buttonText?: string;
+  iconOnly?: boolean;
 }
 
 export function ColumnSelector({
   visibleColumns,
   onColumnToggle,
+  columns = TRADE_COLUMNS,
+  buttonText = "Columns",
+  iconOnly = false,
 }: ColumnSelectorProps) {
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="ml-auto">
-          <Settings2 className="h-4 w-4 mr-2" />
-          Columns
+          <Settings2 className="h-4 w-4" />
+          {!iconOnly && <span className="ml-2">{buttonText}</span>}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[200px]">
@@ -32,7 +38,7 @@ export function ColumnSelector({
           Toggle Columns
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        {TRADE_COLUMNS.map((column) => (
+        {columns.map((column) => (
           <DropdownMenuCheckboxItem
             key={column.id}
             checked={visibleColumns.includes(column.id)}
