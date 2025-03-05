@@ -27,7 +27,6 @@ export * from "./Skeleton";
 export * from "./Spinner";
 export * from "./switch";
 export * from "./tabs";
-export * from "./theme-toggle";
 export * from "./TimeframeSelector";
 export * from "./ToggleButton";
 export * from "./Tooltip";

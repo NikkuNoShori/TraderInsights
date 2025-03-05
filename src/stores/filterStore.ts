@@ -6,17 +6,13 @@ import type {
   TradeSide,
   TradeStatus,
 } from "@/types/trade";
-
-export type FilterSection = "overview" | "journal" | "performance";
+import type { TimeframeOption } from "@/components/ui/TimeframeSelector";
 
 interface FilterState {
-  filters: Record<FilterSection, TradeFilters>;
-  activeSection: FilterSection;
+  filters: TradeFilters;
   sessionId: string;
-  setActiveSection: (section: FilterSection) => void;
   setFilters: (filters: Partial<TradeFilters>) => void;
-  clearFilters: (section?: FilterSection) => void;
-  clearAllFilters: () => void;
+  clearFilters: () => void;
   toggleBroker: (brokerId: string) => void;
   toggleSymbol: (symbol: string) => void;
   toggleType: (type: TradeType) => void;
@@ -25,6 +21,7 @@ interface FilterState {
   setDateRange: (range: [Date, Date] | undefined) => void;
   setPnLRange: (min: number | undefined, max: number | undefined) => void;
   setWinLoss: (value: "win" | "loss" | undefined) => void;
+  setTimeframe: (timeframe: TimeframeOption) => void;
 }
 
 const defaultFilters: TradeFilters = {
@@ -39,6 +36,7 @@ const defaultFilters: TradeFilters = {
   setupTypes: [],
   strategies: [],
   winLoss: undefined,
+  timeframe: "1M",
 };
 
 // Generate a new session ID
@@ -48,49 +46,25 @@ const generateSessionId = () =>
 export const useFilterStore = create<FilterState>()(
   persist(
     (set) => ({
-      // Initialize with default filters for each section
-      filters: {
-        overview: { ...defaultFilters },
-        journal: { ...defaultFilters },
-        performance: { ...defaultFilters },
-      },
-      activeSection: "journal",
+      filters: { ...defaultFilters },
       sessionId: generateSessionId(),
-
-      setActiveSection: (section) => set({ activeSection: section }),
 
       setFilters: (newFilters) =>
         set((state) => ({
           filters: {
             ...state.filters,
-            [state.activeSection]: {
-              ...state.filters[state.activeSection],
-              ...newFilters,
-            },
+            ...newFilters,
           },
         })),
 
-      clearFilters: (section) =>
-        set((state) => ({
-          filters: {
-            ...state.filters,
-            [section || state.activeSection]: { ...defaultFilters },
-          },
-        })),
-
-      clearAllFilters: () =>
+      clearFilters: () =>
         set({
-          filters: {
-            overview: { ...defaultFilters },
-            journal: { ...defaultFilters },
-            performance: { ...defaultFilters },
-          },
+          filters: { ...defaultFilters },
         }),
 
       toggleBroker: (brokerId) =>
         set((state) => {
-          const currentFilters = state.filters[state.activeSection];
-          const brokers = currentFilters.brokers || [];
+          const brokers = state.filters.brokers || [];
           const newBrokers = brokers.includes(brokerId)
             ? brokers.filter((id) => id !== brokerId)
             : [...brokers, brokerId];
@@ -98,18 +72,14 @@ export const useFilterStore = create<FilterState>()(
           return {
             filters: {
               ...state.filters,
-              [state.activeSection]: {
-                ...currentFilters,
-                brokers: newBrokers,
-              },
+              brokers: newBrokers,
             },
           };
         }),
 
       toggleSymbol: (symbol) =>
         set((state) => {
-          const currentFilters = state.filters[state.activeSection];
-          const symbols = currentFilters.symbols || [];
+          const symbols = state.filters.symbols || [];
           const newSymbols = symbols.includes(symbol)
             ? symbols.filter((s) => s !== symbol)
             : [...symbols, symbol];
@@ -117,18 +87,14 @@ export const useFilterStore = create<FilterState>()(
           return {
             filters: {
               ...state.filters,
-              [state.activeSection]: {
-                ...currentFilters,
-                symbols: newSymbols,
-              },
+              symbols: newSymbols,
             },
           };
         }),
 
       toggleType: (type) =>
         set((state) => {
-          const currentFilters = state.filters[state.activeSection];
-          const types = currentFilters.types || [];
+          const types = state.filters.types || [];
           const newTypes = types.includes(type)
             ? types.filter((t) => t !== type)
             : [...types, type];
@@ -136,18 +102,14 @@ export const useFilterStore = create<FilterState>()(
           return {
             filters: {
               ...state.filters,
-              [state.activeSection]: {
-                ...currentFilters,
-                types: newTypes,
-              },
+              types: newTypes,
             },
           };
         }),
 
       toggleSide: (side) =>
         set((state) => {
-          const currentFilters = state.filters[state.activeSection];
-          const sides = currentFilters.sides || [];
+          const sides = state.filters.sides || [];
           const newSides = sides.includes(side)
             ? sides.filter((s) => s !== side)
             : [...sides, side];
@@ -155,18 +117,14 @@ export const useFilterStore = create<FilterState>()(
           return {
             filters: {
               ...state.filters,
-              [state.activeSection]: {
-                ...currentFilters,
-                sides: newSides,
-              },
+              sides: newSides,
             },
           };
         }),
 
       toggleStatus: (status) =>
         set((state) => {
-          const currentFilters = state.filters[state.activeSection];
-          const statuses = currentFilters.status || [];
+          const statuses = state.filters.status || [];
           const newStatuses = statuses.includes(status)
             ? statuses.filter((s) => s !== status)
             : [...statuses, status];
@@ -174,10 +132,7 @@ export const useFilterStore = create<FilterState>()(
           return {
             filters: {
               ...state.filters,
-              [state.activeSection]: {
-                ...currentFilters,
-                status: newStatuses,
-              },
+              status: newStatuses,
             },
           };
         }),
@@ -186,10 +141,7 @@ export const useFilterStore = create<FilterState>()(
         set((state) => ({
           filters: {
             ...state.filters,
-            [state.activeSection]: {
-              ...state.filters[state.activeSection],
-              dateRange: range,
-            },
+            dateRange: range,
           },
         })),
 
@@ -197,11 +149,8 @@ export const useFilterStore = create<FilterState>()(
         set((state) => ({
           filters: {
             ...state.filters,
-            [state.activeSection]: {
-              ...state.filters[state.activeSection],
-              minPnl: min,
-              maxPnl: max,
-            },
+            minPnl: min,
+            maxPnl: max,
           },
         })),
 
@@ -209,19 +158,23 @@ export const useFilterStore = create<FilterState>()(
         set((state) => ({
           filters: {
             ...state.filters,
-            [state.activeSection]: {
-              ...state.filters[state.activeSection],
-              winLoss: value,
-            },
+            winLoss: value,
+          },
+        })),
+
+      setTimeframe: (timeframe) =>
+        set((state) => ({
+          filters: {
+            ...state.filters,
+            timeframe,
           },
         })),
     }),
     {
       name: "trader-insights-filters",
-      version: 2,
+      version: 4,
       partialize: (state) => ({
         filters: state.filters,
-        activeSection: state.activeSection,
         sessionId: state.sessionId,
       }),
       onRehydrateStorage: () => (state) => {
@@ -230,6 +183,6 @@ export const useFilterStore = create<FilterState>()(
           state.sessionId = generateSessionId();
         }
       },
-    },
-  ),
+    }
+  )
 );

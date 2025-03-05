@@ -9,21 +9,15 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-background dark:bg-dark-bg">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <Logo className="mx-auto h-12 w-auto" />
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-foreground dark:text-dark-text">
-          {title}
-        </h2>
-        <p className="mt-2 text-center text-sm text-muted-foreground dark:text-dark-muted">
-          {subtitle}
-        </p>
+    <div className="auth-container">
+      <div className="auth-header">
+        <Logo className="h-12 w-auto" />
+        <h1 className="auth-title">{title}</h1>
+        <p className="auth-subtitle">{subtitle}</p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-card dark:bg-dark-paper py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          {children}
-        </div>
+      <div className="auth-card">
+        {children}
       </div>
     </div>
   );

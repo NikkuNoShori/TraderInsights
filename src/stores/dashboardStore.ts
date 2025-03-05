@@ -4,10 +4,7 @@ import type { Layout } from "react-grid-layout";
 import type { DashboardProfile } from "@/types/dashboard";
 import { supabase } from "@/lib/supabase";
 import { config } from "@/config";
-import {
-  DEFAULT_DASHBOARD_LAYOUT,
-  DEFAULT_ENABLED_CARDS,
-} from "../config/dashboardTheme";
+import { DEFAULT_DASHBOARD_LAYOUT, CARD_TYPES } from "../config/dashboardTheme";
 
 interface DashboardState {
   currentProfileId: string;
@@ -23,11 +20,11 @@ interface DashboardActions {
   setIsEditing: (editing: boolean) => void;
   fetchProfiles: (userId: string) => Promise<void>;
   createProfile: (
-    profile: Omit<DashboardProfile, "id" | "createdAt" | "updatedAt">,
+    profile: Omit<DashboardProfile, "id" | "createdAt" | "updatedAt">
   ) => Promise<void>;
   updateProfile: (
     profileId: string,
-    updates: Partial<DashboardProfile>,
+    updates: Partial<DashboardProfile>
   ) => Promise<void>;
   deleteProfile: (profileId: string) => Promise<void>;
   setCurrentProfile: (profileId: string) => void;
@@ -60,7 +57,7 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
               name: "Default Profile",
               isDefault: true,
               layout: DEFAULT_DASHBOARD_LAYOUT,
-              enabledCards: DEFAULT_ENABLED_CARDS,
+              enabledCards: [...CARD_TYPES],
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
             };
@@ -100,7 +97,7 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
           if (userId) {
             localStorage.setItem(
               `dashboard-layout-${userId}`,
-              JSON.stringify(get().layouts),
+              JSON.stringify(get().layouts)
             );
           }
         } catch (error) {
@@ -122,7 +119,7 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
                 name: profile.name,
                 is_default: profile.isDefault,
                 layout: profile.layout || DEFAULT_DASHBOARD_LAYOUT,
-                enabled_cards: profile.enabledCards || DEFAULT_ENABLED_CARDS,
+                enabled_cards: profile.enabledCards || [...CARD_TYPES],
               },
             ])
             .select()
@@ -163,7 +160,7 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
           if (error) throw error;
 
           const profiles = get().profiles.map((p) =>
-            p.id === profileId ? { ...p, ...data } : p,
+            p.id === profileId ? { ...p, ...data } : p
           );
 
           set({ profiles, isLoading: false });
@@ -235,7 +232,7 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
         if (userId) {
           localStorage.setItem(
             `dashboard-layout-${userId}`,
-            JSON.stringify(newLayouts),
+            JSON.stringify(newLayouts)
           );
         }
       },
@@ -246,6 +243,6 @@ export const useDashboardStore = create<DashboardState & DashboardActions>()(
         currentProfileId: state.currentProfileId,
         layouts: state.layouts,
       }),
-    },
-  ),
+    }
+  )
 );

@@ -135,7 +135,7 @@ export default function TradeDetails() {
 
       <div className="grid grid-cols-12 gap-4">
         {/* Trade Summary Card */}
-        <div className="col-span-12 bg-card dark:bg-dark-card rounded-lg p-4 border border-border dark:border-dark-border">
+        <div className="col-span-12 bg-card rounded-lg p-4 border border-default">
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
             <div>
               <dt className="text-xs text-muted-foreground">Side</dt>
@@ -175,7 +175,7 @@ export default function TradeDetails() {
         </div>
 
         {/* Performance Card */}
-        <div className="col-span-12 md:col-span-6 bg-card dark:bg-dark-card rounded-lg p-4 border border-border dark:border-dark-border">
+        <div className="col-span-12 md:col-span-6 bg-card rounded-lg p-4 border border-default">
           <h2 className="text-sm font-semibold mb-3">Performance</h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -208,7 +208,7 @@ export default function TradeDetails() {
         </div>
 
         {/* Broker Info Card */}
-        <div className="col-span-12 md:col-span-6 bg-card dark:bg-dark-card rounded-lg p-4 border border-border dark:border-dark-border">
+        <div className="col-span-12 md:col-span-6 bg-card rounded-lg p-4 border border-default">
           <h2 className="text-sm font-semibold mb-3">Broker Details</h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -222,7 +222,7 @@ export default function TradeDetails() {
 
         {/* Notes Card */}
         {trade.notes && (
-          <div className="col-span-12 bg-card dark:bg-dark-card rounded-lg p-4 border border-border dark:border-dark-border">
+          <div className="col-span-12 bg-card rounded-lg p-4 border border-default">
             <h2 className="text-sm font-semibold mb-2">Notes</h2>
             <p className="text-sm whitespace-pre-wrap text-muted-foreground">
               {trade.notes}

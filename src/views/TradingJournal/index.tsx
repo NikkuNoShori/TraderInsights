@@ -38,7 +38,7 @@ export default function TradingJournal() {
   });
 
   // Get filtered trades
-  const filteredTrades = useFilteredTrades(trades, "journal");
+  const filteredTrades = useFilteredTrades(trades);
 
   // Calculate derived values for each trade
   const tradesWithCalculatedValues = filteredTrades.map((trade) => ({
@@ -80,13 +80,6 @@ export default function TradingJournal() {
   const sortedTrades = sortTrades(tradesWithCalculatedValues);
   const totalPages =
     pageSize === -1 ? 1 : Math.ceil(sortedTrades.length / pageSize);
-  const paginatedTrades =
-    pageSize === -1
-      ? sortedTrades
-      : sortedTrades.slice(
-          (currentPage - 1) * pageSize,
-          currentPage * pageSize,
-        );
 
   const handleSort = (field: SortField) => {
     setSort((prev) => ({
@@ -152,36 +145,28 @@ export default function TradingJournal() {
   };
 
   return (
-    <div className="w-full px-6">
-      <div className="max-w-[1400px] mx-auto space-y-8">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Trading Journal</h1>
-          <Button onClick={() => setIsModalOpen(true)} className="gap-2">
-            <Plus className="h-4 w-4" />
+    <div className="flex-grow p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold">Trading Journal</h1>
+        <div className="flex items-center gap-2">
+          <FilterBar />
+          <Button
+            onClick={() => {
+              setSelectedTrade(null);
+              setIsModalOpen(true);
+            }}
+            className="bg-primary/90 text-primary-foreground hover:bg-primary/80 transition-colors"
+          >
+            <Plus className="h-4 w-4 mr-2" />
             Add Trade
           </Button>
         </div>
-
-        <div className="space-y-6">
-          <FilterBar section="journal" />
-          <TradeStats trades={trades} />
-        </div>
-
-        <TradeModal
-          isOpen={isModalOpen}
-          onClose={() => {
-            setIsModalOpen(false);
-            setSelectedTrade(null);
-            setSelectedOrderType(undefined);
-          }}
-          onSubmit={handleTradeSubmit}
-          initialData={selectedTrade || undefined}
-          mode={selectedTrade ? "edit" : "add"}
-          orderType={selectedOrderType}
-        />
-
+      </div>
+      
+      <div className="space-y-6">
+        <TradeStats trades={tradesWithCalculatedValues} />
         <TradeList
-          trades={paginatedTrades}
+          trades={sortedTrades}
           isLoading={isLoading}
           onDelete={handleDeleteTrade}
           onEdit={handleEditTrade}
@@ -195,6 +180,15 @@ export default function TradingJournal() {
           onSort={handleSort}
         />
       </div>
+
+      <TradeModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        initialData={selectedTrade || undefined}
+        mode={selectedTrade ? "edit" : "add"}
+        orderType={selectedOrderType}
+        onSubmit={handleTradeSubmit}
+      />
     </div>
   );
 }

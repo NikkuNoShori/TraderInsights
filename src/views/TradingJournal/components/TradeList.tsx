@@ -123,353 +123,169 @@ export function TradeList({
     );
   }
 
-  const visibleColumnConfigs = TRADE_COLUMNS.filter((col) =>
-    visibleColumns.includes(col.id),
-  );
-
   return (
-    <div className="w-full">
-      <div className="flex items-center justify-between mb-4">
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <ColumnSelector
+          visibleColumns={visibleColumns}
+          onColumnToggle={handleColumnToggle}
+        />
         <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Rows per page:</span>
           <Select
             value={pageSize.toString()}
             onValueChange={(value) => onPageSizeChange(Number(value))}
           >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select page size" />
+            <SelectTrigger className="w-[70px]">
+              <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent side="top" className="w-[70px]">
               {pageSizeOptions.map((size) => (
                 <SelectItem key={size} value={size.toString()}>
-                  {size === -1 ? "View All" : `${size} per page`}
+                  {size === -1 ? "All" : size}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-        <ColumnSelector
-          visibleColumns={visibleColumns}
-          onColumnToggle={handleColumnToggle}
-        />
       </div>
 
-      <div className="relative border border-border dark:border-dark-border rounded-lg">
-        <div className="w-full overflow-x-auto">
-          <div className="inline-block min-w-full align-middle">
-            <div className="overflow-hidden">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-card dark:bg-dark-card border-b border-border dark:border-dark-border">
-                    <th className="py-4 px-4 text-center font-medium text-muted-foreground whitespace-nowrap sticky left-0 z-20 bg-inherit">
-                      <span className="sr-only">Expand</span>
-                    </th>
-                    {visibleColumnConfigs.map((column) => (
-                      <th
-                        key={column.id}
-                        className="py-4 px-4 text-center font-medium text-muted-foreground whitespace-nowrap"
-                        style={{ minWidth: column.width }}
-                      >
-                        <button
-                          className="inline-flex items-center gap-1 hover:text-foreground"
-                          onClick={() =>
-                            column.sortable && onSort(column.id as SortField)
-                          }
-                          disabled={!column.sortable}
-                        >
-                          {column.label}
-                          {column.sortable && (
-                            <span className="relative z-10">
-                              {getSortIcon(column.id as SortField)}
-                            </span>
-                          )}
-                        </button>
-                      </th>
-                    ))}
-                    <th className="py-4 px-4 text-center font-medium text-muted-foreground whitespace-nowrap sticky right-0 z-20 bg-inherit">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border dark:divide-dark-border">
-                  {trades.map((trade) => (
-                    <React.Fragment key={trade.id}>
-                      <tr className="bg-card dark:bg-dark-card hover:bg-muted/50 dark:hover:bg-dark-muted/50 transition-colors group">
-                        <td className="py-4 px-2 text-center sticky left-0 z-20 bg-card dark:bg-card group-hover:bg-muted/50 dark:group-hover:bg-dark-muted/50 transition-colors">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleTradeExpansion(trade.id)}
-                            className="h-6 w-6 p-0 mx-auto"
-                          >
-                            {expandedTrades.has(trade.id) ? (
-                              <ChevronUp className="h-4 w-4" />
-                            ) : (
-                              <ChevronDown className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </td>
-                        {visibleColumnConfigs.map((column) => {
-                          const value =
-                            typeof column.accessor === "function"
-                              ? column.accessor(trade)
-                              : trade[column.accessor];
-
-                          return (
-                            <td
-                              key={`${trade.id}-${column.id}`}
-                              className="py-4 px-4 text-center whitespace-nowrap"
-                            >
-                              {column.id === "symbol" ? (
-                                <Link
-                                  to={`/app/journal/${trade.id}`}
-                                  className="text-primary hover:underline font-medium"
-                                >
-                                  {value}
-                                </Link>
-                              ) : (
-                                <TradeCell
-                                  columnId={column.id}
-                                  trade={trade}
-                                  value={value}
-                                />
-                              )}
-                            </td>
-                          );
-                        })}
-                        <td className="py-4 px-4 text-center sticky right-0 z-20 bg-card dark:bg-dark-card group-hover:bg-muted/50 dark:group-hover:bg-dark-muted/50 transition-colors">
-                          <div className="flex justify-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => onDelete(trade.id)}
-                              className="h-8 w-8 p-0 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400"
-                            >
-                              <Trash className="h-4 w-4" />
-                              <span className="sr-only">Delete</span>
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                      {expandedTrades.has(trade.id) && (
-                        <tr className="border-t border-border dark:border-dark-border bg-muted/50 dark:bg-dark-muted/50">
-                          <td
-                            colSpan={visibleColumnConfigs.length + 2}
-                            className="py-4 px-8"
-                          >
-                            <div className="space-y-4">
-                              <div className="flex justify-between items-center">
-                                <h4 className="text-sm font-medium">
-                                  Trade Details
-                                </h4>
-                                {trade.notes && (
-                                  <span className="text-xs text-muted-foreground">
-                                    Has Notes
-                                  </span>
-                                )}
-                              </div>
-
-                              <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                  <thead>
-                                    <tr className="border-b border-border dark:border-dark-border">
-                                      <th className="text-left py-2 px-4 font-medium text-muted-foreground">
-                                        Order Type
-                                      </th>
-                                      <th className="text-left py-2 px-4 font-medium text-muted-foreground">
-                                        Date
-                                      </th>
-                                      <th className="text-left py-2 px-4 font-medium text-muted-foreground">
-                                        Time
-                                      </th>
-                                      <th className="text-right py-2 px-4 font-medium text-muted-foreground">
-                                        Price
-                                      </th>
-                                      <th className="text-right py-2 px-4 font-medium text-muted-foreground">
-                                        Quantity
-                                      </th>
-                                      <th className="text-right py-2 px-4 font-medium text-muted-foreground">
-                                        Total
-                                      </th>
-                                      <th className="text-center py-2 px-4 font-medium text-muted-foreground">
-                                        Actions
-                                      </th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-border dark:divide-dark-border">
-                                    {/* Buy Order Row */}
-                                    <tr>
-                                      <td className="py-3 px-4">
-                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                                          Buy
-                                        </span>
-                                      </td>
-                                      <td className="py-3 px-4">
-                                        {trade.entry_date || trade.date}
-                                      </td>
-                                      <td className="py-3 px-4">
-                                        {new Date(
-                                          trade.entry_date || trade.date,
-                                        ).toLocaleTimeString()}
-                                      </td>
-                                      <td className="py-3 px-4 text-right">
-                                        ${trade.entry_price?.toFixed(2)}
-                                      </td>
-                                      <td className="py-3 px-4 text-right">
-                                        {trade.quantity}
-                                      </td>
-                                      <td className="py-3 px-4 text-right">
-                                        $
-                                        {(
-                                          trade.entry_price * trade.quantity
-                                        ).toFixed(2)}
-                                      </td>
-                                      <td className="py-3 px-4 text-center">
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => onEdit(trade, "buy")}
-                                          className="h-6 w-6 p-0 hover:bg-muted dark:hover:bg-dark-muted"
-                                        >
-                                          <Edit className="h-3 w-3" />
-                                          <span className="sr-only">
-                                            Edit Buy Order
-                                          </span>
-                                        </Button>
-                                      </td>
-                                    </tr>
-
-                                    {/* Sell Order Row */}
-                                    {trade.exit_price && (
-                                      <tr>
-                                        <td className="py-3 px-4">
-                                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
-                                            Sell
-                                          </span>
-                                        </td>
-                                        <td className="py-3 px-4">
-                                          {trade.exit_date || "-"}
-                                        </td>
-                                        <td className="py-3 px-4">
-                                          {trade.exit_date
-                                            ? new Date(
-                                                trade.exit_date,
-                                              ).toLocaleTimeString()
-                                            : "-"}
-                                        </td>
-                                        <td className="py-3 px-4 text-right">
-                                          ${trade.exit_price.toFixed(2)}
-                                        </td>
-                                        <td className="py-3 px-4 text-right">
-                                          {trade.quantity}
-                                        </td>
-                                        <td className="py-3 px-4 text-right">
-                                          $
-                                          {(
-                                            trade.exit_price * trade.quantity
-                                          ).toFixed(2)}
-                                        </td>
-                                        <td className="py-3 px-4 text-center">
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() =>
-                                              onEdit(trade, "sell")
-                                            }
-                                            className="h-6 w-6 p-0 hover:bg-muted dark:hover:bg-dark-muted"
-                                          >
-                                            <Edit className="h-3 w-3" />
-                                            <span className="sr-only">
-                                              Edit Sell Order
-                                            </span>
-                                          </Button>
-                                        </td>
-                                      </tr>
-                                    )}
-                                  </tbody>
-                                  <tfoot className="border-t border-border dark:border-dark-border">
-                                    <tr>
-                                      <td
-                                        colSpan={3}
-                                        className="py-3 px-4 font-medium"
-                                      >
-                                        Performance Summary
-                                      </td>
-                                      <td
-                                        colSpan={4}
-                                        className="py-3 px-4 text-right"
-                                      >
-                                        <div className="space-y-1">
-                                          <div className="flex justify-between">
-                                            <span className="text-muted-foreground">
-                                              P/L:
-                                            </span>
-                                            <span
-                                              className={
-                                                trade.total >= 0
-                                                  ? "text-green-600 dark:text-green-400"
-                                                  : "text-red-600 dark:text-red-400"
-                                              }
-                                            >
-                                              ${trade.total?.toFixed(2)}
-                                            </span>
-                                          </div>
-                                          <div className="flex justify-between">
-                                            <span className="text-muted-foreground">
-                                              Return:
-                                            </span>
-                                            <span
-                                              className={
-                                                trade.total >= 0
-                                                  ? "text-green-600 dark:text-green-400"
-                                                  : "text-red-600 dark:text-red-400"
-                                              }
-                                            >
-                                              {trade.exit_price
-                                                ? `${(((trade.exit_price - trade.entry_price) / trade.entry_price) * 100).toFixed(2)}%`
-                                                : "-"}
-                                            </span>
-                                          </div>
-                                          <div className="flex justify-between">
-                                            <span className="text-muted-foreground">
-                                              Fees:
-                                            </span>
-                                            <span>
-                                              $
-                                              {trade.fees?.toFixed(2) || "0.00"}
-                                            </span>
-                                          </div>
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  </tfoot>
-                                </table>
-                              </div>
-
-                              {trade.notes && (
-                                <div className="mt-4 bg-card dark:bg-dark-card rounded-lg p-3 border border-border dark:border-dark-border">
-                                  <p className="text-muted-foreground font-medium mb-2">
-                                    Notes
-                                  </p>
-                                  <p className="text-sm">{trade.notes}</p>
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
+      <div className="rounded-md border border-default">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b bg-muted/50">
+              <th className="w-[40px] px-4 py-3"></th>
+              {TRADE_COLUMNS.filter((col) => visibleColumns.includes(col.id)).map(
+                (column) => (
+                  <th
+                    key={column.id}
+                    className="px-4 py-3 text-left text-sm font-medium text-muted"
+                  >
+                    <button
+                      className="flex items-center gap-1"
+                      onClick={() => onSort(column.id as SortField)}
+                    >
+                      {column.label}
+                      {getSortIcon(column.id as SortField)}
+                    </button>
+                  </th>
+                )
+              )}
+              <th className="w-[100px] px-4 py-3"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {trades.map((trade) => (
+              <React.Fragment key={trade.id}>
+                <tr className="border-b bg-card hover:bg-card-hover">
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => toggleTradeExpansion(trade.id)}
+                      className="p-1 hover:bg-muted rounded-md"
+                    >
+                      {expandedTrades.has(trade.id) ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
                       )}
-                    </React.Fragment>
+                    </button>
+                  </td>
+                  {TRADE_COLUMNS.filter((col) =>
+                    visibleColumns.includes(col.id)
+                  ).map((column) => (
+                    <td key={column.id} className="px-4 py-3">
+                      <TradeCell
+                        columnId={column.id}
+                        trade={trade}
+                        value={
+                          typeof column.accessor === "function"
+                            ? column.accessor(trade)
+                            : trade[column.accessor]
+                        }
+                      />
+                    </td>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onEdit(trade, "buy")}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onDelete(trade.id)}
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+                {expandedTrades.has(trade.id) && (
+                  <tr className="border-b bg-muted/30">
+                    <td colSpan={visibleColumns.length + 2}>
+                      <div className="px-4 py-3 space-y-2">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          <div>
+                            <div className="text-sm font-medium">Entry Details</div>
+                            <div className="text-sm">
+                              Date: {trade.entry_date} {trade.entry_time}
+                              <br />
+                              Price: ${trade.entry_price}
+                            </div>
+                          </div>
+                          {trade.exit_date && (
+                            <div>
+                              <div className="text-sm font-medium">Exit Details</div>
+                              <div className="text-sm">
+                                Date: {trade.exit_date} {trade.exit_time}
+                                <br />
+                                Price: ${trade.exit_price}
+                              </div>
+                            </div>
+                          )}
+                          <div>
+                            <div className="text-sm font-medium">Risk Management</div>
+                            <div className="text-sm">
+                              Stop Loss: ${trade.stop_loss || "N/A"}
+                              <br />
+                              Take Profit: ${trade.take_profit || "N/A"}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium">Additional Info</div>
+                            <div className="text-sm">
+                              Fees: ${trade.fees || "0"}
+                              <br />
+                              Notes: {trade.notes || "N/A"}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex justify-end">
+                          <Link
+                            to={`/app/journal/${trade.id}`}
+                            className="text-sm text-primary hover:underline"
+                          >
+                            View Details →
+                          </Link>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      {totalPages > 1 && (
+      {pageSize !== -1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            Showing {trades.length} out of {trades.length} trades
+            Showing {trades.length} of {totalPages * pageSize} trades
           </div>
           <div className="flex items-center gap-2">
             <Button

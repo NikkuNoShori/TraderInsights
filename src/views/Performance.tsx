@@ -117,7 +117,7 @@ export default function Performance() {
         <h3 className="text-base font-medium text-text-primary mb-4">
           Trade Distribution
         </h3>
-        <TradeDistributionChart trades={filteredTrades} timeframe={timeframe} />
+        <TradeDistributionChart trades={filteredTrades} />
       </div>
     </div>
   );

@@ -1,83 +1,124 @@
 import { useMemo } from "@/lib/react";
 import type { Trade } from "@/types/trade";
-import { useFilterStore, type FilterSection } from "@/stores/filterStore";
+import { useFilterStore } from "@/stores/filterStore";
 import { calculatePnL } from "@/utils/trade";
+import {
+  startOfDay,
+  endOfDay,
+  subDays,
+  subMonths,
+  startOfYear,
+} from "date-fns";
 
-export function useFilteredTrades(trades: Trade[], section: FilterSection) {
+export function useFilteredTrades(trades: Trade[]) {
   const { filters } = useFilterStore();
 
   return useMemo(() => {
-    const currentFilters = filters[section];
+    let filteredTrades = trades;
 
-    const filteredTrades = trades.filter((trade) => {
-      // Filter by broker
-      if (currentFilters.brokers && currentFilters.brokers.length > 0) {
-        if (
-          !trade.broker_id ||
-          !currentFilters.brokers.includes(trade.broker_id)
-        ) {
-          return false;
-        }
+    // Filter by timeframe
+    if (filters.timeframe) {
+      const now = new Date();
+      let startDate: Date;
+      const endDate = endOfDay(now);
+
+      switch (filters.timeframe) {
+        case "1D":
+          startDate = startOfDay(subDays(now, 1));
+          break;
+        case "1W":
+          startDate = startOfDay(subDays(now, 7));
+          break;
+        case "1M":
+          startDate = startOfDay(subMonths(now, 1));
+          break;
+        case "3M":
+          startDate = startOfDay(subMonths(now, 3));
+          break;
+        case "YTD":
+          startDate = startOfYear(now);
+          break;
+        case "1Y":
+          startDate = startOfDay(subMonths(now, 12));
+          break;
+        case "ALL":
+          startDate = new Date(0); // Beginning of time
+          break;
+        default:
+          startDate = startOfDay(subMonths(now, 1)); // Default to 1M
       }
 
-      // Filter by date range
-      if (currentFilters.dateRange) {
-        const [startDate, endDate] = currentFilters.dateRange;
+      filteredTrades = filteredTrades.filter((trade) => {
+        const tradeDate = new Date(trade.entry_date);
+        return tradeDate >= startDate && tradeDate <= endDate;
+      });
+    }
+
+    // Filter by broker
+    if (filters.brokers && filters.brokers.length > 0) {
+      filteredTrades = filteredTrades.filter(
+        (trade) => trade.broker_id && filters.brokers?.includes(trade.broker_id)
+      );
+    }
+
+    // Filter by date range
+    if (filters.dateRange) {
+      const [startDate, endDate] = filters.dateRange;
+      filteredTrades = filteredTrades.filter((trade) => {
         const tradeDate = new Date(trade.date);
-        if (tradeDate < startDate || tradeDate > endDate) {
-          return false;
-        }
-      }
+        return tradeDate >= startDate && tradeDate <= endDate;
+      });
+    }
 
-      // Filter by symbols
-      if (currentFilters.symbols && currentFilters.symbols.length > 0) {
-        if (!currentFilters.symbols.includes(trade.symbol)) {
-          return false;
-        }
-      }
+    // Filter by symbols
+    if (filters.symbols && filters.symbols.length > 0) {
+      filteredTrades = filteredTrades.filter((trade) =>
+        filters.symbols?.includes(trade.symbol)
+      );
+    }
 
-      // Filter by trade types
-      if (currentFilters.types && currentFilters.types.length > 0) {
-        if (!currentFilters.types.includes(trade.type)) {
-          return false;
-        }
-      }
+    // Filter by trade types
+    if (filters.types && filters.types.length > 0) {
+      filteredTrades = filteredTrades.filter((trade) =>
+        filters.types?.includes(trade.type)
+      );
+    }
 
-      // Filter by sides
-      if (currentFilters.sides && currentFilters.sides.length > 0) {
-        if (!currentFilters.sides.includes(trade.side)) {
-          return false;
-        }
-      }
+    // Filter by sides
+    if (filters.sides && filters.sides.length > 0) {
+      filteredTrades = filteredTrades.filter((trade) =>
+        filters.sides?.includes(trade.side)
+      );
+    }
 
-      // Filter by status
-      if (currentFilters.status && currentFilters.status.length > 0) {
-        if (!currentFilters.status.includes(trade.status)) {
-          return false;
-        }
-      }
+    // Filter by status
+    if (filters.status && filters.status.length > 0) {
+      filteredTrades = filteredTrades.filter((trade) =>
+        filters.status?.includes(trade.status)
+      );
+    }
 
-      // Filter by P&L range
-      if (currentFilters.minPnl !== undefined && trade.pnl !== undefined) {
-        if (trade.pnl < currentFilters.minPnl) {
-          return false;
-        }
-      }
-      if (currentFilters.maxPnl !== undefined && trade.pnl !== undefined) {
-        if (trade.pnl > currentFilters.maxPnl) {
-          return false;
-        }
-      }
-
-      // Filter by win/loss
-      if (currentFilters.winLoss) {
+    // Filter by P&L range
+    if (filters.minPnl !== undefined || filters.maxPnl !== undefined) {
+      filteredTrades = filteredTrades.filter((trade) => {
         if (trade.pnl === undefined) return false;
-        if (currentFilters.winLoss === "win" && trade.pnl <= 0) return false;
-        if (currentFilters.winLoss === "loss" && trade.pnl >= 0) return false;
-      }
+        if (filters.minPnl !== undefined && trade.pnl < filters.minPnl)
+          return false;
+        if (filters.maxPnl !== undefined && trade.pnl > filters.maxPnl)
+          return false;
+        return true;
+      });
+    }
 
-      return true;
-    });
+    // Filter by win/loss
+    if (filters.winLoss) {
+      filteredTrades = filteredTrades.filter((trade) => {
+        if (trade.pnl === undefined) return false;
+        if (filters.winLoss === "win" && trade.pnl <= 0) return false;
+        if (filters.winLoss === "loss" && trade.pnl >= 0) return false;
+        return true;
+      });
+    }
 
     // Calculate derived values for each trade
     return filteredTrades.map((trade) => ({
@@ -85,5 +126,5 @@ export function useFilteredTrades(trades: Trade[], section: FilterSection) {
       total: trade.quantity * (trade.entry_price || 0),
       pnl: calculatePnL(trade),
     }));
-  }, [trades, filters, section]);
+  }, [trades, filters]);
 }

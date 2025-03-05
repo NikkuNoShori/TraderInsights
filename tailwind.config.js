@@ -5,16 +5,23 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background: 'var(--background)',
-        card: 'var(--card)',
-        border: 'var(--border)',
-        primary: 'var(--primary)',
-        'primary-foreground': 'var(--primary-foreground)',
-        'text-primary': 'var(--text-primary)',
-        'text-secondary': 'var(--text-secondary)', 
-        'text-muted': 'var(--text-muted)'
-      }
-    }
+        primary: '#6366f1',
+        success: '#22c55e',
+        error: '#ef4444',
+        warning: '#f59e0b',
+      },
+      backgroundColor: {
+        background: '#1a1b1e',
+        card: '#25262b',
+      },
+      borderColor: {
+        border: '#2e2e35',
+      },
+      textColor: {
+        default: '#f3f4f6',
+        muted: '#9ca3af',
+      },
+    },
   },
   plugins: [],
 };

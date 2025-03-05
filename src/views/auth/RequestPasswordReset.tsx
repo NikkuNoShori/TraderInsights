@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { apiClient } from "@/lib/services/apiClient";
 import { validateEmail } from "@/utils/validation";
-import { FormInput } from "@/components/ui";
+import { FormInput } from "@/components/ui/FormInput";
 import { LoadingButton } from "@/components/LoadingButton";
+import { Logo } from "@/components/ui";
 
 export default function RequestPasswordReset() {
   const [email, setEmail] = useState("");
@@ -54,33 +55,45 @@ export default function RequestPasswordReset() {
   };
 
   return (
-    <div className="w-full max-w-md">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <FormInput
-          type="email"
-          label="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Enter your email"
-          required
-        />
+    <div className="auth-container">
+      <div className="auth-header">
+        <Logo className="h-12 w-auto" />
+        <h1 className="auth-title">Reset your password</h1>
+        <p className="auth-subtitle">Enter your email to receive reset instructions</p>
+      </div>
 
-        {error && <div className="text-red-500 text-sm">{error}</div>}
+      <div className="auth-card">
+        <form onSubmit={handleSubmit} className="auth-form">
+          <FormInput
+            type="email"
+            label="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter your email"
+            required
+          />
 
-        <div className="flex flex-col gap-4">
-          <LoadingButton type="submit" isLoading={isLoading} className="w-full">
-            Reset Password
-          </LoadingButton>
+          {error && <div className="text-sm text-error">{error}</div>}
 
-          <button
-            type="button"
-            onClick={() => navigate("/auth/login")}
-            className="text-sm text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
-          >
-            Back to Sign In
-          </button>
-        </div>
-      </form>
+          <div className="space-y-4">
+            <LoadingButton
+              type="submit"
+              isLoading={isLoading}
+              className="w-full bg-primary text-primary-foreground hover:opacity-90"
+            >
+              Reset Password
+            </LoadingButton>
+
+            <button
+              type="button"
+              onClick={() => navigate("/auth/login")}
+              className="w-full text-sm text-muted hover:text-default transition-colors"
+            >
+              Back to Sign In
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
