@@ -1,17 +1,19 @@
 import { useEffect, type ReactNode } from "react";
 import { useThemeStore } from "@/stores/themeStore";
+import { ThemeWrapper } from "@/components/ThemeWrapper";
 
 interface ThemeProviderProps {
   children: ReactNode;
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  const { theme, setTheme } = useThemeStore();
+  const { setTheme } = useThemeStore();
 
+  // Initialize theme
   useEffect(() => {
-    // Initialize theme on mount
-    setTheme(theme);
+    // Force dark mode
+    setTheme("dark");
   }, []);
 
-  return <>{children}</>;
+  return <ThemeWrapper>{children}</ThemeWrapper>;
 } 

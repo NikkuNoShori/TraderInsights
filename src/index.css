@@ -1,13 +1,13 @@
-@import "@fortawesome/fontawesome-svg-core/styles.css";
-@import "./styles/theme.css";
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+@import "@fortawesome/fontawesome-svg-core/styles.css";
+@import "./styles/theme.css";
+
 @layer base {
   body {
-    @apply bg-default text-default;
+    @apply bg-default text-default min-h-screen;
   }
 }
 

@@ -190,19 +190,28 @@ export function TradeList({
                     <td className="px-4 py-3">
                       <button
                         onClick={() => toggleTradeExpansion(trade.id)}
-                        className="p-1 hover:bg-muted/50 rounded-md transition-colors"
+                        className="p-1 hover:bg-primary-10 rounded-md transition-colors text-primary"
                       >
                         {expandedTrades.has(trade.id) ? (
-                          <ChevronUp className="h-4 w-4 text-muted-foreground/70" />
+                          <ChevronUp className="h-4 w-4" />
                         ) : (
-                          <ChevronDown className="h-4 w-4 text-muted-foreground/70" />
+                          <ChevronDown className="h-4 w-4" />
                         )}
                       </button>
                     </td>
                     {TRADE_COLUMNS.filter((col) =>
                       visibleColumns.includes(col.id)
                     ).map((column) => (
-                      <td key={column.id} className={`px-2 py-3 text-center ${column.id === 'date' ? 'whitespace-nowrap min-w-[120px]' : ''}`}>
+                      <td 
+                        key={column.id} 
+                        className={`px-2 py-3 text-center ${
+                          column.id === 'date' ? 'whitespace-nowrap min-w-[120px]' : ''
+                        } ${
+                          column.id === 'status' ? 'font-medium' : ''
+                        } ${
+                          column.id === 'pnl' ? 'font-semibold' : ''
+                        }`}
+                      >
                         <TradeCell
                           columnId={column.id}
                           trade={trade}
@@ -220,7 +229,7 @@ export function TradeList({
                           variant="ghost"
                           size="sm"
                           onClick={() => onEdit(trade, "buy")}
-                          className="text-muted-foreground/70 hover:text-foreground"
+                          className="text-primary hover:text-primary-hover hover:bg-primary-10"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -228,7 +237,7 @@ export function TradeList({
                           variant="ghost"
                           size="sm"
                           onClick={() => onDelete(trade.id)}
-                          className="text-muted-foreground/70 hover:text-destructive"
+                          className="text-rose-500 hover:text-rose-600 hover:bg-rose-500/10"
                         >
                           <Trash className="h-4 w-4" />
                         </Button>
@@ -238,9 +247,9 @@ export function TradeList({
                   {expandedTrades.has(trade.id) && (
                     <tr className="border-b border-border/40 bg-muted/10">
                       <td colSpan={visibleColumns.length + 2}>
-                        <div className="px-4 py-4 space-y-3">
+                        <div className="px-6 py-4 space-y-4">
                           <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-medium text-foreground/90">Trade Details</h3>
+                            <h3 className="text-base font-semibold text-primary">Trade Details</h3>
                             <ColumnSelector
                               visibleColumns={visibleDetailColumns}
                               onColumnToggle={handleDetailColumnToggle}
@@ -249,75 +258,86 @@ export function TradeList({
                               iconOnly
                             />
                           </div>
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-sm table-fixed">
+                          
+                          <div className="bg-card/50 rounded-lg border border-border/40 overflow-hidden shadow-sm">
+                            <table className="w-full text-sm">
                               <thead>
-                                <tr className="bg-muted/20 border-y border-border/40">
+                                <tr className="bg-primary-10 border-b border-border/40">
                                   {TRADE_DETAILS_COLUMNS.filter((col) => 
                                     visibleDetailColumns.includes(col.id)
                                   ).map((column) => (
                                     <th
                                       key={column.id}
-                                      className="text-center py-2 px-2 font-medium text-muted-foreground whitespace-nowrap"
+                                      className="text-left py-2.5 px-4 font-medium text-primary whitespace-nowrap"
                                     >
                                       {column.label}
                                     </th>
                                   ))}
                                 </tr>
                               </thead>
-                              <tbody className="divide-y divide-border/30">
-                                <tr className="border-b border-border/30 bg-card/30">
+                              <tbody>
+                                <tr className="bg-transparent">
                                   {TRADE_DETAILS_COLUMNS.filter((col) => 
                                     visibleDetailColumns.includes(col.id)
                                   ).map((column) => {
                                     switch (column.id) {
                                       case 'order_type':
                                         return (
-                                          <td key={column.id} className="py-2 px-2 text-center whitespace-nowrap">
-                                            <span className="text-emerald-500 font-medium">Buy</span>
+                                          <td key={column.id} className="py-2.5 px-4 whitespace-nowrap">
+                                            <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
+                                              trade.side === "Long" 
+                                                ? "bg-emerald-500/10 text-emerald-500" 
+                                                : "bg-rose-500/10 text-rose-500"
+                                            }`}>
+                                              {trade.side === "Long" ? "Buy" : "Sell"}
+                                            </span>
                                           </td>
                                         );
                                       case 'date':
                                         return (
-                                          <td key={column.id} className="py-2 px-2 text-center text-muted-foreground font-normal whitespace-nowrap">
+                                          <td key={column.id} className="py-2.5 px-4 text-muted-foreground whitespace-nowrap">
                                             {trade.entry_date}
                                           </td>
                                         );
                                       case 'time':
                                         return (
-                                          <td key={column.id} className="py-2 px-2 text-center text-muted-foreground font-normal whitespace-nowrap">
+                                          <td key={column.id} className="py-2.5 px-4 text-muted-foreground whitespace-nowrap">
                                             {trade.entry_time}
                                           </td>
                                         );
                                       case 'symbol':
                                         return (
-                                          <td key={column.id} className="py-2 px-2 text-center text-muted-foreground font-normal whitespace-nowrap">
+                                          <td key={column.id} className="py-2.5 px-4 text-muted-foreground whitespace-nowrap">
                                             {trade.symbol}
                                           </td>
                                         );
                                       case 'side':
                                         return (
-                                          <td key={column.id} className="py-2 px-2 text-center whitespace-nowrap">
-                                            <span className={`${trade.side === "Long" ? "text-emerald-500" : "text-rose-500"} font-medium`}>
+                                          <td key={column.id} className="py-2.5 px-4 whitespace-nowrap">
+                                            <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
+                                              trade.side === "Long" 
+                                                ? "bg-emerald-500/10 text-emerald-500" 
+                                                : "bg-rose-500/10 text-rose-500"
+                                            }`}>
                                               {trade.side}
                                             </span>
                                           </td>
                                         );
                                       case 'price':
                                         return (
-                                          <td key={column.id} className="py-2 px-2 text-center text-muted-foreground font-normal whitespace-nowrap">
+                                          <td key={column.id} className="py-2.5 px-4 font-medium whitespace-nowrap">
                                             ${Number(trade.entry_price).toFixed(2)}
                                           </td>
                                         );
                                       case 'quantity':
                                         return (
-                                          <td key={column.id} className="py-2 px-2 text-center text-muted-foreground font-normal whitespace-nowrap">
+                                          <td key={column.id} className="py-2.5 px-4 text-muted-foreground whitespace-nowrap">
                                             {trade.quantity}
                                           </td>
                                         );
                                       case 'total':
                                         return (
-                                          <td key={column.id} className="py-2 px-2 text-center text-muted-foreground font-normal whitespace-nowrap">
+                                          <td key={column.id} className="py-2.5 px-4 font-medium whitespace-nowrap">
                                             ${Number(trade.entry_price * trade.quantity).toLocaleString(undefined, {
                                               minimumFractionDigits: 2,
                                               maximumFractionDigits: 2
@@ -326,20 +346,24 @@ export function TradeList({
                                         );
                                       case 'stop_loss':
                                         return (
-                                          <td key={column.id} className="py-2 px-2 text-center text-muted-foreground font-normal whitespace-nowrap">
-                                            {trade.stop_loss ? `$${Number(trade.stop_loss).toFixed(2)}` : "N/A"}
+                                          <td key={column.id} className="py-2.5 px-4 whitespace-nowrap">
+                                            <span className="text-rose-500">
+                                              {trade.stop_loss ? `$${Number(trade.stop_loss).toFixed(2)}` : "N/A"}
+                                            </span>
                                           </td>
                                         );
                                       case 'take_profit':
                                         return (
-                                          <td key={column.id} className="py-2 px-2 text-center text-muted-foreground font-normal whitespace-nowrap">
-                                            {trade.take_profit ? `$${Number(trade.take_profit).toFixed(2)}` : "N/A"}
+                                          <td key={column.id} className="py-2.5 px-4 whitespace-nowrap">
+                                            <span className="text-emerald-500">
+                                              {trade.take_profit ? `$${Number(trade.take_profit).toFixed(2)}` : "N/A"}
+                                            </span>
                                           </td>
                                         );
                                       case 'actions':
                                         return (
-                                          <td key={column.id} className="py-2 px-2 text-center whitespace-nowrap">
-                                            <div className="flex items-center justify-end gap-1">
+                                          <td key={column.id} className="py-2.5 px-4 whitespace-nowrap">
+                                            <div className="flex items-center gap-2">
                                               <Button
                                                 variant="ghost"
                                                 size="sm"
@@ -364,116 +388,8 @@ export function TradeList({
                                     }
                                   })}
                                 </tr>
-                                {trade.exit_price && (
-                                  <tr className="bg-transparent">
-                                    {TRADE_DETAILS_COLUMNS.filter((col) => 
-                                      visibleDetailColumns.includes(col.id)
-                                    ).map((column) => {
-                                      switch (column.id) {
-                                        case 'order_type':
-                                          return (
-                                            <td key={column.id} className="py-2 px-2 text-center whitespace-nowrap">
-                                              <span className="text-rose-500 font-semibold">Sell</span>
-                                            </td>
-                                          );
-                                        case 'date':
-                                          return (
-                                            <td key={column.id} className="py-2 px-2 text-center text-muted-foreground whitespace-nowrap">
-                                              {trade.exit_date}
-                                            </td>
-                                          );
-                                        case 'time':
-                                          return (
-                                            <td key={column.id} className="py-2 px-2 text-center text-muted-foreground whitespace-nowrap">
-                                              {trade.exit_time}
-                                            </td>
-                                          );
-                                        case 'symbol':
-                                          return (
-                                            <td key={column.id} className="py-2 px-2 text-center text-muted-foreground whitespace-nowrap">
-                                              {trade.symbol}
-                                            </td>
-                                          );
-                                        case 'side':
-                                          return (
-                                            <td key={column.id} className="py-2 px-2 text-center whitespace-nowrap">
-                                              <span className={trade.side === "Long" ? "text-emerald-500" : "text-rose-500"}>
-                                                {trade.side}
-                                              </span>
-                                            </td>
-                                          );
-                                        case 'price':
-                                          return (
-                                            <td key={column.id} className="py-2 px-2 text-center text-muted-foreground whitespace-nowrap">
-                                              ${Number(trade.exit_price).toFixed(2)}
-                                            </td>
-                                          );
-                                        case 'quantity':
-                                          return (
-                                            <td key={column.id} className="py-2 px-2 text-center text-muted-foreground whitespace-nowrap">
-                                              {trade.quantity}
-                                            </td>
-                                          );
-                                        case 'total':
-                                          return (
-                                            <td key={column.id} className="py-2 px-2 text-center text-muted-foreground whitespace-nowrap">
-                                              ${(trade.exit_price ? Number(trade.exit_price * trade.quantity) : 0).toLocaleString(undefined, {
-                                                minimumFractionDigits: 2,
-                                                maximumFractionDigits: 2
-                                              })}
-                                            </td>
-                                          );
-                                        case 'stop_loss':
-                                          return (
-                                            <td key={column.id} className="py-2 px-2 text-center text-muted-foreground whitespace-nowrap">
-                                              {trade.stop_loss ? `$${Number(trade.stop_loss).toFixed(2)}` : "N/A"}
-                                            </td>
-                                          );
-                                        case 'take_profit':
-                                          return (
-                                            <td key={column.id} className="py-2 px-2 text-center text-muted-foreground whitespace-nowrap">
-                                              {trade.take_profit ? `$${Number(trade.take_profit).toFixed(2)}` : "N/A"}
-                                            </td>
-                                          );
-                                        case 'actions':
-                                          return (
-                                            <td key={column.id} className="py-2 px-2 text-center whitespace-nowrap">
-                                              <div className="flex items-center justify-end gap-1">
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={() => onEdit(trade, "sell")}
-                                                  className="text-muted-foreground/70 hover:text-foreground"
-                                                >
-                                                  <Edit className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                  variant="ghost"
-                                                  size="sm"
-                                                  onClick={() => onDelete(trade.id)}
-                                                  className="text-muted-foreground/70 hover:text-destructive"
-                                                >
-                                                  <Trash className="h-4 w-4" />
-                                                </Button>
-                                              </div>
-                                            </td>
-                                          );
-                                        default:
-                                          return null;
-                                      }
-                                    })}
-                                  </tr>
-                                )}
                               </tbody>
                             </table>
-                          </div>
-                          <div className="flex justify-end">
-                            <Link
-                              to={`/app/journal/${trade.id}`}
-                              className="text-sm text-primary hover:text-primary/90 transition-colors hover:underline"
-                            >
-                              View Details →
-                            </Link>
                           </div>
                         </div>
                       </td>
@@ -488,12 +404,12 @@ export function TradeList({
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Rows per page:</span>
+          <span className="text-sm text-primary">Rows per page:</span>
           <Select
             value={pageSize.toString()}
             onValueChange={(value) => onPageSizeChange(Number(value))}
           >
-            <SelectTrigger className="w-[70px]">
+            <SelectTrigger className="w-[70px] border-primary-20">
               <SelectValue />
             </SelectTrigger>
             <SelectContent side="top" className="w-[70px]">
@@ -509,7 +425,7 @@ export function TradeList({
 
       {pageSize !== -1 && (
         <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-primary">
             Showing {trades.length} of {totalPages * pageSize} trades
           </div>
           <div className="flex items-center gap-2">
@@ -518,10 +434,11 @@ export function TradeList({
               size="sm"
               onClick={() => onPageChange(currentPage - 1)}
               disabled={currentPage === 1 || pageSize === -1}
+              className="border-primary-20 text-primary hover:bg-primary-10"
             >
               Previous
             </Button>
-            <span className="text-sm">
+            <span className="text-sm text-primary">
               Page {currentPage} of {totalPages}
             </span>
             <Button
@@ -529,6 +446,7 @@ export function TradeList({
               size="sm"
               onClick={() => onPageChange(currentPage + 1)}
               disabled={currentPage === totalPages || pageSize === -1}
+              className="border-primary-20 text-primary hover:bg-primary-10"
             >
               Next
             </Button>

@@ -35,9 +35,9 @@ export function TradeListItem({ trade }: TradeListItemProps) {
       : 0;
 
   return (
-    <div className="border-b border-slate-700/50 last:border-0">
+    <div className="border-b border-slate-700/50 last:border-0 relative">
       <div
-        className="flex items-center justify-between p-4 hover:bg-card/50 cursor-pointer transition-colors duration-200"
+        className="flex items-center justify-between p-4 hover:bg-card/50 cursor-pointer transition-colors duration-200 w-full"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center space-x-4">
@@ -121,14 +121,14 @@ export function TradeListItem({ trade }: TradeListItemProps) {
       </div>
 
       {isExpanded && (
-        <div className="bg-card/30 border-t border-slate-700/50">
+        <div className="bg-card/50 border-t border-slate-700/50 mx-4 my-2 rounded-lg shadow-inner relative w-[calc(100%-2rem)]">
           <div className="p-6">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
               <div>
-                <h4 className="text-sm font-medium text-text-muted mb-2">
+                <h4 className="text-sm font-medium mb-3 text-foreground">
                   Risk Management
                 </h4>
-                <div className="space-y-2">
+                <div className="space-y-2 bg-card/50 p-4 rounded-lg">
                   <div className="flex justify-between">
                     <span className="text-sm text-text-muted">
                       Risk/Reward:
@@ -178,10 +178,10 @@ export function TradeListItem({ trade }: TradeListItemProps) {
 
               {trade.notes && (
                 <div className="col-span-full mt-4">
-                  <h4 className="text-sm font-medium text-text-muted mb-2">
+                  <h4 className="text-sm font-medium mb-3 text-foreground">
                     Notes
                   </h4>
-                  <p className="text-sm text-text-muted bg-card/50 p-4 rounded-lg">
+                  <p className="text-sm text-text-muted bg-card p-4 rounded-lg">
                     {trade.notes}
                   </p>
                 </div>

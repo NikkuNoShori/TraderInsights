@@ -39,5 +39,10 @@ export function StoreProvider({ children }: StoreProviderProps) {
     };
   }, [handleAuthStateChange, setInitialized]);
 
-  return <ThemeProvider>{children}</ThemeProvider>;
+  // Wrap children with ThemeProvider to ensure theme is applied
+  return (
+    <ThemeProvider>
+      {children}
+    </ThemeProvider>
+  );
 }

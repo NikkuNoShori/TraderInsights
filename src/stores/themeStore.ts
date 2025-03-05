@@ -9,48 +9,47 @@ interface ThemeState {
   isDark: boolean;
 }
 
-const updateThemeClass = (isDark: boolean) => {
-  document.documentElement.classList.toggle("dark", isDark);
-};
-
 const getSystemTheme = (): boolean => {
   return window.matchMedia("(prefers-color-scheme: dark)").matches;
+};
+
+const updateThemeClass = (isDark: boolean) => {
+  // Force update of dark mode class
+  document.documentElement.classList.remove("light", "dark");
+  document.documentElement.classList.add(isDark ? "dark" : "light");
 };
 
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set) => ({
-      theme: "system",
-      isDark: getSystemTheme(),
+      theme: "dark", // Set default theme to dark
+      isDark: true, // Set default isDark to true
       setTheme: (theme) => {
         set({ theme });
+        let isDark = theme === "dark";
 
         if (theme === "system") {
-          const isDark = getSystemTheme();
-          set({ isDark });
-          updateThemeClass(isDark);
+          isDark = getSystemTheme();
 
           // Listen for system theme changes
           const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
           const handler = (e: MediaQueryListEvent) => {
-            const isDark = e.matches;
-            set({ isDark });
-            updateThemeClass(isDark);
+            const systemIsDark = e.matches;
+            set({ isDark: systemIsDark });
+            updateThemeClass(systemIsDark);
           };
 
           mediaQuery.addEventListener("change", handler);
           return () => mediaQuery.removeEventListener("change", handler);
-        } else {
-          const isDark = theme === "dark";
-          set({ isDark });
-          updateThemeClass(isDark);
         }
+
+        set({ isDark });
+        updateThemeClass(isDark);
       },
     }),
     {
       name: "theme-storage",
       onRehydrateStorage: () => (state) => {
-        // When store is rehydrated, ensure theme class is applied
         if (state) {
           const isDark =
             state.theme === "system"

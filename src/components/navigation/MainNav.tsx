@@ -58,6 +58,13 @@ const navCategories: NavCategory[] = [
     label: "Future Features",
     items: [
       {
+        label: "Playbook",
+        icon: BookOpen,
+        href: "/app/playbook",
+        isComingSoon: true,
+        isNew: true,
+      },
+      {
         label: "Watchlist",
         icon: List,
         href: "/app/watchlist",

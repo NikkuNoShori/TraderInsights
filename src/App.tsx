@@ -20,6 +20,7 @@ import { StoreProvider } from "./providers/StoreProvider";
 import LandingPage from "./views/LandingPage";
 import Performance from "./views/Performance";
 import ComingSoon from "./views/ComingSoon";
+import Playbook from "./views/Playbook";
 import { useResetFilters } from "./hooks/useResetFilters";
 
 function ProtectedLayout() {
@@ -63,6 +64,7 @@ export default function App() {
               <Route path="settings/*" element={<Settings />} />
 
               {/* Coming Soon Features */}
+              <Route path="playbook" element={<Playbook />} />
               <Route path="watchlist" element={<ComingSoon />} />
               <Route path="portfolios" element={<ComingSoon />} />
             </Route>

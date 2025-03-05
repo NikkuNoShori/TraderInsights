@@ -1,10 +1,23 @@
+@import './theme.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  :root.dark {
+    color-scheme: dark;
+  }
+
+  html {
+    @apply min-h-full;
+  }
+
   body {
-    @apply bg-background text-default antialiased min-h-screen;
+    @apply bg-background text-default antialiased min-h-screen transition-colors duration-200;
   }
 }
 
@@ -16,18 +29,18 @@
   .btn {
     @apply inline-flex items-center justify-center rounded-lg px-4 py-2.5
            font-medium transition-colors duration-200
-           focus:outline-none focus:ring-2 focus:ring-primary
+           focus:outline-none focus:ring-2 focus:ring-primary-30
            disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-primary {
-    @apply btn bg-primary text-primary-foreground hover:opacity-90;
+    @apply btn bg-primary text-primary-foreground hover:bg-primary-hover;
   }
 
   .input {
-    @apply w-full rounded-lg border border-border bg-card px-4 py-2.5
-           text-sm text-default placeholder:text-muted
-           focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
+    @apply w-full rounded-lg border border-border bg-input-bg px-4 py-2.5
+           text-sm text-input-text placeholder:text-input-placeholder
+           focus:outline-none focus:ring-2 focus:ring-primary-20 focus:border-transparent
            disabled:opacity-50 disabled:cursor-not-allowed
            transition-colors duration-200;
   }
@@ -37,8 +50,8 @@
   }
 
   .auth-card {
-    @apply w-full max-w-md space-y-8 rounded-xl bg-card p-8 shadow-lg 
-           border border-border;
+    @apply w-full max-w-md space-y-8 rounded-xl bg-card p-8
+           border border-border shadow-lg;
   }
 
   .auth-header {
