@@ -276,7 +276,8 @@ export function TradeList({
                                 </tr>
                               </thead>
                               <tbody>
-                                <tr className="bg-transparent">
+                                {/* Entry Order */}
+                                <tr className="bg-transparent border-b border-border/40">
                                   {TRADE_DETAILS_COLUMNS.filter((col) => 
                                     visibleDetailColumns.includes(col.id)
                                   ).map((column) => {
@@ -289,7 +290,7 @@ export function TradeList({
                                                 ? "bg-emerald-500/10 text-emerald-500" 
                                                 : "bg-rose-500/10 text-rose-500"
                                             }`}>
-                                              {trade.side === "Long" ? "Buy" : "Sell"}
+                                              {trade.side === "Long" ? "Buy" : "Short"}
                                             </span>
                                           </td>
                                         );
@@ -319,7 +320,7 @@ export function TradeList({
                                                 ? "bg-emerald-500/10 text-emerald-500" 
                                                 : "bg-rose-500/10 text-rose-500"
                                             }`}>
-                                              {trade.side}
+                                              Entry
                                             </span>
                                           </td>
                                         );
@@ -368,18 +369,120 @@ export function TradeList({
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => onEdit(trade, "buy")}
-                                                className="text-muted-foreground/70 hover:text-foreground"
+                                                className="text-primary hover:text-primary-hover hover:bg-primary-10"
                                               >
                                                 <Edit className="h-4 w-4" />
                                               </Button>
-                                              <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => onDelete(trade.id)}
-                                                className="text-muted-foreground/70 hover:text-destructive"
-                                              >
-                                                <Trash className="h-4 w-4" />
-                                              </Button>
+                                            </div>
+                                          </td>
+                                        );
+                                      default:
+                                        return null;
+                                    }
+                                  })}
+                                </tr>
+
+                                {/* Exit Order */}
+                                <tr className="bg-transparent">
+                                  {TRADE_DETAILS_COLUMNS.filter((col) => 
+                                    visibleDetailColumns.includes(col.id)
+                                  ).map((column) => {
+                                    switch (column.id) {
+                                      case 'order_type':
+                                        return (
+                                          <td key={column.id} className="py-2.5 px-4 whitespace-nowrap">
+                                            <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
+                                              trade.side === "Long" 
+                                                ? "bg-rose-500/10 text-rose-500" 
+                                                : "bg-emerald-500/10 text-emerald-500"
+                                            }`}>
+                                              {trade.side === "Long" ? "Sell" : "Cover"}
+                                            </span>
+                                          </td>
+                                        );
+                                      case 'date':
+                                        return (
+                                          <td key={column.id} className="py-2.5 px-4 text-muted-foreground whitespace-nowrap">
+                                            {trade.exit_date || "-"}
+                                          </td>
+                                        );
+                                      case 'time':
+                                        return (
+                                          <td key={column.id} className="py-2.5 px-4 text-muted-foreground whitespace-nowrap">
+                                            {trade.exit_time || "-"}
+                                          </td>
+                                        );
+                                      case 'symbol':
+                                        return (
+                                          <td key={column.id} className="py-2.5 px-4 text-muted-foreground whitespace-nowrap">
+                                            {trade.symbol}
+                                          </td>
+                                        );
+                                      case 'side':
+                                        return (
+                                          <td key={column.id} className="py-2.5 px-4 whitespace-nowrap">
+                                            <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
+                                              trade.side === "Long" 
+                                                ? "bg-rose-500/10 text-rose-500" 
+                                                : "bg-emerald-500/10 text-emerald-500"
+                                            }`}>
+                                              Exit
+                                            </span>
+                                          </td>
+                                        );
+                                      case 'price':
+                                        return (
+                                          <td key={column.id} className="py-2.5 px-4 font-medium whitespace-nowrap">
+                                            {trade.exit_price ? `$${Number(trade.exit_price).toFixed(2)}` : "-"}
+                                          </td>
+                                        );
+                                      case 'quantity':
+                                        return (
+                                          <td key={column.id} className="py-2.5 px-4 text-muted-foreground whitespace-nowrap">
+                                            {trade.quantity}
+                                          </td>
+                                        );
+                                      case 'total':
+                                        return (
+                                          <td key={column.id} className="py-2.5 px-4 font-medium whitespace-nowrap">
+                                            {trade.exit_price 
+                                              ? `$${Number(trade.exit_price * trade.quantity).toLocaleString(undefined, {
+                                                  minimumFractionDigits: 2,
+                                                  maximumFractionDigits: 2
+                                                })}` 
+                                              : "-"}
+                                          </td>
+                                        );
+                                      case 'stop_loss':
+                                        return (
+                                          <td key={column.id} className="py-2.5 px-4 whitespace-nowrap">
+                                            <span className="text-rose-500">
+                                              {trade.stop_loss ? `$${Number(trade.stop_loss).toFixed(2)}` : "N/A"}
+                                            </span>
+                                          </td>
+                                        );
+                                      case 'take_profit':
+                                        return (
+                                          <td key={column.id} className="py-2.5 px-4 whitespace-nowrap">
+                                            <span className="text-emerald-500">
+                                              {trade.take_profit ? `$${Number(trade.take_profit).toFixed(2)}` : "N/A"}
+                                            </span>
+                                          </td>
+                                        );
+                                      case 'actions':
+                                        return (
+                                          <td key={column.id} className="py-2.5 px-4 whitespace-nowrap">
+                                            <div className="flex items-center gap-2">
+                                              {trade.exit_price && (
+                                                <Button
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  onClick={() => onEdit(trade, "sell")}
+                                                  className="text-primary hover:text-primary-hover hover:bg-primary-10"
+                                                >
+                                                  <Edit className="h-4 w-4" />
+                                                </Button>
+                                              )}
                                             </div>
                                           </td>
                                         );

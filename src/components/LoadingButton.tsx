@@ -18,14 +18,24 @@ export function LoadingButton({
 }: LoadingButtonProps) {
   return (
     <Button
-      className={cn("relative", className)}
+      className={cn("relative flex items-center justify-center", className)}
       disabled={isLoading || disabled}
       {...props}
     >
-      {isLoading && (
-        <Loader2 className="absolute left-1/2 -translate-x-1/2 h-5 w-5 animate-spin" />
-      )}
-      <span className={cn(isLoading && "invisible")}>
+      <div
+        className={cn(
+          "absolute inset-0 flex items-center justify-center transition-opacity duration-200",
+          isLoading ? "opacity-100" : "opacity-0"
+        )}
+      >
+        <Loader2 className="h-5 w-5 animate-spin" />
+      </div>
+      <span
+        className={cn(
+          "transition-opacity duration-200",
+          isLoading ? "opacity-0" : "opacity-100"
+        )}
+      >
         {isLoading && loadingText ? loadingText : children}
       </span>
     </Button>

@@ -1,229 +1,155 @@
+import { useEffect, useRef } from "@/lib/react";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-  Legend,
-  ReferenceLine,
-} from "recharts";
+  createChart,
+  ColorType,
+  CrosshairMode,
+  IChartApi,
+  CandlestickData,
+  LineData,
+  UTCTimestamp,
+} from "lightweight-charts";
 import type { Trade } from "@/types/trade";
 import type { TimeframeOption } from "@/components/ui/TimeframeSelector";
 import { formatCurrency } from "@/utils/formatters";
-import { useMemo } from "@/lib/react";
-import {
-  format,
-  startOfDay,
-  endOfDay,
-  eachDayOfInterval,
-  subDays,
-  subMonths,
-  startOfMonth,
-  endOfMonth,
-  eachMonthOfInterval,
-  eachHourOfInterval,
-  addHours,
-} from "date-fns";
 import { useTimeframeFilteredTrades } from "@/hooks/useTimeframeFilteredTrades";
+import { useThemeStore } from "@/stores/themeStore";
 
 interface PnLChartProps {
   trades: Trade[];
   timeframe: TimeframeOption;
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (!active || !payload || !payload.length) return null;
-
-  return (
-    <div className="bg-card dark:bg-dark-paper border border-border rounded-md p-2 text-sm">
-      <div className="font-medium">Date: {label}</div>
-      {payload.map((item: any, index: number) => (
-        <div key={index} style={{ color: item.color }}>
-          {item.name}: {formatCurrency(item.value)}
-          {item.name === "Period P&L" && (
-            <span className="text-xs ml-1">
-              ({item.payload.trades} trade{item.payload.trades !== 1 ? "s" : ""}
-              )
-            </span>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-};
-
 export function PnLChart({ trades, timeframe }: PnLChartProps) {
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<IChartApi | null>(null);
   const timeframeFilteredTrades = useTimeframeFilteredTrades(trades, timeframe);
+  const isDarkMode = useThemeStore((state) => state.isDark);
 
-  const chartData = useMemo(() => {
-    if (!timeframeFilteredTrades.length) return [];
+  useEffect(() => {
+    if (!chartContainerRef.current || !timeframeFilteredTrades.length) return;
 
-    const now = new Date();
-    let start: Date;
-    let end: Date;
-    let dateFormat: string;
-    let intervals: Date[];
+    // Transform trade data first
+    const candleData: CandlestickData<UTCTimestamp>[] = timeframeFilteredTrades
+      .filter(trade => trade.entry_price && trade.exit_price)
+      .map(trade => ({
+        time: (new Date(trade.entry_date).getTime() / 1000) as UTCTimestamp,
+        open: trade.entry_price!,
+        high: Math.max(trade.entry_price!, trade.exit_price!),
+        low: Math.min(trade.entry_price!, trade.exit_price!),
+        close: trade.exit_price!,
+      }));
 
-    // Determine the start date and date format based on timeframe
-    switch (timeframe) {
-      case "1D":
-        start = startOfDay(subDays(now, 1));
-        end = endOfDay(start);
-        dateFormat = "HH:mm";
-        intervals = eachHourOfInterval({ start, end });
-        break;
-      case "1W":
-        start = startOfDay(subDays(now, 7));
-        end = endOfDay(now);
-        dateFormat = "EEE";
-        intervals = eachDayOfInterval({ start, end });
-        break;
-      case "1M":
-        start = startOfDay(subMonths(now, 1));
-        end = endOfDay(now);
-        dateFormat = "MMM d";
-        intervals = eachDayOfInterval({ start, end });
-        break;
-      case "3M":
-        start = startOfMonth(subMonths(now, 3));
-        end = endOfMonth(now);
-        dateFormat = "MMM yyyy";
-        intervals = eachMonthOfInterval({ start, end });
-        break;
-      case "YTD":
-        start = new Date(now.getFullYear(), 0, 1);
-        end = endOfMonth(now);
-        dateFormat = "MMM yyyy";
-        intervals = eachMonthOfInterval({ start, end });
-        break;
-      case "1Y":
-        start = startOfMonth(subMonths(now, 12));
-        end = endOfMonth(now);
-        dateFormat = "MMM yyyy";
-        intervals = eachMonthOfInterval({ start, end });
-        break;
-      case "ALL":
-      default:
-        start = startOfMonth(
-          new Date(
-            Math.min(
-              ...timeframeFilteredTrades.map((t) =>
-                new Date(t.entry_date).getTime(),
-              ),
-            ),
-          ),
-        );
-        end = endOfMonth(now);
-        dateFormat = "MMM yyyy";
-        intervals = eachMonthOfInterval({ start, end });
-    }
-
+    // Calculate cumulative P&L
     let cumulativePnL = 0;
-
-    // Create data points for each interval
-    return intervals.map((intervalStart) => {
-      let intervalEnd;
-      switch (timeframe) {
-        case "1D":
-          intervalEnd = addHours(intervalStart, 1);
-          break;
-        case "1W":
-        case "1M":
-          intervalEnd = endOfDay(intervalStart);
-          break;
-        case "3M":
-        case "YTD":
-        case "1Y":
-        case "ALL":
-          intervalEnd = endOfMonth(intervalStart);
-          break;
-        default:
-          intervalEnd = endOfDay(intervalStart);
-      }
-
-      const periodTrades = timeframeFilteredTrades.filter((trade) => {
-        const tradeDate = new Date(trade.entry_date);
-        return tradeDate >= intervalStart && tradeDate < intervalEnd;
+    const lineData: LineData<UTCTimestamp>[] = timeframeFilteredTrades
+      .filter(trade => trade.pnl !== undefined)
+      .map(trade => {
+        cumulativePnL += trade.pnl || 0;
+        return {
+          time: (new Date(trade.entry_date).getTime() / 1000) as UTCTimestamp,
+          value: cumulativePnL,
+        };
       });
 
-      const periodPnL = periodTrades.reduce(
-        (sum, trade) => sum + (trade.pnl || 0),
-        0,
-      );
-      cumulativePnL += periodPnL;
+    if (!candleData.length && !lineData.length) return;
 
-      return {
-        date: format(intervalStart, dateFormat),
-        pnl: periodPnL,
-        cumulativePnL,
-        trades: periodTrades.length,
-      };
+    // Initialize chart
+    const chart = createChart(chartContainerRef.current, {
+      layout: {
+        background: { type: ColorType.Solid, color: isDarkMode ? "#1a1b1e" : "#ffffff" },
+        textColor: isDarkMode ? "#d1d4dc" : "#131722",
+      },
+      grid: {
+        vertLines: { color: isDarkMode ? "#2B2B43" : "#e1e3eb" },
+        horzLines: { color: isDarkMode ? "#2B2B43" : "#e1e3eb" },
+      },
+      crosshair: {
+        mode: CrosshairMode.Normal,
+      },
+      rightPriceScale: {
+        borderColor: isDarkMode ? "#2B2B43" : "#e1e3eb",
+        scaleMargins: {
+          top: 0.1,
+          bottom: 0.1,
+        },
+      },
+      timeScale: {
+        borderColor: isDarkMode ? "#2B2B43" : "#e1e3eb",
+        timeVisible: true,
+        secondsVisible: false,
+      },
+      width: chartContainerRef.current.clientWidth,
+      height: 400,
+      handleScroll: {
+        mouseWheel: true,
+        pressedMouseMove: true,
+      },
+      handleScale: {
+        axisPressedMouseMove: true,
+        mouseWheel: true,
+        pinch: true,
+      },
     });
-  }, [timeframeFilteredTrades, timeframe]);
+
+    // Add candlestick series if we have data
+    if (candleData.length > 0) {
+      const candlestickSeries = chart.addSeries({
+        type: 'Candlestick',
+        upColor: "#26a69a",
+        downColor: "#ef5350",
+        wickUpColor: "#26a69a",
+        wickDownColor: "#ef5350",
+        borderVisible: false,
+      } as any);
+      candlestickSeries.setData(candleData);
+    }
+
+    // Add line series if we have data
+    if (lineData.length > 0) {
+      const lineSeries = chart.addSeries({
+        type: 'Line',
+        color: "#2962FF",
+        lineWidth: 2,
+        priceLineVisible: false,
+        lastValueVisible: false,
+      } as any);
+      lineSeries.setData(lineData);
+    }
+
+    // Fit content
+    chart.timeScale().fitContent();
+
+    // Store chart reference for cleanup
+    chartRef.current = chart;
+
+    // Handle resize
+    const handleResize = () => {
+      if (chartContainerRef.current && chart) {
+        chart.applyOptions({
+          width: chartContainerRef.current.clientWidth,
+        });
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      chart.remove();
+    };
+  }, [timeframeFilteredTrades, isDarkMode]);
 
   if (!timeframeFilteredTrades.length) {
     return (
-      <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+      <div className="w-full h-[400px] rounded-lg border border-border bg-card p-4 flex items-center justify-center text-muted-foreground">
         No trade data available for the selected timeframe.
       </div>
     );
   }
 
-  if (!chartData.length) {
-    return (
-      <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-        No trades found in the selected time periods.
-      </div>
-    );
-  }
-
-  const minValue = Math.min(
-    0,
-    ...chartData.map((d) => Math.min(d.pnl, d.cumulativePnL)),
-  );
-  const maxValue = Math.max(
-    ...chartData.map((d) => Math.max(d.pnl, d.cumulativePnL)),
-  );
-  const padding = Math.max((maxValue - minValue) * 0.1, 100); // Ensure minimum padding
-
   return (
-    <div className="h-[300px]">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis
-            dataKey="date"
-            tick={{ fontSize: 12 }}
-            interval="preserveStartEnd"
-          />
-          <YAxis
-            tickFormatter={formatCurrency}
-            domain={[minValue - padding, maxValue + padding]}
-            tick={{ fontSize: 12 }}
-          />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend />
-          <ReferenceLine y={0} stroke="var(--border)" strokeDasharray="3 3" />
-          <Line
-            name="Period P&L"
-            type="monotone"
-            dataKey="pnl"
-            stroke="var(--primary)"
-            dot={false}
-            strokeWidth={2}
-          />
-          <Line
-            name="Cumulative P&L"
-            type="monotone"
-            dataKey="cumulativePnL"
-            stroke="var(--success)"
-            dot={false}
-            strokeWidth={2}
-          />
-        </LineChart>
-      </ResponsiveContainer>
+    <div className="w-full h-[400px] rounded-lg border border-border bg-card p-4">
+      <div ref={chartContainerRef} className="w-full h-full" />
     </div>
   );
 }
