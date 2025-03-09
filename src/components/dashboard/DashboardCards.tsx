@@ -11,9 +11,13 @@ import {
 import { formatCurrency } from "@/utils/formatters";
 import { useFilteredTrades } from "@/hooks/useFilteredTrades";
 import { WinRateChart } from "./WinRateChart";
-import { PnLChart } from "./PnLChart";
+import { RechartsPnLChart } from "./RechartsPnLChart";
 import { TradeDistributionChart } from "./TradeDistributionChart";
-import type { TimeframeOption } from "@/components/ui/TimeframeSelector";
+import { MarketOverviewCard } from "./MarketOverviewCard";
+import { StockInfoCard } from "./StockInfoCard";
+import { TechnicalAnalysisCard } from "./TechnicalAnalysisCard";
+import type { TimeframeOption } from "@/components/ui/timeframeSelector";
+import { DASHBOARD_CHART_HEIGHT } from "@/config/chartConfig";
 
 interface DashboardCardsProps {
   trades: Trade[];
@@ -118,17 +122,24 @@ export function DashboardCards({ trades, timeframe }: DashboardCardsProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
           <h3 className="text-lg font-medium mb-4">Win Rate Over Time</h3>
-          <WinRateChart trades={[]} timeframe={timeframe} />
+          <WinRateChart trades={[]} timeframe={timeframe} height={DASHBOARD_CHART_HEIGHT} />
         </div>
         <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
           <h3 className="text-lg font-medium mb-4">P&L Over Time</h3>
-          <PnLChart trades={[]} timeframe={timeframe} />
+          <RechartsPnLChart trades={[]} timeframe={timeframe} height={DASHBOARD_CHART_HEIGHT} />
         </div>
       </div>
 
       <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
         <h3 className="text-lg font-medium mb-4">Trade Distribution</h3>
-        <TradeDistributionChart trades={[]} />
+        <TradeDistributionChart trades={[]} height={DASHBOARD_CHART_HEIGHT} />
+      </div>
+
+      <MarketOverviewCard />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <StockInfoCard />
+        <TechnicalAnalysisCard />
       </div>
     </div>
   );
@@ -173,17 +184,24 @@ export function DashboardCards({ trades, timeframe }: DashboardCardsProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
           <h3 className="text-lg font-medium mb-4">Win Rate Over Time</h3>
-          <WinRateChart trades={filteredTrades} timeframe={timeframe} />
+          <WinRateChart trades={filteredTrades} timeframe={timeframe} height={DASHBOARD_CHART_HEIGHT} />
         </div>
         <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
           <h3 className="text-lg font-medium mb-4">P&L Over Time</h3>
-          <PnLChart trades={filteredTrades} timeframe={timeframe} />
+          <RechartsPnLChart trades={filteredTrades} timeframe={timeframe} height={DASHBOARD_CHART_HEIGHT} />
         </div>
       </div>
 
       <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
         <h3 className="text-lg font-medium mb-4">Trade Distribution</h3>
-        <TradeDistributionChart trades={filteredTrades} />
+        <TradeDistributionChart trades={filteredTrades} height={DASHBOARD_CHART_HEIGHT} />
+      </div>
+
+      <MarketOverviewCard />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <StockInfoCard />
+        <TechnicalAnalysisCard />
       </div>
     </div>
   );

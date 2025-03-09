@@ -1,15 +1,18 @@
 import {
-  BarChart,
-  Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
   Legend,
+  ReferenceLine,
+  Area,
+  ComposedChart,
 } from "recharts";
 import type { Trade } from "@/types/trade";
-import type { TimeframeOption } from "@/components/ui/TimeframeSelector";
+import type { TimeframeOption } from "@/components/ui/timeframeSelector";
 import { useMemo } from "@/lib/react";
 import {
   format,
@@ -25,10 +28,13 @@ import {
   addHours,
 } from "date-fns";
 import { useTimeframeFilteredTrades } from "@/hooks/useTimeframeFilteredTrades";
+import { useThemeStore } from "@/stores/themeStore";
+import { CHART_COLORS, DASHBOARD_CHART_HEIGHT, getRechartsConfig } from "@/config/chartConfig";
 
 interface WinRateChartProps {
   trades: Trade[];
   timeframe: TimeframeOption;
+  height?: number;
 }
 
 const formatTooltip = (value: number) => `${(value * 100).toFixed(1)}%`;
@@ -37,19 +43,35 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload || !payload.length) return null;
 
   const data = payload[0].payload;
+  const isDarkMode = useThemeStore.getState().isDark;
+  
   return (
-    <div className="bg-card dark:bg-dark-paper border border-border rounded-md p-2 text-sm">
-      <div className="font-medium">Date: {label}</div>
-      <div>Win Rate: {formatTooltip(data.winRate)}</div>
-      <div>Wins: {data.wins}</div>
-      <div>Losses: {data.losses}</div>
-      <div>Total Trades: {data.total}</div>
+    <div className={`p-3 rounded-md shadow-lg ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'} border border-border`}>
+      <div className="font-medium">{label}</div>
+      <div className="text-sm mt-1">
+        <span className="font-medium">Win Rate:</span> {formatTooltip(data.winRate)}
+      </div>
+      <div className="text-sm">
+        <span className="font-medium">Wins:</span> {data.wins}
+      </div>
+      <div className="text-sm">
+        <span className="font-medium">Losses:</span> {data.losses}
+      </div>
+      <div className="text-sm">
+        <span className="font-medium">Total Trades:</span> {data.total}
+      </div>
     </div>
   );
 };
 
-export function WinRateChart({ trades, timeframe }: WinRateChartProps) {
+export function WinRateChart({ 
+  trades, 
+  timeframe,
+  height = DASHBOARD_CHART_HEIGHT
+}: WinRateChartProps) {
   const timeframeFilteredTrades = useTimeframeFilteredTrades(trades, timeframe);
+  const isDarkMode = useThemeStore((state) => state.isDark);
+  const chartConfig = getRechartsConfig(isDarkMode);
 
   const chartData = useMemo(() => {
     if (!timeframeFilteredTrades.length) return [];
@@ -156,7 +178,7 @@ export function WinRateChart({ trades, timeframe }: WinRateChartProps) {
 
   if (!timeframeFilteredTrades.length) {
     return (
-      <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+      <div className={`w-full h-[${height}px] flex items-center justify-center text-muted-foreground`}>
         No trade data available for the selected timeframe.
       </div>
     );
@@ -164,7 +186,7 @@ export function WinRateChart({ trades, timeframe }: WinRateChartProps) {
 
   if (!chartData.length) {
     return (
-      <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+      <div className={`w-full h-[${height}px] flex items-center justify-center text-muted-foreground`}>
         No trades found in the selected time periods.
       </div>
     );
@@ -174,29 +196,41 @@ export function WinRateChart({ trades, timeframe }: WinRateChartProps) {
   const yAxisDomain = [0, Math.max(1, Math.ceil(maxWinRate * 10) / 10)];
 
   return (
-    <div className="h-[300px]">
+    <div className="w-full" style={{ height: `${height}px` }}>
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis
-            dataKey="date"
+        <ComposedChart data={chartData} margin={chartConfig.margins}>
+          <defs>
+            <linearGradient id="colorWinRate" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor={CHART_COLORS.successGradient.start} />
+              <stop offset="95%" stopColor={CHART_COLORS.successGradient.end} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke={chartConfig.gridColor} />
+          <XAxis 
+            dataKey="date" 
             tick={{ fontSize: 12 }}
             interval="preserveStartEnd"
+            stroke={chartConfig.textColor}
           />
           <YAxis
             tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
             domain={yAxisDomain}
             tick={{ fontSize: 12 }}
+            stroke={chartConfig.textColor}
           />
           <Tooltip content={<CustomTooltip />} />
           <Legend />
-          <Bar
+          <ReferenceLine y={0.5} stroke={chartConfig.textColor} strokeDasharray="3 3" />
+          <Area
             name="Win Rate"
+            type="monotone"
             dataKey="winRate"
-            fill="var(--primary)"
-            radius={[4, 4, 0, 0]}
+            stroke={CHART_COLORS.success}
+            strokeWidth={2}
+            fillOpacity={1}
+            fill="url(#colorWinRate)"
           />
-        </BarChart>
+        </ComposedChart>
       </ResponsiveContainer>
     </div>
   );

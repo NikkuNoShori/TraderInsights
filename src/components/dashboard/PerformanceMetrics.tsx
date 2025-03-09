@@ -3,7 +3,7 @@ import { StatsCard } from "./StatsCard";
 import { DollarSign } from "lucide-react";
 import type { Trade } from "@/types/trade";
 import { formatCurrency } from "@/utils/formatters";
-import type { TimeframeOption } from "@/components/ui/TimeframeSelector";
+import type { TimeframeOption } from "@/components/ui/timeframeSelector";
 
 interface PerformanceMetricsProps {
   trades: Trade[];

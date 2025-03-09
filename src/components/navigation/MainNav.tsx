@@ -12,6 +12,8 @@ import {
   User,
   Settings,
   LogOut,
+  BarChart,
+  TrendingUp,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { clsx } from "clsx";
@@ -40,17 +42,33 @@ const navCategories: NavCategory[] = [
       {
         label: "Dashboard",
         icon: LayoutDashboard,
-        href: "/app/dashboard",
+        href: "/",
       },
       {
         label: "Journal",
         icon: BookOpen,
-        href: "/app/journal",
+        href: "/journal",
       },
       {
         label: "Performance",
         icon: LineChart,
-        href: "/app/performance",
+        href: "/performance",
+      },
+    ],
+  },
+  {
+    label: "Market",
+    items: [
+      {
+        label: "Stocks",
+        icon: BarChart,
+        href: "/stocks",
+      },
+      {
+        label: "Market Data",
+        icon: TrendingUp,
+        href: "/market",
+        isNew: true,
       },
     ],
   },
@@ -60,20 +78,19 @@ const navCategories: NavCategory[] = [
       {
         label: "Playbook",
         icon: BookOpen,
-        href: "/app/playbook",
+        href: "/playbook",
         isComingSoon: true,
-        isNew: true,
       },
       {
         label: "Watchlist",
         icon: List,
-        href: "/app/watchlist",
+        href: "/watchlist",
         isComingSoon: true,
       },
       {
         label: "Portfolios",
         icon: Briefcase,
-        href: "/app/portfolios",
+        href: "/portfolios",
         isComingSoon: true,
       },
     ],

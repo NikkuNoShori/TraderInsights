@@ -11,7 +11,7 @@ import {
 } from "recharts";
 import type { Trade as PortfolioTrade } from "@/types/portfolio";
 import type { Trade } from "@/types/trade";
-import type { TimeframeOption } from "@/components/ui/TimeframeSelector";
+import type { TimeframeOption } from "@/components/ui/timeframeSelector";
 import { useMemo } from "@/lib/react";
 import { format } from "date-fns";
 import { 

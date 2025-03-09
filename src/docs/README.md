@@ -7,13 +7,15 @@ This directory contains technical documentation for the TraderInsights applicati
 1. **Critical Priority**
 
    - [Migration Guide](./MIGRATION.md) - Comprehensive guide for architectural improvements and migration steps
+   - [Chart System](./CHART_SYSTEM.md) - Documentation for the unified chart configuration and dual charting approach
+   - [WebUll Integration](./WEBULL_INTEGRATION.md) - Guide for WebUll API integration
    - [State Management](./STATE_MANAGEMENT.md) (TODO) - Documentation for state management patterns
    - [Error Handling](./ERROR_HANDLING.md) (TODO) - Error handling patterns and implementation
 
 2. **High Priority**
 
    - [Component Guidelines](./COMPONENT_GUIDELINES.md) (TODO) - Guidelines for component development
-   - [Architecture Overview](./ARCHITECTURE.md) (TODO) - Overview of the application architecture
+   - [Architecture Overview](./ARCHITECTURE.md) - Overview of the application architecture
    - [Testing Strategy](./TESTING.md) (TODO) - Testing guidelines and practices
 
 3. **Implementation Priority**

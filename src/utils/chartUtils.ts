@@ -1,4 +1,4 @@
-import type { TimeframeOption } from "@/components/ui/TimeframeSelector";
+import type { TimeframeOption } from "@/components/ui/timeframeSelector";
 import {
   startOfDay,
   endOfDay,

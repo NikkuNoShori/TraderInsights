@@ -10,6 +10,8 @@ import Dashboard from "@/views/Dashboard";
 import Performance from "@/views/analysis/Performance";
 import TradingJournal from "@/views/TradingJournal";
 import Settings from "@/views/settings/Settings";
+import Stocks from "@/views/Stocks";
+import MarketData from "@/views/MarketData";
 
 // Protected Route component
 function ProtectedRoute() {
@@ -79,6 +81,14 @@ export const router = createBrowserRouter([
           {
             path: "performance",
             element: <Performance />,
+          },
+          {
+            path: "stocks",
+            element: <Stocks />,
+          },
+          {
+            path: "market",
+            element: <MarketData />,
           },
           {
             path: "settings",
