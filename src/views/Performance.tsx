@@ -1,12 +1,12 @@
 import { useState, useMemo, useCallback } from "@/lib/react";
 import { useTrades } from "@/hooks/useTrades";
-import { Spinner } from "@/components/ui/Spinner";
+import { Spinner } from "@/components/ui/spinner";
 import {
   TimeframeSelector,
   type TimeframeOption,
-} from "../components/ui/TimeframeSelector";
+} from "../components/ui/timeframeSelector";
 import { PerformanceMetrics } from "@/components/dashboard/PerformanceMetrics";
-import { PnLChart } from "@/components/dashboard/PnLChart";
+import { RechartsPnLChart } from "@/components/dashboard/RechartsPnLChart";
 import { WinRateChart } from "@/components/dashboard/WinRateChart";
 import { TradeDistributionChart } from "@/components/dashboard/TradeDistributionChart";
 import { PerformanceCharts } from "@/components/portfolio/PerformanceCharts";
@@ -101,7 +101,7 @@ export default function Performance() {
           <h3 className="text-base font-medium text-text-primary mb-4">
             P&L Over Time
           </h3>
-          <PnLChart trades={filteredTrades} timeframe={timeframe} />
+          <RechartsPnLChart trades={filteredTrades} timeframe={timeframe} />
         </div>
 
         <div className="bg-card border border-border rounded-lg p-6">

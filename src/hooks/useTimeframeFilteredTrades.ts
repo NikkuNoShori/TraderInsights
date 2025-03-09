@@ -1,6 +1,6 @@
 import { useMemo } from "@/lib/react";
 import type { Trade } from "@/types/trade";
-import type { TimeframeOption } from "@/components/ui/TimeframeSelector";
+import type { TimeframeOption } from "@/components/ui/timeframeSelector";
 import {
   startOfDay,
   endOfDay,

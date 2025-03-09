@@ -10,9 +10,12 @@ import type { Trade } from "@/types/trade";
 import { useMemo } from "@/lib/react";
 import { formatCurrency, formatPercent } from "@/utils/formatters";
 import { useFilteredTrades } from "@/hooks/useFilteredTrades";
+import { useThemeStore } from "@/stores/themeStore";
+import { DASHBOARD_CHART_HEIGHT, getRechartsConfig } from "@/config/chartConfig";
 
 interface TradeDistributionChartProps {
   trades: Trade[];
+  height?: number;
 }
 
 interface TradeDistributionData {
@@ -36,15 +39,23 @@ const CustomTooltip = ({ active, payload }: any) => {
   if (!active || !payload || !payload.length) return null;
 
   const data = payload[0].payload;
+  const isDarkMode = useThemeStore.getState().isDark;
+  
   return (
-    <div className="bg-card dark:bg-dark-paper border border-border dark:border-dark-border rounded-lg p-3 shadow-lg">
+    <div className={`p-3 rounded-md shadow-lg ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'} border border-border`}>
       <div className="font-medium text-base">{data.name}</div>
       <div className="space-y-1 mt-2 text-sm">
-        <div>Count: {data.value}</div>
-        <div>P&L: {formatCurrency(data.pnl)}</div>
-        <div>Percentage: {formatPercent(data.percentage)}</div>
+        <div>
+          <span className="font-medium">Count:</span> {data.value}
+        </div>
+        <div>
+          <span className="font-medium">P&L:</span> {formatCurrency(data.pnl)}
+        </div>
+        <div>
+          <span className="font-medium">Percentage:</span> {formatPercent(data.percentage)}
+        </div>
         <div className="text-muted-foreground">
-          Avg P&L per Trade: {formatCurrency(data.pnl / data.value)}
+          <span className="font-medium">Avg P&L per Trade:</span> {formatCurrency(data.pnl / data.value)}
         </div>
       </div>
     </div>
@@ -72,8 +83,11 @@ const CustomLegend = ({ payload }: any) => {
 
 export function TradeDistributionChart({
   trades,
+  height = DASHBOARD_CHART_HEIGHT
 }: TradeDistributionChartProps) {
   const filteredTrades = useFilteredTrades(trades);
+  const isDarkMode = useThemeStore((state) => state.isDark);
+  const chartConfig = getRechartsConfig(isDarkMode);
 
   const chartData = useMemo(() => {
     if (!filteredTrades.length) return [];
@@ -163,7 +177,7 @@ export function TradeDistributionChart({
 
   if (!filteredTrades.length) {
     return (
-      <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+      <div className={`w-full h-[${height}px] flex items-center justify-center text-muted-foreground`}>
         No trade data available for the selected timeframe.
       </div>
     );
@@ -171,14 +185,14 @@ export function TradeDistributionChart({
 
   if (!chartData.length) {
     return (
-      <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+      <div className={`w-full h-[${height}px] flex items-center justify-center text-muted-foreground`}>
         No trades found in the selected time periods.
       </div>
     );
   }
 
   return (
-    <div className="h-[400px]">
+    <div className="w-full" style={{ height: `${height}px` }}>
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
@@ -190,11 +204,15 @@ export function TradeDistributionChart({
             innerRadius="45%"
             outerRadius="80%"
             paddingAngle={3}
+            animationDuration={500}
+            animationBegin={0}
           >
             {chartData.map((entry, index) => (
               <Cell
                 key={`cell-${index}`}
                 fill={entry.color}
+                stroke={chartConfig.gridColor}
+                strokeWidth={1}
                 className="hover:opacity-80 transition-opacity duration-200"
               />
             ))}
