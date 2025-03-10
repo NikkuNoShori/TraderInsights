@@ -2,15 +2,17 @@ import { useNavigate } from "react-router-dom";
 import { Construction, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui";
+import { useRouteStore } from "@/stores/routeStore";
 
 export default function ComingSoon() {
   const navigate = useNavigate();
+  const { getRoute } = useRouteStore();
 
   return (
     <div className="flex-grow p-6">
       {/* Back Button */}
       <Button
-        onClick={() => navigate("/app/dashboard")}
+        onClick={() => navigate(getRoute("dashboard"))}
         variant="ghost"
         className="mb-6 -ml-2 text-muted hover:text-default"
       >

@@ -186,73 +186,62 @@ class WebullService {
 
   private async generateMockTrades(count: number = 5): Promise<WebullTrade[]> {
     console.log(`Generating ${count} mock trade pairs...`);
-    const symbols = ["AAPL", "GOOGL", "MSFT", "AMZN", "META"];
+    const symbols = ["AAPL", "GOOGL", "MSFT", "AMZN", "META", "NVDA", "TSLA"];
     const exchanges = ["NASDAQ", "NYSE"];
     const trades: WebullTrade[] = [];
-
-    // Get existing trades to calculate current win rate
-    const existingTrades = await this.getTrades();
-    const existingWinRate =
-      existingTrades.length > 0
-        ? existingTrades.filter((trade) => {
-            const buyOrder = existingTrades.find(
-              (t) =>
-                t.symbol === trade.symbol &&
-                t.action === "BUY" &&
-                t.orderId.split("-")[2] === trade.orderId.split("-")[2],
-            );
-            const sellOrder = existingTrades.find(
-              (t) =>
-                t.symbol === trade.symbol &&
-                t.action === "SELL" &&
-                t.orderId.split("-")[2] === trade.orderId.split("-")[2],
-            );
-
-            if (!buyOrder || !sellOrder || trade.action !== "SELL")
-              return false;
-
-            // For Long trades: sell price should be higher than buy price
-            // For Short trades: sell price should be lower than buy price
-            const isLongTrade = buyOrder.createTime < sellOrder.createTime;
-            const buyPrice = buyOrder.filledPrice || buyOrder.price || 0;
-            const sellPrice = sellOrder.filledPrice || sellOrder.price || 0;
-
-            return isLongTrade
-              ? sellPrice > buyPrice // Long trade is profitable if sell > buy
-              : sellPrice < buyPrice; // Short trade is profitable if sell < buy
-          }).length /
-          (existingTrades.length / 2)
-        : 0.5; // Default to 50% if no existing trades
-
-    console.log(`Current win rate: ${existingWinRate * 100}%`);
 
     // Generate pairs of trades (BUY and SELL) for each count
     for (let i = 0; i < count; i++) {
       console.log(`Generating trade pair ${i + 1}...`);
       const symbol = symbols[Math.floor(Math.random() * symbols.length)];
       const quantity = Math.floor(Math.random() * 100) + 1;
-      const entryPrice = Math.random() * 1000 + 10;
 
-      // Determine if this should be a winning trade based on current win rate
-      const targetWinRate = 0.6; // We want to maintain around 60% win rate
-      const winProbability = existingWinRate < targetWinRate ? 0.7 : 0.5;
-      const isWinner = Math.random() < winProbability;
+      // Set a reasonable entry price based on the stock
+      let entryPrice = 0;
+      switch (symbol) {
+        case "AAPL":
+          entryPrice = 150 + Math.random() * 30;
+          break;
+        case "GOOGL":
+          entryPrice = 120 + Math.random() * 20;
+          break;
+        case "MSFT":
+          entryPrice = 350 + Math.random() * 50;
+          break;
+        case "AMZN":
+          entryPrice = 130 + Math.random() * 30;
+          break;
+        case "META":
+          entryPrice = 400 + Math.random() * 50;
+          break;
+        case "NVDA":
+          entryPrice = 800 + Math.random() * 100;
+          break;
+        case "TSLA":
+          entryPrice = 180 + Math.random() * 40;
+          break;
+        default:
+          entryPrice = 100 + Math.random() * 50;
+      }
+
+      // Always make it a winning trade with 95% probability
+      const isWinner = Math.random() < 0.95;
 
       // Randomly decide if this is a Long or Short trade
-      const isLongTrade = Math.random() > 0.3; // 70% chance of long trade
+      const isLongTrade = Math.random() > 0.2; // 80% chance of long trade
 
-      // Calculate exit price based on trade direction and win/loss status
+      // Calculate exit price based on trade direction - ensure it's profitable
       const exitPrice = isLongTrade
         ? isWinner
-          ? entryPrice * (1 + Math.random() * 0.2) // Long winner: +0-20%
-          : entryPrice * (1 - Math.random() * 0.05) // Long loser: -0-5%
+          ? entryPrice * (1 + Math.random() * 0.3 + 0.1) // Long winner: +10-40%
+          : entryPrice * (1 - Math.random() * 0.02) // Long loser: -0-2%
         : isWinner
-          ? entryPrice * (1 - Math.random() * 0.2) // Short winner: -0-20%
-          : entryPrice * (1 + Math.random() * 0.05); // Short loser: +0-5%
+        ? entryPrice * (1 - Math.random() * 0.3 - 0.1) // Short winner: -10-40%
+        : entryPrice * (1 + Math.random() * 0.02); // Short loser: +0-2%
 
-      const createTime = new Date(
-        Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000,
-      );
+      // Create dates for the trades - more recent trades for better visualization
+      const daysAgo = Math.floor(Math.random() * 30); // Within the last 30 days
+      const createTime = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
       const updateTime = new Date(createTime.getTime() + 1000 * 60 * 60 * 24); // 24 hours later
 
       if (isLongTrade) {
@@ -270,7 +259,7 @@ class WebullService {
           status: "FILLED",
           createTime: createTime.toISOString(),
           updateTime: createTime.toISOString(),
-          commission: Math.random() * 5,
+          commission: Math.random() * 2, // Lower commission
           exchange: exchanges[Math.floor(Math.random() * exchanges.length)],
         };
         trades.push(buyOrder);
@@ -288,7 +277,7 @@ class WebullService {
           status: "FILLED",
           createTime: updateTime.toISOString(),
           updateTime: updateTime.toISOString(),
-          commission: Math.random() * 5,
+          commission: Math.random() * 2, // Lower commission
           exchange: exchanges[Math.floor(Math.random() * exchanges.length)],
         };
         trades.push(sellOrder);
@@ -307,7 +296,7 @@ class WebullService {
           status: "FILLED",
           createTime: createTime.toISOString(),
           updateTime: createTime.toISOString(),
-          commission: Math.random() * 5,
+          commission: Math.random() * 2, // Lower commission
           exchange: exchanges[Math.floor(Math.random() * exchanges.length)],
         };
         trades.push(sellOrder);
@@ -325,14 +314,13 @@ class WebullService {
           status: "FILLED",
           createTime: updateTime.toISOString(),
           updateTime: updateTime.toISOString(),
-          commission: Math.random() * 5,
+          commission: Math.random() * 2, // Lower commission
           exchange: exchanges[Math.floor(Math.random() * exchanges.length)],
         };
         trades.push(buyOrder);
       }
     }
 
-    console.log(`Generated ${trades.length} total trades`);
     return trades;
   }
 
@@ -400,45 +388,12 @@ class WebullService {
     await this.saveTrade(defaultTrade);
   }
 
-  public async addMockTrades(count: number): Promise<void> {
-    const symbols = ["AAPL", "GOOGL", "MSFT", "AMZN", "META"];
-    const actions: Array<"BUY" | "SELL"> = ["BUY", "SELL"];
-    const orderTypes: Array<"MARKET" | "LIMIT"> = ["MARKET", "LIMIT"];
-    const timeInForce: Array<"GTC" | "DAY" | "IOC"> = ["GTC", "DAY", "IOC"];
-    const exchanges = ["NASDAQ", "NYSE", "ARCA", "IEX"];
-
-    for (let i = 0; i < count; i++) {
-      const price = Math.random() * 1000 + 10;
-      const quantity = Math.floor(Math.random() * 1000) + 1;
-      const action = actions[Math.floor(Math.random() * actions.length)];
-      const orderType =
-        orderTypes[Math.floor(Math.random() * orderTypes.length)];
-      const createTime = new Date(
-        Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000,
-      );
-
-      const mockTrade: WebullTrade = {
-        orderId: `mock-${Date.now()}-${i}`,
-        symbol: symbols[Math.floor(Math.random() * symbols.length)],
-        action,
-        orderType,
-        timeInForce:
-          timeInForce[Math.floor(Math.random() * timeInForce.length)],
-        quantity,
-        filledQuantity: action === "BUY" ? quantity : 0,
-        price,
-        filledPrice: action === "BUY" ? price : undefined,
-        status: action === "BUY" ? "FILLED" : "PENDING",
-        createTime: createTime.toISOString(),
-        updateTime: new Date(
-          createTime.getTime() + Math.random() * 60 * 60 * 1000,
-        ).toISOString(),
-        commission: Math.random() * 10,
-        exchange: exchanges[Math.floor(Math.random() * exchanges.length)],
-      };
-
-      await this.saveTrade(mockTrade);
+  public async addMockTrades(count: number = 10): Promise<void> {
+    const mockTrades = await this.generateMockTrades(count);
+    for (const trade of mockTrades) {
+      await this.saveTrade(trade);
     }
+    console.log(`Added ${mockTrades.length} mock trades`);
   }
 }
 

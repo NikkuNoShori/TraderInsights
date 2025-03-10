@@ -8,12 +8,16 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import type { Trade } from "@/types/trade";
+import { useChartStore } from "@/stores/chartStore";
 
 interface TradeAnalyticsProps {
   trades: Trade[];
 }
 
 export function TradeAnalytics({ trades }: TradeAnalyticsProps) {
+  const getChartHeight = useChartStore((state) => state.getChartHeight);
+  const journalChartHeight = getChartHeight("journal");
+  
   const calculateMetrics = () => {
     if (trades.length === 0) {
       return {
@@ -121,7 +125,7 @@ export function TradeAnalytics({ trades }: TradeAnalyticsProps) {
         <h3 className="text-lg font-medium text-gray-900 dark:text-dark-text mb-4">
           Performance Chart
         </h3>
-        <div className="h-64">
+        <div style={{ height: `${journalChartHeight}px` }}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={trades}>
               <XAxis

@@ -63,10 +63,19 @@ export default function App() {
               <Route path="performance" element={<Performance />} />
               <Route path="settings/*" element={<Settings />} />
 
+              {/* Market Section */}
+              <Route path="stocks" element={<ComingSoon />} />
+              <Route path="market" element={<ComingSoon />} />
+
               {/* Coming Soon Features */}
-              <Route path="playbook" element={<Playbook />} />
+              <Route path="playbook" element={<ComingSoon />} />
               <Route path="watchlist" element={<ComingSoon />} />
               <Route path="portfolios" element={<ComingSoon />} />
+
+              {/* Analysis/Performance section */}
+              <Route path="analysis/performance" element={<Performance />} />
+              <Route path="analysis/performance/allocation" element={<ComingSoon />} />
+              <Route path="analysis/performance/calendar" element={<ComingSoon />} />
             </Route>
 
             {/* Catch all redirect */}

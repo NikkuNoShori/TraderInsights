@@ -10,10 +10,11 @@ import {
   ReferenceLine,
   Area,
   ComposedChart,
+  AreaChart,
 } from "recharts";
 import type { Trade } from "@/types/trade";
 import type { TimeframeOption } from "@/components/ui/timeframeSelector";
-import { useMemo } from "@/lib/react";
+import { useMemo, useState, useEffect } from "@/lib/react";
 import {
   format,
   startOfDay,
@@ -29,7 +30,10 @@ import {
 } from "date-fns";
 import { useTimeframeFilteredTrades } from "@/hooks/useTimeframeFilteredTrades";
 import { useThemeStore } from "@/stores/themeStore";
-import { CHART_COLORS, DASHBOARD_CHART_HEIGHT, getRechartsConfig } from "@/config/chartConfig";
+import { useChartStore } from "@/stores/chartStore";
+import { useResponsiveChartSize } from "@/hooks/useResponsiveChartSize";
+import { isSmallerThan } from "@/utils/responsiveUtils";
+import { CHART_COLORS, getRechartsConfig } from "@/config/chartConfig";
 
 interface WinRateChartProps {
   trades: Trade[];
@@ -44,37 +48,77 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
   const data = payload[0].payload;
   const isDarkMode = useThemeStore.getState().isDark;
+  const getTextSize = useChartStore.getState().getTextSize;
+  const tooltipFontSize = getTextSize('tooltip', 'dashboard');
   
   return (
-    <div className={`p-3 rounded-md shadow-lg ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'} border border-border`}>
-      <div className="font-medium">{label}</div>
-      <div className="text-sm mt-1">
-        <span className="font-medium">Win Rate:</span> {formatTooltip(data.winRate)}
+    <div className={`p-2 rounded-md shadow-lg ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'} border border-border`}>
+      <div className="font-medium" style={{ fontSize: `${tooltipFontSize}px` }}>{label}</div>
+      <div className="mt-1" style={{ fontSize: `${tooltipFontSize - 1}px` }}>
+        <span className="font-medium">Win Rate: </span>
+        <span className={data.winRate > 0.5 ? 'text-emerald-500' : 'text-rose-500'}>
+          {formatTooltip(data.winRate)}
+        </span>
       </div>
-      <div className="text-sm">
-        <span className="font-medium">Wins:</span> {data.wins}
-      </div>
-      <div className="text-sm">
-        <span className="font-medium">Losses:</span> {data.losses}
-      </div>
-      <div className="text-sm">
-        <span className="font-medium">Total Trades:</span> {data.total}
+      <div style={{ fontSize: `${tooltipFontSize - 1}px` }}>
+        <span className="font-medium">Trades: </span>
+        {data.totalTrades}
       </div>
     </div>
   );
 };
 
+// Helper function to format dates based on timeframe
+const formatDate = (dateStr: string, timeframe: TimeframeOption) => {
+  const date = new Date(dateStr);
+  switch (timeframe) {
+    case "1D":
+    case "1W":
+      return format(date, "HH:mm");
+    case "1M":
+    case "3M":
+      return format(date, "MMM d");
+    case "6M":
+    case "1Y":
+    case "ALL":
+      return format(date, "MMM yyyy");
+    default:
+      return format(date, "MMM d");
+  }
+};
+
 export function WinRateChart({ 
   trades, 
   timeframe,
-  height = DASHBOARD_CHART_HEIGHT
+  height
 }: WinRateChartProps) {
-  const timeframeFilteredTrades = useTimeframeFilteredTrades(trades, timeframe);
-  const isDarkMode = useThemeStore((state) => state.isDark);
-  const chartConfig = getRechartsConfig(isDarkMode);
+  const filteredTrades = useTimeframeFilteredTrades(trades, timeframe);
+  const { isDark } = useThemeStore();
+  const getChartHeight = useChartStore((state) => state.getChartHeight);
+  const getTextSize = useChartStore((state) => state.getTextSize);
+  const getComponentSpacing = useChartStore((state) => state.getComponentSpacing);
+  
+  // Get spacing from chart store
+  const spacing = getComponentSpacing('dashboard');
+  
+  // Calculate chart height
+  const chartHeight = height || getChartHeight("dashboard");
+  
+  // Track if we're on a small screen
+  const [isSmallScreen, setIsSmallScreen] = useState(() => isSmallerThan('md'));
+  
+  // Update on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setIsSmallScreen(isSmallerThan('md'));
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const chartData = useMemo(() => {
-    if (!timeframeFilteredTrades.length) return [];
+    if (!filteredTrades.length) return [];
 
     const now = new Date();
     let start: Date;
@@ -125,7 +169,7 @@ export function WinRateChart({
         start = startOfMonth(
           new Date(
             Math.min(
-              ...timeframeFilteredTrades.map((t) =>
+              ...filteredTrades.map((t) =>
                 new Date(t.entry_date).getTime(),
               ),
             ),
@@ -157,7 +201,7 @@ export function WinRateChart({
           intervalEnd = endOfDay(intervalStart);
       }
 
-      const periodTrades = timeframeFilteredTrades.filter((trade) => {
+      const periodTrades = filteredTrades.filter((trade) => {
         const tradeDate = new Date(trade.entry_date);
         return tradeDate >= intervalStart && tradeDate < intervalEnd;
       });
@@ -174,11 +218,11 @@ export function WinRateChart({
         total,
       };
     });
-  }, [timeframeFilteredTrades, timeframe]);
+  }, [filteredTrades, timeframe]);
 
-  if (!timeframeFilteredTrades.length) {
+  if (!filteredTrades.length) {
     return (
-      <div className={`w-full h-[${height}px] flex items-center justify-center text-muted-foreground`}>
+      <div className={`w-full h-[${chartHeight}px] flex items-center justify-center text-muted-foreground`}>
         No trade data available for the selected timeframe.
       </div>
     );
@@ -186,7 +230,7 @@ export function WinRateChart({
 
   if (!chartData.length) {
     return (
-      <div className={`w-full h-[${height}px] flex items-center justify-center text-muted-foreground`}>
+      <div className={`w-full h-[${chartHeight}px] flex items-center justify-center text-muted-foreground`}>
         No trades found in the selected time periods.
       </div>
     );
@@ -196,41 +240,43 @@ export function WinRateChart({
   const yAxisDomain = [0, Math.max(1, Math.ceil(maxWinRate * 10) / 10)];
 
   return (
-    <div className="w-full" style={{ height: `${height}px` }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={chartData} margin={chartConfig.margins}>
-          <defs>
-            <linearGradient id="colorWinRate" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={CHART_COLORS.successGradient.start} />
-              <stop offset="95%" stopColor={CHART_COLORS.successGradient.end} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke={chartConfig.gridColor} />
+    <div className="w-full h-full">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-base font-medium">Win Rate</h3>
+      </div>
+      
+      <ResponsiveContainer width="100%" height={chartHeight - 40} className="mt-2">
+        <AreaChart
+          data={chartData}
+          margin={{
+            top: 10,
+            right: 10,
+            left: 0,
+            bottom: 10,
+          }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#333" : "#eee"} />
           <XAxis 
             dataKey="date" 
-            tick={{ fontSize: 12 }}
-            interval="preserveStartEnd"
-            stroke={chartConfig.textColor}
+            tick={{ fontSize: getTextSize('axis', 'dashboard') }}
+            tickMargin={10}
+            tickFormatter={(date) => formatDate(date, timeframe)}
           />
-          <YAxis
-            tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
-            domain={yAxisDomain}
-            tick={{ fontSize: 12 }}
-            stroke={chartConfig.textColor}
+          <YAxis 
+            tickFormatter={formatTooltip}
+            tick={{ fontSize: getTextSize('axis', 'dashboard') }}
+            tickMargin={10}
+            domain={[0, 1]}
           />
           <Tooltip content={<CustomTooltip />} />
-          <Legend />
-          <ReferenceLine y={0.5} stroke={chartConfig.textColor} strokeDasharray="3 3" />
           <Area
-            name="Win Rate"
             type="monotone"
             dataKey="winRate"
-            stroke={CHART_COLORS.success}
+            stroke="#10b981"
+            fill="#10b98133"
             strokeWidth={2}
-            fillOpacity={1}
-            fill="url(#colorWinRate)"
           />
-        </ComposedChart>
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   );

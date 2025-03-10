@@ -14,13 +14,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "react-hot-toast";
-import { Trash2 } from "lucide-react";
+import { Trash2, Plus } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 
 export default function BrokerSettings() {
   const { user } = useAuthStore();
   const { fetchTrades, deleteTrade, trades } = useTradeStore();
   const [isClearing, setIsClearing] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const handleClearBrokerTrades = async (brokerId: string) => {
     setIsClearing(true);
@@ -77,6 +78,28 @@ export default function BrokerSettings() {
     }
   };
 
+  const handleGenerateMockTrades = async () => {
+    setIsGenerating(true);
+    try {
+      // First clear any existing trades to start fresh
+      await handleClearAllTrades();
+      
+      // Generate 20 profitable mock trades
+      await webullService.addMockTrades(20);
+      
+      // Refresh the trades list
+      if (user) {
+        await fetchTrades(user.id);
+      }
+      toast.success("Successfully generated profitable mock trades");
+    } catch (error) {
+      console.error("Failed to generate mock trades:", error);
+      toast.error("Failed to generate mock trades");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto bg-card dark:bg-dark-paper rounded-lg border border-border dark:border-dark-border">
       <div className="divide-y divide-border dark:divide-border">
@@ -91,6 +114,31 @@ export default function BrokerSettings() {
 
         <div className="px-8 py-6">
           <div className="space-y-4">
+            {/* Mock Data Section */}
+            <div className="p-4 border border-border dark:border-dark-border rounded-lg bg-background dark:bg-dark-bg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium text-foreground dark:text-dark-text">
+                    Mock Trading Data
+                  </h3>
+                  <p className="text-sm text-muted-foreground dark:text-dark-muted">
+                    Generate profitable mock trades for testing
+                  </p>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center bg-primary text-primary-foreground hover:bg-primary/90"
+                  disabled={isGenerating}
+                  onClick={handleGenerateMockTrades}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  {isGenerating ? "Generating..." : "Generate Profitable Trades"}
+                </Button>
+              </div>
+            </div>
+
             {/* Webull Section */}
             <div className="p-4 border border-border dark:border-dark-border rounded-lg bg-background dark:bg-dark-bg">
               <div className="flex items-center justify-between">

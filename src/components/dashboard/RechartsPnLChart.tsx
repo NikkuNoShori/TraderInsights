@@ -1,4 +1,4 @@
-import { useMemo } from "@/lib/react";
+import { useMemo, useState, useEffect } from "@/lib/react";
 import {
   LineChart,
   Line,
@@ -15,9 +15,12 @@ import type { Trade } from "@/types/trade";
 import type { TimeframeOption } from "@/components/ui/timeframeSelector";
 import { useTimeframeFilteredTrades } from "@/hooks/useTimeframeFilteredTrades";
 import { useThemeStore } from "@/stores/themeStore";
+import { useChartStore } from "@/stores/chartStore";
+import { useResponsiveChartSize } from "@/hooks/useResponsiveChartSize";
+import { isSmallerThan } from "@/utils/responsiveUtils";
 import { formatCurrency } from "@/utils/formatters";
-import { format, parseISO } from "date-fns";
-import { CHART_COLORS, DASHBOARD_CHART_HEIGHT, getRechartsConfig } from "@/config/chartConfig";
+import { format } from "date-fns";
+import { CHART_COLORS, getRechartsConfig } from "@/config/chartConfig";
 
 interface RechartsPnLChartProps {
   trades: Trade[];
@@ -25,128 +28,181 @@ interface RechartsPnLChartProps {
   height?: number;
 }
 
+// Helper function to format dates based on timeframe
+const formatDate = (dateStr: string, timeframe: TimeframeOption) => {
+  const date = new Date(dateStr);
+  switch (timeframe) {
+    case "1D":
+    case "1W":
+      return format(date, "HH:mm");
+    case "1M":
+    case "3M":
+      return format(date, "MMM d");
+    case "1Y":
+    case "ALL":
+      return format(date, "MMM yyyy");
+    default:
+      return format(date, "MMM d");
+  }
+};
+
 export function RechartsPnLChart({ 
   trades, 
   timeframe,
-  height = DASHBOARD_CHART_HEIGHT
+  height
 }: RechartsPnLChartProps) {
-  const timeframeFilteredTrades = useTimeframeFilteredTrades(trades, timeframe);
-  const isDarkMode = useThemeStore((state) => state.isDark);
-  const chartConfig = getRechartsConfig(isDarkMode);
+  const filteredTrades = useTimeframeFilteredTrades(trades, timeframe);
+  const { isDark } = useThemeStore();
+  const getChartHeight = useChartStore((state) => state.getChartHeight);
+  const getTextSize = useChartStore((state) => state.getTextSize);
+  const getComponentSpacing = useChartStore((state) => state.getComponentSpacing);
+  
+  // Get spacing from chart store
+  const spacing = getComponentSpacing('dashboard');
+  
+  // Calculate chart height
+  const chartHeight = height || getChartHeight("dashboard");
+  
+  // Track if we're on a small screen
+  const [isSmallScreen, setIsSmallScreen] = useState(() => isSmallerThan('md'));
+  
+  // Update on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setIsSmallScreen(isSmallerThan('md'));
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Calculate cumulative P&L for display
-  const cumulativePnL = timeframeFilteredTrades.reduce((sum, trade) => sum + (trade.pnl || 0), 0);
+  const cumulativePnL = filteredTrades.reduce((sum, trade) => sum + (trade.pnl || 0), 0);
   const formattedPnL = formatCurrency(cumulativePnL);
 
   // Prepare chart data
   const chartData = useMemo(() => {
-    if (!timeframeFilteredTrades.length) return [];
+    if (!filteredTrades.length) return [];
 
     // Sort trades by date
-    const sortedTrades = [...timeframeFilteredTrades].sort(
+    const sortedTrades = [...filteredTrades].sort(
       (a, b) => new Date(a.exit_date || a.entry_date).getTime() - new Date(b.exit_date || b.entry_date).getTime()
     );
 
     // Calculate cumulative P&L
     let runningPnL = 0;
     return sortedTrades.map(trade => {
-      const tradePnL = trade.pnl || 0;
-      runningPnL += tradePnL;
-      
+      const pnl = trade.pnl || 0;
+      runningPnL += pnl;
       return {
-        date: format(new Date(trade.exit_date || trade.entry_date), 'MMM dd'),
-        pnl: tradePnL,
+        date: trade.exit_date || trade.entry_date,
+        pnl,
         cumulativePnL: runningPnL,
-        // Include additional data for tooltip
         symbol: trade.symbol,
-        side: trade.side,
-        rawDate: trade.exit_date || trade.entry_date
+        side: trade.side
       };
     });
-  }, [timeframeFilteredTrades]);
+  }, [filteredTrades]);
 
   // Custom tooltip component
   const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className={`p-3 rounded-md shadow-lg ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'} border border-border`}>
-          <p className="font-medium">{format(new Date(data.rawDate), 'MMM dd, yyyy')}</p>
-          <p className="text-sm">
-            <span className="font-medium">Trade P&L:</span> {formatCurrency(data.pnl)}
-          </p>
-          <p className="text-sm">
-            <span className="font-medium">Cumulative P&L:</span> {formatCurrency(data.cumulativePnL)}
-          </p>
-          {data.symbol && (
-            <p className="text-sm">
-              <span className="font-medium">Symbol:</span> {data.symbol}
-            </p>
-          )}
-          {data.side && (
-            <p className="text-sm">
-              <span className="font-medium">Side:</span> {data.side}
-            </p>
-          )}
+    if (!active || !payload || !payload.length) return null;
+    
+    const data = payload[0].payload;
+    const tooltipFontSize = getTextSize('tooltip', 'dashboard');
+    
+    return (
+      <div className="bg-card dark:bg-dark-paper border border-border dark:border-dark-border rounded-lg p-2 shadow-lg">
+        <div className="font-medium" style={{ fontSize: `${tooltipFontSize}px` }}>
+          {format(new Date(data.date), "MMM d, yyyy")}
         </div>
-      );
-    }
-    return null;
+        <div className="mt-1" style={{ fontSize: `${tooltipFontSize - 1}px` }}>
+          <span className="font-medium">Trade P&L: </span>
+          <span className={data.pnl >= 0 ? "text-emerald-500" : "text-rose-500"}>
+            {formatCurrency(data.pnl)}
+          </span>
+        </div>
+        <div style={{ fontSize: `${tooltipFontSize - 1}px` }}>
+          <span className="font-medium">Cumulative P&L: </span>
+          <span className={data.cumulativePnL >= 0 ? "text-emerald-500" : "text-rose-500"}>
+            {formatCurrency(data.cumulativePnL)}
+          </span>
+        </div>
+        <div style={{ fontSize: `${tooltipFontSize - 1}px` }}>
+          <span className="font-medium">Symbol: </span>
+          {data.symbol}
+        </div>
+        <div style={{ fontSize: `${tooltipFontSize - 1}px` }}>
+          <span className="font-medium">Side: </span>
+          {data.side}
+        </div>
+      </div>
+    );
   };
 
-  if (!timeframeFilteredTrades.length) {
+  if (!filteredTrades.length) {
     return (
-      <div className={`w-full h-[${height}px] rounded-lg border border-border bg-card p-4 flex items-center justify-center text-muted-foreground`}>
-        No trade data available for the selected timeframe.
+      <div className="w-full flex items-center justify-center text-muted-foreground" style={{ height: `${chartHeight}px` }}>
+        <span style={{ fontSize: `${getTextSize('title', 'dashboard')}px` }}>No trade data available</span>
       </div>
     );
   }
 
+  // Calculate the height for the chart container
+  const chartContainerHeight = chartHeight;
+
   return (
-    <div className="w-full rounded-lg border border-border bg-card p-4">
-      <div className="mb-2 flex justify-between items-center">
-        <h4 className="text-sm font-medium">Cumulative P&L: {formattedPnL}</h4>
+    <div className="w-full h-full">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-base font-medium">P&L Over Time</h3>
+        <div className="text-sm text-muted-foreground">
+          Cumulative: <span className={cumulativePnL >= 0 ? "text-green-500" : "text-red-500"}>
+            {formatCurrency(cumulativePnL)}
+          </span>
+        </div>
       </div>
-      <div style={{ height: `${height}px` }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={chartData} margin={chartConfig.margins}>
-            <defs>
-              <linearGradient id="colorPnL" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={CHART_COLORS.primaryGradient.start} />
-                <stop offset="95%" stopColor={CHART_COLORS.primaryGradient.end} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke={chartConfig.gridColor} />
-            <XAxis 
-              dataKey="date" 
-              stroke={chartConfig.textColor} 
-              tick={{ fontSize: 12 }}
-            />
-            <YAxis 
-              stroke={chartConfig.textColor} 
-              tickFormatter={formatCurrency}
-              tick={{ fontSize: 12 }}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <ReferenceLine y={0} stroke={chartConfig.textColor} strokeDasharray="3 3" />
-            <Area
-              type="monotone"
-              dataKey="cumulativePnL"
-              stroke={CHART_COLORS.primary}
-              strokeWidth={2}
-              fillOpacity={1}
-              fill="url(#colorPnL)"
-            />
-            <Line
-              type="monotone"
-              dataKey="pnl"
-              stroke={CHART_COLORS.success}
-              strokeWidth={1}
-              dot={{ r: 3 }}
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
-      </div>
+      
+      <ResponsiveContainer width="100%" height={chartHeight - 40} className="mt-2">
+        <ComposedChart
+          data={chartData}
+          margin={{
+            top: 10,
+            right: 10,
+            left: 0,
+            bottom: 10,
+          }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#333" : "#eee"} />
+          <XAxis 
+            dataKey="date" 
+            tick={{ fontSize: getTextSize('axis', 'dashboard') }}
+            tickMargin={10}
+            tickFormatter={(date) => formatDate(date, timeframe)}
+          />
+          <YAxis 
+            tickFormatter={(value) => formatCurrency(value)}
+            tick={{ fontSize: getTextSize('axis', 'dashboard') }}
+            tickMargin={10}
+          />
+          <Tooltip content={<CustomTooltip />} />
+          <Area
+            type="monotone"
+            dataKey="cumulativePnL"
+            stroke="#10b981"
+            fill="#10b98133"
+            strokeWidth={2}
+          />
+          <Line 
+            type="monotone" 
+            dataKey="pnl" 
+            stroke={isDark ? "#60a5fa" : "#3b82f6"} 
+            dot={{ r: 4, fill: isDark ? "#60a5fa" : "#3b82f6", strokeWidth: 0 }}
+            activeDot={{ r: 6, fill: isDark ? "#93c5fd" : "#2563eb" }}
+            name="Trade P&L"
+            strokeWidth={2}
+          />
+        </ComposedChart>
+      </ResponsiveContainer>
     </div>
   );
 } 

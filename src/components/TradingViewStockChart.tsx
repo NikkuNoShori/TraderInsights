@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "@/lib/react";
 import { TradingViewDashboardChart } from "@/components/dashboard/TradingViewDashboardChart";
+import { useChartStore, ChartSection } from "@/stores/chartStore";
 import type { ChartType } from "./ChartTypeSelector";
 import type { OHLC } from "@/types/stock";
-import { DASHBOARD_CHART_HEIGHT } from "@/config/chartConfig";
 
 interface TradingViewStockChartProps {
   data: OHLC[];
@@ -14,6 +14,7 @@ interface TradingViewStockChartProps {
   enablePublishing?: boolean;
   allowSymbolChange?: boolean;
   studies?: string[];
+  section?: ChartSection;
 }
 
 /**
@@ -26,13 +27,17 @@ export function TradingViewStockChart({
   data, 
   type, 
   symbol = "NASDAQ:AAPL",
-  height = DASHBOARD_CHART_HEIGHT,
+  height,
   showToolbar = false,
   showSideToolbar = false,
   enablePublishing = false,
   allowSymbolChange = true,
-  studies = ["Volume@tv-basicstudies"]
+  studies = ["Volume@tv-basicstudies"],
+  section = "dashboard"
 }: TradingViewStockChartProps) {
+  const getChartHeight = useChartStore((state) => state.getChartHeight);
+  const chartHeight = height || getChartHeight(section);
+  
   // Map chart type to TradingView chart style
   const getChartStyle = (): string => {
     switch (type) {
@@ -49,7 +54,7 @@ export function TradingViewStockChart({
 
   if (!data || data.length === 0) {
     return (
-      <div className="w-full flex items-center justify-center text-muted-foreground" style={{ height: `${height}px` }}>
+      <div className="w-full flex items-center justify-center text-muted-foreground" style={{ height: `${chartHeight}px` }}>
         <p className="text-gray-500">No chart data available</p>
       </div>
     );
@@ -61,13 +66,14 @@ export function TradingViewStockChart({
         symbol={symbol}
         chartType="advanced"
         interval="D"
-        height={height}
+        height={chartHeight}
         style={getChartStyle()}
         showToolbar={showToolbar}
         showSideToolbar={showSideToolbar}
         enablePublishing={enablePublishing}
         allowSymbolChange={allowSymbolChange}
         studies={studies}
+        section={section}
       />
     </div>
   );

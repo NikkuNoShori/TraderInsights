@@ -20,6 +20,7 @@ import { clsx } from "clsx";
 import { Tooltip } from "@/components/ui";
 import { useAuthStore } from "@/stores/authStore";
 import { useNavStore } from "@/stores/navStore";
+import { useRouteStore, ROUTES } from "@/stores/routeStore";
 import { Badge } from "@/components/ui";
 
 type NavCategory = {
@@ -27,7 +28,7 @@ type NavCategory = {
   items: {
     label: string;
     icon: typeof LayoutDashboard;
-    href: string;
+    route: keyof typeof ROUTES;
     badge?: string;
     isNew?: boolean;
     isBeta?: boolean;
@@ -42,17 +43,17 @@ const navCategories: NavCategory[] = [
       {
         label: "Dashboard",
         icon: LayoutDashboard,
-        href: "/",
+        route: "dashboard",
       },
       {
         label: "Journal",
         icon: BookOpen,
-        href: "/journal",
+        route: "journal",
       },
       {
         label: "Performance",
         icon: LineChart,
-        href: "/performance",
+        route: "performance",
       },
     ],
   },
@@ -62,13 +63,15 @@ const navCategories: NavCategory[] = [
       {
         label: "Stocks",
         icon: BarChart,
-        href: "/stocks",
+        route: "stocks",
+        isComingSoon: true,
       },
       {
         label: "Market Data",
         icon: TrendingUp,
-        href: "/market",
+        route: "market",
         isNew: true,
+        isComingSoon: true,
       },
     ],
   },
@@ -78,19 +81,19 @@ const navCategories: NavCategory[] = [
       {
         label: "Playbook",
         icon: BookOpen,
-        href: "/playbook",
+        route: "playbook",
         isComingSoon: true,
       },
       {
         label: "Watchlist",
         icon: List,
-        href: "/watchlist",
+        route: "watchlist",
         isComingSoon: true,
       },
       {
         label: "Portfolios",
         icon: Briefcase,
-        href: "/portfolios",
+        route: "portfolios",
         isComingSoon: true,
       },
     ],
@@ -99,6 +102,7 @@ const navCategories: NavCategory[] = [
 
 export function MainNav() {
   const { isCollapsed, toggleCollapsed } = useNavStore();
+  const { getRoute, setCurrentRoute } = useRouteStore();
   const [openCategories, setOpenCategories] = useState<string[]>(() => {
     const saved = localStorage.getItem("nav-open-categories");
     return saved ? JSON.parse(saved) : [];
@@ -110,10 +114,14 @@ export function MainNav() {
   const location = useLocation();
 
   useEffect(() => {
+    setCurrentRoute(location.pathname);
+  }, [location.pathname, setCurrentRoute]);
+
+  useEffect(() => {
     if (!user) {
-      navigate("/auth/login");
+      navigate(getRoute("login"));
     }
-  }, [user, navigate]);
+  }, [user, navigate, getRoute]);
 
   useEffect(() => {
     const handleClickOutside = (event: globalThis.MouseEvent) => {
@@ -236,15 +244,15 @@ export function MainNav() {
                 }}
               >
                 {category.items.map(
-                  ({ label, icon: Icon, href, isComingSoon, isBeta }) => (
+                  ({ label, icon: Icon, route, isComingSoon, isBeta }) => (
                     <Tooltip
-                      key={href}
+                      key={route}
                       content={isCollapsed ? label : null}
                       side="right"
                       delayDuration={0}
                     >
                       <NavLink
-                        to={href}
+                        to={getRoute(route)}
                         className={({ isActive }) =>
                           clsx(
                             "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200",

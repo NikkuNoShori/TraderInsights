@@ -2,23 +2,24 @@ import { NavLink } from "react-router-dom";
 import { TrendingUp, PieChart, Calendar } from "lucide-react";
 import { clsx } from "clsx";
 import { Badge } from "@/components/ui";
+import { useRouteStore, ROUTES } from "@/stores/routeStore";
 
 const reportLinks = [
   {
-    to: "/app/analysis/performance",
+    route: "analysisPerformance",
     label: "Overview",
     icon: TrendingUp,
     description: "Track your trading performance",
   },
   {
-    to: "/app/analysis/performance/allocation",
+    route: "analysisAllocation",
     label: "Allocation",
     icon: PieChart,
     description: "View portfolio allocation",
     isComingSoon: true,
   },
   {
-    to: "/app/analysis/performance/calendar",
+    route: "analysisCalendar",
     label: "Calendar",
     icon: Calendar,
     description: "Trading activity calendar",
@@ -27,14 +28,16 @@ const reportLinks = [
 ];
 
 export function ReportingNav() {
+  const { getRoute } = useRouteStore();
+  
   return (
     <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex space-x-8 -mb-px">
-          {reportLinks.map(({ to, label, icon: Icon, isComingSoon }) => (
+          {reportLinks.map(({ route, label, icon: Icon, isComingSoon }) => (
             <NavLink
-              key={to}
-              to={to}
+              key={route}
+              to={getRoute(route as keyof typeof ROUTES)}
               className={({ isActive }) =>
                 clsx(
                   "group inline-flex items-center px-1 py-4 border-b-2 text-sm font-medium",

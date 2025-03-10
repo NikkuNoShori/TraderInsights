@@ -27,6 +27,7 @@ import {
   CHART_COLORS 
 } from "../charts/ChartComponents";
 import { useTradeCalculations } from "@/hooks/useTradeCalculations";
+import { useChartStore } from "@/stores/chartStore";
 
 interface PerformanceChartsProps {
   trades: (Trade | PortfolioTrade)[];
@@ -35,6 +36,8 @@ interface PerformanceChartsProps {
 
 export function PerformanceCharts({ trades, timeframe }: PerformanceChartsProps) {
   const { normalizedTrades } = useTradeCalculations(trades);
+  const getChartHeight = useChartStore((state) => state.getChartHeight);
+  const performanceChartHeight = getChartHeight("performance");
 
   const processData = useMemo(() => {
     if (!normalizedTrades.length) return [];
@@ -150,10 +153,11 @@ export function PerformanceCharts({ trades, timeframe }: PerformanceChartsProps)
   const yAxisDomain = calculateYAxisDomain(allValues);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
-        <h3 className="text-lg font-medium mb-4">P&L Over Time</h3>
-        <div className="h-[300px]">
+    <div className="space-y-8">
+      {/* Cumulative P&L Chart */}
+      <div className="card p-6">
+        <h3 className="text-lg font-medium mb-4">Cumulative P&L</h3>
+        <div style={{ height: `${performanceChartHeight}px` }}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={processData}>
               <defs>
@@ -203,9 +207,10 @@ export function PerformanceCharts({ trades, timeframe }: PerformanceChartsProps)
         </div>
       </div>
 
-      <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
-        <h3 className="text-lg font-medium mb-4">Drawdown Analysis</h3>
-        <div className="h-[300px]">
+      {/* Drawdown Chart */}
+      <div className="card p-6">
+        <h3 className="text-lg font-medium mb-4">Drawdown</h3>
+        <div style={{ height: `${performanceChartHeight}px` }}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={processData}>
               <defs>

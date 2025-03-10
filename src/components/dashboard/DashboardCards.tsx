@@ -17,7 +17,8 @@ import { MarketOverviewCard } from "./MarketOverviewCard";
 import { StockInfoCard } from "./StockInfoCard";
 import { TechnicalAnalysisCard } from "./TechnicalAnalysisCard";
 import type { TimeframeOption } from "@/components/ui/timeframeSelector";
-import { DASHBOARD_CHART_HEIGHT } from "@/config/chartConfig";
+import { useChartStore } from "@/stores/chartStore";
+import { useResponsiveChartSize } from "@/hooks/useResponsiveChartSize";
 
 interface DashboardCardsProps {
   trades: Trade[];
@@ -84,8 +85,18 @@ export function DashboardCards({ trades, timeframe }: DashboardCardsProps) {
     };
   }, [filteredTrades]);
 
+  // Get the dashboard chart height from our chart store
+  const getChartHeight = useChartStore((state) => state.getChartHeight);
+
+  // Get responsive chart sizing
+  const responsiveHeight = useResponsiveChartSize("dashboard");
+  
+  // Get component spacing from chart store
+  const getComponentSpacing = useChartStore((state) => state.getComponentSpacing);
+  const spacing = getComponentSpacing('dashboard');
+
   const renderEmptyState = () => (
-    <div className="w-full max-w-[1400px] mx-auto space-y-6">
+    <div className={`w-full max-w-[1400px] mx-auto space-y-6`}>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         <StatsCard
           title="P&L"
@@ -119,25 +130,24 @@ export function DashboardCards({ trades, timeframe }: DashboardCardsProps) {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
-          <h3 className="text-lg font-medium mb-4">Win Rate Over Time</h3>
-          <WinRateChart trades={[]} timeframe={timeframe} height={DASHBOARD_CHART_HEIGHT} />
+      <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6`}>
+        <div className={`bg-card dark:bg-dark-paper ${spacing.padding} rounded-lg border border-border dark:border-dark-border`}>
+          <WinRateChart trades={[]} timeframe={timeframe} />
         </div>
-        <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
-          <h3 className="text-lg font-medium mb-4">P&L Over Time</h3>
-          <RechartsPnLChart trades={[]} timeframe={timeframe} height={DASHBOARD_CHART_HEIGHT} />
+        <div className={`bg-card dark:bg-dark-paper ${spacing.padding} rounded-lg border border-border dark:border-dark-border`}>
+          <RechartsPnLChart trades={[]} timeframe={timeframe} />
         </div>
       </div>
 
-      <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
-        <h3 className="text-lg font-medium mb-4">Trade Distribution</h3>
-        <TradeDistributionChart trades={[]} height={DASHBOARD_CHART_HEIGHT} />
+      <div className={`bg-card dark:bg-dark-paper ${spacing.padding} rounded-lg border border-border dark:border-dark-border`}>
+        <TradeDistributionChart trades={[]} />
       </div>
 
-      <MarketOverviewCard />
+      <div className="mt-6">
+        <MarketOverviewCard />
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6`}>
         <StockInfoCard />
         <TechnicalAnalysisCard />
       </div>
@@ -145,7 +155,7 @@ export function DashboardCards({ trades, timeframe }: DashboardCardsProps) {
   );
 
   const renderStats = () => (
-    <div className="w-full max-w-[1400px] mx-auto space-y-6">
+    <div className={`w-full max-w-[1400px] mx-auto space-y-6`}>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         <StatsCard
           title="P&L"
@@ -181,27 +191,21 @@ export function DashboardCards({ trades, timeframe }: DashboardCardsProps) {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
-          <h3 className="text-lg font-medium mb-4">Win Rate Over Time</h3>
-          <WinRateChart trades={filteredTrades} timeframe={timeframe} height={DASHBOARD_CHART_HEIGHT} />
+      <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6`}>
+        <div className={`bg-card dark:bg-dark-paper ${spacing.padding} rounded-lg border border-border dark:border-dark-border`}>
+          <WinRateChart trades={filteredTrades} timeframe={timeframe} />
         </div>
-        <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
-          <h3 className="text-lg font-medium mb-4">P&L Over Time</h3>
-          <RechartsPnLChart trades={filteredTrades} timeframe={timeframe} height={DASHBOARD_CHART_HEIGHT} />
+        <div className={`bg-card dark:bg-dark-paper ${spacing.padding} rounded-lg border border-border dark:border-dark-border`}>
+          <RechartsPnLChart trades={filteredTrades} timeframe={timeframe} />
         </div>
       </div>
 
-      <div className="bg-card dark:bg-dark-paper p-6 rounded-lg border border-border dark:border-dark-border">
-        <h3 className="text-lg font-medium mb-4">Trade Distribution</h3>
-        <TradeDistributionChart trades={filteredTrades} height={DASHBOARD_CHART_HEIGHT} />
+      <div className={`bg-card dark:bg-dark-paper ${spacing.padding} rounded-lg border border-border dark:border-dark-border`}>
+        <TradeDistributionChart trades={filteredTrades} />
       </div>
 
-      <MarketOverviewCard />
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <StockInfoCard />
-        <TechnicalAnalysisCard />
+      <div className="mt-6">
+        <MarketOverviewCard />
       </div>
     </div>
   );

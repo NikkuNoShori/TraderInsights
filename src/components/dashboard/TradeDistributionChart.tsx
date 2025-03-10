@@ -7,11 +7,14 @@ import {
   Legend,
 } from "recharts";
 import type { Trade } from "@/types/trade";
-import { useMemo } from "@/lib/react";
+import { useMemo, useState, useEffect, useRef } from "@/lib/react";
 import { formatCurrency, formatPercent } from "@/utils/formatters";
 import { useFilteredTrades } from "@/hooks/useFilteredTrades";
 import { useThemeStore } from "@/stores/themeStore";
-import { DASHBOARD_CHART_HEIGHT, getRechartsConfig } from "@/config/chartConfig";
+import { useChartStore } from "@/stores/chartStore";
+import { useResponsiveChartSize } from "@/hooks/useResponsiveChartSize";
+import { isSmallerThan } from "@/utils/responsiveUtils";
+import { getRechartsConfig } from "@/config/chartConfig";
 
 interface TradeDistributionChartProps {
   trades: Trade[];
@@ -23,6 +26,7 @@ interface TradeDistributionData {
   value: number;
   pnl: number;
   color: string;
+  percentage: number;
 }
 
 const COLORS = {
@@ -40,11 +44,13 @@ const CustomTooltip = ({ active, payload }: any) => {
 
   const data = payload[0].payload;
   const isDarkMode = useThemeStore.getState().isDark;
+  const getTextSize = useChartStore.getState().getTextSize;
+  const tooltipFontSize = getTextSize('tooltip', 'dashboard');
   
   return (
-    <div className={`p-3 rounded-md shadow-lg ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'} border border-border`}>
-      <div className="font-medium text-base">{data.name}</div>
-      <div className="space-y-1 mt-2 text-sm">
+    <div className={`p-2 rounded-md shadow-lg ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'} border border-border`}>
+      <div className="font-medium text-base" style={{ fontSize: `${tooltipFontSize}px` }}>{data.name}</div>
+      <div className="space-y-1 mt-1" style={{ fontSize: `${tooltipFontSize - 1}px` }}>
         <div>
           <span className="font-medium">Count:</span> {data.value}
         </div>
@@ -54,177 +60,202 @@ const CustomTooltip = ({ active, payload }: any) => {
         <div>
           <span className="font-medium">Percentage:</span> {formatPercent(data.percentage)}
         </div>
-        <div className="text-muted-foreground">
-          <span className="font-medium">Avg P&L per Trade:</span> {formatCurrency(data.pnl / data.value)}
-        </div>
       </div>
     </div>
   );
 };
 
 const CustomLegend = ({ payload }: any) => {
+  if (!payload || !payload.length) return null;
+  
+  const getTextSize = useChartStore.getState().getTextSize;
+  const legendFontSize = getTextSize('legend', 'dashboard');
+  
   return (
-    <div className="flex flex-wrap justify-center gap-4 text-sm mt-4">
-      {payload.map((entry: any, index: number) => (
-        <div key={`legend-${index}`} className="flex items-center gap-2">
-          <div
-            className="w-3 h-3 rounded-full"
-            style={{ backgroundColor: entry.color }}
-          />
-          <span className="font-medium">{entry.value}</span>
-          <span className="text-muted-foreground">
-            ({formatPercent(entry.payload.percentage)})
-          </span>
-        </div>
-      ))}
+    <div className="flex flex-col space-y-1 p-2">
+      <h3 className="text-sm font-medium mb-1" style={{ fontSize: `${legendFontSize + 1}px` }}>Distribution</h3>
+      <div className="grid grid-cols-1 gap-1">
+        {payload.map((entry: any, index: number) => {
+          // Get the original data item from the entry
+          const item = entry.payload || entry;
+          
+          return (
+            <div key={`legend-${index}`} className="flex items-center gap-1">
+              <div
+                className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: item.color || entry.color }}
+              />
+              <span className="font-medium" style={{ fontSize: `${legendFontSize}px` }}>{item.name || entry.value}</span>
+              {item.percentage !== undefined && (
+                <span className="text-muted-foreground" style={{ fontSize: `${legendFontSize - 1}px` }}>
+                  ({formatPercent(item.percentage)})
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };
 
+// Define RADIAN constant
+const RADIAN = Math.PI / 180;
+
 export function TradeDistributionChart({
   trades,
-  height = DASHBOARD_CHART_HEIGHT
+  height
 }: TradeDistributionChartProps) {
   const filteredTrades = useFilteredTrades(trades);
-  const isDarkMode = useThemeStore((state) => state.isDark);
-  const chartConfig = getRechartsConfig(isDarkMode);
+  const { isDark } = useThemeStore();
+  const getChartHeight = useChartStore((state) => state.getChartHeight);
+  const getTextSize = useChartStore((state) => state.getTextSize);
+  const getComponentSpacing = useChartStore((state) => state.getComponentSpacing);
+  
+  const [chartWidth, setChartWidth] = useState(0);
+  const chartRef = useRef<HTMLDivElement>(null);
+  
+  // Get spacing from chart store
+  const spacing = getComponentSpacing('dashboard');
+  
+  // Calculate chart height
+  const chartHeight = height || getChartHeight("dashboard") - 24; // Reduce height to account for spacing
+  
+  // Track if we're on a small screen
+  const [isSmallScreen, setIsSmallScreen] = useState(() => isSmallerThan('md'));
+  
+  // Update on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setIsSmallScreen(isSmallerThan('md'));
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const chartData = useMemo(() => {
     if (!filteredTrades.length) return [];
 
-    // Calculate average P&L for categorization
-    const avgPnL =
-      filteredTrades.reduce((sum, t) => sum + Math.abs(t.pnl || 0), 0) /
-      filteredTrades.length;
+    // Count trades by category
+    const categories = {
+      bigWin: { count: 0, pnl: 0, color: COLORS.bigWin },
+      win: { count: 0, pnl: 0, color: COLORS.win },
+      smallWin: { count: 0, pnl: 0, color: COLORS.smallWin },
+      breakeven: { count: 0, pnl: 0, color: COLORS.breakeven },
+      smallLoss: { count: 0, pnl: 0, color: COLORS.smallLoss },
+      loss: { count: 0, pnl: 0, color: COLORS.loss },
+      bigLoss: { count: 0, pnl: 0, color: COLORS.bigLoss },
+    };
 
     // Categorize trades
-    const categories = filteredTrades.reduce(
-      (acc, trade) => {
-        const pnl = trade.pnl || 0;
+    filteredTrades.forEach(trade => {
+      const pnl = trade.pnl || 0;
+      const absValue = Math.abs(pnl);
 
-        let category;
-        if (pnl > avgPnL * 2) category = "bigWin";
-        else if (pnl > avgPnL) category = "win";
-        else if (pnl > 0) category = "smallWin";
-        else if (pnl === 0) category = "breakeven";
-        else if (pnl > -avgPnL) category = "smallLoss";
-        else if (pnl > -avgPnL * 2) category = "loss";
-        else category = "bigLoss";
-
-        if (!acc[category]) {
-          acc[category] = { count: 0, pnl: 0 };
+      if (pnl > 0) {
+        if (absValue > 1000) {
+          categories.bigWin.count++;
+          categories.bigWin.pnl += pnl;
+        } else if (absValue > 100) {
+          categories.win.count++;
+          categories.win.pnl += pnl;
+        } else {
+          categories.smallWin.count++;
+          categories.smallWin.pnl += pnl;
         }
-        acc[category].count++;
-        acc[category].pnl += pnl;
-        return acc;
-      },
-      {} as Record<string, { count: number; pnl: number }>,
-    );
+      } else if (pnl < 0) {
+        if (absValue > 1000) {
+          categories.bigLoss.count++;
+          categories.bigLoss.pnl += pnl;
+        } else if (absValue > 100) {
+          categories.loss.count++;
+          categories.loss.pnl += pnl;
+        } else {
+          categories.smallLoss.count++;
+          categories.smallLoss.pnl += pnl;
+        }
+      } else {
+        categories.breakeven.count++;
+      }
+    });
 
     // Convert to chart data format
-    const data: TradeDistributionData[] = [
-      {
-        name: "Big Wins (>2x Avg)",
-        value: categories.bigWin?.count || 0,
-        pnl: categories.bigWin?.pnl || 0,
-        color: COLORS.bigWin,
-      },
-      {
-        name: "Wins (1-2x Avg)",
-        value: categories.win?.count || 0,
-        pnl: categories.win?.pnl || 0,
-        color: COLORS.win,
-      },
-      {
-        name: "Small Wins (<1x Avg)",
-        value: categories.smallWin?.count || 0,
-        pnl: categories.smallWin?.pnl || 0,
-        color: COLORS.smallWin,
-      },
-      {
-        name: "Breakeven",
-        value: categories.breakeven?.count || 0,
-        pnl: categories.breakeven?.pnl || 0,
-        color: COLORS.breakeven,
-      },
-      {
-        name: "Small Losses (<1x Avg)",
-        value: categories.smallLoss?.count || 0,
-        pnl: categories.smallLoss?.pnl || 0,
-        color: COLORS.smallLoss,
-      },
-      {
-        name: "Losses (1-2x Avg)",
-        value: categories.loss?.count || 0,
-        pnl: categories.loss?.pnl || 0,
-        color: COLORS.loss,
-      },
-      {
-        name: "Big Losses (>2x Avg)",
-        value: categories.bigLoss?.count || 0,
-        pnl: categories.bigLoss?.pnl || 0,
-        color: COLORS.bigLoss,
-      },
-    ].filter((d) => d.value > 0);
+    const total = filteredTrades.length;
+    const result: TradeDistributionData[] = [
+      { name: "Big Win", value: categories.bigWin.count, pnl: categories.bigWin.pnl, color: COLORS.bigWin, percentage: categories.bigWin.count / total },
+      { name: "Win", value: categories.win.count, pnl: categories.win.pnl, color: COLORS.win, percentage: categories.win.count / total },
+      { name: "Small Win", value: categories.smallWin.count, pnl: categories.smallWin.pnl, color: COLORS.smallWin, percentage: categories.smallWin.count / total },
+      { name: "Breakeven", value: categories.breakeven.count, pnl: categories.breakeven.pnl, color: COLORS.breakeven, percentage: categories.breakeven.count / total },
+      { name: "Small Loss", value: categories.smallLoss.count, pnl: categories.smallLoss.pnl, color: COLORS.smallLoss, percentage: categories.smallLoss.count / total },
+      { name: "Loss", value: categories.loss.count, pnl: categories.loss.pnl, color: COLORS.loss, percentage: categories.loss.count / total },
+      { name: "Big Loss", value: categories.bigLoss.count, pnl: categories.bigLoss.pnl, color: COLORS.bigLoss, percentage: categories.bigLoss.count / total },
+    ];
 
-    // Calculate percentages
-    const total = data.reduce((sum, d) => sum + d.value, 0);
-    return data.map((d) => ({
-      ...d,
-      percentage: d.value / total,
-    }));
+    // Filter out categories with no trades
+    return result.filter(item => item.value > 0);
   }, [filteredTrades]);
+
+  // Custom label renderer for pie chart
+  const renderCustomizedLabel = (props: any) => {
+    const { cx, cy, midAngle, innerRadius, outerRadius, percent } = props;
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    
+    if (percent < 0.05) return null; // Don't show labels for small segments
+    
+    return (
+      <text 
+        x={x} 
+        y={y} 
+        fill={isDark ? "#fff" : "#000"}
+        textAnchor="middle" 
+        dominantBaseline="central"
+        fontSize={getTextSize('tooltip', 'dashboard')}
+      >
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
 
   if (!filteredTrades.length) {
     return (
-      <div className={`w-full h-[${height}px] flex items-center justify-center text-muted-foreground`}>
-        No trade data available for the selected timeframe.
+      <div className="w-full flex items-center justify-center text-muted-foreground" style={{ height: `${chartHeight}px` }}>
+        <span style={{ fontSize: `${getTextSize('title', 'dashboard')}px` }}>No trade data available</span>
       </div>
     );
   }
-
-  if (!chartData.length) {
-    return (
-      <div className={`w-full h-[${height}px] flex items-center justify-center text-muted-foreground`}>
-        No trades found in the selected time periods.
-      </div>
-    );
-  }
-
+  
   return (
-    <div className="w-full" style={{ height: `${height}px` }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
+    <div ref={chartRef} className="w-full h-full">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-base font-medium">Distribution</h3>
+      </div>
+      
+      <ResponsiveContainer width="100%" height={chartHeight} className="mt-2">
+        <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
           <Pie
             data={chartData}
-            dataKey="value"
-            nameKey="name"
             cx="50%"
             cy="50%"
-            innerRadius="45%"
-            outerRadius="80%"
-            paddingAngle={3}
-            animationDuration={500}
-            animationBegin={0}
+            labelLine={false}
+            label={renderCustomizedLabel}
+            outerRadius={chartHeight / 2.5}
+            fill="#8884d8"
+            dataKey="value"
           >
             {chartData.map((entry, index) => (
-              <Cell
-                key={`cell-${index}`}
-                fill={entry.color}
-                stroke={chartConfig.gridColor}
-                strokeWidth={1}
-                className="hover:opacity-80 transition-opacity duration-200"
-              />
+              <Cell key={`cell-${index}`} fill={entry.color} />
             ))}
           </Pie>
-          <Tooltip
-            content={<CustomTooltip />}
-            wrapperStyle={{ outline: "none" }}
-          />
+          <Tooltip content={<CustomTooltip />} />
           <Legend
             content={<CustomLegend />}
+            layout="horizontal"
             verticalAlign="bottom"
-            height={72}
+            align="center"
+            wrapperStyle={{ paddingTop: '16px' }}
           />
         </PieChart>
       </ResponsiveContainer>

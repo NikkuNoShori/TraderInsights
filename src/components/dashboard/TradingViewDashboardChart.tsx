@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "@/lib/react";
 import { useThemeStore } from "@/stores/themeStore";
+import { useChartStore, ChartSection } from "@/stores/chartStore";
 import { DASHBOARD_CHART_HEIGHT, getTradingViewConfig } from "@/config/chartConfig";
 
 interface TradingViewDashboardChartProps {
@@ -14,6 +15,7 @@ interface TradingViewDashboardChartProps {
   studies?: string[];
   style?: string;
   className?: string;
+  section?: ChartSection;
 }
 
 /**
@@ -26,23 +28,28 @@ export function TradingViewDashboardChart({
   symbol,
   chartType = 'advanced',
   interval = "D",
-  height = DASHBOARD_CHART_HEIGHT,
+  height,
   showToolbar,
   showSideToolbar,
   enablePublishing = false,
   allowSymbolChange = true,
   studies = ["Volume@tv-basicstudies"],
   style = "1", // Default to candlestick
-  className = ""
+  className = "",
+  section = "dashboard"
 }: TradingViewDashboardChartProps) {
   const isDarkMode = useThemeStore((state) => state.isDark);
+  const getChartHeight = useChartStore((state) => state.getChartHeight);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [chartId] = useState(`tradingview_dashboard_${Math.random().toString(36).substring(2, 9)}`);
   const widgetRef = useRef<any>(null);
   
   // Get standardized chart configuration
-  const tvConfig = getTradingViewConfig(isDarkMode);
+  const tvConfig = getTradingViewConfig(isDarkMode, section);
+  
+  // Use provided height or get from chart store
+  const chartHeight = height || getChartHeight(section);
   
   // Use provided values or defaults from config
   const finalShowToolbar = showToolbar !== undefined ? showToolbar : tvConfig.showToolbar;
@@ -218,13 +225,13 @@ export function TradingViewDashboardChart({
         }
       }
     };
-  }, [isVisible, symbol, interval, isDarkMode, chartType, chartId, finalShowToolbar, finalShowSideToolbar, enablePublishing, allowSymbolChange, studies, style, tvConfig]);
+  }, [isVisible, symbol, interval, isDarkMode, chartType, chartId, finalShowToolbar, finalShowSideToolbar, enablePublishing, allowSymbolChange, studies, style, tvConfig, chartHeight]);
 
   return (
     <div 
       ref={containerRef}
       id={chartId}
-      style={{ width: '100%', height: `${height}px` }} 
+      style={{ width: '100%', height: `${chartHeight}px` }} 
       className={`bg-card rounded-lg border border-border ${className}`}
     />
   );

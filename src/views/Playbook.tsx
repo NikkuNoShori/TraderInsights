@@ -2,9 +2,11 @@ import { useNavigate } from "react-router-dom";
 import { LineChart, TrendingUp, BookOpen, GraduationCap, Clock, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui";
+import { useRouteStore } from "@/stores/routeStore";
 
 export default function Playbook() {
   const navigate = useNavigate();
+  const { getRoute } = useRouteStore();
 
   const features = [
     {
@@ -33,7 +35,7 @@ export default function Playbook() {
     <div className="flex-grow p-6 bg-background">
       {/* Back Button */}
       <Button
-        onClick={() => navigate("/app/dashboard")}
+        onClick={() => navigate(getRoute("dashboard"))}
         variant="ghost"
         className="mb-6 -ml-2 text-muted hover:text-default"
       >

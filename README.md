@@ -78,6 +78,22 @@ All charts use a unified configuration system defined in `src/config/chartConfig
 - Standardized color schemes
 - Shared configuration across different chart types
 
+### Chart Size Standardization
+
+Each section of the application has its own standardized chart sizes:
+
+- **Dashboard**: Optimized for at-a-glance metrics and compact visualizations
+- **Journal**: Sized for detailed trade analysis and reflection
+- **Performance**: Larger charts for comprehensive performance analysis
+- **Account**: Balanced sizes for account overview and management
+
+The chart size standardization is implemented through a Zustand store (`src/stores/chartStore.ts`) that provides:
+- Section-specific chart sizes
+- Consistent API for accessing chart heights
+- Customization options for user preferences
+
+For detailed documentation on chart standardization, see [Chart Standardization](src/docs/CHART_STANDARDIZATION.md).
+
 ## Environment Setup
 
 1. Clone the repository
