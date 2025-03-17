@@ -63,7 +63,9 @@ A comprehensive trading analytics platform for traders to track performance, ana
 ### Integrations
 - **Market Data**: Polygon.io for real-time and historical market data
 - **Alternative Data**: Alpha Vantage for additional financial data
-- **Broker Integration**: WebUll API for trade data import
+- **Broker Integration**: 
+  - SnapTrade API for secure broker connections (primary)
+  - WebUll API for legacy trade data import (deprecated)
 
 ## Unified Chart System
 
@@ -93,6 +95,9 @@ All charts use a unified configuration system defined in `src/config/chartConfig
 - `VITE_POLYGON_API_KEY`: Your Polygon.io API key for market data
 - `VITE_SUPABASE_URL`: Your Supabase project URL
 - `VITE_SUPABASE_ANON_KEY`: Your Supabase anonymous key
+- `NEXT_PUBLIC_SNAPTRADE_CLIENT_ID`: Your SnapTrade Client ID
+- `NEXT_PUBLIC_SNAPTRADE_CONSUMER_KEY`: Your SnapTrade Consumer Key
+- `NEXT_PUBLIC_SNAPTRADE_REDIRECT_URI`: Your SnapTrade redirect URI
 - Other environment variables as listed in `.env.example`
 
 ## Development
@@ -141,12 +146,57 @@ Used for additional financial data including:
 - Economic indicators
 - Alternative data sets
 
-### WebUll Integration
+### SnapTrade Integration (Primary)
 
-Integration with WebUll for:
-- Importing trade history
-- Analyzing trade performance
-- Syncing portfolio data
+The application uses SnapTrade as the primary broker integration, providing a secure and reliable way to access trading data from multiple brokerages including WebUll, Alpaca, Interactive Brokers, and more.
+
+#### Features
+
+- **OAuth Authentication**: Secure authentication without storing user credentials
+- **Multiple Broker Support**: Connect to multiple brokerages through a single integration
+- **Account Information**: Retrieve account balances, holdings, and orders
+- **Secure Token Storage**: Securely store user tokens in both browser and Node.js environments
+- **TypeScript Support**: Full TypeScript support with type definitions
+
+#### Documentation
+
+- [SnapTrade Integration Guide](src/lib/snaptrade/README.md)
+- [Migration Guide](src/lib/snaptrade/MIGRATION_GUIDE.md)
+- [Security Assessment](src/lib/snaptrade/SECURITY_ASSESSMENT.md)
+
+#### Setup
+
+To use the SnapTrade integration:
+
+1. Sign up for a SnapTrade account at [https://snaptrade.com](https://snaptrade.com)
+2. Create an application and get your Client ID and Consumer Key
+3. Set the following environment variables:
+   ```
+   NEXT_PUBLIC_SNAPTRADE_CLIENT_ID=your_client_id
+   NEXT_PUBLIC_SNAPTRADE_CONSUMER_KEY=your_consumer_key
+   NEXT_PUBLIC_SNAPTRADE_REDIRECT_URI=http://localhost:3000/snaptrade-callback
+   ```
+
+### WebUll Integration (Deprecated)
+
+> **Note**: The WebUll integration is now deprecated in favor of the SnapTrade integration, which provides a more secure and reliable way to access WebUll data. See the [Migration Guide](src/lib/snaptrade/MIGRATION_GUIDE.md) for details on migrating from WebUll to SnapTrade.
+
+The legacy WebUll integration provides a direct interface to the WebUll trading platform, allowing users to:
+
+- **Authentication**: Log in to WebUll accounts with support for MFA
+- **Trade Synchronization**: Import trade history from WebUll accounts
+- **Portfolio Analysis**: View and analyze current positions and account information
+- **Cross-Environment Support**: Works in both browser and Node.js environments
+- **Mock Mode**: Generate mock data for development and testing
+
+For detailed documentation, see:
+- [Quick Start Guide](src/lib/webull/QUICKSTART.md)
+- [WebUll Integration Guide](src/lib/webull/README.md)
+- [Technical Documentation](src/lib/webull/TECHNICAL.md)
+- [Troubleshooting Guide](src/lib/webull/TROUBLESHOOTING.md)
+- [Integration Summary](src/lib/webull/SUMMARY.md)
+- [Data Reference](src/lib/webull/WEBULL_DATA_REFERENCE.md)
+- [Security Assessment](src/lib/webull/SECURITY_ASSESSMENT.md)
 
 ## Contributing
 
