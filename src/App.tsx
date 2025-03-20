@@ -39,6 +39,14 @@ export default function App() {
   return (
     <AppProvider>
       <StoreProvider>
+        {/* 
+          Application Routing Configuration
+          This is the single source of truth for all application routes.
+          Routes are organized into three main sections:
+          1. Public routes - Accessible without authentication
+          2. Auth routes - For authentication-related views
+          3. Protected routes - Requires authentication, all prefixed with '/app'
+        */}
         <Router
           future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
         >

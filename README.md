@@ -154,6 +154,17 @@ Integration with WebUll for:
 2. Create a feature branch
 3. Submit a pull request
 
+## Documentation
+
+The project contains several documentation files to help developers understand the architecture and patterns:
+
+- `src/docs/ARCHITECTURE.md`: Overall application architecture
+- `src/docs/STATE_MANAGEMENT.md`: State management approach with Zustand
+- `src/docs/ROUTING.md`: Routing architecture and path conventions
+- `.cursorrules`: Project code conventions and rules
+
+Please refer to these documents when contributing to maintain consistency throughout the codebase.
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details. 

@@ -42,17 +42,17 @@ const navCategories: NavCategory[] = [
       {
         label: "Dashboard",
         icon: LayoutDashboard,
-        href: "/",
+        href: "/app/dashboard",
       },
       {
         label: "Journal",
         icon: BookOpen,
-        href: "/journal",
+        href: "/app/journal",
       },
       {
         label: "Performance",
         icon: LineChart,
-        href: "/performance",
+        href: "/app/performance",
       },
     ],
   },
@@ -62,12 +62,12 @@ const navCategories: NavCategory[] = [
       {
         label: "Stocks",
         icon: BarChart,
-        href: "/stocks",
+        href: "/app/stocks",
       },
       {
         label: "Market Data",
         icon: TrendingUp,
-        href: "/market",
+        href: "/app/market",
         isNew: true,
       },
     ],
@@ -78,19 +78,19 @@ const navCategories: NavCategory[] = [
       {
         label: "Playbook",
         icon: BookOpen,
-        href: "/playbook",
+        href: "/app/playbook",
         isComingSoon: true,
       },
       {
         label: "Watchlist",
         icon: List,
-        href: "/watchlist",
+        href: "/app/watchlist",
         isComingSoon: true,
       },
       {
         label: "Portfolios",
         icon: Briefcase,
-        href: "/portfolios",
+        href: "/app/portfolios",
         isComingSoon: true,
       },
     ],
