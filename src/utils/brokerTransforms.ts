@@ -1,4 +1,5 @@
 import type { Trade } from "@/types/trade";
+import type { BrokerType } from "@/types/broker";
 
 // Common date/time parsing utility
 export function parseDateTime(
@@ -202,20 +203,18 @@ export function transformWebullTrade(
 }
 
 // Export a unified transform function that handles any broker
-export function transformBrokerTrade(
-  trade: any,
-  broker: string,
-): Omit<Trade, "id" | "user_id" | "created_at" | "updated_at"> {
-  switch (broker.toLowerCase()) {
-    case "schwab":
+export function transformTrade(trade: any, broker: BrokerType): Trade {
+  switch (broker) {
+    case "charlesschwab":
       return transformSchwabTrade(trade);
-    case "td":
+    case "tdameritrade":
       return transformTDAmeritradeTrade(trade);
     case "ibkr":
       return transformIBKRTrade(trade);
     case "webull":
-      return transformWebullTrade(trade);
+      // Webull trades now come through SnapTrade in IBKR format
+      return transformIBKRTrade(trade);
     default:
-      throw new Error(`Unsupported broker: ${broker}`);
+      throw new Error(`Unsupported broker type: ${broker}`);
   }
 }

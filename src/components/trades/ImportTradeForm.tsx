@@ -11,7 +11,7 @@ import {
 import type { Trade } from "@/types/trade";
 import { processTradeFile } from "@/lib/services/fileProcessing";
 import { toast } from "react-hot-toast";
-import { transformBrokerTrade } from "@/utils/brokerTransforms";
+import { transformTrade } from "@/utils/brokerTransforms";
 
 interface ImportTradeFormProps {
   onClose: () => void;
@@ -46,7 +46,7 @@ export function ImportTradeForm({
 
       // Transform trades based on the selected broker
       const processedTrades = result.trades.map((trade) => {
-        const transformedTrade = transformBrokerTrade(trade, selectedBroker);
+        const transformedTrade = transformTrade(trade, selectedBroker as any);
         return {
           ...transformedTrade,
           user_id: user.id,
@@ -84,9 +84,10 @@ export function ImportTradeForm({
           </SelectTrigger>
           <SelectContent className="bg-card border-border">
             <SelectItem value="webull">Webull</SelectItem>
-            <SelectItem value="schwab">Charles Schwab</SelectItem>
-            <SelectItem value="td">TD Ameritrade</SelectItem>
+            <SelectItem value="charlesschwab">Charles Schwab</SelectItem>
+            <SelectItem value="tdameritrade">TD Ameritrade</SelectItem>
             <SelectItem value="ibkr">Interactive Brokers</SelectItem>
+            <SelectItem value="other">Other</SelectItem>
           </SelectContent>
         </Select>
       </div>

@@ -42,17 +42,17 @@ const navCategories: NavCategory[] = [
       {
         label: "Dashboard",
         icon: LayoutDashboard,
-        href: "/",
+        href: "/app/dashboard",
       },
       {
         label: "Journal",
         icon: BookOpen,
-        href: "/journal",
+        href: "/app/journal",
       },
       {
         label: "Performance",
         icon: LineChart,
-        href: "/performance",
+        href: "/app/performance",
       },
     ],
   },
@@ -62,12 +62,12 @@ const navCategories: NavCategory[] = [
       {
         label: "Stocks",
         icon: BarChart,
-        href: "/stocks",
+        href: "/app/stocks",
       },
       {
         label: "Market Data",
         icon: TrendingUp,
-        href: "/market",
+        href: "/app/market",
         isNew: true,
       },
     ],
@@ -78,19 +78,19 @@ const navCategories: NavCategory[] = [
       {
         label: "Playbook",
         icon: BookOpen,
-        href: "/playbook",
+        href: "/app/playbook",
         isComingSoon: true,
       },
       {
         label: "Watchlist",
         icon: List,
-        href: "/watchlist",
+        href: "/app/watchlist",
         isComingSoon: true,
       },
       {
         label: "Portfolios",
         icon: Briefcase,
-        href: "/portfolios",
+        href: "/app/portfolios",
         isComingSoon: true,
       },
     ],
@@ -362,7 +362,7 @@ export function MainNav() {
                 ease: [0.4, 0, 0.2, 1],
               }}
               className={clsx(
-                "absolute bottom-full mb-2 w-full",
+                "absolute bottom-[calc(100%+8px)] w-full",
                 "bg-card dark:bg-dark-paper rounded-lg",
                 "border border-border dark:border-dark-border",
                 "shadow-lg shadow-black/10 dark:shadow-black/20",
@@ -430,9 +430,9 @@ export function MainNav() {
 
       <div
         className={clsx(
-          "fixed top-1/2 transform -translate-y-1/2",
+          "fixed top-1/2 -translate-y-1/2",
           isCollapsed ? "left-[68px]" : "left-[238px]",
-          "transition-all duration-300 ease-in-out",
+          "transition-all duration-300 ease-in-out z-50",
         )}
       >
         <button
@@ -442,7 +442,7 @@ export function MainNav() {
             "flex items-center justify-center",
             "bg-background text-muted-foreground hover:text-foreground",
             "transition-colors duration-200",
-            "shadow-sm hover:shadow-md z-50",
+            "shadow-sm hover:shadow-md",
           )}
         >
           {isCollapsed ? (
