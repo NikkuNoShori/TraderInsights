@@ -1,4 +1,3 @@
-import { transformWebullTrade } from "./webullTransforms";
 import type { Trade } from "@/types/trade";
 
 // Common date/time parsing utility
@@ -167,20 +166,55 @@ export function transformIBKRTrade(
   };
 }
 
+// Webull date format: YYYY-MM-DD HH:mm:ss
+export function transformWebullTrade(
+  webullTrade: any,
+): Omit<Trade, "id" | "user_id" | "created_at" | "updated_at"> {
+  // Webull provides dates in YYYY-MM-DD HH:mm:ss format
+  const entryDateTime = parseDateTime(webullTrade.DateTime);
+  const exitDateTime = webullTrade.ClosingDateTime
+    ? parseDateTime(webullTrade.ClosingDateTime)
+    : undefined;
+
+  return {
+    date: entryDateTime.date,
+    time: entryDateTime.time,
+    timestamp: entryDateTime.timestamp,
+    symbol: webullTrade.Symbol,
+    type: "stock",
+    side: webullTrade.Side.toLowerCase().includes("buy") ? "Long" : "Short",
+    direction: webullTrade.Side.toLowerCase().includes("buy") ? "Long" : "Short",
+    quantity: Number(webullTrade.Quantity),
+    price: Number(webullTrade.Price),
+    total: Number(webullTrade.Quantity) * Number(webullTrade.Price),
+    entry_date: entryDateTime.date,
+    entry_time: entryDateTime.time,
+    entry_timestamp: entryDateTime.timestamp,
+    entry_price: Number(webullTrade.Price),
+    exit_date: exitDateTime?.date,
+    exit_time: exitDateTime?.time,
+    exit_timestamp: exitDateTime?.timestamp,
+    exit_price: exitDateTime ? Number(webullTrade.ClosingPrice) : undefined,
+    status: exitDateTime ? "closed" : "open",
+    notes: `Imported from Webull`,
+    fees: Number(webullTrade.Commission || 0) + Number(webullTrade.Fees || 0),
+  };
+}
+
 // Export a unified transform function that handles any broker
 export function transformBrokerTrade(
   trade: any,
   broker: string,
 ): Omit<Trade, "id" | "user_id" | "created_at" | "updated_at"> {
   switch (broker.toLowerCase()) {
-    case "webull":
-      return transformWebullTrade(trade);
     case "schwab":
       return transformSchwabTrade(trade);
     case "td":
       return transformTDAmeritradeTrade(trade);
     case "ibkr":
       return transformIBKRTrade(trade);
+    case "webull":
+      return transformWebullTrade(trade);
     default:
       throw new Error(`Unsupported broker: ${broker}`);
   }
