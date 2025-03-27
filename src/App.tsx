@@ -64,7 +64,9 @@ export default function App() {
               <Route path="settings/*" element={<Settings />} />
 
               {/* Coming Soon Features */}
-              <Route path="playbook" element={<Playbook />} />
+              <Route path="playbook" element={<ComingSoon />} />
+              <Route path="stocks" element={<ComingSoon />} />
+              <Route path="market" element={<ComingSoon />} />
               <Route path="watchlist" element={<ComingSoon />} />
               <Route path="portfolios" element={<ComingSoon />} />
             </Route>

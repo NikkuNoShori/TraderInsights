@@ -8,7 +8,7 @@ This directory contains technical documentation for the TraderInsights applicati
 
    - [Migration Guide](./MIGRATION.md) - Comprehensive guide for architectural improvements and migration steps ✅
    - [Chart System](./CHART_SYSTEM.md) - Documentation for the unified chart configuration and dual charting approach ✅
-   - [WebUll Integration](./WEBULL_INTEGRATION.md) - Guide for WebUll API integration ✅
+   - [SnapTrade Integration](./SNAPTRADE_INTEGRATION.md) - Progress tracking and implementation guide for SnapTrade API integration ⏳
    - [State Management](./STATE_MANAGEMENT.md) - Documentation for state management patterns ✅
    - [Error Handling](./ERROR_HANDLING.md) - Error handling patterns and implementation ✅
 

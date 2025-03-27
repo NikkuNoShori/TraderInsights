@@ -5,6 +5,7 @@
 
 import { createSnapTradeClient } from '@/lib/snaptrade/client';
 import { StorageHelpers, STORAGE_KEYS } from '@/lib/snaptrade/storage';
+import { RateLimiter } from '@/lib/snaptrade/rateLimiter';
 import { 
   SnapTradeConfig, 
   SnapTradeUser, 
@@ -15,6 +16,15 @@ import {
   SnapTradeOrder 
 } from '@/lib/snaptrade/types';
 
+class RateLimitError extends Error {
+  constructor(resetAt: number) {
+    super('Rate limit exceeded');
+    this.name = 'RateLimitError';
+    this.resetAt = resetAt;
+  }
+  resetAt: number;
+}
+
 /**
  * SnapTrade service singleton
  */
@@ -23,9 +33,11 @@ class SnapTradeServiceSingleton {
   private client: ReturnType<typeof createSnapTradeClient> | null = null;
   private config: SnapTradeConfig | null = null;
   private initialized = false;
+  private rateLimiter: RateLimiter;
 
   private constructor() {
     // Private constructor to enforce singleton pattern
+    this.rateLimiter = RateLimiter.getInstance();
   }
 
   /**
@@ -50,7 +62,7 @@ class SnapTradeServiceSingleton {
 
     try {
       this.config = config;
-      this.client = createSnapTradeClient(config.clientId, config.consumerKey);
+      this.client = createSnapTradeClient(config);
       this.initialized = true;
       console.log('SnapTrade service initialized successfully');
     } catch (error) {
@@ -65,6 +77,16 @@ class SnapTradeServiceSingleton {
   private ensureInitialized(): void {
     if (!this.initialized || !this.client) {
       throw new Error('SnapTrade service not initialized. Call init() first.');
+    }
+  }
+
+  /**
+   * Check rate limit and throw error if exceeded
+   */
+  private checkRateLimit(userId: string): void {
+    const { allowed, resetAt } = this.rateLimiter.checkRateLimit(userId);
+    if (!allowed) {
+      throw new RateLimitError(resetAt);
     }
   }
 
@@ -100,9 +122,9 @@ class SnapTradeServiceSingleton {
   }
 
   /**
-   * Get the current user
+   * Get user from storage
    */
-  public getUser(): SnapTradeUser | null {
+  private getUser(): SnapTradeUser | null {
     return StorageHelpers.getUser();
   }
 
@@ -140,11 +162,18 @@ class SnapTradeServiceSingleton {
     this.ensureInitialized();
 
     try {
+      const user = this.getUser();
+      if (!user) {
+        throw new Error('No user registered');
+      }
+
+      this.checkRateLimit(user.userId);
       const brokerages = await this.client!.getBrokerages();
+      this.rateLimiter.incrementRequestCount(user.userId);
       return brokerages;
     } catch (error) {
       console.error('Failed to get brokerages:', error);
-      throw new Error(`Failed to get brokerages: ${error instanceof Error ? error.message : String(error)}`);
+      throw error;
     }
   }
 
@@ -166,18 +195,20 @@ class SnapTradeServiceSingleton {
       if (!redirectUri) {
         throw new Error('Redirect URI not configured');
       }
-      
+
+      this.checkRateLimit(user.userId);
       const connectionUrl = await this.client!.createConnectionLink(
         user.userId,
         user.userSecret,
         brokerageId,
         redirectUri
       );
+      this.rateLimiter.incrementRequestCount(user.userId);
       
       return connectionUrl;
     } catch (error) {
       console.error('Failed to create connection link:', error);
-      throw new Error(`Failed to create connection link: ${error instanceof Error ? error.message : String(error)}`);
+      throw error;
     }
   }
 
@@ -269,13 +300,14 @@ class SnapTradeServiceSingleton {
       if (!user) {
         throw new Error('No user registered');
       }
-      
+
+      this.checkRateLimit(user.userId);
       const holdings = await this.client!.getAccountHoldings(user.userId, user.userSecret, accountId);
-      StorageHelpers.savePositions(accountId, holdings);
+      this.rateLimiter.incrementRequestCount(user.userId);
       return holdings;
     } catch (error) {
       console.error('Failed to get account holdings:', error);
-      throw new Error(`Failed to get account holdings: ${error instanceof Error ? error.message : String(error)}`);
+      throw error;
     }
   }
 
@@ -313,13 +345,14 @@ class SnapTradeServiceSingleton {
       if (!user) {
         throw new Error('No user registered');
       }
-      
+
+      this.checkRateLimit(user.userId);
       const orders = await this.client!.getAccountOrders(user.userId, user.userSecret, accountId);
-      StorageHelpers.saveOrders(accountId, orders);
+      this.rateLimiter.incrementRequestCount(user.userId);
       return orders;
     } catch (error) {
       console.error('Failed to get account orders:', error);
-      throw new Error(`Failed to get account orders: ${error instanceof Error ? error.message : String(error)}`);
+      throw error;
     }
   }
 
@@ -345,6 +378,21 @@ class SnapTradeServiceSingleton {
    */
   public clearAllData(): void {
     StorageHelpers.clearAllData();
+  }
+
+  /**
+   * Get rate limit info for current user
+   */
+  public getRateLimitInfo(): { remaining: number; timeUntilReset: number } | null {
+    const user = this.getUser();
+    if (!user) {
+      return null;
+    }
+
+    return {
+      remaining: this.rateLimiter.getRemainingRequests(user.userId),
+      timeUntilReset: this.rateLimiter.getTimeUntilReset(user.userId),
+    };
   }
 }
 

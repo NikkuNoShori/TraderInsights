@@ -8,7 +8,7 @@ TraderInsights integrates with multiple external APIs to provide market data, tr
 
 1. **Polygon.io**: Primary source for market data
 2. **Alpha Vantage**: Secondary source for financial data and analytics
-3. **WebUll**: Integration for trade data import
+3. **SnapTrade**: Integration for trade data import and broker connections
 4. **Supabase**: Backend database and authentication
 
 ## Polygon.io Integration
@@ -438,102 +438,83 @@ export const fetchAlphaVantageWithRateLimit = async (url: string) => {
 };
 ```
 
-## WebUll Integration
+## SnapTrade Integration
 
 ### Overview
 
-WebUll integration is used for importing trade data and analyzing trade performance. See the [WebUll Integration](./WEBULL_INTEGRATION.md) document for detailed information.
+SnapTrade integration is used for importing trade data and connecting to multiple brokerages. See the [SnapTrade Integration](./SNAPTRADE_INTEGRATION.md) document for detailed information.
 
 ### Key Features
 
+- Multi-broker support through OAuth
 - Trade history import
 - Position data import
 - Order data import
 - Performance analysis
+- Rate limiting and quota management
 
 ### Data Models
 
 ```typescript
-// src/types/webull.ts
+// src/types/snaptrade.ts
 
-export interface WebullTrade {
-  orderId: string;
-  symbol: string;
-  quantity: number;
-  price: number;
-  orderType: string;
+interface SnapTradeAccount {
+  id: string;
+  name: string;
+  type: string;
+  institution: string;
   status: string;
-  timestamp: string;
-  side: "BUY" | "SELL";
-  filledQuantity: number;
-  filledPrice: number;
-  commission: number;
-  exchange: string;
+  balances: SnapTradeBalance[];
+  holdings: SnapTradeHolding[];
+  orders: SnapTradeOrder[];
 }
 
-export interface WebullPosition {
-  symbol: string;
-  quantity: number;
-  costBasis: number;
+interface SnapTradeBalance {
+  currency: string;
+  cash: number;
   marketValue: number;
-  unrealizedPnL: number;
-  unrealizedPnLPercentage: number;
+  totalValue: number;
+  buyingPower: number;
 }
 
-export interface WebullOrder {
-  orderId: string;
+interface SnapTradeHolding {
   symbol: string;
   quantity: number;
-  price: number;
-  orderType: string;
-  status: string;
-  timestamp: string;
+  averagePrice: number;
+  marketValue: number;
+  unrealizedPnl: number;
+  realizedPnl: number;
+}
+
+interface SnapTradeOrder {
+  id: string;
+  symbol: string;
   side: "BUY" | "SELL";
+  type: "MARKET" | "LIMIT" | "STOP" | "STOP_LIMIT";
+  quantity: number;
+  price?: number;
+  status: string;
+  filledQuantity: number;
+  filledPrice?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 ```
 
-### Service Implementation
+### Rate Limiting
+
+SnapTrade has rate limits based on the subscription tier:
+
+- **Free Tier**: 5 requests per 15 minutes
+- **Premium Tier**: Higher limits based on subscription
 
 ```typescript
-// src/services/webullService.ts
+// Using the rate limiter
+const rateLimiter = new RateLimiter(5, 15 * 60 * 1000); // 5 requests per 15 minutes
 
-// Local storage implementation for development
-const STORAGE_KEYS = {
-  TRADES: "webull_trades",
-  AUTH: "webull_auth",
-  POSITIONS: "webull_positions",
-  ORDERS: "webull_orders",
-};
-
-export const saveTrade = (trade: WebullTrade) => {
-  const trades = getTrades();
-  trades.push(trade);
-  localStorage.setItem(STORAGE_KEYS.TRADES, JSON.stringify(trades));
-};
-
-export const getTrades = (): WebullTrade[] => {
-  const trades = localStorage.getItem(STORAGE_KEYS.TRADES);
-  return trades ? JSON.parse(trades) : [];
-};
-
-export const getTradeById = (orderId: string): WebullTrade | undefined => {
-  const trades = getTrades();
-  return trades.find(trade => trade.orderId === orderId);
-};
-
-export const getTradesBySymbol = (symbol: string): WebullTrade[] => {
-  const trades = getTrades();
-  return trades.filter(trade => trade.symbol === symbol);
-};
-
-export const clearTrades = () => {
-  localStorage.removeItem(STORAGE_KEYS.TRADES);
-};
-
-export const clearAllData = () => {
-  Object.values(STORAGE_KEYS).forEach(key => {
-    localStorage.removeItem(key);
-  });
+export const fetchSnapTradeWithRateLimit = async (url: string) => {
+  await rateLimiter.throttle();
+  return fetch(url);
 };
 ```
 
