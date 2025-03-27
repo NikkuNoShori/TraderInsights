@@ -12,7 +12,6 @@ export default function Layout({ children }: LayoutProps) {
   // Define navigation items
   const navItems = [
     { href: '/', label: 'Home' },
-    { href: '/webull-test', label: 'WebUll Test' },
     { href: '/snaptrade', label: 'SnapTrade' },
     { href: '/snaptrade-test', label: 'SnapTrade Test' },
   ];

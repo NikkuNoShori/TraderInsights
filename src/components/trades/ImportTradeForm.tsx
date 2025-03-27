@@ -11,7 +11,6 @@ import {
 import type { Trade } from "@/types/trade";
 import { processTradeFile } from "@/lib/services/fileProcessing";
 import { toast } from "react-hot-toast";
-import { WebullImportForm } from "./WebullImportForm";
 import { transformBrokerTrade } from "@/utils/brokerTransforms";
 
 interface ImportTradeFormProps {
@@ -92,67 +91,46 @@ export function ImportTradeForm({
         </Select>
       </div>
 
-      {selectedBroker === "webull" ? (
-        <WebullImportForm
-          onClose={onClose}
-          onImportComplete={onImportComplete}
-        />
-      ) : selectedBroker ? (
+      {selectedBroker ? (
         <div className="space-y-4">
           <div>
             <label className="text-sm font-medium text-text-muted">
-              CSV File
+              Upload Trade File
             </label>
-            <div className="mt-1.5 flex items-center space-x-2">
-              <input
-                type="file"
-                accept=".csv,.xlsx,.xls"
-                onChange={handleFileUpload}
-                className="hidden"
-                id="csv-upload"
-              />
-              <label
-                htmlFor="csv-upload"
-                className="cursor-pointer inline-block"
-              >
-                <Button
-                  variant="outline"
-                  disabled={loading}
-                  className="border-border hover:bg-background"
-                >
-                  Choose File
-                </Button>
-              </label>
-              {file && (
-                <span className="text-sm text-text-muted">{file.name}</span>
-              )}
-            </div>
-            {loading && progress > 0 && (
-              <div className="mt-2 w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                <div
-                  className="bg-primary h-2.5 rounded-full"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-            )}
+            <input
+              type="file"
+              accept=".csv,.xlsx"
+              onChange={handleFileUpload}
+              className="mt-1.5 block w-full text-sm text-gray-500
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-full file:border-0
+                file:text-sm file:font-semibold
+                file:bg-primary file:text-primary-foreground
+                hover:file:bg-primary/90"
+            />
           </div>
 
-          <div className="flex justify-end space-x-2 pt-4 border-t border-border">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              className="border-border hover:bg-background"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleImport}
-              disabled={!file || loading}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              {loading ? "Importing..." : "Import Trades"}
-            </Button>
-          </div>
+          {file && (
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-500">{file.name}</span>
+              <Button
+                onClick={handleImport}
+                disabled={loading}
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                {loading ? "Importing..." : "Import"}
+              </Button>
+            </div>
+          )}
+
+          {loading && (
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div
+                className="bg-primary h-2.5 rounded-full transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              ></div>
+            </div>
+          )}
         </div>
       ) : null}
     </div>

@@ -9,7 +9,6 @@ This document provides solutions for common issues encountered in the TraderInsi
    - [Authentication Problems](#authentication-problems)
    - [Data Loading Issues](#data-loading-issues)
    - [Chart Rendering Problems](#chart-rendering-problems)
-   - [WebUll Integration Issues](#webull-integration-issues)
    - [Performance Problems](#performance-problems)
    - [Theme and UI Issues](#theme-and-ui-issues)
    - [API Connection Problems](#api-connection-problems)
@@ -223,31 +222,6 @@ This document provides solutions for common issues encountered in the TraderInsi
    }), [dependencies]);
    ```
 3. Consider using a more performant chart library for large datasets
-
-### WebUll Integration Issues
-
-#### Issue: Unable to import WebUll data
-
-**Symptoms:**
-- Import process fails or times out
-- Error messages about invalid data format
-- Incomplete data after import
-
-**Solutions:**
-1. Verify WebUll API credentials
-2. Check the format of the import file
-3. Implement proper validation for imported data:
-   ```typescript
-   const validateTradeData = (data: unknown): data is WebullTrade[] => {
-     if (!Array.isArray(data)) return false;
-     return data.every(item => 
-       typeof item.symbol === 'string' &&
-       typeof item.quantity === 'number' &&
-       typeof item.price === 'number'
-     );
-   };
-   ```
-4. See [WebUll Integration](./WEBULL_INTEGRATION.md) for detailed troubleshooting
 
 ### Performance Problems
 
