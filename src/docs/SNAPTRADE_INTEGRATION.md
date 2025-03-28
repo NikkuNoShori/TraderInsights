@@ -6,7 +6,7 @@ This document tracks the progress of the SnapTrade API integration for TraderIns
 
 ## Current Status
 
-### Core Infrastructure (90% Complete) ✅
+### Core Infrastructure (95% Complete) ✅
 - [x] Client setup and configuration
 - [x] Service layer implementation
 - [x] Authentication flow with OAuth
@@ -15,7 +15,19 @@ This document tracks the progress of the SnapTrade API integration for TraderIns
 - [x] OAuth callback handling
 - [x] Rate limiting implementation
 - [x] Error handling
+- [x] Edge Functions implementation
 - [ ] Comprehensive logging
+
+### Edge Functions (100% Complete) ✅
+- [x] User registration function
+- [x] Authentication function
+- [x] Broker connections function
+- [x] Account management function
+- [x] Trading operations function
+- [x] CORS handling
+- [x] Error handling
+- [x] Input validation
+- [x] Environment configuration
 
 ### UI Components (75% Complete) ⏳
 - [x] SnapTradeDemo component
@@ -30,7 +42,7 @@ This document tracks the progress of the SnapTrade API integration for TraderIns
 - [ ] Loading states and feedback
 - [ ] Error handling UI
 
-### API Integration (85% Complete) ⏳
+### API Integration (90% Complete) ⏳
 - [x] User registration
 - [x] Brokerage listing
 - [x] Connection management
@@ -39,6 +51,7 @@ This document tracks the progress of the SnapTrade API integration for TraderIns
 - [x] Balance retrieval
 - [x] Order retrieval
 - [x] Rate limit handling
+- [x] Edge Function implementation
 - [ ] Real-time data syncing
 - [ ] Trade execution
 - [ ] Error handling improvements
@@ -74,6 +87,7 @@ This document tracks the progress of the SnapTrade API integration for TraderIns
 3. [x] Trade history import
 4. [x] Basic position tracking
 5. [x] Essential error handling
+6. [x] Edge Functions implementation
 
 ### Phase 2: Data Management (75% Complete) ⏳
 1. [x] Trade data transformation
@@ -89,7 +103,7 @@ This document tracks the progress of the SnapTrade API integration for TraderIns
 4. [ ] Basic error feedback
 5. [ ] Loading states
 
-## Overall MVP Progress: 78% Complete
+## Overall MVP Progress: 85% Complete
 
 ### Completed MVP Features
 1. ✅ Secure OAuth authentication
@@ -100,6 +114,7 @@ This document tracks the progress of the SnapTrade API integration for TraderIns
 6. ✅ Rate limiting
 7. ✅ Error handling
 8. ✅ Basic UI components
+9. ✅ Edge Functions implementation
 
 ### Remaining MVP Tasks
 1. ⏳ Main dashboard integration
@@ -121,11 +136,14 @@ This document tracks the progress of the SnapTrade API integration for TraderIns
 ## Next Steps
 
 ### Immediate Tasks (MVP Priority)
-1. Complete trade import UI
-2. Implement data validation
-3. Add loading states and error feedback
-4. Set up end-to-end testing
-5. Integrate with main dashboard
+1. Deploy Edge Functions to Supabase
+2. Test Edge Functions integration
+3. Update frontend to use Edge Functions
+4. Complete trade import UI
+5. Implement data validation
+6. Add loading states and error feedback
+7. Set up end-to-end testing
+8. Integrate with main dashboard
 
 ### Technical Debt
 1. Improve error handling
@@ -133,23 +151,34 @@ This document tracks the progress of the SnapTrade API integration for TraderIns
 3. Optimize rate limiting
 4. Enhance data validation
 5. Improve test coverage
+6. Fix TypeScript linter errors in Edge Functions
 
 ## Environment Variables
 
 ```env
-# SnapTrade API Configuration
-NEXT_PUBLIC_SNAPTRADE_CLIENT_ID=your_client_id
-NEXT_PUBLIC_SNAPTRADE_CONSUMER_KEY=your_consumer_key
-NEXT_PUBLIC_SNAPTRADE_REDIRECT_URI=http://localhost:3000/snaptrade-callback
+# Supabase Configuration
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_anon_key
+
+# SnapTrade Configuration - Frontend
+VITE_SNAPTRADE_CLIENT_ID=your_client_id
+VITE_SNAPTRADE_CONSUMER_SECRET=your_secret
+VITE_SNAPTRADE_REDIRECT_URI=your_redirect_uri
+
+# SnapTrade Configuration - Edge Functions
+SNAPTRADE_CLIENT_ID=your_client_id
+SNAPTRADE_CONSUMER_KEY=your_secret
+SNAPTRADE_REDIRECT_URI=your_redirect_uri
 
 # Rate Limiting
-NEXT_PUBLIC_SNAPTRADE_RATE_LIMIT_MAX=5
-NEXT_PUBLIC_SNAPTRADE_RATE_LIMIT_WINDOW=10
+VITE_SNAPTRADE_RATE_LIMIT_MAX=5
+VITE_SNAPTRADE_RATE_LIMIT_WINDOW=10
 ```
 
 ## Resources
 - [SnapTrade Documentation](https://docs.snaptrade.com)
 - [SnapTrade TypeScript SDK](https://github.com/passiv/snaptrade-typescript-sdk)
 - [SnapTrade API Reference](https://docs.snaptrade.com/reference)
+- [Supabase Edge Functions](https://supabase.com/docs/guides/functions)
 - [Migration Guide](./MIGRATION_GUIDE.md)
 - [Security Assessment](./SECURITY_ASSESSMENT.md) 

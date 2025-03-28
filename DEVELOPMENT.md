@@ -3,15 +3,17 @@
 ## Current Progress (March 28, 2024)
 
 ### SnapTrade Integration
-We are in the process of migrating the SnapTrade API integration to use Supabase Edge Functions to avoid CORS issues. Here's what has been completed:
+We have completed the migration of the SnapTrade API integration to use Supabase Edge Functions to avoid CORS issues. Here's what has been completed:
 
 1. Set up Supabase project and configuration
-2. Created Edge Function structure for SnapTrade user registration:
+2. Created Edge Function structure for SnapTrade operations:
    ```
-   supabase/functions/snaptrade-register/
-   ├── deno.json
-   ├── index.ts
-   └── package.json
+   supabase/functions/
+   ├── snaptrade-register/     # User registration
+   ├── snaptrade-auth/        # User authentication
+   ├── snaptrade-brokers/     # Broker connections
+   ├── snaptrade-accounts/    # Account management
+   └── snaptrade-trading/     # Trading operations
    ```
 3. Updated environment variables to support both frontend and Edge Functions:
    - Frontend variables with `VITE_` prefix
@@ -39,29 +41,33 @@ SNAPTRADE_REDIRECT_URI=your_redirect_uri
 ## Next Steps
 
 ### Immediate Tasks
-1. Install Docker Desktop (required for Supabase Edge Functions development)
-   - Download from: https://www.docker.com/products/docker-desktop/
-   - Install and restart computer
-   - Verify installation with `docker --version`
-
-2. Configure Supabase Edge Function Environment Variables
-   - Add `SNAPTRADE_CLIENT_ID` and `SNAPTRADE_CONSUMER_KEY` in Supabase Dashboard
-   - Path: Project Settings > Edge Functions > Environment Variables
-
-3. Deploy Edge Functions
+1. Deploy Edge Functions
    ```bash
    npx supabase functions deploy snaptrade-register
+   npx supabase functions deploy snaptrade-auth
+   npx supabase functions deploy snaptrade-brokers
+   npx supabase functions deploy snaptrade-accounts
+   npx supabase functions deploy snaptrade-trading
    ```
 
-### Future Tasks
-1. Test the SnapTrade registration Edge Function
-2. Migrate other SnapTrade operations to Edge Functions:
-   - User authentication
-   - Broker connections
+2. Test each Edge Function:
+   - User registration flow
+   - Authentication flow
+   - Broker connection management
    - Account management
    - Trading operations
-3. Set up proper error handling and logging
-4. Implement rate limiting and security measures
+
+3. Update frontend to use new Edge Functions:
+   - Replace direct SnapTrade API calls with Edge Function calls
+   - Update error handling and response processing
+   - Implement proper loading states and error messages
+
+### Future Tasks
+1. Implement rate limiting and security measures
+2. Add request validation and sanitization
+3. Set up proper error logging and monitoring
+4. Implement caching for frequently accessed data
+5. Add automated testing for Edge Functions
 
 ### Data Storage Strategy
 - Currently keeping trade data in local storage
@@ -72,7 +78,7 @@ SNAPTRADE_REDIRECT_URI=your_redirect_uri
 
 ### Required Tools
 - Node.js and npm
-- Docker Desktop (pending installation)
+- Docker Desktop (installed and running)
 - Supabase CLI (installed via npx)
 
 ### Local Development
@@ -80,12 +86,14 @@ SNAPTRADE_REDIRECT_URI=your_redirect_uri
    ```bash
    npm run dev
    ```
-2. For Edge Functions development (after Docker installation):
+2. For Edge Functions development:
    ```bash
    npx supabase functions serve
    ```
 
 ## Notes
-- CORS issues with direct SnapTrade API calls are being resolved through Edge Functions
+- CORS issues with direct SnapTrade API calls are resolved through Edge Functions
 - Local storage is temporary; will migrate to Supabase database in future
-- Edge Functions provide better security for API keys and sensitive operations 
+- Edge Functions provide better security for API keys and sensitive operations
+- Each Edge Function is designed to handle specific SnapTrade operations
+- Proper error handling and validation implemented in all functions 
