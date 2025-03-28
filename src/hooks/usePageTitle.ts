@@ -4,17 +4,19 @@ import { useLocation } from "react-router-dom";
 const APP_NAME = "Trading Insights";
 
 const routeTitles: Record<string, string> = {
-  "/": "Dashboard",
-  "/dashboard": "Dashboard",
-  "/journal": "Trading Journal",
-  "/watchlist": "Watchlist",
-  "/portfolios": "Portfolios",
-  "/analysis/performance": "Performance Analysis",
-  "/analysis/analytics": "Analytics",
-  "/settings/profile": "Profile Settings",
-  "/settings/appearance": "Appearance Settings",
-  "/settings/notifications": "Notification Settings",
-  "/login": "Login",
+  "/app/dashboard": "Dashboard",
+  "/app/journal": "Trading Journal",
+  "/app/watchlist": "Watchlist",
+  "/app/portfolios": "Portfolios",
+  "/app/performance": "Performance Analysis",
+  "/app/stocks": "Stocks",
+  "/app/market": "Market Data",
+  "/app/settings/profile": "Profile Settings",
+  "/app/settings/appearance": "Appearance Settings",
+  "/app/settings/notifications": "Notification Settings",
+  "/app/settings/brokers": "Broker Settings",
+  "/app/playbook": "Playbook",
+  "/auth/login": "Login",
 };
 
 export function usePageTitle() {

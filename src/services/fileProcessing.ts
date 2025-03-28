@@ -153,4 +153,4 @@ function transformRowToTrade(row: RawTradeData): Partial<Trade> {
   }
 
   return trade;
-}
+} 
