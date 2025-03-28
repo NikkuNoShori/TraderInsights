@@ -15,6 +15,8 @@ import { transformTrade } from "@/utils/brokerTransforms";
 import { snapTradeService } from "@/services/snaptradeService";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatDistanceToNow } from "date-fns";
+import { BrokerConnectionPortal } from "@/components/broker-connection-portal";
+import { SnapTradeConfig } from "@/lib/snaptrade/types";
 
 interface RateLimitError extends Error {
   resetAt: number;
@@ -36,25 +38,52 @@ export function ImportTradeForm({
   const [progress, setProgress] = useState(0);
   const [brokerages, setBrokerages] = useState<any[]>([]);
   const [rateLimitInfo, setRateLimitInfo] = useState<{ remaining: number; timeUntilReset: number } | null>(null);
+  const [isConnectionPortalOpen, setIsConnectionPortalOpen] = useState(false);
+  const [snapTradeConfig, setSnapTradeConfig] = useState<SnapTradeConfig | null>(null);
+  const [userId, setUserId] = useState<string>("");
+  const [userSecret, setUserSecret] = useState<string>("");
+  const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
-    // Fetch supported brokerages
-    const fetchBrokerages = async () => {
+    const initializeSnapTrade = async () => {
       try {
+        setIsInitializing(true);
+        
+        // Check if user is already registered
+        if (!snapTradeService.isUserRegistered() && user) {
+          // Register the user
+          await snapTradeService.registerUser(user.id);
+        }
+
+        // Get SnapTrade configuration
+        const config = await snapTradeService.getConfig();
+        setSnapTradeConfig(config);
+
+        // Get user credentials
+        const storedUser = snapTradeService.getUser();
+        if (storedUser) {
+          setUserId(storedUser.userId);
+          setUserSecret(storedUser.userSecret);
+        }
+
+        // Fetch supported brokerages
         const brokers = await snapTradeService.getBrokerages();
         setBrokerages(brokers);
       } catch (error) {
+        console.error('Failed to initialize SnapTrade:', error);
         if (error instanceof Error && error.name === 'RateLimitError') {
           const rateLimitError = error as RateLimitError;
           const resetTime = new Date(rateLimitError.resetAt);
           toast.error(`Rate limit exceeded. Try again ${formatDistanceToNow(resetTime)}`);
         } else {
-          toast.error('Failed to fetch supported brokers');
+          toast.error('Failed to initialize SnapTrade. Please try again.');
         }
+      } finally {
+        setIsInitializing(false);
       }
     };
 
-    fetchBrokerages();
+    initializeSnapTrade();
 
     // Update rate limit info every minute
     const interval = setInterval(() => {
@@ -67,7 +96,7 @@ export function ImportTradeForm({
     setRateLimitInfo(info);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [user]);
 
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -119,6 +148,41 @@ export function ImportTradeForm({
     }
   };
 
+  const handleConnectBroker = async () => {
+    try {
+      // Open the connection portal
+      setIsConnectionPortalOpen(true);
+    } catch (error) {
+      console.error('Failed to initialize broker connection:', error);
+      toast.error('Failed to initialize broker connection. Please try again.');
+    }
+  };
+
+  const handleConnectionSuccess = async (authorizationId: string) => {
+    try {
+      // Refresh the brokerages list to include the newly connected broker
+      const brokers = await snapTradeService.getBrokerages();
+      setBrokerages(brokers);
+      toast.success('Broker connected successfully!');
+    } catch (error) {
+      console.error('Failed to refresh broker list:', error);
+      toast.error('Failed to refresh broker list. Please try again.');
+    }
+  };
+
+  const handleConnectionError = (error: { errorCode: string; statusCode: string; detail: string }) => {
+    console.error('Broker connection error:', error);
+    toast.error(`Failed to connect broker: ${error.detail}`);
+  };
+
+  if (isInitializing) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {rateLimitInfo && (
@@ -137,64 +201,87 @@ export function ImportTradeForm({
         </Alert>
       )}
 
-      <div>
-        <label className="text-sm font-medium text-text-muted">
-          Select Broker
-        </label>
-        <Select value={selectedBroker} onValueChange={setSelectedBroker}>
-          <SelectTrigger className="mt-1.5 bg-background border-border">
-            <SelectValue placeholder="Choose a broker" />
-          </SelectTrigger>
-          <SelectContent className="bg-card border-border">
-            {brokerages.map((broker) => (
-              <SelectItem key={broker.id} value={broker.id}>
-                {broker.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
       <div className="space-y-4">
         <div>
           <label className="text-sm font-medium text-text-muted">
-            Upload Trade File
+            Select Broker
           </label>
-          <input
-            type="file"
-            accept=".csv,.xlsx"
-            onChange={handleFileUpload}
-            className="mt-1.5 block w-full text-sm text-gray-500
-              file:mr-4 file:py-2 file:px-4
-              file:rounded-full file:border-0
-              file:text-sm file:font-semibold
-              file:bg-primary file:text-primary-foreground
-              hover:file:bg-primary/90"
-          />
-        </div>
-
-        {file && (
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500">{file.name}</span>
+          <div className="flex gap-2 mt-1.5">
+            <Select value={selectedBroker} onValueChange={setSelectedBroker}>
+              <SelectTrigger className="bg-background border-border">
+                <SelectValue placeholder="Choose a broker" />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border">
+                {brokerages.map((broker) => (
+                  <SelectItem key={broker.id} value={broker.id}>
+                    {broker.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Button
-              onClick={handleImport}
-              disabled={loading || (rateLimitInfo?.remaining === 0)}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              onClick={handleConnectBroker}
+              variant="outline"
+              className="whitespace-nowrap"
             >
-              {loading ? "Importing..." : "Import"}
+              Connect New Broker
             </Button>
           </div>
-        )}
+        </div>
 
-        {loading && (
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div
-              className="bg-primary h-2.5 rounded-full transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            ></div>
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-text-muted">
+              Upload Trade File
+            </label>
+            <input
+              type="file"
+              accept=".csv,.xlsx"
+              onChange={handleFileUpload}
+              className="mt-1.5 block w-full text-sm text-gray-500
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-full file:border-0
+                file:text-sm file:font-semibold
+                file:bg-primary file:text-primary-foreground
+                hover:file:bg-primary/90"
+            />
           </div>
-        )}
+
+          {file && (
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-500">{file.name}</span>
+              <Button
+                onClick={handleImport}
+                disabled={loading || (rateLimitInfo?.remaining === 0)}
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                {loading ? "Importing..." : "Import"}
+              </Button>
+            </div>
+          )}
+
+          {loading && (
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div
+                className="bg-primary h-2.5 rounded-full transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              ></div>
+            </div>
+          )}
+        </div>
       </div>
+
+      {snapTradeConfig && userId && userSecret && (
+        <BrokerConnectionPortal
+          isOpen={isConnectionPortalOpen}
+          onClose={() => setIsConnectionPortalOpen(false)}
+          onSuccess={handleConnectionSuccess}
+          onError={handleConnectionError}
+          config={snapTradeConfig}
+          userId={userId}
+          userSecret={userSecret}
+        />
+      )}
     </div>
   );
 }
