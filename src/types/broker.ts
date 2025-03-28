@@ -8,7 +8,7 @@ export interface BrokerProfile {
   updated_at: string;
 }
 
-export type BrokerType = "charlesschwab" | "tdameritrade" | "ibkr" | "webull" | "other";
+export type BrokerType = "charlesschwab" | "tdameritrade" | "ibkr" | "webull" | "snaptrade" | "other";
 
 // Charles Schwab CSV format
 export interface SchwabTradeImport {

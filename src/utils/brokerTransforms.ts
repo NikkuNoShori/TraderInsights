@@ -1,5 +1,6 @@
 import type { Trade } from "@/types/trade";
 import type { BrokerType } from "@/types/broker";
+import type { CreateTradeData } from "@/types/trade";
 
 // Common date/time parsing utility
 export function parseDateTime(
@@ -56,7 +57,7 @@ export function parseDateTime(
 // Schwab date format: MM/DD/YYYY
 export function transformSchwabTrade(
   schwabTrade: any,
-): Omit<Trade, "id" | "user_id" | "created_at" | "updated_at"> {
+): CreateTradeData {
   // Schwab provides dates as MM/DD/YYYY and times as HH:MM:SS AM/PM
   const entryDateTime = parseDateTime(schwabTrade.Date, schwabTrade.Time);
   const exitDateTime = schwabTrade.ClosedDate
@@ -93,7 +94,7 @@ export function transformSchwabTrade(
 // TD Ameritrade date format: YYYY-MM-DD
 export function transformTDAmeritradeTrade(
   tdTrade: any,
-): Omit<Trade, "id" | "user_id" | "created_at" | "updated_at"> {
+): CreateTradeData {
   // TD provides dates in YYYY-MM-DD format and times in 24-hour HH:mm:ss
   const entryDateTime = parseDateTime(
     tdTrade.TransactionDate,
@@ -135,7 +136,7 @@ export function transformTDAmeritradeTrade(
 // IBKR date format: YYYY-MM-DD HH:mm:ss
 export function transformIBKRTrade(
   ibkrTrade: any,
-): Omit<Trade, "id" | "user_id" | "created_at" | "updated_at"> {
+): CreateTradeData {
   // IBKR provides dates in YYYY-MM-DD HH:mm:ss format
   const entryDateTime = parseDateTime(ibkrTrade.DateTime);
   const exitDateTime = ibkrTrade.ClosingDateTime
@@ -170,7 +171,7 @@ export function transformIBKRTrade(
 // Webull date format: YYYY-MM-DD HH:mm:ss
 export function transformWebullTrade(
   webullTrade: any,
-): Omit<Trade, "id" | "user_id" | "created_at" | "updated_at"> {
+): CreateTradeData {
   // Webull provides dates in YYYY-MM-DD HH:mm:ss format
   const entryDateTime = parseDateTime(webullTrade.DateTime);
   const exitDateTime = webullTrade.ClosingDateTime
@@ -202,8 +203,41 @@ export function transformWebullTrade(
   };
 }
 
+// SnapTrade date format: ISO string
+export function transformSnapTradeTrade(
+  snapTrade: any,
+): CreateTradeData {
+  // SnapTrade provides dates in ISO format
+  const entryDateTime = parseDateTime(snapTrade.createdAt);
+  const exitDateTime = snapTrade.filledAt ? parseDateTime(snapTrade.filledAt) : undefined;
+
+  return {
+    date: entryDateTime.date,
+    time: entryDateTime.time,
+    timestamp: entryDateTime.timestamp,
+    symbol: snapTrade.symbol,
+    type: "stock",
+    side: snapTrade.action === "BUY" ? "Long" : "Short",
+    direction: snapTrade.action === "BUY" ? "Long" : "Short",
+    quantity: Number(snapTrade.quantity),
+    price: Number(snapTrade.price),
+    total: Number(snapTrade.quantity) * Number(snapTrade.price),
+    entry_date: entryDateTime.date,
+    entry_time: entryDateTime.time,
+    entry_timestamp: entryDateTime.timestamp,
+    entry_price: Number(snapTrade.price),
+    exit_date: exitDateTime?.date,
+    exit_time: exitDateTime?.time,
+    exit_timestamp: exitDateTime?.timestamp,
+    exit_price: exitDateTime ? Number(snapTrade.filledPrice) : undefined,
+    status: snapTrade.status === "FILLED" ? "closed" : "open",
+    notes: `Imported from ${snapTrade.brokerageName || 'SnapTrade'}`,
+    fees: 0, // SnapTrade doesn't provide fee information in orders
+  };
+}
+
 // Export a unified transform function that handles any broker
-export function transformTrade(trade: any, broker: BrokerType): Trade {
+export function transformTrade(trade: any, broker: BrokerType): CreateTradeData {
   switch (broker) {
     case "charlesschwab":
       return transformSchwabTrade(trade);
@@ -214,6 +248,8 @@ export function transformTrade(trade: any, broker: BrokerType): Trade {
     case "webull":
       // Webull trades now come through SnapTrade in IBKR format
       return transformIBKRTrade(trade);
+    case "snaptrade":
+      return transformSnapTradeTrade(trade);
     default:
       throw new Error(`Unsupported broker type: ${broker}`);
   }

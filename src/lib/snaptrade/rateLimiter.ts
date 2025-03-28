@@ -1,4 +1,4 @@
-import { getItem, setItem } from './storage';
+import { StorageHelpers } from './storage';
 
 interface RateLimitConfig {
   maxRequests: number;  // Maximum requests allowed in the window
@@ -17,7 +17,7 @@ export class RateLimiter {
   private constructor() {
     // Get rate limit configuration from environment variables or use defaults
     const maxRequests = parseInt(process.env.NEXT_PUBLIC_SNAPTRADE_RATE_LIMIT_MAX || '5', 10);
-    const windowMinutes = parseInt(process.env.NEXT_PUBLIC_SNAPTRADE_RATE_LIMIT_WINDOW || '10', 10);
+    const windowMinutes = parseInt(process.env.NEXT_PUBLIC_SNAPTRADE_RATE_LIMIT_WINDOW || '15', 10);
     
     this.config = {
       maxRequests,
@@ -42,7 +42,7 @@ export class RateLimiter {
 
   private getRateLimitInfo(userId: string): RateLimitInfo {
     const key = this.getStorageKey(userId);
-    const stored = getItem(key);
+    const stored = StorageHelpers.getItem(key);
     
     if (!stored) {
       return {
@@ -56,7 +56,7 @@ export class RateLimiter {
 
   private saveRateLimitInfo(userId: string, info: RateLimitInfo): void {
     const key = this.getStorageKey(userId);
-    setItem(key, JSON.stringify(info));
+    StorageHelpers.setItem(key, JSON.stringify(info));
   }
 
   public checkRateLimit(userId: string): { allowed: boolean; resetAt: number; remaining: number } {

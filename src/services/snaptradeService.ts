@@ -6,6 +6,7 @@
 import { createSnapTradeClient } from '@/lib/snaptrade/client';
 import { StorageHelpers, STORAGE_KEYS } from '@/lib/snaptrade/storage';
 import { RateLimiter } from '@/lib/snaptrade/rateLimiter';
+import { getSnapTradeConfig } from '@/lib/snaptrade/config';
 import { 
   SnapTradeConfig, 
   SnapTradeUser, 
@@ -52,23 +53,22 @@ class SnapTradeServiceSingleton {
   }
 
   /**
-   * Initialize the SnapTrade service with configuration
+   * Initialize the service with configuration
+   * @param config SnapTrade configuration
    */
-  public async init(config: SnapTradeConfig): Promise<void> {
+  public initialize(config: SnapTradeConfig): void {
     if (this.initialized) {
-      console.log('SnapTrade service already initialized');
       return;
     }
 
-    try {
-      this.config = config;
-      this.client = createSnapTradeClient(config);
-      this.initialized = true;
-      console.log('SnapTrade service initialized successfully');
-    } catch (error) {
-      console.error('Failed to initialize SnapTrade service:', error);
-      throw new Error(`Failed to initialize SnapTrade service: ${error instanceof Error ? error.message : String(error)}`);
-    }
+    this.config = {
+      clientId: config.clientId,
+      consumerSecret: config.consumerSecret,
+      redirectUri: config.redirectUri,
+    };
+
+    this.client = createSnapTradeClient(this.config);
+    this.initialized = true;
   }
 
   /**
@@ -325,7 +325,7 @@ class SnapTradeServiceSingleton {
       }
       
       const balances = await this.client!.getAccountBalances(user.userId, user.userSecret, accountId);
-      StorageHelpers.saveBalances(accountId, balances);
+      this.saveBalances(balances);
       return balances;
     } catch (error) {
       console.error('Failed to get account balances:', error);
@@ -374,10 +374,18 @@ class SnapTradeServiceSingleton {
   }
 
   /**
-   * Clear all stored data
+   * Save account balances
+   * @param balances Account balances
    */
-  public clearAllData(): void {
-    StorageHelpers.clearAllData();
+  private saveBalances(balances: SnapTradeBalance[]): void {
+    StorageHelpers.setItem(STORAGE_KEYS.BALANCES, JSON.stringify(balances));
+  }
+
+  /**
+   * Clear all data
+   */
+  private clearAllData(): void {
+    StorageHelpers.clearAll();
   }
 
   /**
@@ -396,5 +404,12 @@ class SnapTradeServiceSingleton {
   }
 }
 
-// Export the singleton instance
-export const snapTradeService = SnapTradeServiceSingleton.getInstance(); 
+// Initialize the service with configuration from environment variables
+export const snapTradeService = SnapTradeServiceSingleton.getInstance();
+
+try {
+  const config = getSnapTradeConfig();
+  snapTradeService.initialize(config);
+} catch (error) {
+  console.error('Failed to initialize SnapTrade service:', error);
+} 

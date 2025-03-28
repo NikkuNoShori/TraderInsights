@@ -48,36 +48,30 @@
 
   /* Refined dark theme with sophisticated colors */
   .dark {
-    /* Subtle dark backgrounds */
-    --background: rgb(18, 19, 22); /* Slightly warmer dark background */
-    --card: rgb(26, 27, 32); /* Elevated surface color */
-    --card-hover: rgb(32, 33, 38); /* Subtle hover state */
+    --background: rgb(17, 24, 39);
+    --card: rgb(31, 41, 55);
+    --card-hover: rgb(55, 65, 81);
     
-    /* Softer text colors for better readability */
-    --text: rgb(226, 232, 240); /* Slightly off-white for main text */
-    --text-muted: rgba(226, 232, 240, 0.75); /* Softer secondary text */
-    --text-dim: rgba(226, 232, 240, 0.5); /* Subtle tertiary text */
+    --text: rgb(243, 244, 246);
+    --text-muted: rgba(209, 213, 219, 0.9);
+    --text-dim: rgba(156, 163, 175, 0.7);
     
-    /* Refined borders */
-    --border: rgba(255, 255, 255, 0.1); /* Very subtle borders */
-    --border-hover: rgba(255, 255, 255, 0.15); /* Slightly visible on hover */
+    --border: rgba(75, 85, 99, 0.5);
+    --border-hover: rgba(107, 114, 128, 0.5);
     
-    /* Electric blue with better dark mode harmony */
-    --primary: rgb(56, 189, 248); /* Slightly softer electric blue */
-    --primary-hover: rgb(103, 205, 255); /* Brighter on hover */
+    --primary: rgb(59, 130, 246);
+    --primary-hover: rgb(96, 165, 250);
     --primary-foreground: rgb(255, 255, 255);
-    --primary-50: rgba(56, 189, 248, 0.5);
-    --primary-30: rgba(56, 189, 248, 0.3);
-    --primary-20: rgba(56, 189, 248, 0.2);
-    --primary-10: rgba(56, 189, 248, 0.1);
+    --primary-50: rgba(59, 130, 246, 0.5);
+    --primary-30: rgba(59, 130, 246, 0.3);
+    --primary-20: rgba(59, 130, 246, 0.2);
+    --primary-10: rgba(59, 130, 246, 0.1);
     
-    /* Status colors adjusted for dark theme */
-    --success: rgb(74, 222, 128); /* Softer green */
-    --error: rgb(248, 113, 113); /* Softer red */
-    --warning: rgb(250, 204, 21); /* Softer yellow */
+    --success: rgb(34, 197, 94);
+    --error: rgb(239, 68, 68);
+    --warning: rgb(234, 179, 8);
     
-    /* Dark mode form elements */
-    --input-bg: rgb(32, 33, 38);
+    --input-bg: rgb(31, 41, 55);
     --input-border: var(--border);
     --input-text: var(--text);
     --input-placeholder: var(--text-dim);
@@ -85,16 +79,14 @@
     --button-bg: var(--input-bg);
     --button-text: var(--text);
     --button-border: var(--border);
-    --button-hover: rgb(38, 39, 44);
+    --button-hover: var(--card-hover);
 
-    /* Trading specific colors - adjusted for dark theme */
-    --profit: rgb(74, 222, 128);
-    --loss: rgb(248, 113, 113);
-    --neutral: rgb(148, 163, 184);
+    --profit: rgb(34, 197, 94);
+    --loss: rgb(239, 68, 68);
+    --neutral: rgb(156, 163, 175);
     
-    /* Chart colors for dark theme */
-    --chart-grid: rgba(226, 232, 240, 0.1);
-    --chart-text: rgba(226, 232, 240, 0.6);
+    --chart-grid: rgba(75, 85, 99, 0.3);
+    --chart-text: rgb(156, 163, 175);
   }
 }
 

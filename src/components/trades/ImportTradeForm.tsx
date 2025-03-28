@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "../ui/select";
 import type { Trade } from "@/types/trade";
-import { processTradeFile } from "@/lib/services/fileProcessing";
+import { processTradeFile } from "@/services/fileProcessing";
 import { toast } from "react-hot-toast";
 import { transformTrade } from "@/utils/brokerTransforms";
 import { snapTradeService } from "@/services/snaptradeService";
@@ -81,12 +81,12 @@ export function ImportTradeForm({
 
     setLoading(true);
     try {
-      const result = await processTradeFile(file, (progress) => {
+      const result = await processTradeFile(file, (progress: number) => {
         setProgress(progress * 100);
       });
 
       // Transform trades based on the selected broker
-      const processedTrades = result.trades.map((trade) => {
+      const processedTrades = result.trades.map((trade: Partial<Trade>) => {
         const transformedTrade = transformTrade(trade, selectedBroker as any);
         return {
           ...transformedTrade,

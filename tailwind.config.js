@@ -1,5 +1,5 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
+export default {
   darkMode: 'class',
   content: ['./src/**/*.{js,jsx,ts,tsx}'],
   theme: {
@@ -49,6 +49,8 @@ module.exports = {
         DEFAULT: 'var(--primary)',
         primary: {
           DEFAULT: 'var(--primary)',
+          hover: 'var(--primary-hover)',
+          foreground: 'var(--primary-foreground)',
           50: 'var(--primary-50)',
           30: 'var(--primary-30)',
           20: 'var(--primary-20)',
