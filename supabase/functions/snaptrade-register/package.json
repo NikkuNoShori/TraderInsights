@@ -1,0 +1,8 @@
+{
+  "name": "snaptrade-register",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "snaptrade-typescript-sdk": "^1.0.0"
+  }
+} 
