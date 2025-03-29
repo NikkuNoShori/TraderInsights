@@ -83,13 +83,13 @@ CREATE POLICY "Users can view their own profile"
     ON public.profiles
     FOR SELECT
     TO authenticated
-    USING (auth.uid() = user_id);
+    USING (auth.uid() = id);
 
 CREATE POLICY "Users can update their own profile"
     ON public.profiles
     FOR UPDATE
     TO authenticated
-    USING (auth.uid() = user_id);
+    USING (auth.uid() = id);
 
 CREATE POLICY "Users can view their own SnapTrade data"
     ON public.snaptrade_user_data

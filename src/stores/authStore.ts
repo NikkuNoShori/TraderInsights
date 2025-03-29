@@ -18,7 +18,12 @@ interface AuthActions {
   setLoading: (loading: boolean) => void;
   setError: (error: Error | null) => void;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (
+    email: string,
+    password: string,
+    username: string,
+    fullName: string
+  ) => Promise<void>;
   signOut: () => Promise<void>;
   handleAuthStateChange: (event: string, session: Session | null) => void;
 }
@@ -62,14 +67,34 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
     }
   },
 
-  signUp: async (email, password) => {
+  signUp: async (email, password, username, fullName) => {
     set({ isLoading: true, error: null });
     try {
-      const { error } = await supabase.auth.signUp({
+      // Register user with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
       });
-      if (error) throw error;
+
+      if (authError) throw authError;
+      if (!authData.user) throw new Error("No user data returned");
+
+      // Create user profile
+      const { error: profileError } = await supabase.from("profiles").insert([
+        {
+          user_id: authData.user.id,
+          username,
+          full_name: fullName,
+        },
+      ]);
+
+      if (profileError) throw profileError;
+
+      // Set user data
+      set({ user: authData.user });
     } catch (error) {
       set({ error: error as Error });
       throw error;
@@ -92,31 +117,21 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
     }
   },
 
-  handleAuthStateChange: (event, session) => {
+  handleAuthStateChange: async (event, session) => {
     switch (event) {
       case "SIGNED_IN":
         set({ user: session?.user || null, error: null });
         // Fetch profile when signed in
         if (session?.user) {
-          supabase
+          const { data: profile } = await supabase
             .from("profiles")
             .select("*")
-            .single()
-            .then(({ data }) => {
-              set({ profile: data });
-            });
+            .single();
+          set({ profile });
         }
         break;
       case "SIGNED_OUT":
-        set({ user: null, profile: null, error: null });
-        break;
-      case "USER_UPDATED":
-        set({ user: session?.user || null });
-        break;
-      case "USER_DELETED":
         set({ user: null, profile: null });
-        break;
-      default:
         break;
     }
   },
