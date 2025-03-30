@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSnapTradeStore } from '@/stores/snapTradeStore';
 import { snapTradeAPI } from '@/lib/snaptrade/api';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'react-hot-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 
@@ -12,7 +12,6 @@ export default function BrokerCallback() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { userData, fetchUserData } = useSnapTradeStore();
-  const { toast } = useToast();
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -30,26 +29,19 @@ export default function BrokerCallback() {
         // Refresh user data to get updated broker connections
         await fetchUserData();
 
-        toast({
-          title: "Success",
-          description: "Successfully connected to your broker",
-        });
+        toast.success("Successfully connected to broker!");
 
         // Redirect back to the dashboard
         router.push('/app/dashboard');
       } catch (error) {
         console.error('Error handling broker callback:', error);
-        toast({
-          title: "Error",
-          description: "Failed to complete broker connection",
-          variant: "destructive",
-        });
-        router.push('/app/dashboard');
+        toast.error("Failed to complete broker connection. Please try again.");
+        router.push('/app/settings');
       }
     };
 
     handleCallback();
-  }, [searchParams, router, fetchUserData, toast]);
+  }, [searchParams, router, fetchUserData]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">

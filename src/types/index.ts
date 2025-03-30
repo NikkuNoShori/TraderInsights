@@ -61,3 +61,31 @@ export * from "./watchlist";
 
 // Polygon types
 export * from "./polygon.d";
+
+export interface Trade {
+  id: string;
+  user_id: string;
+  symbol: string;
+  entry_price: number;
+  exit_price?: number;
+  quantity: number;
+  side: "buy" | "sell";
+  date: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+  tags?: string[];
+  pnl?: number;
+  strategy?: string;
+  market?: string;
+  timeframe?: string;
+}
+
+export interface UserProfile {
+  id: string;
+  username: string;
+  full_name: string;
+  avatar_url?: string;
+  created_at: string;
+  updated_at: string;
+}

@@ -4,12 +4,11 @@ import { Button } from "@/components/ui/button";
 import { useState } from "@/lib/react";
 import type { FormEvent, ChangeEvent } from "@/lib/react";
 import { useAuthStore } from "@/stores/authStore";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "react-hot-toast";
 
 export function RegisterForm() {
   const navigate = useNavigate();
   const { signUp } = useAuthStore();
-  const { toast } = useToast();
   
   // Form state
   const [email, setEmail] = useState("");
@@ -44,21 +43,14 @@ export function RegisterForm() {
       await signUp(email, password, username, fullName);
 
       // Show success message
-      toast({
-        title: "Account created successfully",
-        description: "Please check your email to confirm your account.",
-      });
+      toast.success("Account created successfully! Please check your email to confirm your account.");
 
       // Redirect to login page
       navigate("/auth/login");
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An error occurred during registration";
       setError(errorMessage);
-      toast({
-        title: "Registration failed",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

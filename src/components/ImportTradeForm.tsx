@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { SnapTradeService } from '@/lib/snaptrade/client';
 import { SnapTradeConfig } from '@/lib/snaptrade/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSnapTradeStore } from '@/stores/snapTradeStore';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from "react-hot-toast";
 
 interface ImportTradeFormProps {
   config: SnapTradeConfig;
@@ -17,71 +17,83 @@ export function ImportTradeForm({ config, userId }: ImportTradeFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [userSecret, setUserSecret] = useState<string | null>(null);
   const { saveUserData, isLoading: isSaving } = useSnapTradeStore();
-  const { toast } = useToast();
+  const initializationAttempted = useRef(false);
 
   const snapTradeService = new SnapTradeService(config);
 
   useEffect(() => {
-    initializeSnapTrade();
-  }, []);
+    let mounted = true;
 
-  const initializeSnapTrade = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // Check if user is already registered in Supabase
-      const { userData } = useSnapTradeStore.getState();
-      if (userData?.snapTradeUserSecret) {
-        setUserSecret(userData.snapTradeUserSecret);
-        setIsLoading(false);
+    const initialize = async () => {
+      // Prevent multiple initialization attempts
+      if (initializationAttempted.current) {
         return;
       }
+      initializationAttempted.current = true;
 
-      // Check localStorage as fallback
-      const storedUserSecret = localStorage.getItem('snaptrade_user_secret');
-      if (storedUserSecret) {
-        setUserSecret(storedUserSecret);
-        // Migrate to Supabase
-        await saveUserData(userId, storedUserSecret);
+      try {
+        if (!mounted) return;
+        setIsLoading(true);
+        setError(null);
+
+        // Check if user is already registered in Supabase
+        const { userData } = useSnapTradeStore.getState();
+        if (userData?.snapTradeUserSecret) {
+          if (!mounted) return;
+          setUserSecret(userData.snapTradeUserSecret);
+          setIsLoading(false);
+          return;
+        }
+
+        // Check localStorage as fallback
+        const storedUserSecret = localStorage.getItem('snaptrade_user_secret');
+        if (storedUserSecret) {
+          if (!mounted) return;
+          setUserSecret(storedUserSecret);
+          // Migrate to Supabase
+          await saveUserData(userId, storedUserSecret);
+          if (!mounted) return;
+          setIsLoading(false);
+          return;
+        }
+
+        // Register new user
+        const newUserSecret = await snapTradeService.registerUser(userId);
+        if (!mounted) return;
+        setUserSecret(newUserSecret);
+        // Save to both Supabase and localStorage (for backward compatibility)
+        await saveUserData(userId, newUserSecret);
+        localStorage.setItem('snaptrade_user_secret', newUserSecret);
+      } catch (err) {
+        if (!mounted) return;
+        const errorMessage = 'Failed to initialize SnapTrade. Please try again later.';
+        setError(errorMessage);
+        console.error('Error initializing SnapTrade:', err);
+        // Only show toast if component is still mounted
+        if (mounted) {
+          toast.error(errorMessage);
+        }
+      } finally {
+        if (!mounted) return;
         setIsLoading(false);
-        return;
       }
+    };
 
-      // Register new user
-      const newUserSecret = await snapTradeService.registerUser(userId);
-      setUserSecret(newUserSecret);
-      // Save to both Supabase and localStorage (for backward compatibility)
-      await saveUserData(userId, newUserSecret);
-      localStorage.setItem('snaptrade_user_secret', newUserSecret);
-    } catch (err) {
-      setError('Failed to initialize SnapTrade. Please try again later.');
-      console.error('Error initializing SnapTrade:', err);
-      toast({
-        title: "Error",
-        description: "Failed to initialize SnapTrade. Please try again later.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    initialize();
+
+    return () => {
+      mounted = false;
+    };
+  }, [userId, config, saveUserData]); // Add saveUserData to dependencies
 
   const handleDisconnect = async () => {
     try {
       await useSnapTradeStore.getState().clearUserData();
       localStorage.removeItem('snaptrade_user_secret');
       setUserSecret(null);
-      toast({
-        title: "Success",
-        description: "Successfully disconnected from SnapTrade",
-      });
+      toast.success("Successfully disconnected from SnapTrade");
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to disconnect from SnapTrade",
-        variant: "destructive",
-      });
+      toast.error("Failed to disconnect from SnapTrade");
     }
   };
 
@@ -117,7 +129,8 @@ export function ImportTradeForm({ config, userId }: ImportTradeFormProps) {
       </div>
       <Button 
         onClick={handleDisconnect}
-        variant="destructive"
+        variant="outline"
+        className="bg-red-100 hover:bg-red-200 text-red-700"
         disabled={isSaving}
       >
         {isSaving ? 'Disconnecting...' : 'Disconnect from SnapTrade'}

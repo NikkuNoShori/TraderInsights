@@ -18,7 +18,7 @@ export function TechnicalAnalysisCard({
 }: TechnicalAnalysisCardProps) {
   const [symbol, setSymbol] = useState(defaultSymbol);
   const [inputSymbol, setInputSymbol] = useState(defaultSymbol);
-  const [interval, setInterval] = useState("1D");
+  const [interval, setInterval] = useState("D");
   const [key, setKey] = useState(Date.now()); // Add a key to force re-render when symbol or interval changes
 
   const handleSymbolChange = () => {
@@ -52,11 +52,6 @@ export function TechnicalAnalysisCard({
     { value: "M", label: "1M" },
   ];
 
-  const getIntervalValue = (label: string) => {
-    const option = intervalOptions.find(opt => opt.label === label);
-    return option ? option.value : "D";
-  };
-
   return (
     <Card className={`${className}`}>
       <CardHeader className="pb-2">
@@ -87,7 +82,7 @@ export function TechnicalAnalysisCard({
             </SelectTrigger>
             <SelectContent>
               {intervalOptions.map((option) => (
-                <SelectItem key={option.value} value={option.label}>
+                <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
               ))}
@@ -100,7 +95,7 @@ export function TechnicalAnalysisCard({
             key={`technical-${key}`}
             symbol={symbol}
             chartType="technical"
-            interval={getIntervalValue(interval)}
+            interval={interval}
             height={DASHBOARD_CHART_HEIGHT}
             allowSymbolChange={false}
           />

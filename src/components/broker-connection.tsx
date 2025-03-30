@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { useSnapTradeStore } from '@/stores/snapTradeStore';
 import { snapTradeAPI } from '@/lib/snaptrade/api';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from "react-hot-toast";
 import { Loader2 } from 'lucide-react';
 
 interface Broker {
@@ -30,7 +30,6 @@ export function BrokerConnection({ config, userId, userSecret }: BrokerConnectio
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { userData } = useSnapTradeStore();
-  const { toast } = useToast();
 
   const snapTradeService = new SnapTradeService(config);
 
@@ -44,11 +43,7 @@ export function BrokerConnection({ config, userId, userSecret }: BrokerConnectio
       setBrokers(availableBrokers);
     } catch (error) {
       console.error('Error loading brokers:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load available brokers",
-        variant: "destructive",
-      });
+      toast.error("Failed to load available brokers");
     } finally {
       setIsLoading(false);
     }
@@ -60,6 +55,7 @@ export function BrokerConnection({ config, userId, userSecret }: BrokerConnectio
   };
 
   const handleConnect = async (broker: Broker) => {
+    setIsConnecting(true);
     try {
       if (!userData?.snapTradeUserId) {
         throw new Error('No SnapTrade user ID found');
@@ -77,11 +73,9 @@ export function BrokerConnection({ config, userId, userSecret }: BrokerConnectio
       }
     } catch (error) {
       console.error('Error connecting to broker:', error);
-      toast({
-        title: "Error",
-        description: "Failed to connect to broker. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to connect to broker. Please try again.");
+    } finally {
+      setIsConnecting(false);
     }
   };
 
@@ -128,8 +122,9 @@ export function BrokerConnection({ config, userId, userSecret }: BrokerConnectio
                 <Button
                   onClick={() => handleConnect(broker)}
                   className="w-full"
+                  disabled={isConnecting}
                 >
-                  Connect {broker.display_name}
+                  {isConnecting ? "Connecting..." : `Connect ${broker.display_name}`}
                 </Button>
               </CardContent>
             </Card>

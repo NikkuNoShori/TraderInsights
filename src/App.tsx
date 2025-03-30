@@ -11,6 +11,7 @@ import TradingJournal from "./views/TradingJournal";
 import TradeDetails from "./views/TradingJournal/TradeDetails";
 import Settings from "./views/settings/Settings";
 import Login from "./views/auth/Login";
+import Register from "./views/auth/Register";
 import RequestPasswordReset from "./views/auth/RequestPasswordReset";
 import ResetPassword from "./views/auth/ResetPassword";
 import { AuthGuard } from "./components/AuthGuard";
@@ -22,6 +23,7 @@ import Performance from "./views/Performance";
 import ComingSoon from "./views/ComingSoon";
 import Playbook from "./views/Playbook";
 import { useResetFilters } from "./hooks/useResetFilters";
+import { Toaster } from "react-hot-toast";
 
 function ProtectedLayout() {
   useResetFilters();
@@ -49,6 +51,7 @@ export default function App() {
             {/* Auth routes */}
             <Route path="/auth">
               <Route path="login" element={<Login />} />
+              <Route path="register" element={<Register />} />
               <Route path="request-reset" element={<RequestPasswordReset />} />
               <Route path="reset-password" element={<ResetPassword />} />
               <Route index element={<Navigate to="login" replace />} />
@@ -74,6 +77,7 @@ export default function App() {
             {/* Catch all redirect */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          <Toaster position="top-right" />
         </Router>
       </StoreProvider>
     </AppProvider>

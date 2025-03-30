@@ -1,10 +1,12 @@
-import { useState, useMemo, useCallback } from "@/lib/react";
-import { useTrades } from "@/hooks/useTrades";
-import { Spinner } from "@/components/ui/spinner";
+import { useEffect, useMemo, useCallback, useState } from "@/lib/react";
+import { useAuthStore } from "@/stores/authStore";
+import { tradeService } from "@/lib/services/tradeService";
+import type { Trade } from "@/types/trade";
+import { Spinner } from "@/components/ui/Spinner";
 import {
   TimeframeSelector,
   type TimeframeOption,
-} from "../components/ui/timeframeSelector";
+} from "@/components/ui/TimeframeSelector";
 import { PerformanceMetrics } from "@/components/dashboard/PerformanceMetrics";
 import { RechartsPnLChart } from "@/components/dashboard/RechartsPnLChart";
 import { WinRateChart } from "@/components/dashboard/WinRateChart";
@@ -17,8 +19,29 @@ interface PerformanceError extends Error {
 }
 
 export default function Performance() {
-  const { data: trades = [], isLoading, error } = useTrades();
+  const { user } = useAuthStore();
+  const [trades, setTrades] = useState<Trade[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [timeframe, setTimeframe] = useState<TimeframeOption>("1M");
+
+  useEffect(() => {
+    const fetchTrades = async () => {
+      if (!user) return;
+
+      try {
+        const trades = await tradeService.getTrades(user.id);
+        setTrades(trades);
+      } catch (err) {
+        console.error("Error fetching trades:", err);
+        setError("Failed to load trades. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTrades();
+  }, [user]);
 
   const handleTimeframeChange = useCallback((value: TimeframeOption) => {
     setTimeframe(value);
@@ -51,73 +74,62 @@ export default function Performance() {
       case "ALL":
         return trades;
     }
-    return trades.filter((trade) => new Date(trade.entry_date) >= cutoff);
+    return trades.filter((trade: Trade) => new Date(trade.entry_date) >= cutoff);
   }, [trades, timeframe]);
 
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <Spinner size="lg" />
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <Spinner className="w-8 h-8 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold">Loading trades...</h2>
+          <p className="text-muted-foreground">Please wait while we fetch your trading data.</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-error">{(error as PerformanceError).message}</div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-destructive">Error</h2>
+          <p className="text-muted-foreground">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (trades.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold">No trades found</h2>
+          <p className="text-muted-foreground">Start adding trades to see your performance metrics.</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex-grow bg-background p-6">
-      {/* Performance Overview */}
-      <div className="bg-card border border-border rounded-lg p-6 mb-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-lg font-medium text-text-primary">
-            Performance Overview
-          </h2>
-          <TimeframeSelector
-            value={timeframe}
-            onValueChange={handleTimeframeChange}
-            className="text-text-muted"
-          />
-        </div>
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Trading Performance</h1>
+        <TimeframeSelector value={timeframe} onValueChange={handleTimeframeChange} />
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 mb-8">
         <PerformanceMetrics trades={filteredTrades} timeframe={timeframe} />
       </div>
 
-      {/* Advanced Charts */}
-      <div className="bg-card border border-border rounded-lg p-6 mb-6">
-        <h3 className="text-base font-medium text-text-primary mb-4">
-          Advanced Performance Analysis
-        </h3>
-        <PerformanceCharts trades={filteredTrades} timeframe="1M" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <RechartsPnLChart trades={filteredTrades} timeframe={timeframe} />
+        <WinRateChart trades={filteredTrades} timeframe={timeframe} />
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-card border border-border rounded-lg p-6">
-          <h3 className="text-base font-medium text-text-primary mb-4">
-            P&L Over Time
-          </h3>
-          <RechartsPnLChart trades={filteredTrades} timeframe={timeframe} />
-        </div>
-
-        <div className="bg-card border border-border rounded-lg p-6">
-          <h3 className="text-base font-medium text-text-primary mb-4">
-            Win Rate Analysis
-          </h3>
-          <WinRateChart trades={filteredTrades} timeframe={timeframe} />
-        </div>
-      </div>
-
-      {/* Trade Distribution */}
-      <div className="mt-6 bg-card border border-border rounded-lg p-6">
-        <h3 className="text-base font-medium text-text-primary mb-4">
-          Trade Distribution
-        </h3>
+      <div className="grid grid-cols-1 gap-6">
         <TradeDistributionChart trades={filteredTrades} />
+        <PerformanceCharts trades={filteredTrades} timeframe={timeframe} />
       </div>
     </div>
   );

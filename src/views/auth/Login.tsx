@@ -1,22 +1,21 @@
 import { useState, useEffect, useRef } from "@/lib/hooks";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-hot-toast";
-import { validatePassword } from "@/utils/validation";
 import { FormInput } from "@/components/ui/FormInput";
 import { LoadingButton } from "@/components/LoadingButton";
 import { useAuthStore } from "@/stores/authStore";
 import { clearDeveloperMode } from "@/lib/utils/auth";
 import { Logo } from "@/components/ui";
+import { AuthLayout } from "@/components/auth/AuthLayout";
 
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const messageShownRef = useRef(false);
-  const { user, isLoading, isInitialized, signIn, signUp } = useAuthStore();
+  const { user, isLoading, isInitialized, signIn } = useAuthStore();
   const from = location.state?.from?.pathname || "/app/dashboard";
 
   // Clear developer mode on mount
@@ -43,46 +42,18 @@ export default function Login() {
     }
   }, [location, navigate]);
 
-  // Reset state when switching modes
-  const resetState = () => {
-    setEmail("");
-    setPassword("");
-    setError(null);
-  };
-
-  const validateForm = () => {
-    if (!email || !password) {
-      setError(new Error("Please enter both email and password"));
-      return false;
-    }
-
-    if (isSignUp) {
-      const passwordValidation = validatePassword(password);
-      if (!passwordValidation.isValid) {
-        setError(new Error(passwordValidation.errors[0]));
-        return false;
-      }
-    }
-
-    return true;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (!validateForm()) {
+    if (!email || !password) {
+      setError(new Error("Please enter both email and password"));
       return;
     }
 
     try {
-      if (isSignUp) {
-        await signUp(email, password);
-        toast.success("Account created successfully");
-      } else {
-        await signIn(email, password);
-        toast.success("Successfully logged in");
-      }
+      await signIn(email, password);
+      toast.success("Successfully logged in");
       // Navigation will be handled by the useEffect hook above
     } catch (err) {
       setError(err as Error);
@@ -90,77 +61,65 @@ export default function Login() {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-header">
-        <Logo className="h-12 w-auto mb-4" />
-        <h1 className="auth-title">Welcome to Trading Insights</h1>
-        <p className="auth-subtitle">
-          {isSignUp ? "Create your account" : "Sign in to your account"}
-        </p>
-      </div>
+    <AuthLayout
+      title="Welcome back"
+      subtitle="Sign in to your account"
+    >
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <FormInput
+          type="email"
+          label="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Enter your email"
+          required
+          autoComplete="email"
+        />
 
-      <div className="auth-card">
-        <form onSubmit={handleSubmit} className="auth-form">
-          <FormInput
-            type="email"
-            label="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter your email"
-            required
-            autoComplete="email"
-          />
+        <FormInput
+          type="password"
+          label="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Enter your password"
+          required
+          autoComplete="current-password"
+        />
 
-          <FormInput
-            type="password"
-            label="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder={isSignUp ? "Create a password" : "Enter your password"}
-            required
-            autoComplete={isSignUp ? "new-password" : "current-password"}
-          />
+        {error && (
+          <div className="text-sm text-error">
+            {error.message}
+          </div>
+        )}
 
-          {error && (
-            <div className="text-sm text-error">
-              {error.message}
-            </div>
-          )}
+        <div className="space-y-4">
+          <LoadingButton
+            type="submit"
+            isLoading={isLoading}
+            className="w-full bg-primary text-primary-foreground hover:opacity-90"
+          >
+            Sign In
+          </LoadingButton>
 
-          <div className="space-y-4">
-            <LoadingButton
-              type="submit"
-              isLoading={isLoading}
-              className="w-full bg-primary text-primary-foreground hover:opacity-90"
+          <div className="flex flex-col gap-2 text-center text-sm">
+            <button
+              type="button"
+              onClick={() => navigate("/auth/register")}
+              className="text-muted hover:text-default transition-colors"
             >
-              {isSignUp ? "Create Account" : "Sign In"}
-            </LoadingButton>
+              Don't have an account? Sign up
+            </button>
 
             <button
               type="button"
-              onClick={() => {
-                setIsSignUp(!isSignUp);
-                resetState();
-              }}
-              className="w-full text-sm text-muted hover:text-default transition-colors"
+              onClick={() => navigate("/auth/request-reset")}
+              className="text-muted hover:text-default transition-colors"
             >
-              {isSignUp
-                ? "Already have an account? Sign in"
-                : "Don't have an account? Sign up"}
+              Forgot your password?
             </button>
-
-            {!isSignUp && (
-              <button
-                type="button"
-                onClick={() => navigate("/auth/request-reset")}
-                className="w-full text-sm text-muted hover:text-default transition-colors"
-              >
-                Forgot your password?
-              </button>
-            )}
           </div>
-        </form>
-      </div>
-    </div>
+        </div>
+      </form>
+    </AuthLayout>
   );
 }

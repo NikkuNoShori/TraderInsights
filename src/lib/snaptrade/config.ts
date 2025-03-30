@@ -3,7 +3,7 @@
  * This file provides configuration for the SnapTrade service
  */
 
-import type { SnapTradeConfig } from './types';
+import { SnapTradeConfig } from "./types";
 
 /**
  * Get SnapTrade configuration from environment variables
@@ -15,16 +15,13 @@ export function getSnapTradeConfig(): SnapTradeConfig {
   const consumerSecret = import.meta.env.VITE_SNAPTRADE_CONSUMER_SECRET;
   const redirectUri = import.meta.env.VITE_SNAPTRADE_REDIRECT_URI;
 
-  if (!clientId) {
-    throw new Error('VITE_SNAPTRADE_CLIENT_ID is required');
-  }
-
-  if (!consumerSecret) {
-    throw new Error('VITE_SNAPTRADE_CONSUMER_SECRET is required');
-  }
-
-  if (!redirectUri) {
-    throw new Error('VITE_SNAPTRADE_REDIRECT_URI is required');
+  if (!clientId || !consumerSecret || !redirectUri) {
+    console.error("Missing required SnapTrade environment variables:", {
+      hasClientId: !!clientId,
+      hasConsumerSecret: !!consumerSecret,
+      hasRedirectUri: !!redirectUri,
+    });
+    throw new Error("Missing required SnapTrade configuration");
   }
 
   return {

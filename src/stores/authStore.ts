@@ -46,19 +46,22 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   signIn: async (email, password) => {
     set({ isLoading: true, error: null });
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       if (error) throw error;
+      if (!authData.user) throw new Error("No user data returned");
 
       // Fetch profile after successful sign in
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
+        .eq("id", authData.user.id)
         .single();
 
-      set({ profile });
+      if (profileError) throw profileError;
+      set({ user: authData.user, profile });
     } catch (error) {
       set({ error: error as Error });
       throw error;
@@ -85,7 +88,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
       // Create user profile
       const { error: profileError } = await supabase.from("profiles").insert([
         {
-          user_id: authData.user.id,
+          id: authData.user.id,
           username,
           full_name: fullName,
         },
@@ -123,11 +126,45 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
         set({ user: session?.user || null, error: null });
         // Fetch profile when signed in
         if (session?.user) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("*")
-            .single();
-          set({ profile });
+          try {
+            // First try to fetch the profile
+            const { data: profile, error: profileError } = await supabase
+              .from("profiles")
+              .select("*")
+              .eq("id", session.user.id)
+              .single();
+
+            if (profileError) {
+              // If profile doesn't exist, create one
+              if (profileError.code === "PGRST116") {
+                const { data: newProfile, error: createError } = await supabase
+                  .from("profiles")
+                  .insert([
+                    {
+                      id: session.user.id,
+                      username: session.user.email?.split("@")[0] || "user",
+                      full_name: session.user.user_metadata?.full_name || "",
+                    },
+                  ])
+                  .select()
+                  .single();
+
+                if (createError) {
+                  console.error("Error creating profile:", createError);
+                  return;
+                }
+
+                set({ profile: newProfile });
+                return;
+              }
+              console.error("Error fetching profile:", profileError);
+              return;
+            }
+
+            set({ profile });
+          } catch (error) {
+            console.error("Error in handleAuthStateChange:", error);
+          }
         }
         break;
       case "SIGNED_OUT":
