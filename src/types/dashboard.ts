@@ -10,7 +10,25 @@ export type DashboardCardType =
   | "total_trades"
   | "recent_trades"
   | "playbook"
-  | "max_drawdown_pct";
+  | "max_drawdown_pct"
+  // Broker Account Cards
+  | "portfolio_value"
+  | "cash_balance"
+  | "buying_power"
+  | "day_trading_status"
+  // Position Cards
+  | "positions_grid"
+  | "position_performance"
+  | "unrealized_pnl"
+  | "position_distribution"
+  // Balance Cards
+  | "cash_vs_invested"
+  | "buying_power_trend"
+  | "margin_usage"
+  // Order Cards
+  | "recent_orders"
+  | "order_status"
+  | "pending_orders";
 
 export interface DashboardCard {
   type: DashboardCardType;

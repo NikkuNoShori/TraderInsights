@@ -116,29 +116,27 @@ class SnapTradeServiceSingleton {
     this.ensureInitialized();
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/snaptrade-register`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({ userId }),
-        }
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to register user');
+      console.log(`Registering SnapTrade user: ${userId}`);
+      
+      if (!this.client) {
+        throw new Error('SnapTrade client not initialized');
       }
-
-      const data = await response.json();
+      
+      // Direct registration using the SnapTrade client
+      const response = await this.client.authentication.registerSnapTradeUser({
+        userId,
+      });
+      
+      console.log('SnapTrade API response:', response);
+      
+      if (!response.data?.userSecret) {
+        throw new Error('Failed to register user with SnapTrade: No userSecret returned');
+      }
       
       // Save user credentials
       const user: SnapTradeUser = {
-        userId: data.userId,
-        userSecret: data.userSecret
+        userId: userId,
+        userSecret: response.data.userSecret
       };
       
       StorageHelpers.saveUser(user);
@@ -215,12 +213,8 @@ class SnapTradeServiceSingleton {
     this.ensureInitialized();
 
     try {
-      const redirectUri = this.config?.redirectUri;
+      const redirectUri = this.config?.redirectUri || 'http://localhost:5173/snaptrade-callback';
       
-      if (!redirectUri) {
-        throw new Error('Redirect URI not configured');
-      }
-
       this.checkRateLimit(userId);
       const response = await this.client!.authentication.loginSnapTradeUser({
         userId,

@@ -14,6 +14,7 @@ import {
   LogOut,
   BarChart,
   TrendingUp,
+  Wallet,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { clsx } from "clsx";
@@ -53,6 +54,11 @@ const navCategories: NavCategory[] = [
         label: "Performance",
         icon: LineChart,
         href: "/app/performance",
+      },
+      {
+        label: "Trade Hub",
+        icon: Wallet,
+        href: "/app/trade-hub",
       },
     ],
   },

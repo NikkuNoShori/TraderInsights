@@ -22,14 +22,23 @@ export function FilterBar() {
   const { filters, toggleBroker, clearFilters, setTimeframe } = useFilterStore();
   const [isOpen, setIsOpen] = useState(false);
 
-  const activeFilterCount = Object.values(filters).filter((value) =>
-    Array.isArray(value) ? value.length > 0 : value !== undefined,
-  ).length;
+  const activeFilterCount = Object.entries(filters)
+    .filter(([key, value]) => {
+      // Exclude timeframe from the count
+      if (key === 'timeframe') return false;
+      
+      // Count arrays only if they have elements
+      if (Array.isArray(value)) return value.length > 0;
+      
+      // Count other defined values
+      return value !== undefined;
+    })
+    .length;
 
   return (
     <div className="flex items-center gap-2">
       <TimeframeSelector
-        value={filters.timeframe || "1M"}
+        value={filters.timeframe || "ALL"}
         onValueChange={setTimeframe}
         className="w-[120px]"
       />

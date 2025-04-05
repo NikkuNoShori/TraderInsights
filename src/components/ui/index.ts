@@ -26,6 +26,7 @@ export * from "./select";
 export * from "./Skeleton";
 export * from "./Spinner";
 export * from "./switch";
+export * from "./table";
 export * from "./tabs";
 export * from "./TimeframeSelector";
 export * from "./ToggleButton";

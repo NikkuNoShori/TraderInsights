@@ -36,7 +36,7 @@ const defaultFilters: TradeFilters = {
   setupTypes: [],
   strategies: [],
   winLoss: undefined,
-  timeframe: "1M",
+  timeframe: "ALL",
 };
 
 // Generate a new session ID

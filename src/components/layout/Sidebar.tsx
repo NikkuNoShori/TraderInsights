@@ -3,6 +3,7 @@ import { MainNav } from "@/components/navigation/MainNav";
 import { UserMenu } from "./UserMenu";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { clsx } from "clsx";
+import { BarChart3 } from "lucide-react";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -10,6 +11,18 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
+  // Add the broker dashboard to the navigation items
+  const navigationItems = [
+    // ... existing items ...
+    {
+      name: "Broker Dashboard",
+      href: "/broker-dashboard",
+      icon: BarChart3,
+      current: false,
+    },
+    // ... existing items ...
+  ];
+
   return (
     <aside
       className={clsx(
