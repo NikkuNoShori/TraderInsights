@@ -15,7 +15,7 @@ export function createSnapTradeClient(config: SnapTradeConfig): Snaptrade {
   console.log('Creating SnapTrade client with config:', {
     clientId: config.clientId,
     hasConsumerSecret: !!config.consumerSecret,
-    redirectUri: config.redirectUri,
+    hasRedirectUri: !!config.redirectUri,
     environment: process.env.VITE_APP_ENV
   });
 

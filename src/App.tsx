@@ -22,6 +22,7 @@ import Performance from "./views/Performance";
 import ComingSoon from "./views/ComingSoon";
 import Playbook from "./views/Playbook";
 import { useResetFilters } from "./hooks/useResetFilters";
+import BrokerDashboard from "./pages/BrokerDashboard";
 
 function ProtectedLayout() {
   useResetFilters();
@@ -61,6 +62,7 @@ export default function App() {
               <Route path="journal" element={<TradingJournal />} />
               <Route path="journal/:id" element={<TradeDetails />} />
               <Route path="performance" element={<Performance />} />
+              <Route path="broker-dashboard" element={<BrokerDashboard />} />
               <Route path="settings/*" element={<Settings />} />
 
               {/* Coming Soon Features */}

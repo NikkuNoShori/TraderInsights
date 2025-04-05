@@ -215,12 +215,8 @@ class SnapTradeServiceSingleton {
     this.ensureInitialized();
 
     try {
-      const redirectUri = this.config?.redirectUri;
+      const redirectUri = this.config?.redirectUri || 'http://localhost:5173/snaptrade-callback';
       
-      if (!redirectUri) {
-        throw new Error('Redirect URI not configured');
-      }
-
       this.checkRateLimit(userId);
       const response = await this.client!.authentication.loginSnapTradeUser({
         userId,

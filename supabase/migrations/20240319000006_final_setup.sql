@@ -69,7 +69,7 @@ CREATE POLICY "Developer mode bypass for screener presets"
   ON public.screener_presets
   USING (auth.is_dev_mode() OR auth.uid() = user_id);
 
--- Create test users
+-- Create test users including developer user
 INSERT INTO auth.users (
   instance_id,
   id,
@@ -86,6 +86,27 @@ INSERT INTO auth.users (
   email_change_token_new,
   recovery_token
 ) VALUES 
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '00000000-0000-0000-0000-000000000000',
+    'authenticated',
+    'authenticated',
+    'developer@stackblitz.com',
+    crypt('dev123', gen_salt('bf')),
+    now(),
+    jsonb_build_object(
+      'first_name', 'Developer',
+      'last_name', 'Mode',
+      'username', 'developer',
+      'role', 'developer'
+    ),
+    now(),
+    now(),
+    '',
+    '',
+    '',
+    ''
+  ),
   (
     '00000000-0000-0000-0000-000000000000',
     '11111111-1111-1111-1111-111111111111',
@@ -151,7 +172,7 @@ INSERT INTO auth.users (
   )
 ON CONFLICT (id) DO NOTHING;
 
--- Insert developer user into profiles if not exists
+-- Insert developer user into profiles if not exists (now user exists in auth.users)
 INSERT INTO public.profiles (
   id,
   email,
