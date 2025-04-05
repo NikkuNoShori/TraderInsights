@@ -41,19 +41,68 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
   signIn: async (email, password) => {
     set({ isLoading: true, error: null });
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       if (error) throw error;
 
+      if (!authData?.user) {
+        throw new Error("No user data returned from sign in");
+      }
+
+      // Skip profile fetch and use default profile
+      const defaultProfile = {
+        id: authData.user.id,
+        email: authData.user.email,
+        username: authData.user.email?.split('@')[0] || 'user',
+        first_name: '',
+        last_name: '',
+        role: 'user',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      set({ profile: defaultProfile });
+
+      /* Commenting out profile fetch for now due to 406 errors
       // Fetch profile after successful sign in
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
+        .eq("id", authData.user.id)
         .single();
 
-      set({ profile });
+      if (profileError) {
+        console.warn("Error fetching profile during sign in:", profileError.message);
+        // Create a basic profile from user data if we can't fetch it
+        const basicProfile = {
+          id: authData.user.id,
+          email: authData.user.email,
+          username: authData.user.email?.split('@')[0] || 'user',
+          first_name: '',
+          last_name: '',
+          role: 'user',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        set({ profile: basicProfile });
+        
+        // Try to create the profile if it doesn't exist
+        if (profileError.message.includes("no rows")) {
+          const { error: insertError } = await supabase
+            .from("profiles")
+            .insert([basicProfile]);
+            
+          if (insertError) {
+            console.error("Failed to create profile during sign in:", insertError);
+          } else {
+            console.log("Profile created successfully during sign in");
+          }
+        }
+      } else {
+        set({ profile });
+      }
+      */
     } catch (error) {
       set({ error: error as Error });
       throw error;
@@ -96,15 +145,68 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => ({
     switch (event) {
       case "SIGNED_IN":
         set({ user: session?.user || null, error: null });
-        // Fetch profile when signed in
+        // Create a basic profile directly from user data without fetching
         if (session?.user) {
+          // Skip profile fetch and directly use user data as profile
+          const defaultProfile = {
+            id: session.user.id,
+            email: session.user.email,
+            username: session.user.email?.split('@')[0] || 'user',
+            first_name: '',
+            last_name: '',
+            role: 'user',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+          set({ profile: defaultProfile });
+          
+          /* Commenting out profile fetch for now due to 406 errors
           supabase
             .from("profiles")
             .select("*")
+            .eq("id", session.user.id)
             .single()
-            .then(({ data }) => {
-              set({ profile: data });
+            .then(({ data, error }) => {
+              if (error) {
+                console.warn("Error fetching profile:", error.message);
+                // Create a basic profile from user data if we can't fetch it
+                const basicProfile = session.user ? {
+                  id: session.user.id,
+                  email: session.user.email,
+                  username: session.user.email?.split('@')[0] || 'user',
+                  first_name: '',
+                  last_name: '',
+                  role: 'user',
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+                } : null;
+                set({ profile: basicProfile });
+                
+                // Try to create the profile if it doesn't exist
+                if (error.message.includes("no rows")) {
+                  supabase
+                    .from("profiles")
+                    .insert([basicProfile])
+                    .then(({ error: insertError }) => {
+                      if (insertError) {
+                        console.error("Failed to create profile:", insertError);
+                      } else {
+                        console.log("Profile created successfully");
+                      }
+                    });
+                }
+              } else {
+                set({ profile: data });
+              }
+            })
+            .catch(error => {
+              console.error("Failed to fetch profile:", error);
+              set({ 
+                error: new Error("Failed to fetch user profile"),
+                profile: null
+              });
             });
+          */
         }
         break;
       case "SIGNED_OUT":

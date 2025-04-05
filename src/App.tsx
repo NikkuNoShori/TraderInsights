@@ -22,7 +22,7 @@ import Performance from "./views/Performance";
 import ComingSoon from "./views/ComingSoon";
 import Playbook from "./views/Playbook";
 import { useResetFilters } from "./hooks/useResetFilters";
-import BrokerDashboard from "./pages/BrokerDashboard";
+import TradeHub from "./pages/TradeHub";
 
 function ProtectedLayout() {
   useResetFilters();
@@ -62,8 +62,11 @@ export default function App() {
               <Route path="journal" element={<TradingJournal />} />
               <Route path="journal/:id" element={<TradeDetails />} />
               <Route path="performance" element={<Performance />} />
-              <Route path="broker-dashboard" element={<BrokerDashboard />} />
+              <Route path="trade-hub" element={<TradeHub />} />
               <Route path="settings/*" element={<Settings />} />
+
+              {/* Legacy route - redirect to new path */}
+              <Route path="broker-dashboard" element={<Navigate to="/app/trade-hub" replace />} />
 
               {/* Coming Soon Features */}
               <Route path="playbook" element={<ComingSoon />} />

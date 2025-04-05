@@ -11,7 +11,8 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "test:snaptrade": "tsx scripts/test-snaptrade.ts",
-    "init-db": "node scripts/init-db.js"
+    "init-db": "node scripts/init-db.js",
+    "check-profiles": "node scripts/check-profiles.js"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.7.1",

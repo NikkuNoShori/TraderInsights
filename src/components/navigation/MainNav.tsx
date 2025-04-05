@@ -56,9 +56,9 @@ const navCategories: NavCategory[] = [
         href: "/app/performance",
       },
       {
-        label: "Broker Dashboard",
+        label: "Trade Hub",
         icon: Wallet,
-        href: "/app/broker-dashboard",
+        href: "/app/trade-hub",
       },
     ],
   },

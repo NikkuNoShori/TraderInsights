@@ -38,7 +38,7 @@ export function FilterBar() {
   return (
     <div className="flex items-center gap-2">
       <TimeframeSelector
-        value={filters.timeframe || "1M"}
+        value={filters.timeframe || "ALL"}
         onValueChange={setTimeframe}
         className="w-[120px]"
       />
