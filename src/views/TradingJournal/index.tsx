@@ -16,14 +16,12 @@ import { TradeModal } from "@/components/trades/TradeModal";
 import { useTradeStore } from "@/stores/tradeStore";
 import { useAuthStore } from "@/stores/authStore";
 import { calculatePnL } from "@/utils/trade";
-import { useNavigate } from "react-router-dom";
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100, -1] as const;
 type PageSize = (typeof PAGE_SIZE_OPTIONS)[number];
 const DEFAULT_PAGE_SIZE = PAGE_SIZE_OPTIONS[0];
 
 export default function TradingJournal() {
-  const navigate = useNavigate();
   const { user } = useAuthStore();
   const { trades, isLoading, fetchTrades, addTrade, updateTrade, deleteTrade } =
     useTradeStore();
@@ -146,11 +144,6 @@ export default function TradingJournal() {
     }
   };
 
-  // Redirect to Trade Hub with manual entry tab active
-  const handleAddTradeClick = () => {
-    navigate('/app/trade-hub', { state: { activeTab: 'manual-entry' } });
-  };
-
   return (
     <div className="flex-grow p-6">
       <div className="flex items-center justify-between mb-6">
@@ -158,7 +151,10 @@ export default function TradingJournal() {
         <div className="flex items-center gap-2">
           <FilterBar />
           <Button
-            onClick={handleAddTradeClick}
+            onClick={() => {
+              setSelectedTrade(null);
+              setIsModalOpen(true);
+            }}
             className="bg-primary/90 text-primary-foreground hover:bg-primary/80 transition-colors"
           >
             <Plus className="h-4 w-4 mr-2" />

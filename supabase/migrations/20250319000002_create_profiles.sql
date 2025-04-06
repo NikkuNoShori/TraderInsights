@@ -5,8 +5,8 @@ DROP TABLE IF EXISTS public.profiles CASCADE;
 CREATE TABLE IF NOT EXISTS public.profiles (
   id uuid REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
   email text UNIQUE NOT NULL,
-  first_name text NOT NULL,
-  last_name text NOT NULL,
+  first_name text,
+  last_name text,
   username text UNIQUE,
   username_changes_remaining INTEGER DEFAULT 2,
   last_username_change TIMESTAMPTZ,
@@ -27,6 +27,22 @@ CREATE POLICY "Users can view their own profile"
 CREATE POLICY "Users can update their own profile"
   ON public.profiles FOR UPDATE
   USING ( auth.uid() = id );
+
+-- Create profile on signup trigger function
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, email)
+  VALUES (NEW.id, NEW.email);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create profile on signup trigger
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_new_user();
 
 -- Create username validation function
 CREATE OR REPLACE FUNCTION validate_username()
