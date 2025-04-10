@@ -3,25 +3,24 @@
  * This service provides methods for interacting with the SnapTrade API
  */
 
-import { createSnapTradeClient } from '@/lib/snaptrade/client';
-import { StorageHelpers, STORAGE_KEYS } from '@/lib/snaptrade/storage';
-import { RateLimiter } from '@/lib/snaptrade/rateLimiter';
-import { getSnapTradeConfig } from '@/lib/snaptrade/config';
-import { 
-  SnapTradeConfig, 
-  SnapTradeUser, 
-  SnapTradeConnection, 
-  SnapTradeAccount, 
-  SnapTradePosition, 
-  SnapTradeBalance, 
+import { StorageHelpers } from "@/lib/snaptrade/storage";
+import { RateLimiter } from "@/lib/snaptrade/rateLimiter";
+import { getSnapTradeConfig } from "@/lib/snaptrade/config";
+import {
+  SnapTradeConfig,
+  SnapTradeUser,
+  SnapTradeConnection,
+  SnapTradeAccount,
+  SnapTradePosition,
+  SnapTradeBalance,
   SnapTradeOrder,
-  ConnectionStatus
-} from '@/lib/snaptrade/types';
+  ConnectionStatus,
+} from "@/lib/snaptrade/types";
 
 class RateLimitError extends Error {
   constructor(resetAt: number) {
-    super('Rate limit exceeded');
-    this.name = 'RateLimitError';
+    super("Rate limit exceeded");
+    this.name = "RateLimitError";
     this.resetAt = resetAt;
   }
   resetAt: number;
@@ -32,13 +31,11 @@ class RateLimitError extends Error {
  */
 class SnapTradeServiceSingleton {
   private static instance: SnapTradeServiceSingleton;
-  private client: ReturnType<typeof createSnapTradeClient> | null = null;
   private config: SnapTradeConfig | null = null;
   private initialized = false;
   private rateLimiter: RateLimiter;
 
   private constructor() {
-    // Private constructor to enforce singleton pattern
     this.rateLimiter = RateLimiter.getInstance();
   }
 
@@ -64,11 +61,10 @@ class SnapTradeServiceSingleton {
 
     this.config = {
       clientId: config.clientId,
-      consumerSecret: config.consumerSecret,
+      consumerKey: config.consumerKey,
       redirectUri: config.redirectUri,
     };
 
-    this.client = createSnapTradeClient(this.config);
     this.initialized = true;
   }
 
@@ -76,8 +72,8 @@ class SnapTradeServiceSingleton {
    * Check if the service is initialized
    */
   private ensureInitialized(): void {
-    if (!this.initialized || !this.client) {
-      throw new Error('SnapTrade service not initialized. Call init() first.');
+    if (!this.initialized) {
+      throw new Error("SnapTrade service not initialized. Call init() first.");
     }
   }
 
@@ -97,7 +93,7 @@ class SnapTradeServiceSingleton {
   public getConfig(): SnapTradeConfig {
     this.ensureInitialized();
     if (!this.config) {
-      throw new Error('SnapTrade service not configured');
+      throw new Error("SnapTrade service not configured");
     }
     return this.config;
   }
@@ -117,33 +113,42 @@ class SnapTradeServiceSingleton {
 
     try {
       console.log(`Registering SnapTrade user: ${userId}`);
-      
-      if (!this.client) {
-        throw new Error('SnapTrade client not initialized');
-      }
-      
-      // Direct registration using the SnapTrade client
-      const response = await this.client.authentication.registerSnapTradeUser({
-        userId,
+
+      const response = await fetch("/api/snaptrade/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId }),
       });
-      
-      console.log('SnapTrade API response:', response);
-      
-      if (!response.data?.userSecret) {
-        throw new Error('Failed to register user with SnapTrade: No userSecret returned');
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
+      const data = await response.json();
+
+      if (!data?.userSecret) {
+        throw new Error(
+          "Failed to register user with SnapTrade: No userSecret returned"
+        );
+      }
+
       // Save user credentials
       const user: SnapTradeUser = {
         userId: userId,
-        userSecret: response.data.userSecret
+        userSecret: data.userSecret,
       };
-      
+
       StorageHelpers.saveUser(user);
-      console.log('User registered successfully:', userId);
+      console.log("User registered successfully:", userId);
     } catch (error) {
-      console.error('Failed to register user:', error);
-      throw new Error(`Failed to register user: ${error instanceof Error ? error.message : String(error)}`);
+      console.error("Failed to register user:", error);
+      throw new Error(
+        `Failed to register user: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   }
 
@@ -163,24 +168,32 @@ class SnapTradeServiceSingleton {
 
     try {
       const user = this.getUser();
-      
+
       if (!user) {
-        throw new Error('No user registered');
+        throw new Error("No user registered");
       }
-      
-      await this.client!.authentication.deleteSnapTradeUser({
-        userId,
+
+      await fetch("/api/snaptrade/delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId }),
       });
-      
+
       // If the deleted user is the current user, clear credentials
       if (user.userId === userId) {
         StorageHelpers.clearAll();
       }
-      
-      console.log('User deleted successfully:', userId);
+
+      console.log("User deleted successfully:", userId);
     } catch (error) {
-      console.error('Failed to delete user:', error);
-      throw new Error(`Failed to delete user: ${error instanceof Error ? error.message : String(error)}`);
+      console.error("Failed to delete user:", error);
+      throw new Error(
+        `Failed to delete user: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   }
 
@@ -193,15 +206,22 @@ class SnapTradeServiceSingleton {
     try {
       const user = this.getUser();
       if (!user) {
-        throw new Error('No user registered');
+        throw new Error("No user registered");
       }
 
       this.checkRateLimit(user.userId);
-      const response = await this.client!.referenceData.listAllBrokerages();
+
+      const response = await fetch("/api/snaptrade/brokerages");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
       this.rateLimiter.incrementRequestCount(user.userId);
-      return response.data || [];
+
+      return data || [];
     } catch (error) {
-      console.error('Failed to get brokerages:', error);
+      console.error("Failed to get brokerages:", error);
       throw error;
     }
   }
@@ -209,26 +229,29 @@ class SnapTradeServiceSingleton {
   /**
    * Create a connection link for a user to connect their brokerage account
    */
-  public async createConnectionLink(userId: string, userSecret: string): Promise<any> {
+  public async createConnectionLink(
+    userId: string,
+    userSecret: string
+  ): Promise<string> {
     this.ensureInitialized();
 
     try {
-      const redirectUri = this.config?.redirectUri || 'http://localhost:5173/snaptrade-callback';
-      
-      this.checkRateLimit(userId);
-      const response = await this.client!.authentication.loginSnapTradeUser({
-        userId,
-        userSecret,
+      const response = await fetch("/api/snaptrade/connection-link", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId, userSecret }),
       });
-      this.rateLimiter.incrementRequestCount(userId);
-      
-      if (!response.data) {
-        throw new Error('Failed to get login link');
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      return response.data;
+      const data = await response.json();
+      return data.redirectUri || data.url;
     } catch (error) {
-      console.error('Failed to create connection link:', error);
+      console.error("Failed to create connection link:", error);
       throw error;
     }
   }
@@ -241,18 +264,21 @@ class SnapTradeServiceSingleton {
 
     try {
       const user = this.getUser();
-      
+
       if (!user) {
-        throw new Error('No user registered');
+        throw new Error("No user registered");
       }
-      
-      const response = await this.client!.connections.listBrokerageAuthorizations({
-        userId: user.userId,
-        userSecret: user.userSecret,
-      });
+
+      const response = await fetch("/api/snaptrade/connections");
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
 
       // Transform the response to match our SnapTradeConnection type
-      const connections: SnapTradeConnection[] = (response.data || []).map((auth: any) => ({
+      const connections: SnapTradeConnection[] = data.map((auth: any) => ({
         id: auth.id,
         brokerageId: auth.brokerageId,
         brokerageName: auth.brokerageName,
@@ -264,8 +290,12 @@ class SnapTradeServiceSingleton {
       StorageHelpers.saveConnections(connections);
       return connections;
     } catch (error) {
-      console.error('Failed to get user connections:', error);
-      throw new Error(`Failed to get user connections: ${error instanceof Error ? error.message : String(error)}`);
+      console.error("Failed to get user connections:", error);
+      throw new Error(
+        `Failed to get user connections: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   }
 
@@ -277,18 +307,20 @@ class SnapTradeServiceSingleton {
 
     try {
       const user = this.getUser();
-      
+
       if (!user) {
-        throw new Error('No user registered');
+        throw new Error("No user registered");
       }
-      
-      await this.client!.connections.removeBrokerageAuthorization({
-        userId: user.userId,
-        userSecret: user.userSecret,
-        authorizationId: connectionId,
+
+      await fetch("/api/snaptrade/connection", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId: user.userId, connectionId }),
       });
     } catch (error) {
-      console.error('Failed to delete connection:', error);
+      console.error("Failed to delete connection:", error);
       throw error;
     }
   }
@@ -301,39 +333,64 @@ class SnapTradeServiceSingleton {
 
     try {
       const user = this.getUser();
-      
+
       if (!user) {
-        throw new Error('No user registered');
+        throw new Error("No user registered");
       }
-      
-      const accounts = await this.client!.getUserAccounts(user.userId, user.userSecret);
-      StorageHelpers.saveAccounts(accounts);
-      return accounts;
+
+      const response = await fetch("/api/snaptrade/accounts");
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      StorageHelpers.saveAccounts(data);
+      return data;
     } catch (error) {
-      console.error('Failed to get user accounts:', error);
-      throw new Error(`Failed to get user accounts: ${error instanceof Error ? error.message : String(error)}`);
+      console.error("Failed to get user accounts:", error);
+      throw new Error(
+        `Failed to get user accounts: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   }
 
   /**
    * Get account holdings
    */
-  public async getAccountHoldings(accountId: string): Promise<SnapTradePosition[]> {
+  public async getAccountHoldings(
+    accountId: string
+  ): Promise<SnapTradePosition[]> {
     this.ensureInitialized();
 
     try {
       const user = this.getUser();
-      
+
       if (!user) {
-        throw new Error('No user registered');
+        throw new Error("No user registered");
       }
 
       this.checkRateLimit(user.userId);
-      const holdings = await this.client!.getAccountHoldings(user.userId, user.userSecret, accountId);
+      const response = await fetch("/api/snaptrade/holdings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId: user.userId, accountId }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
       this.rateLimiter.incrementRequestCount(user.userId);
-      return holdings;
+      return data || [];
     } catch (error) {
-      console.error('Failed to get account holdings:', error);
+      console.error("Failed to get account holdings:", error);
       throw error;
     }
   }
@@ -341,22 +398,40 @@ class SnapTradeServiceSingleton {
   /**
    * Get account balances
    */
-  public async getAccountBalances(accountId: string): Promise<SnapTradeBalance[]> {
+  public async getAccountBalances(
+    accountId: string
+  ): Promise<SnapTradeBalance[]> {
     this.ensureInitialized();
 
     try {
       const user = this.getUser();
-      
+
       if (!user) {
-        throw new Error('No user registered');
+        throw new Error("No user registered");
       }
-      
-      const balances = await this.client!.getAccountBalances(user.userId, user.userSecret, accountId);
-      this.saveBalances(balances);
-      return balances;
+
+      const response = await fetch("/api/snaptrade/balances", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId: user.userId, accountId }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      this.saveBalances(data);
+      return data;
     } catch (error) {
-      console.error('Failed to get account balances:', error);
-      throw new Error(`Failed to get account balances: ${error instanceof Error ? error.message : String(error)}`);
+      console.error("Failed to get account balances:", error);
+      throw new Error(
+        `Failed to get account balances: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   }
 
@@ -368,17 +443,29 @@ class SnapTradeServiceSingleton {
 
     try {
       const user = this.getUser();
-      
+
       if (!user) {
-        throw new Error('No user registered');
+        throw new Error("No user registered");
       }
 
       this.checkRateLimit(user.userId);
-      const orders = await this.client!.getAccountOrders(user.userId, user.userSecret, accountId);
+      const response = await fetch("/api/snaptrade/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId: user.userId, accountId }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
       this.rateLimiter.incrementRequestCount(user.userId);
-      return orders;
+      return data || [];
     } catch (error) {
-      console.error('Failed to get account orders:', error);
+      console.error("Failed to get account orders:", error);
       throw error;
     }
   }
@@ -386,17 +473,24 @@ class SnapTradeServiceSingleton {
   /**
    * Sync all user data (connections and accounts)
    */
-  public async syncAllData(): Promise<{ connections: SnapTradeConnection[], accounts: SnapTradeAccount[] }> {
+  public async syncAllData(): Promise<{
+    connections: SnapTradeConnection[];
+    accounts: SnapTradeAccount[];
+  }> {
     this.ensureInitialized();
 
     try {
       const connections = await this.getUserConnections();
       const accounts = await this.getUserAccounts();
-      
+
       return { connections, accounts };
     } catch (error) {
-      console.error('Failed to sync all data:', error);
-      throw new Error(`Failed to sync all data: ${error instanceof Error ? error.message : String(error)}`);
+      console.error("Failed to sync all data:", error);
+      throw new Error(
+        `Failed to sync all data: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   }
 
@@ -405,7 +499,7 @@ class SnapTradeServiceSingleton {
    * @param balances Account balances
    */
   private saveBalances(balances: SnapTradeBalance[]): void {
-    StorageHelpers.setItem(STORAGE_KEYS.BALANCES, JSON.stringify(balances));
+    StorageHelpers.setItem("balances", JSON.stringify(balances));
   }
 
   /**
@@ -418,7 +512,10 @@ class SnapTradeServiceSingleton {
   /**
    * Get rate limit info
    */
-  public getRateLimitInfo(): { remaining: number; timeUntilReset: number } | null {
+  public getRateLimitInfo(): {
+    remaining: number;
+    timeUntilReset: number;
+  } | null {
     const user = this.getUser();
     if (!user) return null;
 
@@ -430,11 +527,24 @@ class SnapTradeServiceSingleton {
   }
 }
 
-export const snapTradeService = SnapTradeServiceSingleton.getInstance();
+// Initialize the singleton instance with environment variables
+const snapTradeService = SnapTradeServiceSingleton.getInstance();
 
-try {
-  const config = getSnapTradeConfig();
-  snapTradeService.initialize(config);
-} catch (error) {
-  console.error('Failed to initialize SnapTrade service:', error);
-} 
+// Initialize with environment variables
+const config = {
+  clientId: import.meta.env.VITE_SNAPTRADE_CLIENT_ID || "",
+  consumerKey: import.meta.env.VITE_SNAPTRADE_CONSUMER_KEY || "",
+  redirectUri:
+    import.meta.env.VITE_SNAPTRADE_REDIRECT_URI ||
+    `${window.location.origin}/broker-callback`,
+};
+
+console.log("Initializing SnapTrade service with config:", {
+  hasClientId: !!config.clientId,
+  hasConsumerKey: !!config.consumerKey,
+  redirectUri: config.redirectUri,
+});
+
+snapTradeService.initialize(config);
+
+export { snapTradeService }; 

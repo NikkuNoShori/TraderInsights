@@ -24,6 +24,11 @@ export function BrokerList({ config, onSelect }: BrokerListProps) {
   const snapTradeService = new SnapTradeService(config);
 
   useEffect(() => {
+    console.log('BrokerList mounted with config:', {
+      hasClientId: !!config.clientId,
+      hasConsumerSecret: !!config.consumerSecret,
+      redirectUri: config.redirectUri
+    });
     loadBrokers();
   }, []);
 
@@ -32,6 +37,7 @@ export function BrokerList({ config, onSelect }: BrokerListProps) {
       setIsLoading(true);
       setError(null);
 
+      console.log('Starting to load brokers...');
       const brokerList = await snapTradeService.getBrokerages();
       console.log('Raw broker list:', JSON.stringify(brokerList, null, 2));
       
@@ -43,6 +49,8 @@ export function BrokerList({ config, onSelect }: BrokerListProps) {
           typeof broker.description === 'string'
         );
       
+      console.log('Filtered valid brokers:', validBrokers.length);
+      
       // Log Webull specifically if found
       const webull = validBrokers.find(b => b.name.toLowerCase().includes('webull'));
       if (webull) {
@@ -51,8 +59,13 @@ export function BrokerList({ config, onSelect }: BrokerListProps) {
 
       setBrokers(validBrokers);
     } catch (err) {
-      setError('Failed to load brokers. Please try again later.');
-      console.error('Error loading brokers:', err);
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.error('Error loading brokers:', {
+        error: err,
+        message: errorMessage,
+        stack: err instanceof Error ? err.stack : undefined
+      });
+      setError(`Failed to load brokers: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
@@ -62,6 +75,7 @@ export function BrokerList({ config, onSelect }: BrokerListProps) {
     return (
       <div className="text-center py-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="mt-2 text-gray-600">Loading available brokers...</p>
       </div>
     );
   }
@@ -69,15 +83,28 @@ export function BrokerList({ config, onSelect }: BrokerListProps) {
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-        {error}
+        <p className="font-semibold">Error Loading Brokers</p>
+        <p className="text-sm mt-1">{error}</p>
+        <button 
+          onClick={loadBrokers}
+          className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
+        >
+          Try Again
+        </button>
       </div>
     );
   }
 
   if (brokers.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-600">
-        No brokers available at the moment.
+      <div className="text-center py-8">
+        <p className="text-gray-600">No brokers available at the moment.</p>
+        <button 
+          onClick={loadBrokers}
+          className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
+        >
+          Refresh List
+        </button>
       </div>
     );
   }

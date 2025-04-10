@@ -1,0 +1,28 @@
+:root {
+  /* Base layers */
+  --z-background: 0;
+  --z-default: 1;
+  
+  /* Navigation and layout */
+  --z-nav: 40;
+  --z-nav-dropdown: 45;
+  
+  /* Interactive elements */
+  --z-dropdown: 50;
+  --z-tooltip: 55;
+  --z-popover: 60;
+  
+  /* Overlays */
+  --z-modal: 70;
+  --z-dialog: 80;
+  --z-alert: 90;
+  
+  /* Top-level elements */
+  --z-toast: 100;
+  --z-dev-tools: 999;
+}
+
+/* Usage example:
+.nav { z-index: var(--z-nav); }
+.dropdown { z-index: var(--z-dropdown); }
+*/ 

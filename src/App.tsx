@@ -22,7 +22,7 @@ import Performance from "./views/Performance";
 import ComingSoon from "./views/ComingSoon";
 import Playbook from "./views/Playbook";
 import { useResetFilters } from "./hooks/useResetFilters";
-import BrokerDashboard from "./pages/BrokerDashboard";
+import BrokerDashboard from "./components/BrokerDashboard";
 
 function ProtectedLayout() {
   useResetFilters();

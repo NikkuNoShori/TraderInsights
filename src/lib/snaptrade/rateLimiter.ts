@@ -15,10 +15,16 @@ export class RateLimiter {
   private config: RateLimitConfig;
 
   private constructor() {
-    // Get rate limit configuration from environment variables or use defaults
-    const maxRequests = parseInt(process.env.NEXT_PUBLIC_SNAPTRADE_RATE_LIMIT_MAX || '5', 10);
-    const windowMinutes = parseInt(process.env.NEXT_PUBLIC_SNAPTRADE_RATE_LIMIT_WINDOW || '15', 10);
-    
+    // Get rate limit configuration from environment variables
+    const maxRequests = parseInt(
+      import.meta.env.VITE_SNAPTRADE_RATE_LIMIT_MAX || "5",
+      10
+    );
+    const windowMinutes = parseInt(
+      import.meta.env.VITE_SNAPTRADE_RATE_LIMIT_WINDOW || "15",
+      10
+    );
+
     this.config = {
       maxRequests,
       windowMs: windowMinutes * 60 * 1000,
