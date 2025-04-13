@@ -7,6 +7,13 @@ export const serverEnv = {
   apiRateLimit: parseInt(process.env.VITE_API_RATE_LIMIT || "100"),
   supabaseUrl: process.env.VITE_SUPABASE_URL,
   supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY,
+  snapTrade: {
+    clientId: process.env.VITE_SNAPTRADE_CLIENT_ID,
+    consumerKey: process.env.VITE_SNAPTRADE_CONSUMER_KEY,
+    redirectUri:
+      process.env.VITE_SNAPTRADE_REDIRECT_URI ||
+      "http://localhost:5173/broker-callback",
+  },
 };
 
 // Validate required environment variables
@@ -14,6 +21,8 @@ const requiredVars = [
   "VITE_SUPABASE_URL",
   "VITE_SUPABASE_ANON_KEY",
   "VITE_APP_ENV",
+  "VITE_SNAPTRADE_CLIENT_ID",
+  "VITE_SNAPTRADE_CONSUMER_KEY",
 ] as const;
 
 const missing = requiredVars.filter((key) => !process.env[key]);

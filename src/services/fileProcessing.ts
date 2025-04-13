@@ -1,5 +1,5 @@
-import * as XLSX from "xlsx";
 import { parse } from "papaparse";
+import ExcelJS from "exceljs";
 import type {
   Trade,
   TradeType,
@@ -34,7 +34,7 @@ interface RawTradeData {
 
 export async function processTradeFile(
   file: File,
-  onProgress: ProgressCallback,
+  onProgress: ProgressCallback
 ): Promise<ProcessedTradeData> {
   const fileType = file.name.split(".").pop()?.toLowerCase();
 
@@ -62,7 +62,7 @@ export async function processTradeFile(
     throw new Error(
       `Failed to process file: ${
         error instanceof Error ? error.message : "Unknown error"
-      }`,
+      }`
     );
   }
 }
@@ -79,23 +79,61 @@ async function processCsvFile(file: File): Promise<RawTradeData[]> {
 }
 
 async function processExcelFile(file: File): Promise<RawTradeData[]> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
+  return new Promise(async (resolve, reject) => {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(arrayBuffer);
 
-    reader.onload = (e) => {
-      try {
-        const data = e.target?.result;
-        const workbook = XLSX.read(data, { type: "binary" });
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(firstSheet);
-        resolve(jsonData as RawTradeData[]);
-      } catch (error) {
-        reject(error);
+      const worksheet = workbook.worksheets[0];
+      if (!worksheet) {
+        throw new Error("No worksheet found in Excel file");
       }
-    };
 
-    reader.onerror = () => reject(new Error("Failed to read file"));
-    reader.readAsBinaryString(file);
+      const headers: string[] = [];
+      const data: RawTradeData[] = [];
+
+      // Get headers from the first row
+      worksheet.getRow(1).eachCell((cell, colNumber) => {
+        headers[colNumber - 1] = cell.value?.toString() || `Column${colNumber}`;
+      });
+
+      // Process each row
+      worksheet.eachRow((row, rowNumber) => {
+        // Skip header row
+        if (rowNumber === 1) return;
+
+        const rowData: any = {};
+        row.eachCell((cell, colNumber) => {
+          const header = headers[colNumber - 1];
+          let value = cell.value;
+
+          // Handle different cell types
+          if (cell.type === ExcelJS.ValueType.Date) {
+            value = (cell.value as Date).toISOString();
+          } else if (cell.type === ExcelJS.ValueType.Number) {
+            value = Number(cell.value);
+          } else {
+            value = cell.value?.toString() || "";
+          }
+
+          // Handle nested option_details
+          if (header.startsWith("option_details.")) {
+            const optionField = header.split(".")[1];
+            rowData.option_details = rowData.option_details || {};
+            rowData.option_details[optionField] = value;
+          } else {
+            rowData[header] = value;
+          }
+        });
+
+        data.push(rowData);
+      });
+
+      resolve(data);
+    } catch (error) {
+      reject(error);
+    }
   });
 }
 
@@ -114,7 +152,7 @@ function validateAndTransformTrades(data: RawTradeData[]): {
       errors.push(
         `Row ${index + 1}: ${
           error instanceof Error ? error.message : "Invalid data"
-        }`,
+        }`
       );
     }
   });
@@ -153,4 +191,4 @@ function transformRowToTrade(row: RawTradeData): Partial<Trade> {
   }
 
   return trade;
-} 
+}

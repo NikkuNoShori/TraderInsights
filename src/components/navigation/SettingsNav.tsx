@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { User, Palette, Bell, Shield, BarChart3 } from "lucide-react";
+import { User, Palette, Bell, Shield, BarChart3, Link2 } from "lucide-react";
 import { clsx } from "clsx";
 
 const settingsLinks = [
@@ -14,6 +14,12 @@ const settingsLinks = [
     label: "Brokers",
     icon: BarChart3,
     description: "Manage connected trading accounts",
+  },
+  {
+    to: "/app/settings/snaptrade",
+    label: "SnapTrade",
+    icon: Link2,
+    description: "Configure SnapTrade integration",
   },
   {
     to: "/app/settings/security",

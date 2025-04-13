@@ -1,13 +1,21 @@
 import { useState, useEffect } from 'react';
 import { snapTradeService } from '@/services/snaptradeService';
 import { SnapTradeConnection, SnapTradeAccount, SnapTradePosition, SnapTradeBalance, SnapTradeOrder } from '@/lib/snaptrade/types';
+import { SnapTradeService } from '@/lib/snaptrade/client';
 
 // Configuration for SnapTrade
 const SNAPTRADE_CONFIG = {
-  clientId: process.env.NEXT_PUBLIC_SNAPTRADE_CLIENT_ID || '',
-  consumerKey: process.env.NEXT_PUBLIC_SNAPTRADE_CONSUMER_KEY || '',
-  redirectUri: process.env.NEXT_PUBLIC_SNAPTRADE_REDIRECT_URI || `${window.location.origin}/snaptrade-callback`,
+  clientId: import.meta.env.VITE_SNAPTRADE_CLIENT_ID || '',
+  consumerKey: import.meta.env.VITE_SNAPTRADE_CONSUMER_KEY || '',
+  redirectUri: import.meta.env.VITE_SNAPTRADE_REDIRECT_URI || `${window.location.origin}/broker-callback`,
 };
+
+// Log the configuration (without sensitive values)
+console.log('SnapTrade Configuration:', {
+  hasClientId: !!SNAPTRADE_CONFIG.clientId,
+  hasConsumerKey: !!SNAPTRADE_CONFIG.consumerKey,
+  redirectUri: SNAPTRADE_CONFIG.redirectUri,
+});
 
 export default function SnapTradeDemo() {
   const [isLoading, setIsLoading] = useState(false);
@@ -35,17 +43,14 @@ export default function SnapTradeDemo() {
 
     const initService = async () => {
       try {
-        await snapTradeService.init(SNAPTRADE_CONFIG);
+        // Create a new instance of SnapTradeService with the config
+        const service = new SnapTradeService(SNAPTRADE_CONFIG);
         setIsInitialized(true);
-        
-        // Check if user is already registered
-        const isUserRegistered = snapTradeService.isUserRegistered();
-        setIsRegistered(isUserRegistered);
-        
-        if (isUserRegistered) {
-          // Load connections and accounts
-          await loadUserData();
-        }
+
+        // Load brokerages immediately
+        const brokerageList = await service.getBrokerages();
+        console.log('Loaded brokerages:', brokerageList);
+        setBrokerages(brokerageList);
       } catch (error) {
         console.error('Failed to initialize SnapTrade service:', error);
         setError(`Failed to initialize SnapTrade service: ${error instanceof Error ? error.message : String(error)}`);
@@ -141,7 +146,12 @@ export default function SnapTradeDemo() {
     try {
       setIsLoading(true);
       setError(null);
-      const connectionUrl = await snapTradeService.createConnectionLink(brokerageId);
+      const user = snapTradeService.getUser();
+      if (!user) {
+        setError('No user registered');
+        return;
+      }
+      const connectionUrl = await snapTradeService.createConnectionLink(user.userId, user.userSecret);
       window.open(connectionUrl, '_blank');
     } catch (error) {
       console.error('Failed to create connection link:', error);

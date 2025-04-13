@@ -5,6 +5,7 @@
 
 import { Snaptrade } from 'snaptrade-typescript-sdk';
 import { SnapTradeConfig } from './types';
+import crypto from "crypto";
 
 /**
  * Creates a SnapTrade API client
@@ -12,27 +13,37 @@ import { SnapTradeConfig } from './types';
  * @returns SnapTrade client instance
  */
 export function createSnapTradeClient(config: SnapTradeConfig): Snaptrade {
-  console.log('Creating SnapTrade client with config:', {
-    clientId: config.clientId,
-    hasConsumerSecret: !!config.consumerSecret,
+  console.log("Creating SnapTrade client with config:", {
+    hasClientId: !!config.clientId,
+    hasConsumerKey: !!config.consumerKey,
     hasRedirectUri: !!config.redirectUri,
-    environment: process.env.VITE_APP_ENV
+    clientId: config.clientId,
+    redirectUri: config.redirectUri,
   });
 
-  if (!config.clientId || !config.consumerSecret) {
-    console.error('Missing required SnapTrade configuration:', {
+  if (!config.clientId || !config.consumerKey) {
+    console.error("Missing required SnapTrade configuration:", {
       hasClientId: !!config.clientId,
-      hasConsumerSecret: !!config.consumerSecret
+      hasConsumerKey: !!config.consumerKey,
     });
-    throw new Error('Missing required SnapTrade configuration');
+    throw new Error("Missing required SnapTrade configuration");
   }
+
+  // Generate timestamp and signature
+  const timestamp = Math.floor(Date.now() / 1000);
+  const signature = crypto
+    .createHmac("sha256", config.consumerKey)
+    .update(`${config.clientId}${timestamp}`)
+    .digest("hex");
 
   const client = new Snaptrade({
     clientId: config.clientId,
-    consumerKey: config.consumerSecret,
+    consumerKey: config.consumerKey,
+    timestamp,
+    signature,
   });
 
-  console.log('SnapTrade client created successfully');
+  console.log("SnapTrade client created successfully");
   return client;
 }
 
@@ -44,13 +55,24 @@ export class SnapTradeService {
   private client: Snaptrade;
   private userId: string | null = null;
   private userSecret: string | null = null;
+  private config: SnapTradeConfig;
 
   constructor(config: SnapTradeConfig) {
-    console.log('Initializing SnapTradeService with config:', {
-      clientId: config.clientId,
-      hasConsumerSecret: !!config.consumerSecret,
-      redirectUri: config.redirectUri
+    console.log("Initializing SnapTradeService with config:", {
+      hasClientId: !!config.clientId,
+      hasConsumerKey: !!config.consumerKey,
+      redirectUri: config.redirectUri,
     });
+
+    if (!config.clientId || !config.consumerKey) {
+      console.error("Missing required SnapTrade configuration:", {
+        hasClientId: !!config.clientId,
+        hasConsumerKey: !!config.consumerKey,
+      });
+      throw new Error("Missing required SnapTrade configuration");
+    }
+
+    this.config = config;
     this.client = createSnapTradeClient(config);
   }
 
@@ -61,24 +83,63 @@ export class SnapTradeService {
    */
   async registerUser(userId: string): Promise<string> {
     try {
-      console.log('Registering user:', { userId });
-      const response = await this.client.authentication.registerSnapTradeUser({
-        userId,
-      });
+      console.log("Registering SnapTrade user:", { userId });
 
-      if (!response.data?.userSecret) {
-        console.error('Failed to register user - no userSecret in response:', response);
-        throw new Error('Failed to register user with SnapTrade');
+      // Generate timestamp and signature for this request
+      const timestampNum = Math.floor(Date.now() / 1000);
+      const timestamp = timestampNum.toString();
+      const signature = crypto
+        .createHmac("sha256", this.config.consumerKey)
+        .update(`${this.config.clientId}${timestamp}`)
+        .digest("hex");
+
+      const response = await fetch(
+        "https://api.snaptrade.com/api/v1/snapTrade/registerUser",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Signature: signature,
+            Timestamp: timestamp,
+            ClientId: this.config.clientId,
+          },
+          body: JSON.stringify({
+            userId: userId,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("SnapTrade API error:", errorData);
+        throw new Error(
+          `API error: ${response.status} - ${JSON.stringify(errorData)}`
+        );
+      }
+
+      const data = await response.json();
+      console.log("SnapTrade registration response:", data);
+
+      if (!data?.userSecret) {
+        console.error(
+          "Failed to register user - no userSecret in response:",
+          data
+        );
+        throw new Error("Failed to register user with SnapTrade");
       }
 
       this.userId = userId;
-      this.userSecret = response.data.userSecret;
+      this.userSecret = data.userSecret;
 
-      console.log('User registered successfully');
-      return response.data.userSecret;
+      console.log("User registered successfully");
+      return data.userSecret;
     } catch (error) {
-      console.error('Error registering user with SnapTrade:', error);
-      throw new Error(`Failed to register user with SnapTrade: ${error instanceof Error ? error.message : String(error)}`);
+      console.error("Error registering user with SnapTrade:", error);
+      throw new Error(
+        `Failed to register user with SnapTrade: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   }
 
@@ -100,8 +161,12 @@ export class SnapTradeService {
 
       return true;
     } catch (error) {
-      console.error('Error deleting user from SnapTrade:', error);
-      throw new Error(`Failed to delete user from SnapTrade: ${error instanceof Error ? error.message : String(error)}`);
+      console.error("Error deleting user from SnapTrade:", error);
+      throw new Error(
+        `Failed to delete user from SnapTrade: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   }
 
@@ -111,36 +176,55 @@ export class SnapTradeService {
    */
   async getBrokerages() {
     try {
-      console.log('Fetching brokerages with state:', {
+      console.log("Fetching brokerages with state:", {
         userId: this.userId,
-        hasUserSecret: !!this.userSecret
+        hasUserSecret: !!this.userSecret,
+        clientInitialized: !!this.client,
       });
 
+      if (!this.client) {
+        throw new Error("SnapTrade client not initialized");
+      }
+
       const response = await this.client.referenceData.listAllBrokerages();
-      console.log('Raw API response:', {
+      console.log("Raw API response:", {
         status: response.status,
         statusText: response.statusText,
         hasData: !!response.data,
         dataLength: response.data?.length,
-        data: response.data
+        data: response.data,
       });
 
       if (!response.data || response.data.length === 0) {
-        console.warn('No brokers returned from API');
+        console.warn("No brokers returned from API");
         return [];
       }
 
+      // Log each broker for debugging
+      response.data.forEach((broker, index) => {
+        console.log(`Broker ${index + 1}:`, {
+          id: broker.id,
+          name: broker.name,
+          status: broker.status,
+          authTypes: broker.authTypes,
+        });
+      });
+
       return response.data;
     } catch (error) {
-      console.error('Error getting brokerages from SnapTrade:', error);
+      console.error("Error getting brokerages from SnapTrade:", error);
       if (error instanceof Error) {
-        console.error('Error details:', {
+        console.error("Error details:", {
           name: error.name,
           message: error.message,
-          stack: error.stack
+          stack: error.stack,
         });
       }
-      throw new Error(`Failed to get brokerages from SnapTrade: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to get brokerages from SnapTrade: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   }
 
@@ -152,25 +236,34 @@ export class SnapTradeService {
    */
   async createConnectionLink(userId: string, userSecret: string): Promise<any> {
     try {
-      console.log('Creating connection link:', { userId });
-      
+      console.log("Creating connection link:", { userId });
+
       // Get the login link for the connection portal
-      const loginResponse = await this.client.authentication.loginSnapTradeUser({
-        userId,
-        userSecret,
-      });
+      const loginResponse = await this.client.authentication.loginSnapTradeUser(
+        {
+          userId,
+          userSecret,
+        }
+      );
 
       if (!loginResponse.data) {
-        console.error('Failed to get login link - no data in response:', loginResponse);
-        throw new Error('Failed to get login link');
+        console.error(
+          "Failed to get login link - no data in response:",
+          loginResponse
+        );
+        throw new Error("Failed to get login link");
       }
 
       // Return the entire response data which will contain the redirect URL
       // This can be used in an iframe, new window, or with the React SDK
       return loginResponse.data;
     } catch (error) {
-      console.error('Error creating connection link:', error);
-      throw new Error(`Failed to create connection link: ${error instanceof Error ? error.message : String(error)}`);
+      console.error("Error creating connection link:", error);
+      throw new Error(
+        `Failed to create connection link: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   }
 
@@ -181,18 +274,23 @@ export class SnapTradeService {
   async getUserConnections() {
     try {
       if (!this.userId || !this.userSecret) {
-        throw new Error('User not authenticated');
+        throw new Error("User not authenticated");
       }
 
-      const response = await this.client.connections.listBrokerageAuthorizations({
-        userId: this.userId,
-        userSecret: this.userSecret,
-      });
+      const response =
+        await this.client.connections.listBrokerageAuthorizations({
+          userId: this.userId,
+          userSecret: this.userSecret,
+        });
 
       return response.data || [];
     } catch (error) {
-      console.error('Error getting user connections:', error);
-      throw new Error(`Failed to get user connections: ${error instanceof Error ? error.message : String(error)}`);
+      console.error("Error getting user connections:", error);
+      throw new Error(
+        `Failed to get user connections: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   }
 
@@ -203,7 +301,7 @@ export class SnapTradeService {
   async deleteConnection(authorizationId: string) {
     try {
       if (!this.userId || !this.userSecret) {
-        throw new Error('User not authenticated');
+        throw new Error("User not authenticated");
       }
 
       await this.client.connections.removeBrokerageAuthorization({
@@ -212,8 +310,12 @@ export class SnapTradeService {
         authorizationId,
       });
     } catch (error) {
-      console.error('Error deleting connection:', error);
-      throw new Error(`Failed to delete connection: ${error instanceof Error ? error.message : String(error)}`);
+      console.error("Error deleting connection:", error);
+      throw new Error(
+        `Failed to delete connection: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   }
 
@@ -224,7 +326,11 @@ export class SnapTradeService {
    * @param accountId Account identifier
    * @returns Account holdings
    */
-  async getAccountHoldings(userId: string, userSecret: string, accountId: string) {
+  async getAccountHoldings(
+    userId: string,
+    userSecret: string,
+    accountId: string
+  ) {
     try {
       const response = await this.client.accountInformation.getUserHoldings({
         userId,
@@ -233,8 +339,12 @@ export class SnapTradeService {
       });
       return response.data;
     } catch (error) {
-      console.error('Error getting account holdings:', error);
-      throw new Error(`Failed to get account holdings: ${error instanceof Error ? error.message : String(error)}`);
+      console.error("Error getting account holdings:", error);
+      throw new Error(
+        `Failed to get account holdings: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   }
 
@@ -245,17 +355,26 @@ export class SnapTradeService {
    * @param accountId Account identifier
    * @returns Account balances
    */
-  async getAccountBalances(userId: string, userSecret: string, accountId: string) {
+  async getAccountBalances(
+    userId: string,
+    userSecret: string,
+    accountId: string
+  ) {
     try {
-      const response = await this.client.accountInformation.getUserAccountBalance({
-        userId,
-        userSecret,
-        accountId,
-      });
+      const response =
+        await this.client.accountInformation.getUserAccountBalance({
+          userId,
+          userSecret,
+          accountId,
+        });
       return response.data;
     } catch (error) {
-      console.error('Error getting account balances:', error);
-      throw new Error(`Failed to get account balances: ${error instanceof Error ? error.message : String(error)}`);
+      console.error("Error getting account balances:", error);
+      throw new Error(
+        `Failed to get account balances: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   }
 
@@ -266,17 +385,26 @@ export class SnapTradeService {
    * @param accountId Account identifier
    * @returns Account orders
    */
-  async getAccountOrders(userId: string, userSecret: string, accountId: string) {
+  async getAccountOrders(
+    userId: string,
+    userSecret: string,
+    accountId: string
+  ) {
     try {
-      const response = await this.client.accountInformation.getUserAccountOrders({
-        userId,
-        userSecret,
-        accountId,
-      });
+      const response =
+        await this.client.accountInformation.getUserAccountOrders({
+          userId,
+          userSecret,
+          accountId,
+        });
       return response.data;
     } catch (error) {
-      console.error('Error getting account orders:', error);
-      throw new Error(`Failed to get account orders: ${error instanceof Error ? error.message : String(error)}`);
+      console.error("Error getting account orders:", error);
+      throw new Error(
+        `Failed to get account orders: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   }
 } 

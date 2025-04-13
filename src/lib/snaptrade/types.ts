@@ -8,8 +8,8 @@
  */
 export interface SnapTradeConfig {
   clientId: string;
-  consumerSecret: string;
-  redirectUri?: string;
+  consumerKey: string;
+  redirectUri: string;
 }
 
 /**

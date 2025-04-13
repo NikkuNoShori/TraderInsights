@@ -23,7 +23,8 @@ export function Toast({
   return (
     <div
       className={clsx(
-        "fixed bottom-4 right-4 flex items-center p-4 rounded-lg shadow-lg space-x-3 z-50 transition-all duration-300",
+        "fixed bottom-4 right-4 flex items-center p-4 rounded-lg shadow-lg space-x-3 transition-all duration-300",
+        style={{ zIndex: 'var(--z-toast)' }},
         type === "error" && "bg-red-50 text-red-700",
         type === "success" && "bg-green-50 text-green-700",
         type === "info" && "bg-blue-50 text-blue-700",

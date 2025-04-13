@@ -46,6 +46,12 @@ export default defineConfig(({ mode }) => {
           secure: false,
           ws: true,
         },
+        "/snapTrade": {
+          target: "https://api.snaptrade.com/api/v1",
+          changeOrigin: true,
+          secure: true,
+          rewrite: (path) => path.replace(/^\/snapTrade/, ""),
+        },
       },
       hmr: {
         protocol: "ws",

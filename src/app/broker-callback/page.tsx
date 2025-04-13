@@ -16,9 +16,9 @@ export default function BrokerCallback() {
       try {
         // TODO: Get these from your app's state management or session
         const config: SnapTradeConfig = {
-          clientId: process.env.VITE_SNAPTRADE_CLIENT_ID || '',
-          consumerSecret: process.env.VITE_SNAPTRADE_CONSUMER_SECRET || '',
-          redirectUri: process.env.VITE_SNAPTRADE_REDIRECT_URI || `${window.location.origin}/broker-callback`,
+          clientId: import.meta.env.VITE_SNAPTRADE_CLIENT_ID || '',
+          consumerKey: import.meta.env.VITE_SNAPTRADE_CONSUMER_KEY || '',
+          redirectUri: import.meta.env.VITE_SNAPTRADE_REDIRECT_URI || `${window.location.origin}/broker-callback`,
         };
         const userId = localStorage.getItem('snaptrade_user_id');
         const userSecret = localStorage.getItem('snaptrade_user_secret');

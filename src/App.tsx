@@ -22,7 +22,8 @@ import Performance from "./views/Performance";
 import ComingSoon from "./views/ComingSoon";
 import Playbook from "./views/Playbook";
 import { useResetFilters } from "./hooks/useResetFilters";
-import TradeHub from "./pages/TradeHub";
+import BrokerDashboard from "./components/BrokerDashboard";
+import { SnapTradeTest } from "./components/test/SnapTradeTest";
 
 function ProtectedLayout() {
   useResetFilters();
@@ -62,11 +63,9 @@ export default function App() {
               <Route path="journal" element={<TradingJournal />} />
               <Route path="journal/:id" element={<TradeDetails />} />
               <Route path="performance" element={<Performance />} />
-              <Route path="trade-hub" element={<TradeHub />} />
+              <Route path="broker-dashboard" element={<BrokerDashboard />} />
               <Route path="settings/*" element={<Settings />} />
-
-              {/* Legacy route - redirect to new path */}
-              <Route path="broker-dashboard" element={<Navigate to="/app/trade-hub" replace />} />
+              <Route path="snaptrade-test" element={<SnapTradeTest />} />
 
               {/* Coming Soon Features */}
               <Route path="playbook" element={<ComingSoon />} />

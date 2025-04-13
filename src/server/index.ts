@@ -4,6 +4,7 @@ import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { authRouter } from "./routes/auth";
+import { snapTradeRouter } from "./api/snaptrade";
 import { serverEnv } from "./utils/env";
 
 const app = express();
@@ -16,7 +17,7 @@ app.use(
       ? "http://localhost:5173"
       : serverEnv.appUrl,
     credentials: true,
-  }),
+  })
 );
 app.use(express.json());
 
@@ -29,6 +30,7 @@ app.use(limiter);
 
 // Routes
 app.use("/api/auth", authRouter);
+app.use("/api/snaptrade", snapTradeRouter);
 
 // Error handling
 app.use(
