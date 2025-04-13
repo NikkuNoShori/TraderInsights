@@ -6,6 +6,7 @@ import SecuritySettings from "./SecuritySettings";
 import { AppearanceSettings } from "./AppearanceSettings";
 import NotificationSettings from "./NotificationSettings";
 import BrokerSettings from "./BrokerSettings";
+import SnapTradeSettings from "./SnapTradeSettings";
 
 export default function Settings() {
   const location = useLocation();
@@ -17,6 +18,8 @@ export default function Settings() {
         return <ProfileSettings />;
       case "brokers":
         return <BrokerSettings />;
+      case "snaptrade":
+        return <SnapTradeSettings />;
       case "security":
         return <SecuritySettings />;
       case "appearance":

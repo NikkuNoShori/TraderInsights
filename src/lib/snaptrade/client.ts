@@ -5,6 +5,7 @@
 
 import { Snaptrade } from 'snaptrade-typescript-sdk';
 import { SnapTradeConfig } from './types';
+import crypto from "crypto";
 
 /**
  * Creates a SnapTrade API client
@@ -28,9 +29,18 @@ export function createSnapTradeClient(config: SnapTradeConfig): Snaptrade {
     throw new Error("Missing required SnapTrade configuration");
   }
 
+  // Generate timestamp and signature
+  const timestamp = Math.floor(Date.now() / 1000);
+  const signature = crypto
+    .createHmac("sha256", config.consumerKey)
+    .update(`${config.clientId}${timestamp}`)
+    .digest("hex");
+
   const client = new Snaptrade({
     clientId: config.clientId,
     consumerKey: config.consumerKey,
+    timestamp,
+    signature,
   });
 
   console.log("SnapTrade client created successfully");
@@ -45,6 +55,7 @@ export class SnapTradeService {
   private client: Snaptrade;
   private userId: string | null = null;
   private userSecret: string | null = null;
+  private config: SnapTradeConfig;
 
   constructor(config: SnapTradeConfig) {
     console.log("Initializing SnapTradeService with config:", {
@@ -61,6 +72,7 @@ export class SnapTradeService {
       throw new Error("Missing required SnapTrade configuration");
     }
 
+    this.config = config;
     this.client = createSnapTradeClient(config);
   }
 
@@ -71,24 +83,56 @@ export class SnapTradeService {
    */
   async registerUser(userId: string): Promise<string> {
     try {
-      console.log("Registering user:", { userId });
-      const response = await this.client.authentication.registerSnapTradeUser({
-        userId,
-      });
+      console.log("Registering SnapTrade user:", { userId });
 
-      if (!response.data?.userSecret) {
+      // Generate timestamp and signature for this request
+      const timestampNum = Math.floor(Date.now() / 1000);
+      const timestamp = timestampNum.toString();
+      const signature = crypto
+        .createHmac("sha256", this.config.consumerKey)
+        .update(`${this.config.clientId}${timestamp}`)
+        .digest("hex");
+
+      const response = await fetch(
+        "https://api.snaptrade.com/api/v1/snapTrade/registerUser",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Signature: signature,
+            Timestamp: timestamp,
+            ClientId: this.config.clientId,
+          },
+          body: JSON.stringify({
+            userId: userId,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("SnapTrade API error:", errorData);
+        throw new Error(
+          `API error: ${response.status} - ${JSON.stringify(errorData)}`
+        );
+      }
+
+      const data = await response.json();
+      console.log("SnapTrade registration response:", data);
+
+      if (!data?.userSecret) {
         console.error(
           "Failed to register user - no userSecret in response:",
-          response
+          data
         );
         throw new Error("Failed to register user with SnapTrade");
       }
 
       this.userId = userId;
-      this.userSecret = response.data.userSecret;
+      this.userSecret = data.userSecret;
 
       console.log("User registered successfully");
-      return response.data.userSecret;
+      return data.userSecret;
     } catch (error) {
       console.error("Error registering user with SnapTrade:", error);
       throw new Error(

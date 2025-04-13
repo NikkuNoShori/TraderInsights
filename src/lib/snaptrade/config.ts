@@ -8,7 +8,7 @@ import type { SnapTradeConfig } from './types';
 /**
  * Get SnapTrade configuration from environment variables
  * @returns SnapTrade configuration
- * @throws Error if required environment variables are missing
+ * @throws Error if required environment variables are missing or invalid
  */
 export function getSnapTradeConfig(): SnapTradeConfig {
   // Check if we're in a browser environment
@@ -21,14 +21,14 @@ export function getSnapTradeConfig(): SnapTradeConfig {
 
   if (isBrowser) {
     // Browser environment - use import.meta.env
-    clientId = import.meta.env.VITE_SNAPTRADE_CLIENT_ID;
-    consumerKey = import.meta.env.VITE_SNAPTRADE_CONSUMER_KEY;
-    redirectUri = import.meta.env.VITE_SNAPTRADE_REDIRECT_URI;
+    clientId = import.meta.env.VITE_SNAPTRADE_CLIENT_ID?.trim();
+    consumerKey = import.meta.env.VITE_SNAPTRADE_CONSUMER_KEY?.trim();
+    redirectUri = import.meta.env.VITE_SNAPTRADE_REDIRECT_URI?.trim();
   } else {
     // Server environment - use process.env
-    clientId = process.env.VITE_SNAPTRADE_CLIENT_ID;
-    consumerKey = process.env.VITE_SNAPTRADE_CONSUMER_KEY;
-    redirectUri = process.env.VITE_SNAPTRADE_REDIRECT_URI;
+    clientId = process.env.SNAPTRADE_CLIENT_ID?.trim();
+    consumerKey = process.env.SNAPTRADE_CONSUMER_KEY?.trim();
+    redirectUri = process.env.SNAPTRADE_REDIRECT_URI?.trim();
   }
 
   // Set default redirect URI if not provided
@@ -38,22 +38,30 @@ export function getSnapTradeConfig(): SnapTradeConfig {
       : "http://localhost:5173/broker-callback";
   }
 
+  // Validate required configuration
+  if (!clientId) {
+    throw new Error(
+      isBrowser
+        ? "VITE_SNAPTRADE_CLIENT_ID is required"
+        : "SNAPTRADE_CLIENT_ID is required"
+    );
+  }
+
+  if (!consumerKey) {
+    throw new Error(
+      isBrowser
+        ? "VITE_SNAPTRADE_CONSUMER_KEY is required"
+        : "SNAPTRADE_CONSUMER_KEY is required"
+    );
+  }
+
   // Log configuration (without sensitive values)
   console.log("SnapTrade configuration:", {
-    hasClientId: !!clientId,
+    clientId,
     hasConsumerKey: !!consumerKey,
     redirectUri,
     environment: isBrowser ? "browser" : "server",
   });
-
-  // Validate required configuration
-  if (!clientId) {
-    throw new Error("VITE_SNAPTRADE_CLIENT_ID is required");
-  }
-
-  if (!consumerKey) {
-    throw new Error("VITE_SNAPTRADE_CONSUMER_KEY is required");
-  }
 
   return {
     clientId,

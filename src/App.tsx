@@ -23,6 +23,7 @@ import ComingSoon from "./views/ComingSoon";
 import Playbook from "./views/Playbook";
 import { useResetFilters } from "./hooks/useResetFilters";
 import BrokerDashboard from "./components/BrokerDashboard";
+import { SnapTradeTest } from "./components/test/SnapTradeTest";
 
 function ProtectedLayout() {
   useResetFilters();
@@ -64,6 +65,7 @@ export default function App() {
               <Route path="performance" element={<Performance />} />
               <Route path="broker-dashboard" element={<BrokerDashboard />} />
               <Route path="settings/*" element={<Settings />} />
+              <Route path="snaptrade-test" element={<SnapTradeTest />} />
 
               {/* Coming Soon Features */}
               <Route path="playbook" element={<ComingSoon />} />

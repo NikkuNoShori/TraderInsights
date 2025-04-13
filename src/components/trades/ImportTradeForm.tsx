@@ -150,8 +150,23 @@ export function ImportTradeForm({
 
   const handleConnectBroker = async () => {
     try {
-      // Open the connection portal
-      setIsConnectionPortalOpen(true);
+      // Ensure user is registered before opening portal
+      if (!snapTradeService.isUserRegistered() && user) {
+        await snapTradeService.registerUser(user.id);
+        // Update stored user credentials
+        const storedUser = snapTradeService.getUser();
+        if (storedUser) {
+          setUserId(storedUser.userId);
+          setUserSecret(storedUser.userSecret);
+        }
+      }
+
+      // Only open portal if we have valid credentials
+      if (userId && userSecret) {
+        setIsConnectionPortalOpen(true);
+      } else {
+        throw new Error('Failed to initialize user credentials');
+      }
     } catch (error) {
       console.error('Failed to initialize broker connection:', error);
       toast.error('Failed to initialize broker connection. Please try again.');
