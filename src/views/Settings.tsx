@@ -5,6 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "react-hot-toast";
 import { supabase } from "@/lib/supabase";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DebugSettings } from '@/components/settings/DebugSettings';
+import { SecuritySettings } from '@/components/settings/SecuritySettings';
+import { ProfileSettings } from '@/components/settings/ProfileSettings';
+import { DataSettings } from '@/components/settings/DataSettings';
+import { SnapTradeSettings } from '@/components/settings/SnapTradeSettings';
 
 export default function Settings() {
   const { user, profile, setProfile } = useAuthStore();
@@ -51,94 +58,68 @@ export default function Settings() {
   }
 
   return (
-    <div className="flex-grow bg-background p-6">
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Settings</h1>
+    <div className="container mx-auto py-6">
+      <div className="max-w-3xl mx-auto">
+        <h1 className="text-2xl font-bold mb-2">Settings</h1>
+        <p className="text-muted-foreground mb-6">Manage your account and preferences</p>
+        
+        <Tabs defaultValue="profile">
+          <TabsList className="w-full grid grid-cols-7 gap-1">
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="data">Data</TabsTrigger>
+            <TabsTrigger value="security">Security</TabsTrigger>
+            <TabsTrigger value="snaptrade">SnapTrade</TabsTrigger>
+            <TabsTrigger value="appearance">Appearance</TabsTrigger>
+            <TabsTrigger value="notifications">Notifications</TabsTrigger>
+            <TabsTrigger value="debug">Debug</TabsTrigger>
+          </TabsList>
 
-        <div className="bg-card border border-border rounded-lg p-6">
-          <h2 className="text-lg font-medium mb-4">Profile Settings</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label
-                htmlFor="firstName"
-                className="block text-sm font-medium text-text-primary mb-1"
-              >
-                First Name
-              </label>
-              <Input
-                id="firstName"
-                type="text"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder="Enter your first name"
-                className="w-full"
-                required
-              />
-            </div>
+          <TabsContent value="profile">
+            <ProfileSettings />
+          </TabsContent>
 
-            <div>
-              <label
-                htmlFor="lastName"
-                className="block text-sm font-medium text-text-primary mb-1"
-              >
-                Last Name
-              </label>
-              <Input
-                id="lastName"
-                type="text"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                placeholder="Enter your last name"
-                className="w-full"
-                required
-              />
-            </div>
+          <TabsContent value="data">
+            <DataSettings />
+          </TabsContent>
 
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-text-primary mb-1"
-              >
-                Email
-              </label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                className="w-full"
-                required
-              />
-            </div>
+          <TabsContent value="security">
+            <SecuritySettings />
+          </TabsContent>
 
-            <div>
-              <label
-                htmlFor="username"
-                className="block text-sm font-medium text-text-primary mb-1"
-              >
-                Username
-              </label>
-              <Input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter your username"
-                className="w-full"
-              />
-              <p className="text-sm text-text-muted mt-1">
-                Username must be 3-20 characters and contain only letters,
-                numbers, and underscores. You have{" "}
-                {profile.username_changes_remaining} changes remaining.
-              </p>
-            </div>
+          <TabsContent value="snaptrade">
+            <SnapTradeSettings />
+          </TabsContent>
 
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Saving..." : "Save Changes"}
-            </Button>
-          </form>
-        </div>
+          <TabsContent value="appearance">
+            <Card>
+              <CardHeader>
+                <CardTitle>Appearance</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div>
+                  <p className="text-muted-foreground">Appearance settings coming soon...</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="notifications">
+            <Card>
+              <CardHeader>
+                <CardTitle>Notifications</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div>
+                  <p className="text-muted-foreground">Notification settings coming soon...</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="debug">
+            <DebugSettings />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

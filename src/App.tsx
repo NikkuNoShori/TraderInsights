@@ -9,8 +9,7 @@ import { Layout } from "./components/layout/Layout";
 import Dashboard from "./views/Dashboard";
 import TradingJournal from "./views/TradingJournal";
 import TradeDetails from "./views/TradingJournal/TradeDetails";
-import Settings from "./views/settings/Settings";
-import SettingsPage from "./pages/settings/SettingsPage";
+import Settings from "./views/Settings";
 import Login from "./views/auth/Login";
 import RequestPasswordReset from "./views/auth/RequestPasswordReset";
 import ResetPassword from "./views/auth/ResetPassword";
@@ -65,7 +64,7 @@ export default function App() {
               <Route path="journal/:id" element={<TradeDetails />} />
               <Route path="performance" element={<Performance />} />
               <Route path="broker-dashboard" element={<BrokerDashboard />} />
-              <Route path="settings/*" element={<SettingsPage />} />
+              <Route path="settings/*" element={<Settings />} />
               <Route path="snaptrade-test" element={<SnapTradeTest />} />
 
               {/* Coming Soon Features */}

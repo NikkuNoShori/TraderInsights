@@ -34,6 +34,14 @@ interface DebugSettings {
     brokerError: string | null;
     missingBrokers: string[];
   };
+  // Store previous settings when debug mode is off
+  previousSettings?: {
+    enabledCategories: DebugCategory[];
+    minLogLevel: DebugLevel;
+    showDebugPanel: boolean;
+    brokerDebug: DebugSettings["brokerDebug"];
+    apiDebug: DebugSettings["apiDebug"];
+  };
 }
 
 interface DebugStore extends DebugSettings {
@@ -78,14 +86,43 @@ export const useDebugStore = create<DebugStore>()(
       ...defaultSettings,
 
       toggleDebugMode: () =>
-        set((state) => ({
-          isDebugMode: !state.isDebugMode,
-          // Reset to default categories when enabling debug mode
-          enabledCategories: !state.isDebugMode ? ["broker"] : [],
-        })),
+        set((state) => {
+          if (state.isDebugMode) {
+            // Turning debug mode off - store current settings and reset to defaults
+            return {
+              isDebugMode: false,
+              previousSettings: {
+                enabledCategories: state.enabledCategories,
+                minLogLevel: state.minLogLevel,
+                showDebugPanel: state.showDebugPanel,
+                brokerDebug: state.brokerDebug,
+                apiDebug: state.apiDebug,
+              },
+              enabledCategories: [],
+              minLogLevel: "info",
+              showDebugPanel: false,
+              brokerDebug: defaultSettings.brokerDebug,
+              apiDebug: defaultSettings.apiDebug,
+            };
+          } else {
+            // Turning debug mode on - restore previous settings if available
+            const previous = state.previousSettings;
+            return {
+              isDebugMode: true,
+              enabledCategories: previous?.enabledCategories || ["broker"],
+              minLogLevel: previous?.minLogLevel || "info",
+              showDebugPanel: previous?.showDebugPanel || false,
+              brokerDebug: previous?.brokerDebug || defaultSettings.brokerDebug,
+              apiDebug: previous?.apiDebug || defaultSettings.apiDebug,
+              previousSettings: undefined,
+            };
+          }
+        }),
 
       toggleCategory: (category) =>
         set((state) => {
+          if (!state.isDebugMode) return state;
+
           if (category === "all") {
             return {
               enabledCategories:
@@ -102,22 +139,35 @@ export const useDebugStore = create<DebugStore>()(
           return { enabledCategories: newCategories };
         }),
 
-      setLogLevel: (level) => set({ minLogLevel: level }),
+      setLogLevel: (level) =>
+        set((state) => {
+          if (!state.isDebugMode) return state;
+          return { minLogLevel: level };
+        }),
 
       toggleDebugPanel: () =>
-        set((state) => ({
-          showDebugPanel: !state.showDebugPanel,
-        })),
+        set((state) => {
+          if (!state.isDebugMode) return state;
+          return {
+            showDebugPanel: !state.showDebugPanel,
+          };
+        }),
 
       updateBrokerDebug: (settings) =>
-        set((state) => ({
-          brokerDebug: { ...state.brokerDebug, ...settings },
-        })),
+        set((state) => {
+          if (!state.isDebugMode) return state;
+          return {
+            brokerDebug: { ...state.brokerDebug, ...settings },
+          };
+        }),
 
       updateApiDebug: (settings) =>
-        set((state) => ({
-          apiDebug: { ...state.apiDebug, ...settings },
-        })),
+        set((state) => {
+          if (!state.isDebugMode) return state;
+          return {
+            apiDebug: { ...state.apiDebug, ...settings },
+          };
+        }),
 
       setDebugState: (state) =>
         set((prev) => ({

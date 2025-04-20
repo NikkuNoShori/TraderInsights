@@ -725,46 +725,6 @@ export default function BrokerDashboard() {
         </div>
       </div>
 
-      {/* Debug Panel */}
-      <div className="mb-6 p-4 border border-border rounded-lg bg-card">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-lg font-medium">Debug Information</h3>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
-              {isInitialized ? 'Initialized' : 'Not Initialized'}
-            </span>
-            <div className={`w-2 h-2 rounded-full ${isInitialized ? 'bg-green-500' : 'bg-red-500'}`} />
-          </div>
-        </div>
-        <div className="space-y-2 text-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Loaded Brokers:</span>
-            <span>{brokers.length}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Loading State:</span>
-            <span>{loadingBrokers ? 'Loading...' : 'Idle'}</span>
-          </div>
-          {brokerError && (
-            <div className="flex items-center justify-between text-red-500">
-              <span className="text-muted-foreground">Error:</span>
-              <span>{brokerError}</span>
-            </div>
-          )}
-          {missingBrokers.length > 0 && (
-            <div className="mt-2">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-muted-foreground">Missing Brokers:</span>
-                <span>{missingBrokers.length}</span>
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {missingBrokers.join(', ')}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
       {renderBrokerList()}
     </div>
   );

@@ -1,3 +1,5 @@
+import { supabase } from "@/lib/supabase";
+
 export interface ErrorStats {
   low: number;
   medium: number;
@@ -36,7 +38,7 @@ export class ErrorTrackingService {
       componentName?: string;
       userId?: string;
       additionalData?: Record<string, unknown>;
-    },
+    }
   ) {
     const errorLog: ErrorLog = {
       id: Math.random().toString(36).substring(2),
@@ -49,23 +51,71 @@ export class ErrorTrackingService {
       timestamp: new Date().toISOString(),
     };
 
-    console.error("Error logged:", errorLog);
+    try {
+      const { error: dbError } = await supabase
+        .from("error_logs")
+        .insert(errorLog);
+
+      if (dbError) {
+        console.error("Failed to log error to database:", dbError);
+      }
+    } catch (e) {
+      console.error("Failed to log error:", e);
+    }
+
     return errorLog;
   }
 
   async getErrorStats(): Promise<ErrorStats> {
-    // TODO: Implement actual error stats fetching
-    return {
-      low: 0,
-      medium: 0,
-      high: 0,
-      critical: 0,
-    };
+    try {
+      const { data, error } = await supabase
+        .from("error_logs")
+        .select("severity")
+        .gte(
+          "timestamp",
+          new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+        );
+
+      if (error) throw error;
+
+      const stats: ErrorStats = {
+        low: 0,
+        medium: 0,
+        high: 0,
+        critical: 0,
+      };
+
+      data?.forEach((log) => {
+        const severity = log.severity as keyof ErrorStats;
+        stats[severity]++;
+      });
+
+      return stats;
+    } catch (error) {
+      console.error("Failed to get error stats:", error);
+      return {
+        low: 0,
+        medium: 0,
+        high: 0,
+        critical: 0,
+      };
+    }
   }
 
   async getRecentErrors(): Promise<ErrorLog[]> {
-    // TODO: Implement actual error logs fetching
-    return [];
+    try {
+      const { data, error } = await supabase
+        .from("error_logs")
+        .select("*")
+        .order("timestamp", { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error("Failed to get recent errors:", error);
+      return [];
+    }
   }
 }
 
