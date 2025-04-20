@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { snapTradeService } from "@/services/snaptradeService";
+import { snapTradeService } from "../services/snaptradeService";
 
 export const SnapTradeTest: React.FC = () => {
   const [status, setStatus] = useState<string>("");
@@ -19,10 +19,13 @@ export const SnapTradeTest: React.FC = () => {
   }, []);
 
   return (
-    <div>
-      <h2>SnapTrade API Status</h2>
-      {status && <pre>{status}</pre>}
-      {error && <div style={{ color: "red" }}>{error}</div>}
+    <div className="p-4">
+      <h2 className="text-xl font-bold mb-4">SnapTrade API Test</h2>
+      {error ? (
+        <div className="text-red-500">{error}</div>
+      ) : (
+        <pre className="bg-gray-100 p-4 rounded">{status || "Loading..."}</pre>
+      )}
     </div>
   );
 }; 

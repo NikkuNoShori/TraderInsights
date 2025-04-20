@@ -8,9 +8,13 @@ export const serverEnv = {
   supabaseUrl: process.env.VITE_SUPABASE_URL,
   supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY,
   snapTrade: {
-    clientId: process.env.VITE_SNAPTRADE_CLIENT_ID,
-    consumerKey: process.env.VITE_SNAPTRADE_CONSUMER_KEY,
+    clientId:
+      process.env.SNAPTRADE_CLIENT_ID || process.env.VITE_SNAPTRADE_CLIENT_ID,
+    consumerKey:
+      process.env.SNAPTRADE_CONSUMER_KEY ||
+      process.env.VITE_SNAPTRADE_CONSUMER_KEY,
     redirectUri:
+      process.env.SNAPTRADE_REDIRECT_URI ||
       process.env.VITE_SNAPTRADE_REDIRECT_URI ||
       "http://localhost:5173/broker-callback",
   },
@@ -21,14 +25,19 @@ const requiredVars = [
   "VITE_SUPABASE_URL",
   "VITE_SUPABASE_ANON_KEY",
   "VITE_APP_ENV",
-  "VITE_SNAPTRADE_CLIENT_ID",
-  "VITE_SNAPTRADE_CONSUMER_KEY",
 ] as const;
 
 const missing = requiredVars.filter((key) => !process.env[key]);
 
 if (missing.length > 0) {
   throw new Error(
-    `Missing required environment variables: ${missing.join(", ")}`,
+    `Missing required environment variables: ${missing.join(", ")}`
   );
 }
+
+// Log SnapTrade configuration
+console.log("SnapTrade configuration:", {
+  hasClientId: !!serverEnv.snapTrade.clientId,
+  hasConsumerKey: !!serverEnv.snapTrade.consumerKey,
+  redirectUri: serverEnv.snapTrade.redirectUri,
+});

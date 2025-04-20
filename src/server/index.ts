@@ -4,7 +4,7 @@ import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { authRouter } from "./routes/auth";
-import { snapTradeRouter } from "./api/snaptrade";
+import snapTradeRouter from "./api/snaptrade";
 import { serverEnv } from "./utils/env";
 
 const app = express();
@@ -38,13 +38,20 @@ app.use(
     error: Error,
     _req: express.Request,
     res: express.Response,
-    _next: express.NextFunction,
+    _next: express.NextFunction
   ) => {
     console.error("Error:", error);
     res.status(500).json({ error: error.message });
-  },
+  }
 );
 
-app.listen(serverEnv.port, () => {
-  console.log(`Server running on port ${serverEnv.port}`);
+// Start server
+const port = serverEnv.port;
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+  console.log("SnapTrade configuration:", {
+    hasClientId: !!serverEnv.snapTrade.clientId,
+    hasConsumerKey: !!serverEnv.snapTrade.consumerKey,
+    redirectUri: serverEnv.snapTrade.redirectUri,
+  });
 });

@@ -3,17 +3,29 @@
  * This file defines types for the SnapTrade API integration
  */
 
+import type {
+  UserIDandSecret,
+  Brokerage,
+  BrokerageAuthorization,
+  Account,
+  Position,
+  Balance,
+  AccountOrderRecord,
+  AccountHoldingsAccount,
+} from "snaptrade-typescript-sdk";
+
 /**
  * SnapTrade configuration
  */
 export interface SnapTradeConfig {
   clientId: string;
-  consumerKey: string;
-  redirectUri: string;
+  consumerKey: string; // Used for both frontend and backend authentication
+  redirectUri?: string;
 }
 
 /**
  * SnapTrade user
+ * Ensuring userId and userSecret are required
  */
 export interface SnapTradeUser {
   userId: string;
@@ -23,102 +35,37 @@ export interface SnapTradeUser {
 /**
  * SnapTrade connection status
  */
-export enum ConnectionStatus {
-  CONNECTED = 'CONNECTED',
-  DISCONNECTED = 'DISCONNECTED',
-  CONNECTING = 'CONNECTING',
-  ERROR = 'ERROR',
-}
+export type ConnectionStatus = "connected" | "disconnected" | "pending";
 
 /**
  * SnapTrade connection
  */
-export interface SnapTradeConnection {
-  id: string;
-  brokerageId: string;
-  brokerageName: string;
-  status: ConnectionStatus;
-  createdAt: string;
-  updatedAt: string;
-}
+export type SnapTradeConnection = BrokerageAuthorization;
 
 /**
  * SnapTrade account
  */
-export interface SnapTradeAccount {
-  id: string;
-  connectionId: string;
-  brokerageId: string;
-  name: string;
-  number: string;
-  type: string;
-  createdAt: string;
-  updatedAt: string;
-}
+export type SnapTradeAccount = Account;
 
 /**
  * SnapTrade position
  */
-export interface SnapTradePosition {
-  id: string;
-  accountId: string;
-  symbol: string;
-  symbolId: string;
-  quantity: number;
-  price: number;
-  averageEntryPrice: number;
-  marketValue: number;
-  openPnl: number;
-  dayPnl: number;
-  currency: string;
-  createdAt: string;
-  updatedAt: string;
-}
+export type SnapTradePosition = Position;
 
 /**
  * SnapTrade balance
  */
-export interface SnapTradeBalance {
-  currency: string;
-  cash: number;
-  marketValue: number;
-  totalValue: number;
-  buyingPower: number;
-  maintenanceExcess: number;
-}
-
-/**
- * SnapTrade order status
- */
-export enum OrderStatus {
-  PENDING = 'PENDING',
-  ACCEPTED = 'ACCEPTED',
-  FILLED = 'FILLED',
-  CANCELED = 'CANCELED',
-  REJECTED = 'REJECTED',
-  PARTIAL = 'PARTIAL',
-}
+export type SnapTradeBalance = Balance;
 
 /**
  * SnapTrade order
  */
-export interface SnapTradeOrder {
-  id: string;
-  accountId: string;
-  symbol: string;
-  symbolId: string;
-  quantity: number;
-  price: number;
-  status: OrderStatus;
-  action: 'BUY' | 'SELL';
-  type: 'MARKET' | 'LIMIT' | 'STOP' | 'STOP_LIMIT';
-  timeInForce: 'DAY' | 'GTC' | 'FOK' | 'IOC';
-  createdAt: string;
-  updatedAt: string;
-  filledAt?: string;
-  filledQuantity?: number;
-  filledPrice?: number;
-}
+export type SnapTradeOrder = AccountOrderRecord;
+
+/**
+ * SnapTrade holdings
+ */
+export type SnapTradeHoldings = AccountHoldingsAccount;
 
 /**
  * SnapTrade brokerage

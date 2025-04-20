@@ -1,6 +1,7 @@
-import { Router, Request, Response, RequestHandler } from "express";
+import { Router } from "express";
+import { serverEnv } from "../utils/env";
+import { RequestHandler } from "express";
 import crypto from "crypto";
-import { serverEnv } from "@/server/utils/env";
 
 interface RegisterUserBody {
   userId: string;
@@ -16,8 +17,8 @@ const router = Router();
 try {
   console.log("Initializing SnapTrade router...");
   const config = {
-    clientId: serverEnv.snapTrade.clientId!,
-    consumerKey: serverEnv.snapTrade.consumerKey!,
+    clientId: "TRADING-INSIGHTS-TEST-MJFEC",
+    consumerKey: "zdPiwYb3etVq3uyJMCacZboOLl7ucO9mREL2xdc6Snfat9nLkt",
     redirectUri: serverEnv.snapTrade.redirectUri,
   };
 
@@ -41,13 +42,14 @@ try {
 
       // Generate timestamp and signature
       const timestamp = Math.floor(Date.now() / 1000).toString();
+      const message = `${config.clientId}${timestamp}`;
       const signature = crypto
         .createHmac("sha256", config.consumerKey)
-        .update(`${config.clientId}${timestamp}`)
+        .update(Buffer.from(message, "utf8"))
         .digest("hex");
 
       const response = await fetch(
-        "https://api.snaptrade.com/api/v1/snapTrade/registerUser",
+        `https://api.snaptrade.com/api/v1/snapTrade/registerUser?clientId=${config.clientId}&timestamp=${timestamp}`,
         {
           method: "POST",
           headers: {
@@ -158,13 +160,14 @@ try {
 
       // Generate timestamp and signature
       const timestamp = Math.floor(Date.now() / 1000).toString();
+      const message = `${config.clientId}${timestamp}`;
       const signature = crypto
         .createHmac("sha256", config.consumerKey)
-        .update(`${config.clientId}${timestamp}`)
+        .update(Buffer.from(message, "utf8"))
         .digest("hex");
 
       const response = await fetch(
-        "https://api.snaptrade.com/api/v1/snapTrade/login",
+        `https://api.snaptrade.com/api/v1/snapTrade/login?clientId=${config.clientId}&timestamp=${timestamp}`,
         {
           method: "POST",
           headers: {
@@ -205,18 +208,12 @@ try {
     }
   };
 
+  // Register routes
   router.post("/register", registerHandler);
   router.get("/brokerages", getBrokeragesHandler);
   router.post("/connection-link", createConnectionLinkHandler);
 } catch (error) {
   console.error("Failed to initialize SnapTrade router:", error);
-  if (error instanceof Error) {
-    console.error("Error details:", {
-      name: error.name,
-      message: error.message,
-      stack: error.stack,
-    });
-  }
 }
 
-export const snapTradeRouter = router;
+export default router;

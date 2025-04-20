@@ -1,66 +1,85 @@
 /**
  * SnapTrade configuration
  * This file provides configuration for the SnapTrade service
+ * 
+ * Note: There is a naming discrepancy between SnapTrade's documentation and dashboard:
+ * - Documentation uses: clientId and consumerKey
+ * - Dashboard shows: "Client ID" and "Client Secret"
+ * 
+ * The mapping is:
+ * - "Client ID" from dashboard → clientId in code
+ * - "Client Secret" from dashboard → consumerKey in code
+ * 
+ * Example:
+ * Dashboard "Client ID": TRADING-INSIGHTS-TEST-MJFEC → VITE_SNAPTRADE_CLIENT_ID
+ * Dashboard "Client Secret": zdPiwYb3etVq3uyJMCacZboOLl7ucO9mREL2xdc6Snfat9nLkt → VITE_SNAPTRADE_CONSUMER_KEY
  */
 
-import type { SnapTradeConfig } from './types';
+import { SnapTradeConfig } from "./types";
 
 /**
- * Get SnapTrade configuration from environment variables
- * @returns SnapTrade configuration
- * @throws Error if required environment variables are missing or invalid
+ * Get the current environment
  */
-export function getSnapTradeConfig(): SnapTradeConfig {
-  // Check if we're in a browser environment
-  const isBrowser = typeof window !== "undefined";
+const getEnvironment = (): "browser" | "node" => {
+  return typeof window !== "undefined" ? "browser" : "node";
+};
 
-  // Get environment variables based on the environment
-  let clientId: string | undefined;
-  let consumerKey: string | undefined;
-  let redirectUri: string | undefined;
+/**
+ * Helper function to safely get environment variable
+ * This handles both Vite-style client variables and server variables
+ */
+function getEnvVariable(key: string): string | undefined {
+  const environment = getEnvironment();
+  
+  // For browser environment, look for import.meta.env variables (Vite style)
+  if (environment === "browser") {
+    // @ts-ignore - Vite specific
+    if (import.meta?.env) {
+      // @ts-ignore - Vite specific
+      return import.meta.env[`VITE_${key}`] || undefined;
+    }
+    return undefined;
+  }
+  
+  // For Node.js environment (server-side)
+  return process.env[key] || process.env[`VITE_${key}`] || undefined;
+}
 
-  if (isBrowser) {
-    // Browser environment - use import.meta.env
-    clientId = import.meta.env.VITE_SNAPTRADE_CLIENT_ID?.trim();
-    consumerKey = import.meta.env.VITE_SNAPTRADE_CONSUMER_KEY?.trim();
-    redirectUri = import.meta.env.VITE_SNAPTRADE_REDIRECT_URI?.trim();
+/**
+ * Get SnapTrade configuration
+ */
+export const getSnapTradeConfig = (): SnapTradeConfig => {
+  const environment = getEnvironment();
+  
+  // Get client ID and consumer key based on environment
+  let clientId = "";
+  let consumerKey = "";
+  
+  if (environment === "browser") {
+    // Browser environment (client-side)
+    // @ts-ignore - Vite specific
+    clientId = import.meta?.env?.VITE_SNAPTRADE_CLIENT_ID || "";
+    // @ts-ignore - Vite specific
+    consumerKey = import.meta?.env?.VITE_SNAPTRADE_CONSUMER_KEY || "";
   } else {
-    // Server environment - use process.env
-    clientId = process.env.SNAPTRADE_CLIENT_ID?.trim();
-    consumerKey = process.env.SNAPTRADE_CONSUMER_KEY?.trim();
-    redirectUri = process.env.SNAPTRADE_REDIRECT_URI?.trim();
+    // Node.js environment (server-side)
+    clientId = process.env.SNAPTRADE_CLIENT_ID || 
+              process.env.VITE_SNAPTRADE_CLIENT_ID || "";
+    consumerKey = process.env.SNAPTRADE_CONSUMER_KEY || 
+                 process.env.VITE_SNAPTRADE_CONSUMER_KEY || "";
   }
+  
+  // Determine redirect URI based on environment
+  const redirectUri = environment === "browser"
+    ? `${window.location.origin}/app/broker-callback`
+    : "";
 
-  // Set default redirect URI if not provided
-  if (!redirectUri) {
-    redirectUri = isBrowser
-      ? `${window.location.origin}/broker-callback`
-      : "http://localhost:5173/broker-callback";
-  }
-
-  // Validate required configuration
-  if (!clientId) {
-    throw new Error(
-      isBrowser
-        ? "VITE_SNAPTRADE_CLIENT_ID is required"
-        : "SNAPTRADE_CLIENT_ID is required"
-    );
-  }
-
-  if (!consumerKey) {
-    throw new Error(
-      isBrowser
-        ? "VITE_SNAPTRADE_CONSUMER_KEY is required"
-        : "SNAPTRADE_CONSUMER_KEY is required"
-    );
-  }
-
-  // Log configuration (without sensitive values)
+  // Log configuration for debugging
   console.log("SnapTrade configuration:", {
-    clientId,
+    clientId: clientId,
     hasConsumerKey: !!consumerKey,
     redirectUri,
-    environment: isBrowser ? "browser" : "server",
+    environment,
   });
 
   return {
@@ -68,4 +87,23 @@ export function getSnapTradeConfig(): SnapTradeConfig {
     consumerKey,
     redirectUri,
   };
+};
+
+/**
+ * Verify SnapTrade configuration
+ * @returns boolean indicating if configuration is valid
+ */
+export function verifySnapTradeConfig(): boolean {
+  try {
+    const config = getSnapTradeConfig();
+    const isBrowser = typeof window !== "undefined";
+    return (
+      !!config.clientId &&
+      !!config.redirectUri &&
+      (isBrowser ? !!config.consumerKey : !!config.consumerKey)
+    );
+  } catch (error) {
+    console.error("SnapTrade configuration verification failed:", error);
+    return false;
+  }
 } 

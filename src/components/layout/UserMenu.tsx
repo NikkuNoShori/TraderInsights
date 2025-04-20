@@ -1,8 +1,7 @@
 import { useAuthStore } from "@/stores/authStore";
-import { useThemeStore } from "@/stores/themeStore";
 import { useNavStore } from "@/stores/navStore";
 import { Link } from "react-router-dom";
-import { User, LogOut, Sun, Moon, Settings } from "lucide-react";
+import { User, LogOut, Settings } from "lucide-react";
 import { clsx } from "clsx";
 import {
   DropdownMenu,
@@ -15,12 +14,7 @@ import {
 
 export function UserMenu() {
   const { user, signOut } = useAuthStore();
-  const { theme, setTheme } = useThemeStore();
   const { isCollapsed } = useNavStore();
-
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
-  };
 
   if (!user) return null;
 
@@ -103,15 +97,6 @@ export function UserMenu() {
               <Settings className="h-4 w-4 mr-2" />
               Settings
             </Link>
-          </DropdownMenuItem>
-
-          <DropdownMenuItem onClick={toggleTheme}>
-            {theme === "dark" ? (
-              <Sun className="h-4 w-4 mr-2" />
-            ) : (
-              <Moon className="h-4 w-4 mr-2" />
-            )}
-            {theme === "dark" ? "Light Mode" : "Dark Mode"}
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />

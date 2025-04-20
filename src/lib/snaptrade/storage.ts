@@ -3,21 +3,28 @@
  * This adapter provides a consistent interface for storage operations in both browser and Node.js environments.
  */
 
-import { SnapTradeUser, SnapTradeConnection, SnapTradeAccount } from './types';
+import {
+  SnapTradeUser,
+  SnapTradeConnection,
+  SnapTradeAccount,
+  SnapTradeConfig,
+} from "./types";
 
 // Determine if we're running in a browser or Node.js environment
-const isBrowser = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+const isBrowser =
+  typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 
 // In-memory storage for Node.js environment
 const memoryStorage: Record<string, string> = {};
 
 // Storage keys
 export const STORAGE_KEYS = {
-  USER: 'snaptrade_user',
-  CONNECTIONS: 'snaptrade_connections',
-  ACCOUNTS: 'snaptrade_accounts',
-  LAST_SYNC: 'snaptrade_last_sync',
-  BALANCES: 'snaptrade_balances',
+  USER: "snaptrade_user",
+  CONNECTIONS: "snaptrade_connections",
+  ACCOUNTS: "snaptrade_accounts",
+  LAST_SYNC: "snaptrade_last_sync",
+  BALANCES: "snaptrade_balances",
+  CONFIG: "snaptrade_config",
 } as const;
 
 // Storage helpers
@@ -49,7 +56,7 @@ export const StorageHelpers = {
     if (isBrowser) {
       localStorage.clear();
     } else {
-      Object.keys(memoryStorage).forEach(key => {
+      Object.keys(memoryStorage).forEach((key) => {
         delete memoryStorage[key];
       });
     }
@@ -58,11 +65,39 @@ export const StorageHelpers = {
   // User data
   getUser: (): SnapTradeUser | null => {
     const data = StorageHelpers.getItem(STORAGE_KEYS.USER);
-    return data ? JSON.parse(data) : null;
+    if (!data) return null;
+
+    try {
+      const user = JSON.parse(data);
+      // Validate that the user object has the required properties
+      if (!user.userId || !user.userSecret) {
+        console.warn("Invalid SnapTrade user data in storage");
+        return null;
+      }
+      return user as SnapTradeUser;
+    } catch (error) {
+      console.error("Error parsing SnapTrade user data:", error);
+      return null;
+    }
   },
 
   saveUser: (user: SnapTradeUser): void => {
+    // Validate user object before saving
+    if (!user.userId || !user.userSecret) {
+      console.warn("Attempted to save invalid SnapTrade user data");
+      return;
+    }
     StorageHelpers.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+  },
+
+  // Config data
+  getConfig: (): SnapTradeConfig | null => {
+    const data = StorageHelpers.getItem(STORAGE_KEYS.CONFIG);
+    return data ? JSON.parse(data) : null;
+  },
+
+  setConfig: (config: SnapTradeConfig): void => {
+    StorageHelpers.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(config));
   },
 
   // Connections
@@ -72,7 +107,10 @@ export const StorageHelpers = {
   },
 
   saveConnections: (connections: SnapTradeConnection[]): void => {
-    StorageHelpers.setItem(STORAGE_KEYS.CONNECTIONS, JSON.stringify(connections));
+    StorageHelpers.setItem(
+      STORAGE_KEYS.CONNECTIONS,
+      JSON.stringify(connections)
+    );
   },
 
   // Accounts
@@ -93,5 +131,12 @@ export const StorageHelpers = {
 
   saveLastSync: (timestamp: number): void => {
     StorageHelpers.setItem(STORAGE_KEYS.LAST_SYNC, timestamp.toString());
+  },
+
+  // Clear all SnapTrade data
+  clearAllSnapTradeData: (): void => {
+    Object.values(STORAGE_KEYS).forEach((key) => {
+      StorageHelpers.removeItem(key);
+    });
   },
 }; 

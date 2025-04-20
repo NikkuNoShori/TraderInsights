@@ -1,5 +1,8 @@
 import { create } from "zustand";
-import { snapTradeService } from "@/services/snaptradeService";
+import { persist } from "zustand/middleware";
+import { snapTradeService } from "../services/snaptradeService";
+import { SnapTradeUser } from "../lib/snaptrade/types";
+import { StorageHelpers } from "../lib/storage";
 import type {
   SnapTradeConnection,
   SnapTradeAccount,
@@ -46,16 +49,41 @@ export const useBrokerDataStore = create<BrokerDataState>((set, get) => ({
   // Actions
   registerUser: async (userId: string) => {
     set({ isLoading: true, error: null });
-    try {
-      await snapTradeService.registerUser(userId);
-    } catch (error) {
-      set({
-        error:
-          error instanceof Error ? error.message : "Failed to register user",
-      });
-      throw error;
-    } finally {
-      set({ isLoading: false });
+    let attempts = 0;
+    const maxAttempts = 2;
+
+    while (attempts < maxAttempts) {
+      try {
+        console.log(`Registration attempt ${attempts + 1}/${maxAttempts}`);
+
+        // Call the SnapTrade service to register the user
+        const userData = await snapTradeService.registerUser(userId);
+        console.log("Registration successful:", { userId });
+
+        // Success - return and exit the retry loop
+        set({ isLoading: false });
+        return userData;
+      } catch (error) {
+        attempts++;
+        console.error(`Registration attempt ${attempts} failed:`, error);
+
+        // Only throw on the last attempt
+        if (attempts >= maxAttempts) {
+          set({
+            error:
+              error instanceof Error
+                ? error.message
+                : "Failed to register user",
+            isLoading: false,
+          });
+          throw error;
+        }
+
+        // Wait before retrying (exponential backoff)
+        const delay = Math.pow(2, attempts) * 500; // 1s, 2s
+        console.log(`Waiting ${delay}ms before retry...`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
     }
   },
 
@@ -68,15 +96,30 @@ export const useBrokerDataStore = create<BrokerDataState>((set, get) => ({
         throw new Error("User not registered with SnapTrade");
       }
 
-      const data = await snapTradeService.syncAllData();
+      // Ensure userId and userSecret are available
+      const { userId, userSecret } = user;
+      if (!userId || !userSecret) {
+        throw new Error("Invalid SnapTrade user data");
+      }
+
+      // Get connections
+      const connectionsResponse = await snapTradeService.connections.list();
+
+      // Get accounts
+      const accountsResponse =
+        await snapTradeService.accountInformation.listUserAccounts({
+          userId,
+          userSecret,
+        });
+
       set({
-        connections: data.connections,
-        accounts: data.accounts,
+        connections: connectionsResponse || [],
+        accounts: accountsResponse.data || [],
         lastSyncTime: new Date().toISOString(),
       });
 
       // Fetch positions, balances, and orders for each account
-      for (const account of data.accounts) {
+      for (const account of accountsResponse.data || []) {
         await get().refreshPositions(account.id);
         await get().refreshBalances(account.id);
         await get().refreshOrders(account.id);
@@ -93,54 +136,94 @@ export const useBrokerDataStore = create<BrokerDataState>((set, get) => ({
 
   refreshPositions: async (accountId: string) => {
     try {
-      const positions = await snapTradeService.getAccountHoldings(accountId);
+      const user = snapTradeService.getUser();
+      if (!user) {
+        throw new Error("User not registered with SnapTrade");
+      }
+
+      // Extract and validate userId and userSecret
+      const { userId, userSecret } = user;
+      if (!userId || !userSecret) {
+        throw new Error("Invalid SnapTrade user data");
+      }
+
+      const positionsResponse =
+        await snapTradeService.accountInformation.getUserAccountPositions({
+          userId,
+          userSecret,
+          accountId,
+        });
+
       set((state) => ({
         positions: {
           ...state.positions,
-          [accountId]: positions,
+          [accountId]: positionsResponse.data?.positions || [],
         },
       }));
     } catch (error) {
-      set({
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to refresh positions",
-      });
+      console.error("Error refreshing positions:", error);
     }
   },
 
   refreshBalances: async (accountId: string) => {
     try {
-      const balances = await snapTradeService.getAccountBalances(accountId);
+      const user = snapTradeService.getUser();
+      if (!user) {
+        throw new Error("User not registered with SnapTrade");
+      }
+
+      // Extract and validate userId and userSecret
+      const { userId, userSecret } = user;
+      if (!userId || !userSecret) {
+        throw new Error("Invalid SnapTrade user data");
+      }
+
+      const balancesResponse =
+        await snapTradeService.accountInformation.getUserAccountBalance({
+          userId,
+          userSecret,
+          accountId,
+        });
+
       set((state) => ({
         balances: {
           ...state.balances,
-          [accountId]: balances,
+          [accountId]: balancesResponse.data || [],
         },
       }));
     } catch (error) {
-      set({
-        error:
-          error instanceof Error ? error.message : "Failed to refresh balances",
-      });
+      console.error("Error refreshing balances:", error);
     }
   },
 
   refreshOrders: async (accountId: string) => {
     try {
-      const orders = await snapTradeService.getAccountOrders(accountId);
+      const user = snapTradeService.getUser();
+      if (!user) {
+        throw new Error("User not registered with SnapTrade");
+      }
+
+      // Extract and validate userId and userSecret
+      const { userId, userSecret } = user;
+      if (!userId || !userSecret) {
+        throw new Error("Invalid SnapTrade user data");
+      }
+
+      const ordersResponse =
+        await snapTradeService.accountInformation.getUserAccountOrders({
+          userId,
+          userSecret,
+          accountId,
+        });
+
       set((state) => ({
         orders: {
           ...state.orders,
-          [accountId]: orders,
+          [accountId]: ordersResponse.data || [],
         },
       }));
     } catch (error) {
-      set({
-        error:
-          error instanceof Error ? error.message : "Failed to refresh orders",
-      });
+      console.error("Error refreshing orders:", error);
     }
   },
 

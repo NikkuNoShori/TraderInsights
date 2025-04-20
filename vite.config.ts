@@ -3,9 +3,14 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 
 export default defineConfig(({ mode }) => {
-  // Load env file based on `mode` in the current working directory.
-  // Set the third parameter to '' to load all env regardless of the `VITE_` prefix.
-  const env = loadEnv(mode, process.cwd(), "");
+  // Load env variables from .env files
+  const env = loadEnv(mode, process.cwd(), ["VITE_", "SNAPTRADE_"]);
+
+  console.log("Vite config environment:", {
+    mode,
+    hasSnapTradeClientId: !!env.VITE_SNAPTRADE_CLIENT_ID,
+    hasSnapTradeConsumerKey: !!env.VITE_SNAPTRADE_CONSUMER_KEY,
+  });
 
   return {
     plugins: [react()],
@@ -40,17 +45,11 @@ export default defineConfig(({ mode }) => {
       host: true,
       open: false,
       proxy: {
+        // For local Next.js API routes
         "/api": {
-          target: env.VITE_API_URL || "http://localhost:3000",
+          target: "http://localhost:3000",
           changeOrigin: true,
           secure: false,
-          ws: true,
-        },
-        "/snapTrade": {
-          target: "https://api.snaptrade.com/api/v1",
-          changeOrigin: true,
-          secure: true,
-          rewrite: (path) => path.replace(/^\/snapTrade/, ""),
         },
       },
       hmr: {
@@ -91,6 +90,10 @@ export default defineConfig(({ mode }) => {
           env.VITE_ENABLE_PAPER_TRADING
         ),
         VITE_ENABLE_ANALYTICS: JSON.stringify(env.VITE_ENABLE_ANALYTICS),
+        VITE_SNAPTRADE_CLIENT_ID: JSON.stringify(env.VITE_SNAPTRADE_CLIENT_ID),
+        VITE_SNAPTRADE_CONSUMER_KEY: JSON.stringify(
+          env.VITE_SNAPTRADE_CONSUMER_KEY
+        ),
       },
     },
   };

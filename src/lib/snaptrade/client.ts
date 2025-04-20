@@ -3,48 +3,111 @@
  * This file provides a client for interacting with the SnapTrade API
  */
 
-import { Snaptrade } from 'snaptrade-typescript-sdk';
-import { SnapTradeConfig } from './types';
+import { Snaptrade } from "snaptrade-typescript-sdk";
 import crypto from "crypto";
+import { SnapTradeConfig } from "./types";
 
 /**
- * Creates a SnapTrade API client
+ * Generate authentication credentials for SnapTrade
+ * @param config SnapTrade configuration
+ * @returns Authentication object with clientId, timestamp, and signature
+ */
+export async function generateSnapTradeAuth(config: SnapTradeConfig) {
+  try {
+    if (!config.clientId || !config.consumerKey) {
+      throw new Error("Missing required SnapTrade configuration");
+    }
+
+    // Generate timestamp for signature
+    const timestamp = Math.floor(Date.now() / 1000).toString();
+
+    // Create signature
+    let signature;
+
+    if (
+      typeof window !== "undefined" &&
+      window.crypto &&
+      window.crypto.subtle
+    ) {
+      // Browser environment: Use Web Crypto API
+      const encoder = new TextEncoder();
+      const key = encoder.encode(config.consumerKey);
+      const message = encoder.encode(`${config.clientId}${timestamp}`);
+
+      const cryptoKey = await window.crypto.subtle.importKey(
+        "raw",
+        key,
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["sign"]
+      );
+
+      const signatureBuffer = await window.crypto.subtle.sign(
+        "HMAC",
+        cryptoKey,
+        message
+      );
+
+      signature = Array.from(new Uint8Array(signatureBuffer))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+    } else {
+      // Node.js environment: Use crypto
+      signature = crypto
+        .createHmac("sha256", config.consumerKey)
+        .update(`${config.clientId}${timestamp}`)
+        .digest("hex");
+    }
+
+    return {
+      clientId: config.clientId,
+      timestamp,
+      signature,
+    };
+  } catch (error) {
+    console.error("Error generating SnapTrade authentication:", error);
+    throw new Error(
+      `Failed to generate SnapTrade auth: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
+  }
+}
+
+/**
+ * Create a SnapTrade client instance with proper authentication
  * @param config SnapTrade configuration
  * @returns SnapTrade client instance
  */
-export function createSnapTradeClient(config: SnapTradeConfig): Snaptrade {
-  console.log("Creating SnapTrade client with config:", {
-    hasClientId: !!config.clientId,
-    hasConsumerKey: !!config.consumerKey,
-    hasRedirectUri: !!config.redirectUri,
-    clientId: config.clientId,
-    redirectUri: config.redirectUri,
-  });
+export async function createSnapTradeClient(
+  config: SnapTradeConfig
+): Promise<Snaptrade> {
+  try {
+    // Generate authentication parameters
+    const auth = await generateSnapTradeAuth(config);
 
-  if (!config.clientId || !config.consumerKey) {
-    console.error("Missing required SnapTrade configuration:", {
-      hasClientId: !!config.clientId,
-      hasConsumerKey: !!config.consumerKey,
+    // Log authentication parameters (without sensitive info)
+    console.log("Creating SnapTrade client:", {
+      clientId: auth.clientId,
+      timestamp: auth.timestamp,
+      signatureLength: auth.signature.length,
     });
-    throw new Error("Missing required SnapTrade configuration");
+
+    // Create and return client instance
+    return new Snaptrade({
+      clientId: auth.clientId,
+      consumerKey: config.consumerKey,
+      timestamp: auth.timestamp,
+      signature: auth.signature,
+    });
+  } catch (error) {
+    console.error("Error creating SnapTrade client:", error);
+    throw new Error(
+      `Failed to create SnapTrade client: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
   }
-
-  // Generate timestamp and signature
-  const timestamp = Math.floor(Date.now() / 1000);
-  const signature = crypto
-    .createHmac("sha256", config.consumerKey)
-    .update(`${config.clientId}${timestamp}`)
-    .digest("hex");
-
-  const client = new Snaptrade({
-    clientId: config.clientId,
-    consumerKey: config.consumerKey,
-    timestamp,
-    signature,
-  });
-
-  console.log("SnapTrade client created successfully");
-  return client;
 }
 
 /**
@@ -52,7 +115,7 @@ export function createSnapTradeClient(config: SnapTradeConfig): Snaptrade {
  * Provides methods for interacting with the SnapTrade API
  */
 export class SnapTradeService {
-  private client: Snaptrade;
+  private client: Snaptrade | null = null;
   private userId: string | null = null;
   private userSecret: string | null = null;
   private config: SnapTradeConfig;
@@ -73,7 +136,26 @@ export class SnapTradeService {
     }
 
     this.config = config;
-    this.client = createSnapTradeClient(config);
+  }
+
+  /**
+   * Initializes the SnapTrade client
+   */
+  async initialize() {
+    if (!this.client) {
+      this.client = await createSnapTradeClient(this.config);
+    }
+    return this.client;
+  }
+
+  /**
+   * Gets the SnapTrade client, initializing it if necessary
+   */
+  private async getClient(): Promise<Snaptrade> {
+    if (!this.client) {
+      this.client = await this.initialize();
+    }
+    return this.client;
   }
 
   /**
@@ -88,10 +170,26 @@ export class SnapTradeService {
       // Generate timestamp and signature for this request
       const timestampNum = Math.floor(Date.now() / 1000);
       const timestamp = timestampNum.toString();
-      const signature = crypto
-        .createHmac("sha256", this.config.consumerKey)
-        .update(`${this.config.clientId}${timestamp}`)
-        .digest("hex");
+      const encoder = new TextEncoder();
+      const key = encoder.encode(this.config.consumerKey);
+      const message = encoder.encode(`${this.config.clientId}${timestamp}`);
+
+      const cryptoKey = await window.crypto.subtle.importKey(
+        "raw",
+        key,
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["sign"]
+      );
+
+      const signatureBuffer = await window.crypto.subtle.sign(
+        "HMAC",
+        cryptoKey,
+        message
+      );
+      const signature = Array.from(new Uint8Array(signatureBuffer))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
 
       const response = await fetch(
         "https://api.snaptrade.com/api/v1/snapTrade/registerUser",
@@ -150,7 +248,8 @@ export class SnapTradeService {
    */
   async deleteUser(userId: string): Promise<boolean> {
     try {
-      await this.client.authentication.deleteSnapTradeUser({
+      const client = await this.getClient();
+      await client.authentication.deleteSnapTradeUser({
         userId,
       });
 
@@ -182,11 +281,8 @@ export class SnapTradeService {
         clientInitialized: !!this.client,
       });
 
-      if (!this.client) {
-        throw new Error("SnapTrade client not initialized");
-      }
-
-      const response = await this.client.referenceData.listAllBrokerages();
+      const client = await this.getClient();
+      const response = await client.referenceData.listAllBrokerages();
       console.log("Raw API response:", {
         status: response.status,
         statusText: response.statusText,
@@ -238,13 +334,11 @@ export class SnapTradeService {
     try {
       console.log("Creating connection link:", { userId });
 
-      // Get the login link for the connection portal
-      const loginResponse = await this.client.authentication.loginSnapTradeUser(
-        {
-          userId,
-          userSecret,
-        }
-      );
+      const client = await this.getClient();
+      const loginResponse = await client.authentication.loginSnapTradeUser({
+        userId,
+        userSecret,
+      });
 
       if (!loginResponse.data) {
         console.error(
@@ -254,8 +348,6 @@ export class SnapTradeService {
         throw new Error("Failed to get login link");
       }
 
-      // Return the entire response data which will contain the redirect URL
-      // This can be used in an iframe, new window, or with the React SDK
       return loginResponse.data;
     } catch (error) {
       console.error("Error creating connection link:", error);
@@ -277,11 +369,11 @@ export class SnapTradeService {
         throw new Error("User not authenticated");
       }
 
-      const response =
-        await this.client.connections.listBrokerageAuthorizations({
-          userId: this.userId,
-          userSecret: this.userSecret,
-        });
+      const client = await this.getClient();
+      const response = await client.connections.listBrokerageAuthorizations({
+        userId: this.userId,
+        userSecret: this.userSecret,
+      });
 
       return response.data || [];
     } catch (error) {
@@ -304,7 +396,8 @@ export class SnapTradeService {
         throw new Error("User not authenticated");
       }
 
-      await this.client.connections.removeBrokerageAuthorization({
+      const client = await this.getClient();
+      await client.connections.removeBrokerageAuthorization({
         userId: this.userId,
         userSecret: this.userSecret,
         authorizationId,
@@ -332,7 +425,8 @@ export class SnapTradeService {
     accountId: string
   ) {
     try {
-      const response = await this.client.accountInformation.getUserHoldings({
+      const client = await this.getClient();
+      const response = await client.accountInformation.getUserHoldings({
         userId,
         userSecret,
         accountId,
@@ -361,12 +455,12 @@ export class SnapTradeService {
     accountId: string
   ) {
     try {
-      const response =
-        await this.client.accountInformation.getUserAccountBalance({
-          userId,
-          userSecret,
-          accountId,
-        });
+      const client = await this.getClient();
+      const response = await client.accountInformation.getUserAccountBalance({
+        userId,
+        userSecret,
+        accountId,
+      });
       return response.data;
     } catch (error) {
       console.error("Error getting account balances:", error);
@@ -391,12 +485,12 @@ export class SnapTradeService {
     accountId: string
   ) {
     try {
-      const response =
-        await this.client.accountInformation.getUserAccountOrders({
-          userId,
-          userSecret,
-          accountId,
-        });
+      const client = await this.getClient();
+      const response = await client.accountInformation.getUserAccountOrders({
+        userId,
+        userSecret,
+        accountId,
+      });
       return response.data;
     } catch (error) {
       console.error("Error getting account orders:", error);

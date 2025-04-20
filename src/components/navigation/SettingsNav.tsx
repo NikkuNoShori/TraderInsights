@@ -1,70 +1,56 @@
-import { NavLink } from "react-router-dom";
-import { User, Palette, Bell, Shield, BarChart3, Link2 } from "lucide-react";
-import { clsx } from "clsx";
+import { Link } from "react-router-dom";
+import { IconType } from "react-icons";
+import { FiUser, FiDatabase, FiLock, FiLink } from "react-icons/fi";
 
-const settingsLinks = [
+interface SettingsLink {
+  to: string;
+  label: string;
+  icon: IconType;
+  description: string;
+}
+
+const settingsLinks: SettingsLink[] = [
   {
     to: "/app/settings/profile",
     label: "Profile",
-    icon: User,
-    description: "Manage your personal information",
+    icon: FiUser,
+    description: "Manage your account settings and preferences"
   },
   {
-    to: "/app/settings/brokers",
-    label: "Brokers",
-    icon: BarChart3,
-    description: "Manage connected trading accounts",
-  },
-  {
-    to: "/app/settings/snaptrade",
-    label: "SnapTrade",
-    icon: Link2,
-    description: "Configure SnapTrade integration",
+    to: "/app/settings/data",
+    label: "Data",
+    icon: FiDatabase,
+    description: "Import, export and manage your trade data"
   },
   {
     to: "/app/settings/security",
     label: "Security",
-    icon: Shield,
-    description: "Update password and security settings",
+    icon: FiLock,
+    description: "Configure security settings and authentication"
   },
   {
-    to: "/app/settings/appearance",
-    label: "Appearance",
-    icon: Palette,
-    description: "Customize your interface",
-  },
-  {
-    to: "/app/settings/notifications",
-    label: "Notifications",
-    icon: Bell,
-    description: "Configure your notifications",
-  },
+    to: "/app/settings/snaptrade",
+    label: "SnapTrade",
+    icon: FiLink,
+    description: "Configure SnapTrade API integration settings"
+  }
 ];
 
-export function SettingsNav() {
+export default function SettingsNav() {
   return (
     <nav className="space-y-1">
-      {settingsLinks.map(({ to, label, icon: Icon, description }) => (
-        <NavLink
-          key={to}
-          to={to}
-          className={({ isActive }) =>
-            clsx(
-              "flex items-center px-3 py-2 rounded-md transition-colors",
-              isActive
-                ? "bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400"
-                : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800",
-            )
-          }
+      {settingsLinks.map((link) => (
+        <Link
+          key={link.to}
+          to={link.to}
+          className="flex items-start space-x-4 p-3 rounded-lg hover:bg-muted/50 transition-colors"
         >
-          <Icon className="h-5 w-5 mr-3 flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium truncate">{label}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-              {description}
-            </div>
+          <link.icon className="w-5 h-5 mt-0.5 text-muted-foreground" />
+          <div>
+            <div className="font-medium text-foreground">{link.label}</div>
+            <div className="text-sm text-muted-foreground">{link.description}</div>
           </div>
-        </NavLink>
+        </Link>
       ))}
     </nav>
   );
