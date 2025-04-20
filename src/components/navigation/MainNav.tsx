@@ -127,8 +127,20 @@ export function MainNav() {
       loadingBrokers, 
       brokerError, 
       missingBrokers 
-    } 
+    },
+    isDebugMode,
+    showDebugPanel,
+    brokerDebug: {
+      showMissingBrokers,
+      showBrokerDetails,
+      showConnectionStatus
+    }
   } = useDebugStore();
+
+  // Add effect to handle debug state changes
+  useEffect(() => {
+    console.log('Debug state changed:', { isDebugMode, showDebugPanel });
+  }, [isDebugMode, showDebugPanel]);
 
   useEffect(() => {
     if (!user) {
@@ -333,7 +345,7 @@ export function MainNav() {
           </div>
 
           {/* Debug Panel */}
-          {!isCollapsed && (
+          {!isCollapsed && isDebugMode && showDebugPanel && (
             <div className="px-4 py-2">
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 text-xs">
                 <div className="flex items-center justify-between mb-2">
@@ -343,6 +355,7 @@ export function MainNav() {
                     <span className="text-gray-500 dark:text-gray-400">{isInitialized ? 'Ready' : 'Initializing'}</span>
                   </div>
                 </div>
+                
                 <div className="space-y-1">
                   <div className="flex justify-between">
                     <span className="text-gray-500 dark:text-gray-400">Brokers:</span>
@@ -360,7 +373,7 @@ export function MainNav() {
                       <span className="max-w-[200px] truncate">{brokerError}</span>
                     </div>
                   )}
-                  {missingBrokers && missingBrokers.length > 0 && (
+                  {showMissingBrokers && missingBrokers && missingBrokers.length > 0 && (
                     <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                       <div className="flex justify-between items-center mb-1">
                         <span className="text-gray-500 dark:text-gray-400">Missing Brokers:</span>
@@ -372,6 +385,31 @@ export function MainNav() {
                             <li key={broker} className="text-gray-600 dark:text-gray-400">{broker}</li>
                           ))}
                         </ul>
+                      </div>
+                    </div>
+                  )}
+                  {showBrokerDetails && brokers && brokers.length > 0 && (
+                    <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-gray-500 dark:text-gray-400">Connected Brokers:</span>
+                        <span className="font-medium text-green-500">{brokers.length}</span>
+                      </div>
+                      <div className="max-h-[100px] overflow-y-auto">
+                        <ul className="list-disc pl-4 space-y-0.5">
+                          {brokers.map((broker: any) => (
+                            <li key={broker.id} className="text-gray-600 dark:text-gray-400">{broker.name}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+                  {showConnectionStatus && (
+                    <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-500 dark:text-gray-400">Connection Status:</span>
+                        <span className={`font-medium ${isInitialized ? 'text-green-500' : 'text-yellow-500'}`}>
+                          {isInitialized ? 'Connected' : 'Connecting...'}
+                        </span>
                       </div>
                     </div>
                   )}

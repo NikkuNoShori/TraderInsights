@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { logger } from '@/lib/services/loggingService';
 
 const DEBUG_CATEGORIES: DebugCategory[] = [
   'broker',
@@ -35,158 +36,207 @@ export function DebugSettings() {
 
   const [showAdvanced, setShowAdvanced] = useState(false);
 
+  const handleToggleDebugMode = () => {
+    toggleDebugMode();
+    logger.info('state', `Debug mode ${isDebugMode ? 'disabled' : 'enabled'}`);
+  };
+
+  const handleToggleCategory = (category: DebugCategory) => {
+    toggleCategory(category);
+    logger.info('state', `Debug category ${category} ${enabledCategories.includes(category) ? 'disabled' : 'enabled'}`);
+  };
+
+  const handleSetLogLevel = (level: DebugLevel) => {
+    setLogLevel(level);
+    logger.info('state', `Log level set to ${level}`);
+  };
+
+  const handleToggleDebugPanel = () => {
+    toggleDebugPanel();
+    logger.info('state', `Debug panel ${showDebugPanel ? 'hidden' : 'shown'}`);
+  };
+
+  const handleUpdateBrokerDebug = (settings: Partial<typeof brokerDebug>) => {
+    updateBrokerDebug(settings);
+    logger.info('state', 'Broker debug settings updated', settings);
+  };
+
+  const handleUpdateApiDebug = (settings: Partial<typeof apiDebug>) => {
+    updateApiDebug(settings);
+    logger.info('state', 'API debug settings updated', settings);
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Debug Settings</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <div className="space-y-6">
+      <h2 className="text-lg font-semibold">Debug Settings</h2>
+      <div className="space-y-4">
         {/* Debug Mode Toggle */}
         <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label>Debug Mode</Label>
-            <p className="text-sm text-muted-foreground">
-              Enable or disable all debug features
-            </p>
-          </div>
+          <Label htmlFor="debug-mode" className="text-sm">Debug Mode</Label>
           <Switch
+            id="debug-mode"
             checked={isDebugMode}
-            onCheckedChange={toggleDebugMode}
+            onCheckedChange={handleToggleDebugMode}
+            className="data-[state=unchecked]:bg-muted/50 dark:data-[state=unchecked]:bg-muted/25"
           />
         </div>
 
-        {/* Debug Panel Toggle */}
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label>Debug Panel</Label>
-            <p className="text-sm text-muted-foreground">
-              Show or hide the debug information panel
-            </p>
-          </div>
-          <Switch
-            checked={showDebugPanel}
-            onCheckedChange={toggleDebugPanel}
-          />
-        </div>
+        {isDebugMode && (
+          <>
+            <Separator className="my-4" />
+            
+            {/* Log Level */}
+            <div className="space-y-2">
+              <Label className="text-sm">Log Level</Label>
+              <Select value={minLogLevel} onValueChange={handleSetLogLevel}>
+                <SelectTrigger className="w-[200px] ml-auto">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {LOG_LEVELS.map((level) => (
+                    <SelectItem key={level} value={level}>
+                      {level.charAt(0).toUpperCase() + level.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-        {/* Log Level Selector */}
-        <div className="space-y-2">
-          <Label>Minimum Log Level</Label>
-          <Select
-            value={minLogLevel}
-            onValueChange={(value: DebugLevel) => setLogLevel(value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select log level" />
-            </SelectTrigger>
-            <SelectContent>
-              {LOG_LEVELS.map((level) => (
-                <SelectItem key={level} value={level}>
-                  {level.charAt(0).toUpperCase() + level.slice(1)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+            <Separator className="my-4" />
 
-        {/* Debug Categories */}
-        <div className="space-y-2">
-          <Label>Debug Categories</Label>
-          <div className="flex flex-wrap gap-2">
-            {DEBUG_CATEGORIES.map((category) => (
-              <Button
-                key={category}
-                variant={enabledCategories.includes(category) ? "default" : "outline"}
-                size="sm"
-                onClick={() => toggleCategory(category)}
-              >
-                {category.charAt(0).toUpperCase() + category.slice(1)}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        {/* Advanced Settings Button */}
-        <Button
-          variant="outline"
-          onClick={() => setShowAdvanced(!showAdvanced)}
-        >
-          {showAdvanced ? 'Hide Advanced Settings' : 'Show Advanced Settings'}
-        </Button>
-
-        {/* Advanced Settings */}
-        {showAdvanced && (
-          <div className="space-y-6 pt-4 border-t">
-            {/* Broker Debug Settings */}
-            <div className="space-y-4">
-              <h4 className="font-medium">Broker Debug Settings</h4>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label>Show Missing Brokers</Label>
-                  <Switch
-                    checked={brokerDebug.showMissingBrokers}
-                    onCheckedChange={(checked) => 
-                      updateBrokerDebug({ showMissingBrokers: checked })
-                    }
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label>Show Broker Details</Label>
-                  <Switch
-                    checked={brokerDebug.showBrokerDetails}
-                    onCheckedChange={(checked) => 
-                      updateBrokerDebug({ showBrokerDetails: checked })
-                    }
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label>Show Connection Status</Label>
-                  <Switch
-                    checked={brokerDebug.showConnectionStatus}
-                    onCheckedChange={(checked) => 
-                      updateBrokerDebug({ showConnectionStatus: checked })
-                    }
-                  />
-                </div>
+            {/* Debug Categories */}
+            <div className="space-y-2">
+              <Label className="text-sm">Debug Categories</Label>
+              <div className="space-y-2">
+                {DEBUG_CATEGORIES.map((category) => (
+                  <div key={category} className="flex items-center justify-between">
+                    <Label className="text-sm">{category.charAt(0).toUpperCase() + category.slice(1)}</Label>
+                    <Switch
+                      checked={enabledCategories.includes(category)}
+                      onCheckedChange={() => handleToggleCategory(category)}
+                      className="data-[state=unchecked]:bg-muted/50 dark:data-[state=unchecked]:bg-muted/25"
+                    />
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* API Debug Settings */}
-            <div className="space-y-4">
-              <h4 className="font-medium">API Debug Settings</h4>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label>Show API Requests</Label>
-                  <Switch
-                    checked={apiDebug.showRequests}
-                    onCheckedChange={(checked) => 
-                      updateApiDebug({ showRequests: checked })
-                    }
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label>Show API Responses</Label>
-                  <Switch
-                    checked={apiDebug.showResponses}
-                    onCheckedChange={(checked) => 
-                      updateApiDebug({ showResponses: checked })
-                    }
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <Label>Show API Errors</Label>
-                  <Switch
-                    checked={apiDebug.showErrors}
-                    onCheckedChange={(checked) => 
-                      updateApiDebug({ showErrors: checked })
-                    }
-                  />
-                </div>
+            <div className="py-4">
+              <Separator />
+            </div>
+
+            {/* Debug Panel Settings */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="debug-panel" className="text-sm">Show Debug Panel</Label>
+                <Switch
+                  id="debug-panel"
+                  checked={showDebugPanel}
+                  onCheckedChange={handleToggleDebugPanel}
+                  className="data-[state=unchecked]:bg-muted/50 dark:data-[state=unchecked]:bg-muted/25"
+                />
               </div>
             </div>
-          </div>
+
+            {showDebugPanel && (
+              <>
+                <div className="flex justify-center mt-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowAdvanced(!showAdvanced)}
+                    className="text-muted-foreground hover:text-primary text-sm"
+                  >
+                    {showAdvanced ? 'Hide Advanced Settings' : 'Show Advanced Settings'}
+                  </Button>
+                </div>
+
+                {showAdvanced && (
+                  <>
+                    <Separator className="my-4" />
+                    
+                    {/* Broker Debug */}
+                    <div className="space-y-2">
+                      <Label className="text-sm">Broker Debug</Label>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm">Show Missing Brokers</Label>
+                          <Switch
+                            checked={brokerDebug.showMissingBrokers}
+                            onCheckedChange={(checked) =>
+                              handleUpdateBrokerDebug({ showMissingBrokers: checked })
+                            }
+                            className="data-[state=unchecked]:bg-muted/50 dark:data-[state=unchecked]:bg-muted/25"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm">Show Broker Details</Label>
+                          <Switch
+                            checked={brokerDebug.showBrokerDetails}
+                            onCheckedChange={(checked) =>
+                              handleUpdateBrokerDebug({ showBrokerDetails: checked })
+                            }
+                            className="data-[state=unchecked]:bg-muted/50 dark:data-[state=unchecked]:bg-muted/25"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm">Show Connection Status</Label>
+                          <Switch
+                            checked={brokerDebug.showConnectionStatus}
+                            onCheckedChange={(checked) =>
+                              handleUpdateBrokerDebug({ showConnectionStatus: checked })
+                            }
+                            className="data-[state=unchecked]:bg-muted/50 dark:data-[state=unchecked]:bg-muted/25"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator className="my-4" />
+
+                    {/* API Debug */}
+                    <div className="space-y-2">
+                      <Label className="text-sm">API Debug</Label>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm">Show Requests</Label>
+                          <Switch
+                            checked={apiDebug.showRequests}
+                            onCheckedChange={(checked) =>
+                              handleUpdateApiDebug({ showRequests: checked })
+                            }
+                            className="data-[state=unchecked]:bg-muted/50 dark:data-[state=unchecked]:bg-muted/25"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm">Show Responses</Label>
+                          <Switch
+                            checked={apiDebug.showResponses}
+                            onCheckedChange={(checked) =>
+                              handleUpdateApiDebug({ showResponses: checked })
+                            }
+                            className="data-[state=unchecked]:bg-muted/50 dark:data-[state=unchecked]:bg-muted/25"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm">Show Errors</Label>
+                          <Switch
+                            checked={apiDebug.showErrors}
+                            onCheckedChange={(checked) =>
+                              handleUpdateApiDebug({ showErrors: checked })
+                            }
+                            className="data-[state=unchecked]:bg-muted/50 dark:data-[state=unchecked]:bg-muted/25"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+          </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 } 
