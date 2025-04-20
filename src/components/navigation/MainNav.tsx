@@ -24,6 +24,7 @@ import { useNavStore } from "@/stores/navStore";
 import { Badge } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { UserMenu } from "@/components/layout/UserMenu";
+import { useDebugStore } from '@/stores/debugStore';
 
 type NavCategory = {
   label: string;
@@ -117,6 +118,17 @@ export function MainNav() {
   const { user, profile, signOut } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Get debug state from store
+  const { 
+    brokerState: { 
+      isInitialized, 
+      brokers, 
+      loadingBrokers, 
+      brokerError, 
+      missingBrokers 
+    } 
+  } = useDebugStore();
 
   useEffect(() => {
     if (!user) {
@@ -319,6 +331,54 @@ export function MainNav() {
               </div>
             ))}
           </div>
+
+          {/* Debug Panel */}
+          {!isCollapsed && (
+            <div className="px-4 py-2">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 text-xs">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium text-gray-700 dark:text-gray-300">Debug Info</span>
+                  <div className="flex items-center space-x-2">
+                    <span className={`w-2 h-2 rounded-full ${isInitialized ? 'bg-green-500' : 'bg-yellow-500'}`}></span>
+                    <span className="text-gray-500 dark:text-gray-400">{isInitialized ? 'Ready' : 'Initializing'}</span>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500 dark:text-gray-400">Brokers:</span>
+                    <span className="font-medium">{brokers?.length || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500 dark:text-gray-400">Loading:</span>
+                    <span className={loadingBrokers ? 'text-yellow-500' : 'text-green-500'}>
+                      {loadingBrokers ? 'Yes' : 'No'}
+                    </span>
+                  </div>
+                  {brokerError && (
+                    <div className="flex justify-between text-red-500">
+                      <span>Error:</span>
+                      <span className="max-w-[200px] truncate">{brokerError}</span>
+                    </div>
+                  )}
+                  {missingBrokers && missingBrokers.length > 0 && (
+                    <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-gray-500 dark:text-gray-400">Missing Brokers:</span>
+                        <span className="font-medium text-yellow-500">{missingBrokers.length}</span>
+                      </div>
+                      <div className="max-h-[100px] overflow-y-auto">
+                        <ul className="list-disc pl-4 space-y-0.5">
+                          {missingBrokers.map((broker: string) => (
+                            <li key={broker} className="text-gray-600 dark:text-gray-400">{broker}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer with user menu */}

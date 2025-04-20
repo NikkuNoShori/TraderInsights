@@ -74,20 +74,6 @@ export function UserMenu() {
             <div className="text-sm font-medium text-foreground dark:text-dark-text">
               {user.email}
             </div>
-            <div className="flex items-center space-x-2 mt-1">
-              <span className="text-xs text-muted-foreground dark:text-dark-muted">
-                Advanced Trader
-              </span>
-              <span
-                className={clsx(
-                  "inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium",
-                  "bg-primary-50 dark:bg-primary-900/20",
-                  "text-primary-700 dark:text-primary-300",
-                )}
-              >
-                Level 3
-              </span>
-            </div>
           </div>
 
           <DropdownMenuSeparator />

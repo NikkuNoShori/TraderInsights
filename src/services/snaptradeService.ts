@@ -192,8 +192,14 @@ export const snapTradeService = {
       const config = getSnapTradeConfig();
 
       try {
+        // Define response type for login
+        interface LoginResponse {
+          redirectUri: string;
+          [key: string]: any;
+        }
+
         // Use the centralized auth utilities for direct API call
-        const response = await makeSnapTradeRequest(
+        const response = await makeSnapTradeRequest<LoginResponse>(
           config,
           "/snapTrade/login",
           "POST",

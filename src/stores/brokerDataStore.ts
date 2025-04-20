@@ -27,7 +27,7 @@ interface BrokerDataState {
   lastSyncTime: string | null;
 
   // Actions
-  registerUser: (userId: string) => Promise<void>;
+  registerUser: (userId: string) => Promise<SnapTradeUser>;
   syncAllData: () => Promise<void>;
   refreshPositions: (accountId: string) => Promise<void>;
   refreshBalances: (accountId: string) => Promise<void>;
@@ -56,6 +56,15 @@ export const useBrokerDataStore = create<BrokerDataState>((set, get) => ({
       try {
         console.log(`Registration attempt ${attempts + 1}/${maxAttempts}`);
 
+        // If we already have a failed registration attempt, add a delay
+        // to ensure we get a new timestamp for signature generation
+        if (attempts > 0) {
+          // Wait before retrying (exponential backoff)
+          const delay = Math.pow(2, attempts) * 1000; // 2s, 4s
+          console.log(`Waiting ${delay}ms before retry...`);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+
         // Call the SnapTrade service to register the user
         const userData = await snapTradeService.registerUser(userId);
         console.log("Registration successful:", { userId });
@@ -65,7 +74,17 @@ export const useBrokerDataStore = create<BrokerDataState>((set, get) => ({
         return userData;
       } catch (error) {
         attempts++;
-        console.error(`Registration attempt ${attempts} failed:`, error);
+
+        // Check if this is a signature verification error
+        const errorStr = String(error);
+        const isSignatureError =
+          errorStr.includes("Unable to verify signature") ||
+          errorStr.includes('code":"1076');
+
+        console.error(`Registration attempt ${attempts} failed:`, {
+          error,
+          isSignatureError,
+        });
 
         // Only throw on the last attempt
         if (attempts >= maxAttempts) {
@@ -78,13 +97,11 @@ export const useBrokerDataStore = create<BrokerDataState>((set, get) => ({
           });
           throw error;
         }
-
-        // Wait before retrying (exponential backoff)
-        const delay = Math.pow(2, attempts) * 500; // 1s, 2s
-        console.log(`Waiting ${delay}ms before retry...`);
-        await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
+
+    // This should never be reached due to the while loop, but TypeScript requires a return statement
+    throw new Error("Failed to register user after multiple attempts");
   },
 
   syncAllData: async () => {
@@ -104,6 +121,10 @@ export const useBrokerDataStore = create<BrokerDataState>((set, get) => ({
 
       // Get connections
       const connectionsResponse = await snapTradeService.connections.list();
+      // Ensure we have a valid connections array
+      const connections = Array.isArray(connectionsResponse)
+        ? connectionsResponse
+        : [];
 
       // Get accounts
       const accountsResponse =
@@ -113,7 +134,7 @@ export const useBrokerDataStore = create<BrokerDataState>((set, get) => ({
         });
 
       set({
-        connections: connectionsResponse || [],
+        connections,
         accounts: accountsResponse.data || [],
         lastSyncTime: new Date().toISOString(),
       });

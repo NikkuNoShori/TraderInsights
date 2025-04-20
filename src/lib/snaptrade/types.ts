@@ -21,6 +21,7 @@ export interface SnapTradeConfig {
   clientId: string;
   consumerKey: string; // Used for both frontend and backend authentication
   redirectUri?: string;
+  isDemo?: boolean; // Flag indicating if we're using demo credentials
 }
 
 /**
@@ -74,10 +75,30 @@ export interface SnaptradeBrokerage {
   id: string;
   name: string;
   slug: string;
-  logo: string;
+  description?: string;
   url: string;
-  status: 'ACTIVE' | 'BETA' | 'COMING_SOON' | 'INACTIVE';
-  authTypes: ('OAUTH' | 'CREDENTIALS')[];
-  isOAuthSupported: boolean;
-  isCredentialsSupported: boolean;
+  display_name?: string;
+  aws_s3_logo_url?: string;
+  aws_s3_square_logo_url?: string;
+  status?: string;
+  release_stage?: string;
+  enabled?: boolean;
+  maintenance_mode?: boolean;
+  allows_fractional_units?: boolean | null;
+  allows_trading?: boolean | null;
+  has_reporting?: boolean | null;
+  is_real_time_connection?: boolean;
+  authorization_types?: Array<any>;
+  exchanges?: string[];
+  is_degraded?: boolean;
+  allows_cryptocurrency_symbols?: boolean;
+  allows_cryptocurrency_and_regular_securities?: boolean;
+  brokerage_type?: {
+    id: string;
+    name: string;
+  };
+  // These appear to be derived properties not in the raw API response
+  isOAuthSupported?: boolean;
+  isCredentialsSupported?: boolean;
+  logo?: string; // Fallback for backward compatibility
 } 

@@ -50,11 +50,11 @@ function getEnvVariable(key: string): string | undefined {
  */
 export const getSnapTradeConfig = (): SnapTradeConfig => {
   const environment = getEnvironment();
-  
+
   // Get client ID and consumer key based on environment
   let clientId = "";
   let consumerKey = "";
-  
+
   if (environment === "browser") {
     // Browser environment (client-side)
     // @ts-ignore - Vite specific
@@ -63,29 +63,39 @@ export const getSnapTradeConfig = (): SnapTradeConfig => {
     consumerKey = import.meta?.env?.VITE_SNAPTRADE_CONSUMER_KEY || "";
   } else {
     // Node.js environment (server-side)
-    clientId = process.env.SNAPTRADE_CLIENT_ID || 
-              process.env.VITE_SNAPTRADE_CLIENT_ID || "";
-    consumerKey = process.env.SNAPTRADE_CONSUMER_KEY || 
-                 process.env.VITE_SNAPTRADE_CONSUMER_KEY || "";
+    clientId =
+      process.env.SNAPTRADE_CLIENT_ID ||
+      process.env.VITE_SNAPTRADE_CLIENT_ID ||
+      "";
+    consumerKey =
+      process.env.SNAPTRADE_CONSUMER_KEY ||
+      process.env.VITE_SNAPTRADE_CONSUMER_KEY ||
+      "";
   }
-  
+
   // Determine redirect URI based on environment
-  const redirectUri = environment === "browser"
-    ? `${window.location.origin}/app/broker-callback`
-    : "";
+  const redirectUri =
+    environment === "browser"
+      ? `${window.location.origin}/app/broker-callback`
+      : "";
+
+  // Check if we're using demo credentials and add a flag
+  const isDemo = clientId === "TRADING-INSIGHTS-TEST-MJFEC";
 
   // Log configuration for debugging
   console.log("SnapTrade configuration:", {
-    clientId: clientId,
+    clientId,
     hasConsumerKey: !!consumerKey,
     redirectUri,
     environment,
+    isDemo,
   });
 
   return {
     clientId,
     consumerKey,
     redirectUri,
+    isDemo,
   };
 };
 
