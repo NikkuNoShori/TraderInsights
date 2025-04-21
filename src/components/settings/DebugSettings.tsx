@@ -48,7 +48,10 @@ export function DebugSettings() {
 
   const handleSetLogLevel = (level: DebugLevel) => {
     setLogLevel(level);
-    logger.info('state', `Log level set to ${level}`);
+    logger.debug("state", "🐛 Debug level test message");
+    logger.info("state", "ℹ️ Info level test message");
+    logger.warn("state", "⚠️ Warning level test message");
+    logger.error("state", new Error("❌ Error level test message"));
   };
 
   const handleToggleDebugPanel = () => {

@@ -167,45 +167,15 @@ export class SnapTradeService {
     try {
       console.log("Registering SnapTrade user:", { userId });
 
-      // Generate timestamp and signature for this request
-      const timestampNum = Math.floor(Date.now() / 1000);
-      const timestamp = timestampNum.toString();
-      const encoder = new TextEncoder();
-      const key = encoder.encode(this.config.consumerKey);
-      const message = encoder.encode(`${this.config.clientId}${timestamp}`);
-
-      const cryptoKey = await window.crypto.subtle.importKey(
-        "raw",
-        key,
-        { name: "HMAC", hash: "SHA-256" },
-        false,
-        ["sign"]
-      );
-
-      const signatureBuffer = await window.crypto.subtle.sign(
-        "HMAC",
-        cryptoKey,
-        message
-      );
-      const signature = Array.from(new Uint8Array(signatureBuffer))
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
-
-      const response = await fetch(
-        "https://api.snaptrade.com/api/v1/snapTrade/registerUser",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Signature: signature,
-            Timestamp: timestamp,
-            ClientId: this.config.clientId,
-          },
-          body: JSON.stringify({
-            userId: userId,
-          }),
-        }
-      );
+      const response = await fetch("/api/snaptrade/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: userId,
+        }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -275,49 +245,30 @@ export class SnapTradeService {
    */
   async getBrokerages() {
     try {
-      console.log("Fetching brokerages with state:", {
-        userId: this.userId,
-        hasUserSecret: !!this.userSecret,
-        clientInitialized: !!this.client,
+      console.log("Fetching brokerages from SnapTrade");
+
+      const response = await fetch("/api/snaptrade/brokerages", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
 
-      const client = await this.getClient();
-      const response = await client.referenceData.listAllBrokerages();
-      console.log("Raw API response:", {
-        status: response.status,
-        statusText: response.statusText,
-        hasData: !!response.data,
-        dataLength: response.data?.length,
-        data: response.data,
-      });
-
-      if (!response.data || response.data.length === 0) {
-        console.warn("No brokers returned from API");
-        return [];
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("SnapTrade API error:", errorData);
+        throw new Error(
+          `API error: ${response.status} - ${JSON.stringify(errorData)}`
+        );
       }
 
-      // Log each broker for debugging
-      response.data.forEach((broker, index) => {
-        console.log(`Broker ${index + 1}:`, {
-          id: broker.id,
-          name: broker.name,
-          status: broker.status,
-          authTypes: broker.authTypes,
-        });
-      });
-
-      return response.data;
+      const data = await response.json();
+      console.log("SnapTrade brokerages response:", data);
+      return data;
     } catch (error) {
-      console.error("Error getting brokerages from SnapTrade:", error);
-      if (error instanceof Error) {
-        console.error("Error details:", {
-          name: error.name,
-          message: error.message,
-          stack: error.stack,
-        });
-      }
+      console.error("Error fetching brokerages:", error);
       throw new Error(
-        `Failed to get brokerages from SnapTrade: ${
+        `Failed to fetch brokerages: ${
           error instanceof Error ? error.message : String(error)
         }`
       );
@@ -334,21 +285,28 @@ export class SnapTradeService {
     try {
       console.log("Creating connection link:", { userId });
 
-      const client = await this.getClient();
-      const loginResponse = await client.authentication.loginSnapTradeUser({
-        userId,
-        userSecret,
+      const response = await fetch("/api/snaptrade/connection-link", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          userSecret,
+        }),
       });
 
-      if (!loginResponse.data) {
-        console.error(
-          "Failed to get login link - no data in response:",
-          loginResponse
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("SnapTrade API error:", errorData);
+        throw new Error(
+          `API error: ${response.status} - ${JSON.stringify(errorData)}`
         );
-        throw new Error("Failed to get login link");
       }
 
-      return loginResponse.data;
+      const data = await response.json();
+      console.log("SnapTrade connection link response:", data);
+      return data;
     } catch (error) {
       console.error("Error creating connection link:", error);
       throw new Error(

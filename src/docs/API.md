@@ -794,4 +794,265 @@ export const useStockPrices = (symbol: string, from: string, to: string) => {
 2. **Caching Strategy**: Refine caching strategy for better performance
 3. **Error Reporting**: Implement centralized error reporting
 4. **Rate Limit Handling**: Improve rate limit handling with backoff strategies
-5. **API Versioning**: Handle API versioning gracefully 
+5. **API Versioning**: Handle API versioning gracefully
+
+# SnapTrade API Documentation
+
+This document provides detailed information about the SnapTrade API integration in TraderInsights.
+
+## SDK Types and Interfaces
+
+The SnapTrade integration uses the official `snaptrade-typescript-sdk` package. Here are the key types and interfaces:
+
+### SnapTradeConfig
+
+Configuration for the SnapTrade integration.
+
+```typescript
+interface SnapTradeConfig {
+  clientId: string;          // SnapTrade client ID
+  consumerKey: string;       // SnapTrade consumer key (used for authentication)
+  redirectUri?: string;      // OAuth redirect URI
+  isDemo?: boolean;          // Flag indicating if using demo credentials
+}
+```
+
+### SnapTradeAccount
+
+Represents a user's brokerage account.
+
+```typescript
+interface SnapTradeAccount {
+  id: string;               // Unique account identifier
+  name: string;             // Account name
+  type: string;             // Account type (e.g., "MARGIN", "CASH")
+  institution: string;      // Brokerage institution name
+  status: string;           // Account status
+  balances: SnapTradeBalance[];  // Account balances
+  holdings: SnapTradeHolding[];  // Account holdings
+  orders: SnapTradeOrder[];      // Account orders
+}
+```
+
+### SnapTradeBalance
+
+Represents an account balance.
+
+```typescript
+interface SnapTradeBalance {
+  currency: string;         // Currency code (e.g., "USD")
+  cash: number;            // Cash balance
+  marketValue: number;     // Market value of holdings
+  totalValue: number;      // Total account value
+  buyingPower: number;     // Available buying power
+}
+```
+
+### SnapTradeHolding
+
+Represents a position in an account.
+
+```typescript
+interface SnapTradeHolding {
+  symbol: string;          // Security symbol
+  quantity: number;        // Number of shares/units
+  averagePrice: number;    // Average purchase price
+  marketValue: number;     // Current market value
+  unrealizedPnl: number;   // Unrealized profit/loss
+  realizedPnl: number;     // Realized profit/loss
+}
+```
+
+### SnapTradeOrder
+
+Represents an order in an account.
+
+```typescript
+interface SnapTradeOrder {
+  id: string;              // Unique order identifier
+  symbol: string;          // Security symbol
+  side: "BUY" | "SELL";   // Order side
+  type: "MARKET" | "LIMIT" | "STOP" | "STOP_LIMIT";  // Order type
+  quantity: number;        // Order quantity
+  price?: number;          // Order price (for limit orders)
+  status: string;          // Order status
+  filledQuantity: number;  // Filled quantity
+  filledPrice?: number;    // Average fill price
+  createdAt: string;       // Order creation timestamp
+  updatedAt: string;       // Last update timestamp
+}
+```
+
+## API Methods
+
+### Authentication
+
+#### generateSnapTradeAuth
+
+Generates authentication credentials for SnapTrade.
+
+```typescript
+async function generateSnapTradeAuth(config: SnapTradeConfig): Promise<{
+  clientId: string;
+  timestamp: string;
+  signature: string;
+}>
+```
+
+#### createSnapTradeClient
+
+Creates a SnapTrade client instance.
+
+```typescript
+async function createSnapTradeClient(config: SnapTradeConfig): Promise<Snaptrade>
+```
+
+### User Management
+
+#### registerUser
+
+Registers a new user with SnapTrade.
+
+```typescript
+async function registerUser(userId: string): Promise<string>
+```
+
+#### login
+
+Logs in a user with SnapTrade.
+
+```typescript
+async function login(userId: string, userSecret: string): Promise<void>
+```
+
+### Account Management
+
+#### getBrokerages
+
+Retrieves available brokerages.
+
+```typescript
+async function getBrokerages(): Promise<Brokerage[]>
+```
+
+#### createConnectionLink
+
+Creates a connection link for OAuth authentication.
+
+```typescript
+async function createConnectionLink(brokerageId: string): Promise<string>
+```
+
+#### getUserConnections
+
+Retrieves user's brokerage connections.
+
+```typescript
+async function getUserConnections(): Promise<SnapTradeConnection[]>
+```
+
+#### getUserAccounts
+
+Retrieves user's accounts.
+
+```typescript
+async function getUserAccounts(): Promise<SnapTradeAccount[]>
+```
+
+### Data Retrieval
+
+#### getAccountHoldings
+
+Retrieves account holdings.
+
+```typescript
+async function getAccountHoldings(accountId: string): Promise<SnapTradeHolding[]>
+```
+
+#### getAccountBalances
+
+Retrieves account balances.
+
+```typescript
+async function getAccountBalances(accountId: string): Promise<SnapTradeBalance[]>
+```
+
+#### getAccountOrders
+
+Retrieves account orders.
+
+```typescript
+async function getAccountOrders(accountId: string): Promise<SnapTradeOrder[]>
+```
+
+## Rate Limiting
+
+SnapTrade has rate limits based on the subscription tier:
+
+- **Free Tier**: 5 requests per 15 minutes
+- **Premium Tier**: Higher limits based on subscription
+
+```typescript
+// Using the rate limiter
+const rateLimiter = new RateLimiter(5, 15 * 60 * 1000); // 5 requests per 15 minutes
+
+export const fetchSnapTradeWithRateLimit = async (url: string) => {
+  await rateLimiter.throttle();
+  return fetch(url);
+};
+```
+
+## Error Handling
+
+The API includes comprehensive error handling:
+
+```typescript
+try {
+  const response = await snapTradeService.getAccountHoldings(accountId);
+} catch (error) {
+  if (error instanceof SnapTradeError) {
+    // Handle SnapTrade specific errors
+    console.error('SnapTrade error:', error.message);
+  } else {
+    // Handle other errors
+    console.error('Unexpected error:', error);
+  }
+}
+```
+
+## Security Considerations
+
+1. **Authentication**:
+   - All API requests are signed with HMAC-SHA256
+   - Timestamps are validated to prevent replay attacks
+   - User credentials are never stored
+
+2. **Data Protection**:
+   - Sensitive information is stored in environment variables
+   - No credential storage in the application
+   - Rate limiting prevents abuse
+
+3. **Environment Security**:
+   - Browser environment uses Web Crypto API
+   - Node.js environment uses crypto module
+   - Secure token storage in both environments
+
+## Testing
+
+The API includes a test script that can be run from the command line:
+
+```bash
+# Run with mock data
+npm run test:snaptrade -- --mock
+
+# Run with real data (requires environment variables)
+npm run test:snaptrade
+```
+
+The test script verifies:
+
+1. User registration
+2. Brokerage listing
+3. Connection management
+4. Account information retrieval
+5. Holdings, balances, and orders retrieval 

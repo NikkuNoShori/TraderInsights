@@ -208,10 +208,76 @@ try {
     }
   };
 
+  // Login handler
+  const loginHandler: RequestHandler = async (req, res) => {
+    try {
+      const { userId, userSecret } = req.body;
+      console.log("Logging in user with SnapTrade:", { userId });
+
+      if (!userId || !userSecret) {
+        console.error("Missing required fields:", {
+          hasUserId: !!userId,
+          hasUserSecret: !!userSecret,
+        });
+        res.status(400).json({ error: "userId and userSecret are required" });
+        return;
+      }
+
+      // Generate timestamp and signature
+      const timestamp = Math.floor(Date.now() / 1000).toString();
+      const message = `${config.clientId}${timestamp}`;
+      const signature = crypto
+        .createHmac("sha256", config.consumerKey)
+        .update(Buffer.from(message, "utf8"))
+        .digest("hex");
+
+      const response = await fetch(
+        `https://api.snaptrade.com/api/v1/snapTrade/login?clientId=${config.clientId}&timestamp=${timestamp}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Signature: signature,
+            Timestamp: timestamp,
+            ClientId: config.clientId,
+          },
+          body: JSON.stringify({ userId, userSecret }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("SnapTrade API error:", errorData);
+        res.status(response.status).json(errorData);
+        return;
+      }
+
+      const data = await response.json();
+      console.log("SnapTrade login response:", data);
+      res.json(data);
+      return;
+    } catch (error) {
+      console.error("Failed to login user with SnapTrade:", error);
+      if (error instanceof Error) {
+        console.error("Error details:", {
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+        });
+      }
+      res.status(500).json({
+        error: "Failed to login user",
+        details: error instanceof Error ? error.message : String(error),
+      });
+      return;
+    }
+  };
+
   // Register routes
   router.post("/register", registerHandler);
   router.get("/brokerages", getBrokeragesHandler);
   router.post("/connection-link", createConnectionLinkHandler);
+  router.post("/login", loginHandler);
 } catch (error) {
   console.error("Failed to initialize SnapTrade router:", error);
 }
