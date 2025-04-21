@@ -6,6 +6,17 @@ This directory contains the SnapTrade integration for TraderInsights, which allo
 
 SnapTrade is an official service that provides a secure API for integrating with various brokerages, including WebUll, Alpaca, Interactive Brokers, and more. Unlike the unofficial WebUll API, SnapTrade uses OAuth for authentication, which means that user credentials are never shared with our application.
 
+## Dependencies
+
+```json
+{
+  "dependencies": {
+    "snaptrade-typescript-sdk": "^1.0.0",  // Official SnapTrade TypeScript SDK
+    "crypto": "^1.0.1"                      // For Node.js environment
+  }
+}
+```
+
 ## Features
 
 - **OAuth Authentication**: Secure authentication without storing user credentials
@@ -13,6 +24,9 @@ SnapTrade is an official service that provides a secure API for integrating with
 - **Account Information**: Retrieve account balances, holdings, and orders
 - **Secure Token Storage**: Securely store user tokens in both browser and Node.js environments
 - **TypeScript Support**: Full TypeScript support with type definitions
+- **Dual Environment Support**: Works in both browser and Node.js environments
+- **Rate Limiting**: Built-in rate limiting support
+- **Error Handling**: Comprehensive error handling and logging
 
 ## Getting Started
 
@@ -30,6 +44,66 @@ Create a `.env.local` file in the root of your project with the following variab
 NEXT_PUBLIC_SNAPTRADE_CLIENT_ID=your_client_id
 NEXT_PUBLIC_SNAPTRADE_CONSUMER_KEY=your_consumer_key
 NEXT_PUBLIC_SNAPTRADE_REDIRECT_URI=http://localhost:3000/snaptrade-callback
+```
+
+### Authentication
+
+The SnapTrade integration supports authentication in both browser and Node.js environments:
+
+#### Browser Environment
+```typescript
+// Generate authentication headers
+const headers = await generateAuthHeaders(config);
+
+// Make API request
+const response = await fetch(url, {
+  headers,
+  // ... other options
+});
+```
+
+#### Node.js Environment
+```typescript
+// Generate authentication headers
+const headers = await generateAuthHeaders(config);
+
+// Make API request
+const response = await fetch(url, {
+  headers,
+  // ... other options
+});
+```
+
+### Error Handling
+
+The integration includes comprehensive error handling:
+
+```typescript
+try {
+  const response = await snapTradeService.getAccountHoldings(accountId);
+} catch (error) {
+  if (error instanceof SnapTradeError) {
+    // Handle SnapTrade specific errors
+    console.error('SnapTrade error:', error.message);
+  } else {
+    // Handle other errors
+    console.error('Unexpected error:', error);
+  }
+}
+```
+
+### Rate Limiting
+
+The integration includes built-in rate limiting:
+
+```typescript
+// Using the rate limiter
+const rateLimiter = new RateLimiter(5, 15 * 60 * 1000); // 5 requests per 15 minutes
+
+export const fetchSnapTradeWithRateLimit = async (url: string) => {
+  await rateLimiter.throttle();
+  return fetch(url);
+};
 ```
 
 ### Basic Usage
@@ -69,6 +143,64 @@ const balances = await snapTradeService.getAccountBalances(accounts[0].id);
 // Get account orders
 const orders = await snapTradeService.getAccountOrders(accounts[0].id);
 ```
+
+## Testing
+
+The SnapTrade integration includes a test script that can be run from the command line:
+
+```bash
+# Run with mock data
+npm run test:snaptrade -- --mock
+
+# Run with real data (requires environment variables)
+npm run test:snaptrade
+```
+
+The test script verifies:
+
+1. User registration
+2. Brokerage listing
+3. Connection management
+4. Account information retrieval
+5. Holdings, balances, and orders retrieval
+
+## Security Considerations
+
+- User credentials are never shared with our application
+- User tokens are stored securely
+- Sensitive information is stored in environment variables
+- No credential storage in our application
+- All API requests are signed with HMAC-SHA256
+- Rate limiting is implemented to prevent abuse
+
+## Troubleshooting
+
+Common issues and solutions:
+
+1. **Authentication Errors**
+   - Check your client ID and consumer key
+   - Verify the timestamp is within the allowed window
+   - Ensure the signature is generated correctly
+
+2. **Rate Limiting**
+   - Check your subscription tier
+   - Implement proper rate limiting in your application
+   - Use caching where appropriate
+
+3. **Environment Issues**
+   - Verify environment variables are set correctly
+   - Check for proper Node.js/browser environment detection
+   - Ensure proper error handling
+
+## Future Enhancements
+
+Potential future enhancements for the SnapTrade integration include:
+
+1. **Trading Capabilities**: Implement trading functionality through the SnapTrade API
+2. **Enhanced Data Visualization**: Improve visualization of account data
+3. **Performance Optimization**: Optimize data retrieval and caching
+4. **Additional Broker Support**: Add support for more brokerages
+5. **Advanced Authentication**: Implement more advanced authentication flows
 
 ## Components
 
@@ -162,80 +294,6 @@ The `storage.ts` file provides a storage adapter for securely storing user token
 ### Types
 
 The `types.ts` file provides TypeScript type definitions for the SnapTrade integration.
-
-## Security
-
-The SnapTrade integration is designed with security in mind:
-
-- **OAuth Authentication**: User credentials are never shared with our application
-- **Secure Token Storage**: User tokens are stored securely
-- **Environment Variables**: Sensitive information is stored in environment variables
-- **No Credential Storage**: User credentials are never stored by our application
-
-For more information about security, see the [Security Assessment](./SECURITY_ASSESSMENT.md).
-
-## Testing
-
-The SnapTrade integration includes a test page that can be used to test the integration with mock or real data.
-
-```tsx
-import { useState } from 'react';
-import Layout from '@/components/Layout';
-
-export default function SnapTradeTestPage() {
-  const [output, setOutput] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  const runTest = async (useMockData: boolean) => {
-    setLoading(true);
-    setOutput(['Running test...']);
-
-    try {
-      const response = await fetch(`/api/run-snaptrade-test?mock=${useMockData}`);
-      const data = await response.json();
-      
-      setOutput(data.logs || ['No logs returned from the API']);
-    } catch (error) {
-      setOutput([`Error: ${(error as Error).message}`]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Layout>
-      <div className="container mx-auto py-8">
-        <h1 className="text-2xl font-bold mb-8">SnapTrade Test</h1>
-        
-        <div className="flex space-x-4 mb-8">
-          <button
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
-            onClick={() => runTest(true)}
-            disabled={loading}
-          >
-            Run with Mock Data
-          </button>
-          
-          <button
-            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
-            onClick={() => runTest(false)}
-            disabled={loading}
-          >
-            Run with Real Data
-          </button>
-        </div>
-        
-        <div className="bg-gray-100 p-4 rounded">
-          <h2 className="text-lg font-semibold mb-2">Output:</h2>
-          <pre className="whitespace-pre-wrap">
-            {output.join('\n')}
-          </pre>
-        </div>
-      </div>
-    </Layout>
-  );
-}
-```
 
 ## Documentation
 

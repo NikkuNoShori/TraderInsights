@@ -16,6 +16,9 @@
  */
 
 import { SnapTradeConfig } from "./types";
+import { createDebugLogger } from '@/stores/debugStore';
+
+const configLogger = createDebugLogger('config');
 
 /**
  * Get the current environment
@@ -48,56 +51,29 @@ function getEnvVariable(key: string): string | undefined {
 /**
  * Get SnapTrade configuration
  */
-export const getSnapTradeConfig = (): SnapTradeConfig => {
-  const environment = getEnvironment();
+export function getSnapTradeConfig(): SnapTradeConfig {
+  const config = {
+    clientId: import.meta.env.VITE_SNAPTRADE_CLIENT_ID,
+    consumerKey: import.meta.env.VITE_SNAPTRADE_CONSUMER_KEY,
+    redirectUri: import.meta.env.VITE_SNAPTRADE_REDIRECT_URI,
+    environment: 'browser' as const,
+    isDemo: true
+  };
 
-  // Get client ID and consumer key based on environment
-  let clientId = "";
-  let consumerKey = "";
-
-  if (environment === "browser") {
-    // Browser environment (client-side)
-    // @ts-ignore - Vite specific
-    clientId = import.meta?.env?.VITE_SNAPTRADE_CLIENT_ID || "";
-    // @ts-ignore - Vite specific
-    consumerKey = import.meta?.env?.VITE_SNAPTRADE_CONSUMER_KEY || "";
-  } else {
-    // Node.js environment (server-side)
-    clientId =
-      process.env.SNAPTRADE_CLIENT_ID ||
-      process.env.VITE_SNAPTRADE_CLIENT_ID ||
-      "";
-    consumerKey =
-      process.env.SNAPTRADE_CONSUMER_KEY ||
-      process.env.VITE_SNAPTRADE_CONSUMER_KEY ||
-      "";
+  // Only log configuration changes, not every access
+  if (!configLogger.lastConfig || JSON.stringify(configLogger.lastConfig) !== JSON.stringify(config)) {
+    configLogger.debug('SnapTrade configuration updated', {
+      clientId: config.clientId,
+      hasConsumerKey: !!config.consumerKey,
+      redirectUri: config.redirectUri,
+      environment: config.environment,
+      isDemo: config.isDemo
+    });
+    configLogger.lastConfig = config;
   }
 
-  // Determine redirect URI based on environment
-  const redirectUri =
-    environment === "browser"
-      ? `${window.location.origin}/app/broker-callback`
-      : "";
-
-  // Check if we're using demo credentials and add a flag
-  const isDemo = clientId === "TRADING-INSIGHTS-TEST-MJFEC";
-
-  // Log configuration for debugging
-  console.log("SnapTrade configuration:", {
-    clientId,
-    hasConsumerKey: !!consumerKey,
-    redirectUri,
-    environment,
-    isDemo,
-  });
-
-  return {
-    clientId,
-    consumerKey,
-    redirectUri,
-    isDemo,
-  };
-};
+  return config;
+}
 
 /**
  * Verify SnapTrade configuration
@@ -115,5 +91,12 @@ export function verifySnapTradeConfig(): boolean {
   } catch (error) {
     console.error("SnapTrade configuration verification failed:", error);
     return false;
+  }
+}
+
+// Add type augmentation for the logger
+declare module '@/stores/debugStore' {
+  interface DebugLogger {
+    lastConfig?: SnapTradeConfig;
   }
 } 

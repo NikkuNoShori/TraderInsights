@@ -25,6 +25,9 @@ import { Badge } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { UserMenu } from "@/components/layout/UserMenu";
 import { useDebugStore } from '@/stores/debugStore';
+import { createDebugLogger } from '@/stores/debugStore';
+import { supabase } from '@/lib/supabase';
+import { User as SupabaseUser } from '@supabase/supabase-js';
 
 type NavCategory = {
   label: string;
@@ -107,39 +110,32 @@ const navCategories: NavCategory[] = [
   },
 ];
 
+interface DebugUser extends SupabaseUser {
+  brokers?: any[];
+  loadingBrokers?: boolean;
+  brokerError?: string;
+  showMissingBrokers?: boolean;
+  missingBrokers?: string[];
+  showBrokerDetails?: boolean;
+  showConnectionStatus?: boolean;
+}
+
+const navLogger = createDebugLogger('navigation');
+
 export function MainNav() {
   const { isCollapsed, toggleCollapsed } = useNavStore();
-  const [openCategories, setOpenCategories] = useState<string[]>(() => {
-    const saved = localStorage.getItem("nav-open-categories");
-    return saved ? JSON.parse(saved) : [];
-  });
-
+  const { isDebugMode, showDebugPanel, toggleDebugMode, toggleDebugPanel } = useDebugStore();
+  const [openCategories, setOpenCategories] = useState<Set<string>>(new Set());
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const { user, profile, signOut } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
+  const navRef = useRef<HTMLDivElement>(null);
 
-  // Get debug state from store
-  const { 
-    brokerState: { 
-      isInitialized, 
-      brokers, 
-      loadingBrokers, 
-      brokerError, 
-      missingBrokers 
-    },
-    isDebugMode,
-    showDebugPanel,
-    brokerDebug: {
-      showMissingBrokers,
-      showBrokerDetails,
-      showConnectionStatus
-    }
-  } = useDebugStore();
-
-  // Add effect to handle debug state changes
+  // Log debug state changes
   useEffect(() => {
-    console.log('Debug state changed:', { isDebugMode, showDebugPanel });
+    navLogger.debug('Debug state changed', { isDebugMode, showDebugPanel });
   }, [isDebugMode, showDebugPanel]);
 
   useEffect(() => {
@@ -148,39 +144,61 @@ export function MainNav() {
     }
   }, [user, navigate]);
 
+  // Handle click outside
   useEffect(() => {
-    const handleClickOutside = (event: globalThis.MouseEvent) => {
-      if (
-        userMenuRef.current &&
-        !userMenuRef.current.contains(event.target as Node)
-      ) {
-        // Menu closes automatically with CSS
+    const handleClickOutside = (event: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) {
+        setOpenCategories(new Set());
       }
     };
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   useEffect(() => {
     // Menu closes automatically with CSS
   }, [location.pathname]);
 
+  // Load open categories from localStorage
   useEffect(() => {
-    localStorage.setItem("nav-open-categories", JSON.stringify(openCategories));
+    const savedCategories = localStorage.getItem('openCategories');
+    if (savedCategories) {
+      setOpenCategories(new Set(JSON.parse(savedCategories)));
+    }
+  }, []);
+
+  // Save open categories to localStorage
+  useEffect(() => {
+    localStorage.setItem('openCategories', JSON.stringify([...openCategories]));
   }, [openCategories]);
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+      navLogger.debug('Authentication status changed', { isAuthenticated: !!session });
+    };
+
+    checkAuth();
+  }, []);
 
   useEffect(() => {
     console.log("MainNav mounted");
     return () => console.log("MainNav unmounted");
   }, []);
 
-  const toggleCategory = useCallback((category: string, e: ReactMouseEvent) => {
-    e.preventDefault();
-    setOpenCategories((prev) =>
-      prev.includes(category)
-        ? prev.filter((c) => c !== category)
-        : [...prev, category],
-    );
+  const toggleCategory = useCallback((category: string) => {
+    setOpenCategories((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(category)) {
+        newSet.delete(category);
+      } else {
+        newSet.add(category);
+      }
+      return newSet;
+    });
   }, []);
 
   const handleSettingsClick = () => {
@@ -195,6 +213,8 @@ export function MainNav() {
       console.error("Error signing out:", error);
     }
   };
+
+  const debugUser = user as DebugUser;
 
   if (!user) return null;
 
@@ -236,7 +256,7 @@ export function MainNav() {
                 {!isCollapsed && (
                   <div
                     onClick={(e) =>
-                      toggleCategory(category.label, e as ReactMouseEvent)
+                      toggleCategory(category.label)
                     }
                     className="flex items-center justify-between w-full text-sm font-semibold 
                              text-muted-foreground dark:text-gray-300 
@@ -247,7 +267,7 @@ export function MainNav() {
                     <ChevronLeft
                       className={clsx(
                         "h-4 w-4 text-muted-foreground dark:text-gray-300 transition-transform",
-                        openCategories.includes(category.label) && "-rotate-90",
+                        openCategories.has(category.label) && "-rotate-90",
                       )}
                     />
                   </div>
@@ -261,11 +281,11 @@ export function MainNav() {
                   initial={false}
                   animate={{
                     height:
-                      isCollapsed || openCategories.includes(category.label)
+                      isCollapsed || openCategories.has(category.label)
                         ? "auto"
                         : 0,
                     opacity:
-                      isCollapsed || openCategories.includes(category.label)
+                      isCollapsed || openCategories.has(category.label)
                         ? 1
                         : 0,
                   }}
@@ -346,74 +366,71 @@ export function MainNav() {
 
           {/* Debug Panel */}
           {!isCollapsed && isDebugMode && showDebugPanel && (
-            <div className="px-4 py-2">
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 text-xs">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium text-gray-700 dark:text-gray-300">Debug Info</span>
-                  <div className="flex items-center space-x-2">
-                    <span className={`w-2 h-2 rounded-full ${isInitialized ? 'bg-green-500' : 'bg-yellow-500'}`}></span>
-                    <span className="text-gray-500 dark:text-gray-400">{isInitialized ? 'Ready' : 'Initializing'}</span>
-                  </div>
+            <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div className="flex justify-between items-center mb-2">
+                <span className="font-medium text-gray-700 dark:text-gray-300">Debug Info</span>
+                <div className="flex items-center space-x-2">
+                  <span className={`w-2 h-2 rounded-full ${isAuthenticated ? 'bg-green-500' : 'bg-yellow-500'}`}></span>
+                  <span className="text-gray-500 dark:text-gray-400">{isAuthenticated ? 'Ready' : 'Initializing'}</span>
                 </div>
-                
-                <div className="space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">Brokers:</span>
-                    <span className="font-medium">{brokers?.length || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500 dark:text-gray-400">Loading:</span>
-                    <span className={loadingBrokers ? 'text-yellow-500' : 'text-green-500'}>
-                      {loadingBrokers ? 'Yes' : 'No'}
-                    </span>
-                  </div>
-                  {brokerError && (
-                    <div className="flex justify-between text-red-500">
-                      <span>Error:</span>
-                      <span className="max-w-[200px] truncate">{brokerError}</span>
-                    </div>
-                  )}
-                  {showMissingBrokers && missingBrokers && missingBrokers.length > 0 && (
-                    <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-gray-500 dark:text-gray-400">Missing Brokers:</span>
-                        <span className="font-medium text-yellow-500">{missingBrokers.length}</span>
-                      </div>
-                      <div className="max-h-[100px] overflow-y-auto">
-                        <ul className="list-disc pl-4 space-y-0.5">
-                          {missingBrokers.map((broker: string) => (
-                            <li key={broker} className="text-gray-600 dark:text-gray-400">{broker}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  )}
-                  {showBrokerDetails && brokers && brokers.length > 0 && (
-                    <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-gray-500 dark:text-gray-400">Connected Brokers:</span>
-                        <span className="font-medium text-green-500">{brokers.length}</span>
-                      </div>
-                      <div className="max-h-[100px] overflow-y-auto">
-                        <ul className="list-disc pl-4 space-y-0.5">
-                          {brokers.map((broker: any) => (
-                            <li key={broker.id} className="text-gray-600 dark:text-gray-400">{broker.name}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  )}
-                  {showConnectionStatus && (
-                    <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-500 dark:text-gray-400">Connection Status:</span>
-                        <span className={`font-medium ${isInitialized ? 'text-green-500' : 'text-yellow-500'}`}>
-                          {isInitialized ? 'Connected' : 'Connecting...'}
-                        </span>
-                      </div>
-                    </div>
-                  )}
+              </div>
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-500 dark:text-gray-400">Brokers:</span>
+                  <span className="font-medium">{debugUser?.brokers?.length || 0}</span>
                 </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500 dark:text-gray-400">Loading:</span>
+                  <span className={debugUser?.loadingBrokers ? 'text-yellow-500' : 'text-green-500'}>
+                    {debugUser?.loadingBrokers ? 'Yes' : 'No'}
+                  </span>
+                </div>
+                {debugUser?.brokerError && (
+                  <div className="flex justify-between text-red-500">
+                    <span>Error:</span>
+                    <span className="max-w-[200px] truncate">{debugUser.brokerError}</span>
+                  </div>
+                )}
+                {debugUser?.showMissingBrokers && debugUser?.missingBrokers && debugUser.missingBrokers.length > 0 && (
+                  <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-gray-500 dark:text-gray-400">Missing Brokers:</span>
+                      <span className="font-medium text-yellow-500">{debugUser.missingBrokers.length}</span>
+                    </div>
+                    <div className="max-h-[100px] overflow-y-auto">
+                      <ul className="list-disc pl-4 space-y-0.5">
+                        {debugUser.missingBrokers.map((broker: string) => (
+                          <li key={broker} className="text-gray-600 dark:text-gray-400">{broker}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+                {debugUser?.showBrokerDetails && debugUser?.brokers && debugUser.brokers.length > 0 && (
+                  <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-gray-500 dark:text-gray-400">Connected Brokers:</span>
+                      <span className="font-medium text-green-500">{debugUser.brokers.length}</span>
+                    </div>
+                    <div className="max-h-[100px] overflow-y-auto">
+                      <ul className="list-disc pl-4 space-y-0.5">
+                        {debugUser.brokers.map((broker: any) => (
+                          <li key={broker.id} className="text-gray-600 dark:text-gray-400">{broker.name}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+                {debugUser?.showConnectionStatus && (
+                  <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-500 dark:text-gray-400">Connection Status:</span>
+                      <span className={`font-medium ${isAuthenticated ? 'text-green-500' : 'text-yellow-500'}`}>
+                        {isAuthenticated ? 'Connected' : 'Connecting...'}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
