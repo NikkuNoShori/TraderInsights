@@ -2,13 +2,17 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 export type DebugCategory =
+  | "main"
   | "broker"
   | "api"
   | "auth"
   | "theme"
   | "performance"
   | "state"
-  | "all";
+  | "all"
+  | "config"
+  | "supabase"
+  | "navigation";
 
 export type DebugLevel = "info" | "warn" | "error" | "debug";
 
@@ -237,3 +241,11 @@ export const createDebugLogger = (category: DebugCategory) => {
     },
   };
 };
+
+export interface DebugLogger {
+  debug: (...args: any[]) => void;
+  info: (...args: any[]) => void;
+  warn: (...args: any[]) => void;
+  error: (...args: any[]) => void;
+  lastConfig?: any; // Allow any type for lastConfig
+}
