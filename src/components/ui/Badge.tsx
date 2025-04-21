@@ -1,40 +1,40 @@
-import { motion } from "framer-motion";
-import { clsx } from "clsx";
+import { cn } from "@/lib/utils";
 import { Tooltip } from "./Tooltip";
 
 interface BadgeProps {
-  type: "soon" | "beta" | "new";
-  tooltipContent: string;
+  type?: "success" | "error" | "warning" | "info" | "default" | "soon" | "beta" | "new";
+  children: React.ReactNode;
+  tooltipContent?: string;
+  className?: string;
 }
 
-const badgeVariants = {
-  soon: "bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400",
-  beta: "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400",
-  new: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400",
-};
-
-const badgeLabels = {
-  soon: "Soon",
-  beta: "Beta",
-  new: "New",
-};
-
-export function Badge({ type, tooltipContent }: BadgeProps) {
-  return (
-    <Tooltip content={tooltipContent} side="right">
-      <motion.span
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className={clsx(
-          "ml-2 px-1.5 py-0.5 text-xs font-medium rounded-full",
-          "transition-colors duration-150",
-          badgeVariants[type],
-        )}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        {badgeLabels[type]}
-      </motion.span>
-    </Tooltip>
+export function Badge({ type = "default", children, tooltipContent, className }: BadgeProps) {
+  const badge = (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+        type === "success" && "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400",
+        type === "error" && "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400",
+        type === "warning" && "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400",
+        type === "info" && "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400",
+        type === "default" && "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
+        type === "soon" && "bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400",
+        type === "beta" && "bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400",
+        type === "new" && "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400",
+        className
+      )}
+    >
+      {children}
+    </span>
   );
+
+  if (tooltipContent) {
+    return (
+      <Tooltip content={tooltipContent}>
+        {badge}
+      </Tooltip>
+    );
+  }
+
+  return badge;
 }

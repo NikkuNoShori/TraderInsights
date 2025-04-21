@@ -1,3 +1,32 @@
+/**
+ * BrokerDashboard Component
+ * 
+ * Primary component for managing broker connections and displaying the broker selection interface.
+ * This is the main entry point for users to connect their brokerage accounts through SnapTrade.
+ * 
+ * Features:
+ * - Displays available brokers in a grid layout
+ * - Handles broker connection initialization
+ * - Manages SnapTrade user registration
+ * - Supports demo/test mode for development
+ * - Includes debug tools and logging
+ * - Persists session state
+ * 
+ * Route: /app/broker-dashboard
+ * 
+ * State Management:
+ * - Uses useBrokerDataStore for broker connections and account data
+ * - Uses useDebugStore for development and testing features
+ * - Uses useAuthStore for user authentication
+ * 
+ * Related Components:
+ * - BrokerConnectionPortal: Handles OAuth flow for broker connections
+ * - ImportTradeForm: Uses broker connection functionality for trade imports
+ * 
+ * @see src/components/broker-connection-portal.tsx
+ * @see src/components/trades/ImportTradeForm.tsx
+ */
+
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import { useBrokerDataStore } from '@/stores/brokerDataStore';
@@ -5,7 +34,7 @@ import { snapTradeService } from '@/services/snaptradeService';
 import { getSnapTradeConfig } from '@/lib/snaptrade/config';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, RefreshCw, Info } from 'lucide-react';
+import { AlertCircle, RefreshCw, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { SnaptradeBrokerage, SnapTradeUser } from '@/lib/snaptrade/types';
 import { StorageHelpers } from '@/lib/snaptrade/storage';
 import { Tooltip } from '@/components/ui/Tooltip';
@@ -134,6 +163,7 @@ export default function BrokerDashboard() {
   } = useDebugStore();
   
   const [brokers, setBrokers] = useState<SnaptradeBrokerage[]>([]);
+  const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set());
 
   // Memoize configuration
   const config = useMemo(() => getSnapTradeConfig(), []);
@@ -314,6 +344,18 @@ export default function BrokerDashboard() {
     }
   }, [isInitialized, loadBrokers]);
 
+  const toggleDescription = (brokerId: string) => {
+    setExpandedDescriptions(prev => {
+      const next = new Set(prev);
+      if (next.has(brokerId)) {
+        next.delete(brokerId);
+      } else {
+        next.add(brokerId);
+      }
+      return next;
+    });
+  };
+
   // Memoize the broker list rendering
   const renderBrokerList = useMemo(() => {
     logDebug('Rendering broker list', { 
@@ -326,32 +368,61 @@ export default function BrokerDashboard() {
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {sortedBrokers.map((broker) => (
-          <div key={broker.id} className="p-4 border rounded-lg">
-            <div className="flex items-center space-x-4">
-              <img 
-                src={broker.aws_s3_square_logo_url} 
-                alt={broker.name}
-                className="w-12 h-12 object-contain"
-              />
-              <div>
-                <h3 className="font-medium">{broker.name}</h3>
-                <p className="text-sm text-gray-500">{broker.description}</p>
+        {sortedBrokers.map((broker) => {
+          const isExpanded = expandedDescriptions.has(broker.id);
+
+          return (
+            <div key={broker.id} className="p-4 border rounded-lg flex flex-col h-full">
+              <div className="flex-grow">
+                <div className="flex items-center space-x-4">
+                  <img 
+                    src={broker.aws_s3_square_logo_url} 
+                    alt={broker.name}
+                    className="w-12 h-12 object-contain"
+                  />
+                  <div className="flex-1">
+                    <h3 className="font-medium">{broker.name}</h3>
+                    <div className="relative">
+                      <p className={`text-sm text-gray-500 ${!isExpanded ? 'line-clamp-3' : ''}`}>
+                        {broker.description}
+                      </p>
+                      {broker.description && broker.description.length > 100 && (
+                        <button
+                          onClick={() => toggleDescription(broker.id)}
+                          className="text-xs text-primary hover:text-primary/80 flex items-center mt-1"
+                        >
+                          {isExpanded ? (
+                            <>
+                              Show Less
+                              <ChevronUp className="h-3 w-3 ml-1" />
+                            </>
+                          ) : (
+                            <>
+                              Show More
+                              <ChevronDown className="h-3 w-3 ml-1" />
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-auto pt-4 flex justify-center">
+                <Button
+                  onClick={() => handleConnect(broker)}
+                  disabled={loadingBrokers || isLoading}
+                  className="w-full md:w-auto"
+                >
+                  Connect
+                </Button>
               </div>
             </div>
-            <div className="mt-4">
-              <Button
-                onClick={() => handleConnect(broker)}
-                disabled={loadingBrokers || isLoading}
-              >
-                Connect
-              </Button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
-  }, [brokers, loadingBrokers, isLoading, logDebug]);
+  }, [brokers, loadingBrokers, isLoading, logDebug, expandedDescriptions]);
 
   // Listen for visibility changes to handle tab focus
   useEffect(() => {
@@ -517,22 +588,52 @@ export default function BrokerDashboard() {
       brokers,
       loadingBrokers,
       brokerError,
-      missingBrokers
+      missingBrokers,
+      connectionStatus: {
+        isConnected: connections.length > 0,
+        connectionCount: connections.length,
+        lastSyncTime: lastSyncTime ? Number(lastSyncTime) : undefined
+      }
     });
-  }, [isInitialized, brokers, loadingBrokers, brokerError, missingBrokers, setDebugState]);
+  }, [isInitialized, brokers, loadingBrokers, brokerError, missingBrokers, setDebugState, connections, lastSyncTime]);
 
   // Add refresh function
   const handleRefresh = useCallback(async () => {
     try {
       setDebugState({ loadingBrokers: true, brokerError: null });
       logDebug('Manually refreshing broker list');
-      const brokerList = await snapTradeService.getBrokerages();
+      
+      // Refresh both brokers and connections
+      const [brokerList, connectionList] = await Promise.all([
+        snapTradeService.getBrokerages(),
+        snapTradeService.connections.list().catch(() => [])
+      ]);
+      
       setBrokers(brokerList);
-      logDebug('Broker list refreshed successfully', { count: brokerList.length });
+      setDebugState({
+        brokers: brokerList,
+        connectionStatus: {
+          isConnected: connectionList.length > 0,
+          connectionCount: connectionList.length,
+          lastSyncTime: Date.now()
+        }
+      });
+      
+      logDebug('Broker list and connections refreshed successfully', { 
+        brokerCount: brokerList.length,
+        connectionCount: connectionList.length
+      });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       logDebug('Failed to refresh broker list', { error: errorMessage });
-      setDebugState({ brokerError: errorMessage });
+      setDebugState({ 
+        brokerError: errorMessage,
+        connectionStatus: {
+          isConnected: false,
+          connectionCount: 0,
+          lastSyncTime: Date.now()
+        }
+      });
     } finally {
       setDebugState({ loadingBrokers: false });
     }

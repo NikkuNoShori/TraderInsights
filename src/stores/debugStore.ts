@@ -37,6 +37,11 @@ interface DebugSettings {
     loadingBrokers: boolean;
     brokerError: string | null;
     missingBrokers: string[];
+    connectionStatus?: {
+      isConnected: boolean;
+      connectionCount: number;
+      lastSyncTime?: number;
+    };
   };
   // Store previous settings when debug mode is off
   previousSettings?: {

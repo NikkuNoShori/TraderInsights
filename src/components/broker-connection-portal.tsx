@@ -1,3 +1,44 @@
+/**
+ * BrokerConnectionPortal Component
+ * 
+ * A modal component that handles the OAuth flow for connecting brokerage accounts.
+ * Used as a reusable portal for broker connections across different parts of the application.
+ * 
+ * Features:
+ * - Manages broker OAuth authentication flow
+ * - Handles connection success/failure states
+ * - Provides user feedback during connection process
+ * - Supports custom success/error callbacks
+ * 
+ * Usage:
+ * ```tsx
+ * <BrokerConnectionPortal
+ *   isOpen={isOpen}
+ *   onClose={handleClose}
+ *   onSuccess={handleSuccess}
+ *   onError={handleError}
+ *   config={snapTradeConfig}
+ *   userId={userId}
+ *   userSecret={userSecret}
+ * />
+ * ```
+ * 
+ * Props:
+ * @prop {boolean} isOpen - Controls portal visibility
+ * @prop {() => void} onClose - Callback when portal is closed
+ * @prop {(authorizationId: string) => void} onSuccess - Optional callback on successful connection
+ * @prop {(error: { errorCode: string; statusCode: string; detail: string }) => void} onError - Optional callback on connection error
+ * @prop {SnapTradeConfig} config - SnapTrade configuration
+ * @prop {string} userId - User identifier for SnapTrade
+ * @prop {string} userSecret - User secret for SnapTrade authentication
+ * 
+ * Used By:
+ * - ImportTradeForm: For connecting brokers during trade import
+ * 
+ * @see src/components/trades/ImportTradeForm.tsx
+ * @see src/components/BrokerDashboard.tsx
+ */
+
 import React, { useEffect, useState } from 'react';
 import { SnapTradeService } from '@/lib/snaptrade/client';
 import { SnapTradeConfig } from '@/lib/snaptrade/types';

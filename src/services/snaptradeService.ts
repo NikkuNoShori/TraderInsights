@@ -184,12 +184,25 @@ export const snapTradeService = {
     }
   },
 
-  createConnectionLink: async (userId: string, userSecret: string) => {
+  createConnectionLink: async (userId: string, userSecret?: string) => {
     try {
       console.log("Creating connection link:", { userId });
 
       // Get config for proper credentials
       const config = getSnapTradeConfig();
+
+      // In demo mode, use a fixed userSecret
+      if (config.isDemo) {
+        userSecret = "demo-secret";
+      } else if (!userSecret) {
+        // For non-demo mode, get the stored user secret
+        const user = StorageHelpers.getUser();
+        userSecret = user?.userSecret;
+
+        if (!userSecret) {
+          throw new Error("User secret not found. Please register first.");
+        }
+      }
 
       try {
         // Define response type for login
