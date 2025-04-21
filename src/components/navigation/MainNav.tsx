@@ -233,11 +233,45 @@ export function MainNav() {
         {/* Header */}
         <div className="absolute top-0 left-0 right-0 z-10 p-4 border-b border-border dark:border-dark-border bg-card dark:bg-dark-paper">
           <div className="flex items-center space-x-2">
-            <LineChart className="h-6 w-6 text-primary" />
+            <svg
+              className="h-6 w-6 text-primary"
+              viewBox="0 0 512 512"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle cx="256" cy="256" r="256" fill="currentColor" fillOpacity="0.1"/>
+              <path
+                d="M128 384L192 256L256 320L320 192L384 128"
+                stroke="currentColor"
+                strokeWidth="48"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <circle
+                cx="320"
+                cy="192"
+                r="64"
+                stroke="currentColor"
+                strokeWidth="32"
+                fill="none"
+              />
+              <line
+                x1="365"
+                y1="237"
+                x2="416"
+                y2="288"
+                stroke="currentColor"
+                strokeWidth="32"
+                strokeLinecap="round"
+              />
+              <circle cx="192" cy="256" r="16" fill="currentColor"/>
+              <circle cx="256" cy="320" r="16" fill="currentColor"/>
+              <circle cx="320" cy="192" r="16" fill="currentColor"/>
+            </svg>
             {!isCollapsed && (
               <div className="flex items-center">
                 <span className="font-semibold text-foreground dark:text-dark-text">
-                  Trading Insights
+                  TraderInsights
                 </span>
                 <Badge
                   type="beta"

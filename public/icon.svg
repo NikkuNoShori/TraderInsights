@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="256" cy="256" r="256" fill="#2563EB" fill-opacity="0.1"/>
+  
+  <!-- Chart Lines -->
+  <path d="M128 384L192 256L256 320L320 192L384 128" 
+        stroke="#2563EB" 
+        stroke-width="48" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"/>
+  
+  <!-- Magnifying Glass -->
+  <circle cx="320" cy="192" r="64" 
+          stroke="#2563EB" 
+          stroke-width="32" 
+          fill="none"/>
+  <line x1="365" y1="237" x2="416" y2="288" 
+        stroke="#2563EB" 
+        stroke-width="32" 
+        stroke-linecap="round"/>
+        
+  <!-- Dots -->
+  <circle cx="192" cy="256" r="16" fill="#2563EB"/>
+  <circle cx="256" cy="320" r="16" fill="#2563EB"/>
+  <circle cx="320" cy="192" r="16" fill="#2563EB"/>
+</svg> 

@@ -24,6 +24,7 @@ import Playbook from "./views/Playbook";
 import { useResetFilters } from "./hooks/useResetFilters";
 import BrokerDashboard from "./components/BrokerDashboard";
 import { SnapTradeTest } from "./components/test/SnapTradeTest";
+import ContactPage from "./views/ContactUs";
 
 function ProtectedLayout() {
   useResetFilters();
@@ -47,6 +48,7 @@ export default function App() {
           <Routes>
             {/* Public routes */}
             <Route index element={<LandingPage />} />
+            <Route path="contact" element={<ContactPage />} />
 
             {/* Auth routes */}
             <Route path="/auth">

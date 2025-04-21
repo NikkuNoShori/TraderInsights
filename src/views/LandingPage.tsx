@@ -1,8 +1,46 @@
 import { useNavigate } from "react-router-dom";
-import { LineChart, TrendingUp, BarChart2, BookOpen } from "lucide-react";
+import { TrendingUp, BarChart2, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect } from "@/lib/react";
 import { clearDeveloperMode } from "@/lib/utils/auth";
+
+const AppIcon = () => (
+  <svg
+    className="text-primary"
+    viewBox="0 0 512 512"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <circle cx="256" cy="256" r="256" fill="currentColor" fillOpacity="0.1"/>
+    <path
+      d="M128 384L192 256L256 320L320 192L384 128"
+      stroke="currentColor"
+      strokeWidth="48"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <circle
+      cx="320"
+      cy="192"
+      r="64"
+      stroke="currentColor"
+      strokeWidth="32"
+      fill="none"
+    />
+    <line
+      x1="365"
+      y1="237"
+      x2="416"
+      y2="288"
+      stroke="currentColor"
+      strokeWidth="32"
+      strokeLinecap="round"
+    />
+    <circle cx="192" cy="256" r="16" fill="currentColor"/>
+    <circle cx="256" cy="320" r="16" fill="currentColor"/>
+    <circle cx="320" cy="192" r="16" fill="currentColor"/>
+  </svg>
+);
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -54,7 +92,9 @@ export default function LandingPage() {
             {/* Feature 1 */}
             <div className="bg-card p-6 rounded-xl shadow-sm border border-border">
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                <LineChart className="w-6 h-6 text-primary" />
+                <div className="w-6 h-6">
+                  <AppIcon />
+                </div>
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">
                 Performance Tracking
@@ -126,11 +166,22 @@ export default function LandingPage() {
       <footer className="bg-muted/30 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <LineChart className="h-6 w-6 text-primary" />
-              <span className="font-semibold text-foreground">
-                TraderInsights
-              </span>
+            <div className="flex items-center space-x-6">
+              <div className="flex items-center space-x-2">
+                <div className="h-6 w-6">
+                  <AppIcon />
+                </div>
+                <span className="font-semibold text-foreground">
+                  TraderInsights
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                onClick={() => navigate("/contact")}
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                Contact Us
+              </Button>
             </div>
             <p className="text-sm text-muted-foreground">
               © {new Date().getFullYear()} TraderInsights. All rights reserved.
