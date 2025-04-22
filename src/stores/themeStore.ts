@@ -22,8 +22,8 @@ const updateThemeClass = (isDark: boolean) => {
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set) => ({
-      theme: "dark", // Set default theme to dark
-      isDark: true, // Set default isDark to true
+      theme: "system",
+      isDark: getSystemTheme(),
       setTheme: (theme) => {
         set({ theme });
         let isDark = theme === "dark";

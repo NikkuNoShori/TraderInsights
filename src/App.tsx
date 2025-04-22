@@ -54,7 +54,7 @@ export default function App() {
             <Route path="contact" element={<ContactPage />} />
 
             {/* Auth routes */}
-            <Route path="/auth">
+            <Route path="/auth" element={<AuthLayout title="Authentication" subtitle="Sign in to your account" />}>
               <Route path="login" element={<Login />} />
               <Route path="request-reset" element={<RequestPasswordReset />} />
               <Route path="reset-password" element={<ResetPassword />} />
@@ -62,7 +62,7 @@ export default function App() {
               <Route index element={<Navigate to="login" replace />} />
             </Route>
 
-            {/* Protected routes */}
+            {/* Protected routes - all under /app/* */}
             <Route path="/app" element={<ProtectedLayout />}>
               <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />

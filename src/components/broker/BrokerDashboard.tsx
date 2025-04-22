@@ -112,6 +112,7 @@ interface DebugState {
 }
 
 export function BrokerDashboard() {
+  // Remove debug console logging
   const { user } = useAuthStore();
   const { 
     connections, 
@@ -429,13 +430,18 @@ export function BrokerDashboard() {
 
       // Register a new user with a unique ID
       const userId = `user-${Date.now()}`;
+      console.log("Registering user with ID:", userId);
       await snapTradeService.registerUser(userId);
+      
       const user = snapTradeService.getUser();
+      console.log("User after registration:", user);
+      
       if (!user || !user.userSecret) {
         throw new Error("Failed to register user: missing userSecret");
       }
 
       // Create connection link with broker slug and options
+      console.log("Creating connection link for broker:", broker.slug);
       const { redirectURI, sessionId } = await snapTradeService.createConnectionLink(
         user.userId,
         user.userSecret,
@@ -443,10 +449,12 @@ export function BrokerDashboard() {
         {
           immediateRedirect: true,
           connectionType: 'read',
-          connectionPortalVersion: 'v4',
-          customRedirect: window.location.origin + '/app/broker-callback'
+          connectionPortalVersion: 'v4'
+          // Let the SnapTrade SDK handle the redirect URL
         }
       );
+
+      console.log("Connection link created:", { redirectURI, sessionId });
 
       // Save session info for callback handling
       StorageHelpers.saveConnectionSession({
@@ -457,6 +465,7 @@ export function BrokerDashboard() {
       });
 
       // Redirect to broker connection page
+      console.log("Redirecting to:", redirectURI);
       window.location.href = redirectURI;
     } catch (error) {
       console.error("Error connecting to broker:", error);

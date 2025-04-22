@@ -6,8 +6,7 @@ export function ThemeWrapper({ children }: PropsWithChildren) {
   const { isDark } = useThemeStore();
 
   useEffect(() => {
-    // Ensure dark mode class is applied on mount and update color scheme
-    document.documentElement.classList.toggle("dark", isDark);
+    // Theme class is handled by themeStore's updateThemeClass
     document.documentElement.style.colorScheme = isDark ? "dark" : "light";
   }, [isDark]);
 

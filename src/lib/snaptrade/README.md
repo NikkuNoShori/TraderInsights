@@ -43,7 +43,7 @@ Create a `.env.local` file in the root of your project with the following variab
 ```
 NEXT_PUBLIC_SNAPTRADE_CLIENT_ID=your_client_id
 NEXT_PUBLIC_SNAPTRADE_CONSUMER_KEY=your_consumer_key
-NEXT_PUBLIC_SNAPTRADE_REDIRECT_URI=http://localhost:3000/snaptrade-callback
+# No need to specify redirect URI - it's generated dynamically by the SnapTrade SDK
 ```
 
 ### Authentication
@@ -115,7 +115,7 @@ import { snapTradeService } from '@/lib/snaptrade/service';
 await snapTradeService.init({
   clientId: process.env.NEXT_PUBLIC_SNAPTRADE_CLIENT_ID || '',
   consumerKey: process.env.NEXT_PUBLIC_SNAPTRADE_CONSUMER_KEY || '',
-  redirectUri: process.env.NEXT_PUBLIC_SNAPTRADE_REDIRECT_URI || '',
+  // No need to specify redirectUri - it's handled by the SDK
 });
 
 // Register a user
@@ -125,8 +125,8 @@ await snapTradeService.registerUser('user123');
 const brokerages = await snapTradeService.getBrokerages();
 
 // Create a connection link for OAuth authentication
-const connectionUrl = await snapTradeService.createConnectionLink(brokerages[0].id);
-window.open(connectionUrl, '_blank');
+const { redirectURI } = await snapTradeService.createConnectionLink(brokerages[0].id);
+window.location.href = redirectURI;
 
 // Get user connections
 const connections = await snapTradeService.getUserConnections();

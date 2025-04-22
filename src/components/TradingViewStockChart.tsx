@@ -49,8 +49,8 @@ export function TradingViewStockChart({
 
   if (!data || data.length === 0) {
     return (
-      <div className="w-full flex items-center justify-center text-muted-foreground" style={{ height: `${height}px` }}>
-        <p className="text-gray-500">No chart data available</p>
+      <div className="w-full flex items-center justify-center text-muted" style={{ height: `${height}px` }}>
+        <p>No chart data available</p>
       </div>
     );
   }

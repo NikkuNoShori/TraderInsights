@@ -31,8 +31,8 @@ export function ChartTypeSelector({
           className={clsx(
             "flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors",
             selectedType === type
-              ? "bg-indigo-100 text-indigo-700"
-              : "bg-white text-gray-600 hover:bg-gray-50",
+              ? "bg-primary/10 text-primary"
+              : "bg-card text-muted hover:bg-muted",
           )}
         >
           <Icon className="h-4 w-4" />

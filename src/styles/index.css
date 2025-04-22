@@ -1,8 +1,4 @@
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
-
-@import "./datepicker.css";
+@import "./theme.css";
 
 @layer base {
   :root {
@@ -10,7 +6,7 @@
   }
 
   body {
-    @apply bg-gray-200 text-gray-800 dark:bg-dark-bg dark:text-dark-text;
+    @apply bg-background text-default antialiased min-h-screen;
   }
 
   /* Scrollbar styles */
@@ -23,40 +19,35 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-gray-400 dark:bg-gray-700 rounded-full;
+    @apply bg-muted rounded-full;
   }
 
   /* Selection styles */
   ::selection {
-    @apply bg-primary-200 dark:bg-primary-900/30;
+    @apply bg-primary/20;
   }
 }
 
 @layer components {
   .card {
-    @apply bg-gray-100 border border-gray-300 rounded-lg shadow-sm 
-           dark:bg-dark-paper dark:border-dark-border;
+    @apply bg-card border border-border rounded-lg shadow-sm;
   }
 
   .btn-primary {
-    @apply px-4 py-2 text-sm font-medium text-white 
-           bg-primary-600 hover:bg-primary-700
-           dark:bg-primary-500 dark:hover:bg-primary-600
+    @apply px-4 py-2 text-sm font-medium text-primary-foreground 
+           bg-primary hover:bg-primary-hover
            rounded-lg shadow-sm transition-colors
-           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
-           dark:focus:ring-offset-dark-bg
+           focus:outline-none focus:ring-2 focus:ring-primary/30
            disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .input {
-    @apply block w-full rounded-md border-gray-300 shadow-sm 
-           bg-gray-100
-           focus:border-primary-500 focus:ring-primary-500
-           dark:bg-dark-paper/50 dark:border-dark-border dark:text-dark-text
-           hover:border-gray-400 dark:hover:border-dark-border/80
+    @apply block w-full rounded-lg border border-border bg-input-bg
+           text-input-text placeholder:text-input-placeholder
+           focus:border-primary focus:ring-primary/20
+           hover:border-border-hover
            transition-colors;
   }
 }
 
 @import "./tables.css";
-/* ... other imports */
