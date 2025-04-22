@@ -57,22 +57,27 @@ export function SnapTradeSettings() {
           </form>
         </div>
 
-        <div className="border-t pt-6">
-          <h3 className="text-lg font-medium mb-2">Demo Mode</h3>
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Enable Demo Mode</Label>
-              <p className="text-sm text-muted-foreground">
-                Use SnapTrade in demo mode with simulated data
-              </p>
+        <div className="border-t border-border dark:border-dark-border pt-6">
+          <h3 className="text-md font-medium text-foreground mb-2">Current Configuration</h3>
+          <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+            <div>
+              <span className="text-sm font-medium text-foreground">Client ID: </span>
+              <span className="text-sm text-muted-foreground">
+                {import.meta.env.VITE_SNAPTRADE_CLIENT_ID || 'Not configured'}
+              </span>
             </div>
-            <Switch
-              checked={config.isDemo || false}
-              onCheckedChange={() => {
-                // TODO: Implement demo mode toggle
-                console.log('Toggle demo mode');
-              }}
-            />
+            <div>
+              <span className="text-sm font-medium text-foreground">Redirect URI: </span>
+              <span className="text-sm text-muted-foreground">
+                {import.meta.env.VITE_SNAPTRADE_REDIRECT_URI || window.location.origin + '/broker-callback'}
+              </span>
+            </div>
+            <div>
+              <span className="text-sm font-medium text-foreground">Environment: </span>
+              <span className="text-sm text-muted-foreground">
+                {import.meta.env.MODE}
+              </span>
+            </div>
           </div>
         </div>
 

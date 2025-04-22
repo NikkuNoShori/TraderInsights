@@ -21,7 +21,7 @@ export interface SnapTradeConfig {
   clientId: string;
   consumerKey: string; // Used for both frontend and backend authentication
   redirectUri?: string;
-  isDemo?: boolean; // Flag indicating if we're using demo credentials
+  isDemo?: boolean; // Flag indicating if using demo credentials
 }
 
 /**

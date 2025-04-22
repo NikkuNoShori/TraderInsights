@@ -281,39 +281,42 @@ export class SnapTradeService {
    * @param userSecret User secret
    * @returns Response data containing the login URL that can be used to open the connection portal
    */
-  async createConnectionLink(userId: string, userSecret: string): Promise<any> {
+  async createConnectionLink(
+    userId: string,
+    userSecret: string
+  ): Promise<string> {
     try {
       console.log("Creating connection link:", { userId });
 
-      const response = await fetch("/api/snaptrade/connection-link", {
+      const response = await fetch("/api/snaptrade/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          userId,
-          userSecret,
-        }),
+        body: JSON.stringify({ userId, userSecret }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error("SnapTrade API error:", errorData);
-        throw new Error(
-          `API error: ${response.status} - ${JSON.stringify(errorData)}`
-        );
+        const error = await response.json();
+        throw new Error(error.error || "Failed to create connection link");
       }
 
       const data = await response.json();
-      console.log("SnapTrade connection link response:", data);
-      return data;
+      console.log("Connection link response:", data);
+
+      // If we're in demo mode, use the mock redirect URI
+      if (data.redirectUri?.includes("demo=true")) {
+        console.log("Using demo mode connection link");
+        // Store the demo user credentials
+        this.userId = data.userId;
+        this.userSecret = data.userSecret;
+        return data.redirectUri;
+      }
+
+      return data.redirectUri;
     } catch (error) {
       console.error("Error creating connection link:", error);
-      throw new Error(
-        `Failed to create connection link: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
+      throw error;
     }
   }
 

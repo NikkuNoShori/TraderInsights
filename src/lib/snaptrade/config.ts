@@ -16,9 +16,12 @@
  */
 
 import { SnapTradeConfig } from "./types";
-import { createDebugLogger } from '@/stores/debugStore';
+import { createDebugLogger, DebugLogger } from "@/stores/debugStore";
 
-const configLogger = createDebugLogger('config');
+// Create debug logger
+const configLogger = createDebugLogger("config") as DebugLogger & {
+  lastConfig?: SnapTradeConfig;
+};
 
 /**
  * Get the current environment
@@ -33,7 +36,7 @@ const getEnvironment = (): "browser" | "node" => {
  */
 function getEnvVariable(key: string): string | undefined {
   const environment = getEnvironment();
-  
+
   // For browser environment, look for import.meta.env variables (Vite style)
   if (environment === "browser") {
     // @ts-ignore - Vite specific
@@ -43,7 +46,7 @@ function getEnvVariable(key: string): string | undefined {
     }
     return undefined;
   }
-  
+
   // For Node.js environment (server-side)
   return process.env[key] || process.env[`VITE_${key}`] || undefined;
 }
@@ -56,18 +59,21 @@ export function getSnapTradeConfig(): SnapTradeConfig {
     clientId: import.meta.env.VITE_SNAPTRADE_CLIENT_ID,
     consumerKey: import.meta.env.VITE_SNAPTRADE_CONSUMER_KEY,
     redirectUri: import.meta.env.VITE_SNAPTRADE_REDIRECT_URI,
-    environment: 'browser' as const,
-    isDemo: true
+    environment: "browser" as const,
+    isDemo: import.meta.env.VITE_SNAPTRADE_IS_DEMO === "true",
   };
 
   // Only log configuration changes, not every access
-  if (!configLogger.lastConfig || JSON.stringify(configLogger.lastConfig) !== JSON.stringify(config)) {
-    configLogger.debug('SnapTrade configuration updated', {
+  if (
+    !configLogger.lastConfig ||
+    JSON.stringify(configLogger.lastConfig) !== JSON.stringify(config)
+  ) {
+    configLogger.debug("SnapTrade configuration updated", {
       clientId: config.clientId,
       hasConsumerKey: !!config.consumerKey,
       redirectUri: config.redirectUri,
       environment: config.environment,
-      isDemo: config.isDemo
+      isDemo: config.isDemo,
     });
     configLogger.lastConfig = config;
   }
@@ -91,12 +97,5 @@ export function verifySnapTradeConfig(): boolean {
   } catch (error) {
     console.error("SnapTrade configuration verification failed:", error);
     return false;
-  }
-}
-
-// Add type augmentation for the logger
-declare module '@/stores/debugStore' {
-  interface DebugLogger {
-    lastConfig?: SnapTradeConfig;
   }
 } 

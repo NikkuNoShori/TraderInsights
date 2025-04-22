@@ -12,15 +12,37 @@ interface CreateConnectionLinkBody {
   userSecret: string;
 }
 
+interface SnapTradeConfig {
+  clientId: string;
+  consumerKey: string;
+  redirectUri: string;
+}
+
 const router = Router();
 
 try {
   console.log("Initializing SnapTrade router...");
-  const config = {
-    clientId: "TRADING-INSIGHTS-TEST-MJFEC",
-    consumerKey: "zdPiwYb3etVq3uyJMCacZboOLl7ucO9mREL2xdc6Snfat9nLkt",
-    redirectUri: serverEnv.snapTrade.redirectUri,
+
+  // Get credentials from environment variables
+  const config: SnapTradeConfig = {
+    clientId:
+      process.env.SNAPTRADE_CLIENT_ID ?? serverEnv.snapTrade.clientId ?? "",
+    consumerKey:
+      process.env.SNAPTRADE_CONSUMER_KEY ??
+      serverEnv.snapTrade.consumerKey ??
+      "",
+    redirectUri:
+      process.env.SNAPTRADE_REDIRECT_URI ??
+      serverEnv.snapTrade.redirectUri ??
+      "",
   };
+
+  // Validate configuration
+  if (!config.clientId || !config.consumerKey) {
+    throw new Error(
+      "Missing required SnapTrade configuration. Please check your environment variables."
+    );
+  }
 
   console.log("SnapTrade config:", {
     hasClientId: !!config.clientId,
@@ -28,10 +50,30 @@ try {
     redirectUri: config.redirectUri,
   });
 
+  // Helper function to generate authentication headers
+  const generateAuthHeaders = (timestamp: string): Record<string, string> => {
+    if (!config.clientId || !config.consumerKey) {
+      throw new Error("Missing required SnapTrade configuration");
+    }
+
+    const message = `${config.clientId}${timestamp}`;
+    const signature = crypto
+      .createHmac("sha256", config.consumerKey)
+      .update(Buffer.from(message, "utf8"))
+      .digest("hex");
+
+    return {
+      "Content-Type": "application/json",
+      Signature: signature,
+      Timestamp: timestamp,
+      ClientId: config.clientId,
+    };
+  };
+
   // Register user with SnapTrade
   const registerHandler: RequestHandler = async (req, res) => {
     try {
-      const { userId } = req.body;
+      const { userId } = req.body as RegisterUserBody;
       console.log("Registering user with SnapTrade:", { userId });
 
       if (!userId) {
@@ -42,22 +84,13 @@ try {
 
       // Generate timestamp and signature
       const timestamp = Math.floor(Date.now() / 1000).toString();
-      const message = `${config.clientId}${timestamp}`;
-      const signature = crypto
-        .createHmac("sha256", config.consumerKey)
-        .update(Buffer.from(message, "utf8"))
-        .digest("hex");
+      const headers = generateAuthHeaders(timestamp);
 
       const response = await fetch(
         `https://api.snaptrade.com/api/v1/snapTrade/registerUser?clientId=${config.clientId}&timestamp=${timestamp}`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Signature: signature,
-            Timestamp: timestamp,
-            ClientId: config.clientId,
-          },
+          headers,
           body: JSON.stringify({ userId }),
         }
       );
@@ -72,21 +105,12 @@ try {
       const data = await response.json();
       console.log("SnapTrade registration response:", data);
       res.json(data);
-      return;
     } catch (error) {
       console.error("Failed to register user with SnapTrade:", error);
-      if (error instanceof Error) {
-        console.error("Error details:", {
-          name: error.name,
-          message: error.message,
-          stack: error.stack,
-        });
-      }
       res.status(500).json({
         error: "Failed to register user",
         details: error instanceof Error ? error.message : String(error),
       });
-      return;
     }
   };
 
@@ -146,7 +170,7 @@ try {
   // Create connection link
   const createConnectionLinkHandler: RequestHandler = async (req, res) => {
     try {
-      const { userId, userSecret } = req.body;
+      const { userId, userSecret } = req.body as CreateConnectionLinkBody;
       console.log("Creating connection link:", { userId });
 
       if (!userId || !userSecret) {
@@ -160,87 +184,13 @@ try {
 
       // Generate timestamp and signature
       const timestamp = Math.floor(Date.now() / 1000).toString();
-      const message = `${config.clientId}${timestamp}`;
-      const signature = crypto
-        .createHmac("sha256", config.consumerKey)
-        .update(Buffer.from(message, "utf8"))
-        .digest("hex");
+      const headers = generateAuthHeaders(timestamp);
 
       const response = await fetch(
         `https://api.snaptrade.com/api/v1/snapTrade/login?clientId=${config.clientId}&timestamp=${timestamp}`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Signature: signature,
-            Timestamp: timestamp,
-            ClientId: config.clientId,
-          },
-          body: JSON.stringify({ userId, userSecret }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("SnapTrade API error:", errorData);
-        res.status(response.status).json(errorData);
-        return;
-      }
-
-      const data = await response.json();
-      console.log("SnapTrade connection link response:", data);
-      res.json(data);
-      return;
-    } catch (error) {
-      console.error("Failed to create connection link:", error);
-      if (error instanceof Error) {
-        console.error("Error details:", {
-          name: error.name,
-          message: error.message,
-          stack: error.stack,
-        });
-      }
-      res.status(500).json({
-        error: "Failed to create connection link",
-        details: error instanceof Error ? error.message : String(error),
-      });
-      return;
-    }
-  };
-
-  // Login handler
-  const loginHandler: RequestHandler = async (req, res) => {
-    try {
-      const { userId, userSecret } = req.body;
-      console.log("Logging in user with SnapTrade:", { userId });
-
-      if (!userId || !userSecret) {
-        console.error("Missing required fields:", {
-          hasUserId: !!userId,
-          hasUserSecret: !!userSecret,
-        });
-        res.status(400).json({ error: "userId and userSecret are required" });
-        return;
-      }
-
-      // Generate timestamp and signature
-      const timestamp = Math.floor(Date.now() / 1000).toString();
-      const message = `${config.clientId}${timestamp}`;
-      const signature = crypto
-        .createHmac("sha256", config.consumerKey)
-        .update(Buffer.from(message, "utf8"))
-        .digest("hex");
-
-      const response = await fetch(
-        `https://api.snaptrade.com/api/v1/snapTrade/login?clientId=${config.clientId}&timestamp=${timestamp}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Signature: signature,
-            Timestamp: timestamp,
-            ClientId: config.clientId,
-          },
+          headers,
           body: JSON.stringify({ userId, userSecret }),
         }
       );
@@ -254,30 +204,34 @@ try {
 
       const data = await response.json();
       console.log("SnapTrade login response:", data);
-      res.json(data);
-      return;
-    } catch (error) {
-      console.error("Failed to login user with SnapTrade:", error);
-      if (error instanceof Error) {
-        console.error("Error details:", {
-          name: error.name,
-          message: error.message,
-          stack: error.stack,
-        });
+
+      // Ensure we have a redirectUri in the response
+      if (!data.redirectUri) {
+        console.error("No redirectUri in SnapTrade response");
+        res.status(500).json({ error: "No redirectUri in response" });
+        return;
       }
+
+      // Return the response with the redirectUri
+      res.json({
+        redirectUri: data.redirectUri,
+        userId: data.userId,
+        userSecret: data.userSecret,
+        status: "success",
+      });
+    } catch (error) {
+      console.error("Failed to create connection link:", error);
       res.status(500).json({
-        error: "Failed to login user",
+        error: "Failed to create connection link",
         details: error instanceof Error ? error.message : String(error),
       });
-      return;
     }
   };
 
   // Register routes
   router.post("/register", registerHandler);
+  router.post("/login", createConnectionLinkHandler);
   router.get("/brokerages", getBrokeragesHandler);
-  router.post("/connection-link", createConnectionLinkHandler);
-  router.post("/login", loginHandler);
 } catch (error) {
   console.error("Failed to initialize SnapTrade router:", error);
 }

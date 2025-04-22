@@ -112,6 +112,18 @@ const PROXY_ROUTE_MAP: Record<string, string> = {
 };
 
 /**
+ * Get the API base URL based on environment
+ */
+function getApiBaseUrl(): string {
+  if (typeof window !== "undefined") {
+    // Browser environment
+    return import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
+  }
+  // Server environment
+  return process.env.VITE_API_BASE_URL || "http://localhost:3000/api";
+}
+
+/**
  * Make an authenticated request to SnapTrade API
  * @param config SnapTrade configuration
  * @param endpoint API endpoint
@@ -134,8 +146,9 @@ export async function makeSnapTradeRequest<T>(
     if (isBrowser || config.isDemo) {
       // In browser: Use proxy routes to avoid CORS issues
       const proxyRoute = PROXY_ROUTE_MAP[endpoint] || `/api/snaptrade/proxy?endpoint=${encodeURIComponent(endpoint)}`;
+      const apiBaseUrl = getApiBaseUrl();
       
-      console.log(`Making proxy API request to ${proxyRoute}`, {
+      console.log(`Making proxy API request to ${apiBaseUrl}${proxyRoute}`, {
         method,
         hasBody: !!body,
         endpoint,
@@ -143,7 +156,7 @@ export async function makeSnapTradeRequest<T>(
       });
       
       // Make request through our proxy
-      const response = await fetch(proxyRoute, {
+      const response = await fetch(`${apiBaseUrl}${proxyRoute}`, {
         method,
         headers: {
           "Content-Type": "application/json",

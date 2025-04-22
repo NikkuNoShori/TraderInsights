@@ -47,6 +47,16 @@ export const snapTradeService = {
       // Get config for proper credentials
       const config = getSnapTradeConfig();
 
+      // In demo mode, use fixed credentials
+      if (config.isDemo) {
+        const demoUser = {
+          userId: "demo-user",
+          userSecret: "demo-secret"
+        };
+        StorageHelpers.saveUser(demoUser);
+        return demoUser;
+      }
+
       // Use the centralized auth utilities
       try {
         // Define the expected response type
@@ -191,9 +201,14 @@ export const snapTradeService = {
       // Get config for proper credentials
       const config = getSnapTradeConfig();
 
-      // In demo mode, use a fixed userSecret
+      // In demo mode, use a fixed userSecret and ensure user is registered
       if (config.isDemo) {
         userSecret = "demo-secret";
+        // Store the demo user in storage
+        StorageHelpers.saveUser({
+          userId: "demo-user",
+          userSecret: "demo-secret",
+        });
       } else if (!userSecret) {
         // For non-demo mode, get the stored user secret
         const user = StorageHelpers.getUser();

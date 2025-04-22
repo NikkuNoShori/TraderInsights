@@ -25,44 +25,21 @@ export default function BrokerCallback() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Get error and code from URL params
-        const error = searchParams.get('error');
-        const code = searchParams.get('code');
-        const state = searchParams.get('state');
+        const searchParams = new URLSearchParams(window.location.search);
+        const userId = searchParams.get('userId');
+        const userSecret = searchParams.get('userSecret');
+        const authorizationId = searchParams.get('authorizationId');
 
-        // Check for errors first
-        if (error) {
-          console.error('Broker connection error:', error);
-          setStatus('error');
-          setMessage(`Connection failed: ${error}`);
-          toast.error('Failed to connect broker account');
-          setTimeout(() => router.push('/app/broker-dashboard'), 2000);
-          return;
+        if (!userId || !userSecret || !authorizationId) {
+          throw new Error('Missing required parameters from callback');
         }
 
-        // Validate we have the required code
-        if (!code) {
-          throw new Error('No authorization code received');
-        }
+        // Store user credentials
+        StorageHelpers.saveUser({ userId, userSecret });
 
-        // Get config to check if we're in demo mode
-        const config = getSnapTradeConfig();
-        
-        // In demo mode, we don't need to validate the user session
-        if (!config.isDemo) {
-          // Get the stored user
-          const user = StorageHelpers.getUser();
-          if (!user || !user.userId || !user.userSecret) {
-            throw new Error('User session not found');
-          }
-        }
+        // Get user connections
+        const connections = await snapTradeService.getUserConnections();
 
-        // Initialize SnapTrade service
-        await snapTradeService.initialize(config);
-
-        // Complete the connection with the authorization code
-        await snapTradeService.connections.list();
-        
         // Sync all data to get the new connection
         await syncAllData();
 
@@ -73,10 +50,10 @@ export default function BrokerCallback() {
 
         // Redirect back to dashboard after a short delay
         setTimeout(() => router.push('/app/broker-dashboard'), 2000);
-      } catch (err) {
-        console.error('Error handling broker callback:', err);
+      } catch (error) {
+        console.error('Error handling broker callback:', error);
         setStatus('error');
-        setMessage(err instanceof Error ? err.message : 'Failed to complete broker connection');
+        setMessage(error instanceof Error ? error.message : 'Failed to handle broker callback');
         toast.error('Failed to connect broker account');
         setTimeout(() => router.push('/app/broker-dashboard'), 2000);
       }

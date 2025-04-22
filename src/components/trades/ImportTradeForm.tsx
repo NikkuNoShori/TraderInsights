@@ -15,7 +15,7 @@ import { transformTrade } from "@/utils/brokerTransforms";
 import { snapTradeService } from "@/services/snaptradeService";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatDistanceToNow } from "date-fns";
-import { BrokerConnectionPortal } from "@/components/broker-connection-portal";
+import { BrokerConnectionPortal } from "@/components/broker/BrokerConnectionPortal";
 import { SnapTradeConfig } from "@/lib/snaptrade/types";
 
 interface RateLimitError extends Error {
