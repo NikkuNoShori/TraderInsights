@@ -10,6 +10,12 @@ interface RegisterUserBody {
 interface CreateConnectionLinkBody {
   userId: string;
   userSecret: string;
+  broker?: string;
+  immediateRedirect?: boolean;
+  customRedirect?: string;
+  reconnect?: string;
+  connectionType?: string;
+  connectionPortalVersion?: string;
 }
 
 interface SnapTradeConfig {
@@ -170,8 +176,23 @@ try {
   // Create connection link
   const createConnectionLinkHandler: RequestHandler = async (req, res) => {
     try {
-      const { userId, userSecret } = req.body as CreateConnectionLinkBody;
-      console.log("Creating connection link:", { userId });
+      const {
+        userId,
+        userSecret,
+        broker,
+        immediateRedirect = false,
+        customRedirect = config.redirectUri,
+        reconnect,
+        connectionType = "read",
+        connectionPortalVersion = "v4",
+      } = req.body as CreateConnectionLinkBody;
+
+      console.log("Creating connection link:", {
+        userId,
+        hasBroker: !!broker,
+        customRedirect,
+        connectionType,
+      });
 
       if (!userId || !userSecret) {
         console.error("Missing required fields:", {
@@ -186,12 +207,31 @@ try {
       const timestamp = Math.floor(Date.now() / 1000).toString();
       const headers = generateAuthHeaders(timestamp);
 
+      // Prepare request body with all required fields
+      const requestBody: Record<string, string | boolean | undefined> = {
+        userId,
+        userSecret,
+        broker,
+        immediateRedirect,
+        customRedirect,
+        reconnect,
+        connectionType,
+        connectionPortalVersion,
+      };
+
+      // Remove undefined values
+      Object.keys(requestBody).forEach((key) => {
+        if (requestBody[key] === undefined) {
+          delete requestBody[key];
+        }
+      });
+
       const response = await fetch(
         `https://api.snaptrade.com/api/v1/snapTrade/login?clientId=${config.clientId}&timestamp=${timestamp}`,
         {
           method: "POST",
           headers,
-          body: JSON.stringify({ userId, userSecret }),
+          body: JSON.stringify(requestBody),
         }
       );
 
@@ -205,18 +245,17 @@ try {
       const data = await response.json();
       console.log("SnapTrade login response:", data);
 
-      // Ensure we have a redirectUri in the response
-      if (!data.redirectUri) {
-        console.error("No redirectUri in SnapTrade response");
-        res.status(500).json({ error: "No redirectUri in response" });
+      // Check for redirectURI (uppercase as per API docs)
+      if (!data.redirectURI) {
+        console.error("No redirectURI in SnapTrade response:", data);
+        res.status(500).json({ error: "No redirectURI in response" });
         return;
       }
 
-      // Return the response with the redirectUri
+      // Return the response with the correct field names
       res.json({
-        redirectUri: data.redirectUri,
-        userId: data.userId,
-        userSecret: data.userSecret,
+        redirectURI: data.redirectURI,
+        sessionId: data.sessionId,
         status: "success",
       });
     } catch (error) {

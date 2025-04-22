@@ -13,14 +13,17 @@ import Settings from "./views/Settings";
 import Login from "./views/auth/Login";
 import RequestPasswordReset from "./views/auth/RequestPasswordReset";
 import ResetPassword from "./views/auth/ResetPassword";
+import BrokerCallback from "./views/auth/BrokerCallback";
 import { AuthGuard } from "./components/AuthGuard";
 import { AuthLayout } from "./components/auth/AuthLayout";
 import { AppProvider } from "./providers/AppProvider";
 import { StoreProvider } from "./providers/StoreProvider";
 import LandingPage from "./views/LandingPage";
 import Performance from "./views/Performance";
-import ComingSoon from "./views/ComingSoon";
+import MarketData from "./views/MarketData";
+import Stocks from "./views/Stocks";
 import Playbook from "./views/Playbook";
+import Portfolios from "./views/Portfolios";
 import { useResetFilters } from "./hooks/useResetFilters";
 import { BrokerDashboard } from "./components/broker/BrokerDashboard";
 import { SnapTradeTest } from "./components/test/SnapTradeTest";
@@ -55,6 +58,7 @@ export default function App() {
               <Route path="login" element={<Login />} />
               <Route path="request-reset" element={<RequestPasswordReset />} />
               <Route path="reset-password" element={<ResetPassword />} />
+              <Route path="broker-callback" element={<BrokerCallback />} />
               <Route index element={<Navigate to="login" replace />} />
             </Route>
 
@@ -69,12 +73,11 @@ export default function App() {
               <Route path="settings/*" element={<Settings />} />
               <Route path="snaptrade-test" element={<SnapTradeTest />} />
 
-              {/* Coming Soon Features */}
-              <Route path="playbook" element={<ComingSoon />} />
-              <Route path="stocks" element={<ComingSoon />} />
-              <Route path="market" element={<ComingSoon />} />
-              <Route path="watchlist" element={<ComingSoon />} />
-              <Route path="portfolios" element={<ComingSoon />} />
+              {/* Feature Routes */}
+              <Route path="playbook" element={<Playbook />} />
+              <Route path="stocks" element={<Stocks />} />
+              <Route path="market" element={<MarketData />} />
+              <Route path="portfolios" element={<Portfolios />} />
             </Route>
 
             {/* Catch all redirect */}

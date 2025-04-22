@@ -3,8 +3,9 @@ import { makeSnapTradeRequest } from "./auth";
 import { Brokerage, BrokerageAuthorization } from "snaptrade-typescript-sdk";
 
 interface ConnectionLinkResponse {
-  redirectUri: string;
-  [key: string]: any; // Allow other properties
+  redirectURI: string;
+  sessionId: string;
+  status: string;
 }
 
 export class SnapTradeService {
@@ -25,29 +26,48 @@ export class SnapTradeService {
 
   async createConnectionLink(
     userId: string,
-    userSecret: string
-  ): Promise<{ redirectUri: string }> {
+    userSecret: string,
+    broker: string,
+    options: {
+      immediateRedirect?: boolean;
+      customRedirect?: string;
+      connectionType?: "read" | "trade";
+      connectionPortalVersion?: "v4";
+      reconnect?: string;
+    } = {}
+  ): Promise<{ redirectURI: string; sessionId: string }> {
     try {
       console.log("Creating connection link:", {
         userId,
         hasUserSecret: !!userSecret,
+        broker,
+        ...options,
       });
 
       const data = await makeSnapTradeRequest<ConnectionLinkResponse>(
         this.config,
         "/snapTrade/login",
         "POST",
-        { userId, userSecret }
+        {
+          userId,
+          userSecret,
+          broker,
+          ...options,
+          connectionPortalVersion: options.connectionPortalVersion || "v4",
+        }
       );
 
       console.log("Connection link created successfully:", data);
 
-      // Ensure we have a redirectUri in the response
-      if (!data.redirectUri) {
-        throw new Error("No redirectUri in response");
+      // Ensure we have a redirectURI in the response
+      if (!data.redirectURI) {
+        throw new Error("No redirectURI in response");
       }
 
-      return { redirectUri: data.redirectUri };
+      return {
+        redirectURI: data.redirectURI,
+        sessionId: data.sessionId,
+      };
     } catch (error) {
       console.error("Error creating connection link:", error);
       throw error;

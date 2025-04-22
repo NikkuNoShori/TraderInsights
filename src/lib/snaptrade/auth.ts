@@ -104,10 +104,10 @@ export async function generateAuthHeaders(
  * Maps SnapTrade API endpoints to our proxy routes
  */
 const PROXY_ROUTE_MAP: Record<string, string> = {
-  "/snapTrade/registerUser": "/snaptrade/register",
-  "/snapTrade/login": "/snaptrade/login",
-  "/referenceData/brokerages": "/snaptrade/brokerages",
-  "/authorizations": "/snaptrade/authorizations",
+  "/snapTrade/registerUser": "/api/snaptrade/register",
+  "/snapTrade/login": "/api/snaptrade/login",
+  "/referenceData/brokerages": "/api/snaptrade/brokerages",
+  "/authorizations": "/api/snaptrade/authorizations",
   // Add more mappings as needed
 };
 
@@ -147,6 +147,9 @@ export async function makeSnapTradeRequest<T>(
     // Determine if we're in a browser environment
     const isBrowser = typeof window !== "undefined";
 
+    // Generate auth headers for both browser and server environments
+    const headers = await generateAuthHeaders(config);
+
     // Always use proxy routes in browser environment to avoid CORS issues
     if (isBrowser) {
       // In browser: Use proxy routes to avoid CORS issues
@@ -155,19 +158,29 @@ export async function makeSnapTradeRequest<T>(
         `/snaptrade/proxy?endpoint=${encodeURIComponent(endpoint)}`;
       const apiBaseUrl = getApiBaseUrl();
 
+      // Ensure userSecret is included in the request body if it's a login request
+      const requestBody =
+        endpoint === "/snapTrade/login" && body?.userSecret
+          ? { ...body, userSecret: body.userSecret }
+          : body;
+
       console.log(`Making proxy API request to ${apiBaseUrl}${proxyRoute}`, {
         method,
-        hasBody: !!body,
+        hasBody: !!requestBody,
         endpoint,
+        hasUserSecret:
+          endpoint === "/snapTrade/login" && !!requestBody?.userSecret,
+        headerCount: Object.keys(headers).length,
       });
 
       // Make request through our proxy
       const response = await fetch(`${apiBaseUrl}${proxyRoute}`, {
         method,
         headers: {
+          ...headers,
           "Content-Type": "application/json",
         },
-        body: body ? JSON.stringify(body) : undefined,
+        body: requestBody ? JSON.stringify(requestBody) : undefined,
       });
 
       // Handle errors
@@ -185,9 +198,6 @@ export async function makeSnapTradeRequest<T>(
       return await response.json();
     } else {
       // Server-side: Use direct API call with authentication headers
-      // Generate auth headers
-      const headers = await generateAuthHeaders(config);
-
       console.log(`Making direct SnapTrade API request to ${endpoint}`, {
         method,
         hasBody: !!body,
@@ -199,7 +209,10 @@ export async function makeSnapTradeRequest<T>(
         `https://api.snaptrade.com/api/v1${endpoint}`,
         {
           method,
-          headers,
+          headers: {
+            ...headers,
+            "Content-Type": "application/json",
+          },
           body: body ? JSON.stringify(body) : undefined,
         }
       );

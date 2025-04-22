@@ -25,7 +25,16 @@ export const STORAGE_KEYS = {
   LAST_SYNC: "snaptrade_last_sync",
   BALANCES: "snaptrade_balances",
   CONFIG: "snaptrade_config",
+  CONNECTION_SESSION: "snaptrade_connection_session",
 } as const;
+
+// Define the connection session type
+interface ConnectionSession {
+  sessionId: string;
+  userId: string;
+  userSecret: string;
+  brokerSlug: string;
+}
 
 // Storage helpers
 export const StorageHelpers = {
@@ -138,5 +147,22 @@ export const StorageHelpers = {
     Object.values(STORAGE_KEYS).forEach((key) => {
       StorageHelpers.removeItem(key);
     });
+  },
+
+  // Connection session
+  getConnectionSession: (): ConnectionSession | null => {
+    const data = StorageHelpers.getItem(STORAGE_KEYS.CONNECTION_SESSION);
+    return data ? JSON.parse(data) : null;
+  },
+
+  saveConnectionSession: (session: ConnectionSession): void => {
+    StorageHelpers.setItem(
+      STORAGE_KEYS.CONNECTION_SESSION,
+      JSON.stringify(session)
+    );
+  },
+
+  clearConnectionSession: (): void => {
+    StorageHelpers.removeItem(STORAGE_KEYS.CONNECTION_SESSION);
   },
 }; 

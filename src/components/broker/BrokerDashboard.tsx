@@ -301,14 +301,15 @@ export function BrokerDashboard() {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {brokers.map((broker) => {
-          const isExpanded = expandedDescriptions.has(broker.id);
+          const isExpanded = expandedDescriptions.has(broker.id || '');
+          const logoUrl = broker.aws_s3_square_logo_url || '';
 
           return (
             <div key={broker.id} className="p-4 border rounded-lg flex flex-col h-full">
               <div className="flex-grow">
                 <div className="flex items-center space-x-4">
                   <img 
-                    src={broker.aws_s3_square_logo_url} 
+                    src={logoUrl}
                     alt={broker.name}
                     className="w-12 h-12 object-contain"
                   />
@@ -320,7 +321,7 @@ export function BrokerDashboard() {
                       </p>
                       {broker.description && broker.description.length > 100 && (
                         <button
-                          onClick={() => toggleDescription(broker.id)}
+                          onClick={() => toggleDescription(broker.id || '')}
                           className="text-xs text-primary hover:text-primary/80 flex items-center mt-1"
                         >
                           {isExpanded ? (
@@ -342,7 +343,7 @@ export function BrokerDashboard() {
               </div>
               <div className="mt-auto pt-4 flex justify-center">
                 <Button
-                  onClick={() => handleConnect(broker.id)}
+                  onClick={() => handleConnectBroker(broker)}
                   disabled={loadingBrokers || isLoading}
                   className="w-full md:w-auto"
                 >
@@ -421,46 +422,49 @@ export function BrokerDashboard() {
     };
   }, [syncAllData, isInitialized, lastSyncTime, brokers.length, brokerError, config.isDemo]);
 
-  const handleConnect = useCallback(async (brokerageId: string) => {
+  const handleConnectBroker = async (broker: Brokerage) => {
     try {
       setConnecting(true);
       setError(null);
 
-      // Get stored user credentials
-      const storedUser = StorageHelpers.getUser();
-      let userId: string;
-      let userSecret: string;
-
-      if (config.isDemo) {
-        // Use demo credentials
-        userId = 'demo-user';
-        userSecret = 'demo-secret';
-      } else if (!storedUser) {
-        // Register new user if none exists
-        userId = `user_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-        userSecret = await snapTradeService.registerUser(userId);
-        StorageHelpers.saveUser({ userId, userSecret });
-      } else {
-        userId = storedUser.userId;
-        userSecret = storedUser.userSecret;
+      // Register a new user with a unique ID
+      const userId = `user-${Date.now()}`;
+      await snapTradeService.registerUser(userId);
+      const user = snapTradeService.getUser();
+      if (!user || !user.userSecret) {
+        throw new Error("Failed to register user: missing userSecret");
       }
 
-      // Create connection link
-      const { redirectUri } = await snapTradeService.createConnectionLink(userId, userSecret);
-      if (!redirectUri) {
-        throw new Error('No redirect URI returned');
-      }
+      // Create connection link with broker slug and options
+      const { redirectURI, sessionId } = await snapTradeService.createConnectionLink(
+        user.userId,
+        user.userSecret,
+        broker.slug || '',
+        {
+          immediateRedirect: true,
+          connectionType: 'read',
+          connectionPortalVersion: 'v4',
+          customRedirect: window.location.origin + '/app/broker-callback'
+        }
+      );
 
-      // Open the connection link in a new window
-      window.location.href = redirectUri;
+      // Save session info for callback handling
+      StorageHelpers.saveConnectionSession({
+        sessionId,
+        userId: user.userId,
+        userSecret: user.userSecret,
+        brokerSlug: broker.slug || ''
+      });
+
+      // Redirect to broker connection page
+      window.location.href = redirectURI;
     } catch (error) {
       console.error("Error connecting to broker:", error);
       setError(error instanceof Error ? error.message : "Failed to connect to broker");
-      toast.error("Failed to connect to broker. Please try again.");
     } finally {
       setConnecting(false);
     }
-  }, [snapTradeService, config.isDemo]);
+  };
 
   // Update the retry button click handler
   const handleRetry = () => {

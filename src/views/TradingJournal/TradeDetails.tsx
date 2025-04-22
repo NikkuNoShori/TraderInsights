@@ -76,7 +76,7 @@ export default function TradeDetails() {
   if (!trade) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-lg">
+        <div className="bg-error/10 text-error p-4 rounded-lg">
           <h3 className="text-lg font-medium">Trade not found</h3>
           <p>The requested trade could not be found.</p>
           <Button
@@ -125,7 +125,7 @@ export default function TradeDetails() {
             variant="ghost"
             size="sm"
             onClick={handleDelete}
-            className="flex items-center gap-1 h-8 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
+            className="flex items-center gap-1 h-8 text-error hover:text-error hover:bg-error/10"
           >
             <Trash className="h-4 w-4" />
             <span className="text-sm">Delete</span>
@@ -142,8 +142,8 @@ export default function TradeDetails() {
               <dd
                 className={`text-sm font-medium ${
                   trade.side === "Long"
-                    ? "text-green-600 dark:text-green-400"
-                    : "text-red-600 dark:text-red-400"
+                    ? "text-success"
+                    : "text-error"
                 }`}
               >
                 {trade.side}
@@ -189,8 +189,8 @@ export default function TradeDetails() {
               <dd
                 className={`text-sm font-medium ${
                   trade.pnl && trade.pnl > 0
-                    ? "text-green-600 dark:text-green-400"
-                    : "text-red-600 dark:text-red-400"
+                    ? "text-success"
+                    : "text-error"
                 }`}
               >
                 {trade.pnl ? `$${trade.pnl.toFixed(2)}` : "N/A"}

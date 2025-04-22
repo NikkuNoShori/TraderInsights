@@ -51,7 +51,7 @@ export const snapTradeService = {
       if (config.isDemo) {
         const demoUser = {
           userId: "demo-user",
-          userSecret: "demo-secret"
+          userSecret: "demo-secret",
         };
         StorageHelpers.saveUser(demoUser);
         return demoUser;
@@ -194,56 +194,26 @@ export const snapTradeService = {
     }
   },
 
-  createConnectionLink: async (userId: string, userSecret?: string) => {
+  async createConnectionLink(
+    userId: string,
+    userSecret: string
+  ): Promise<{ redirectUri: string }> {
     try {
-      console.log("Creating connection link:", { userId });
+      const response = await this.makeSnapTradeRequest("/snapTrade/login", {
+        method: "POST",
+        body: JSON.stringify({ userId, userSecret }),
+      });
 
-      // Get config for proper credentials
-      const config = getSnapTradeConfig();
-
-      // In demo mode, use a fixed userSecret and ensure user is registered
-      if (config.isDemo) {
-        userSecret = "demo-secret";
-        // Store the demo user in storage
-        StorageHelpers.saveUser({
-          userId: "demo-user",
-          userSecret: "demo-secret",
-        });
-      } else if (!userSecret) {
-        // For non-demo mode, get the stored user secret
-        const user = StorageHelpers.getUser();
-        userSecret = user?.userSecret;
-
-        if (!userSecret) {
-          throw new Error("User secret not found. Please register first.");
-        }
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to create connection link");
       }
 
-      try {
-        // Define response type for login
-        interface LoginResponse {
-          redirectUri: string;
-          [key: string]: any;
-        }
-
-        // Use the centralized auth utilities for direct API call
-        const response = await makeSnapTradeRequest<LoginResponse>(
-          config,
-          "/snapTrade/login",
-          "POST",
-          { userId, userSecret }
-        );
-
-        if (!response.redirectUri) {
-          throw new Error("No redirect URI in response");
-        }
-
-        console.log("Connection link created successfully");
-        return response;
-      } catch (directApiError) {
-        console.error("Direct API call failed:", directApiError);
-        throw directApiError;
+      const data = await response.json();
+      if (!data.redirectUri) {
+        throw new Error("No redirect URI in response");
       }
+      return { redirectUri: data.redirectUri };
     } catch (error) {
       console.error("Error creating connection link:", error);
       throw error;
