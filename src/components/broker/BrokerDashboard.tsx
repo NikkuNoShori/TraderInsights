@@ -35,13 +35,15 @@ import { getSnapTradeConfig } from '@/lib/snaptrade/config';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw, Info, ChevronDown, ChevronUp } from 'lucide-react';
-import { SnaptradeBrokerage, SnapTradeUser, SnapTradeConnection } from '@/lib/snaptrade/types';
+import { SnapTradeUser, SnapTradeConnection, SnaptradeBrokerage } from '@/lib/snaptrade/types';
 import { StorageHelpers } from '@/lib/snaptrade/storage';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { useDebugStore } from '@/stores/debugStore';
 import { createDebugLogger } from '@/stores/debugStore';
 import { BrokerList } from './BrokerList';
 import { BrokerConnectionPortal } from './BrokerConnectionPortal';
+import { SnapTradeService } from '@/lib/snaptrade/snaptradeService';
+import { Brokerage } from 'snaptrade-typescript-sdk';
 
 // Create debug logger
 const brokerLogger = createDebugLogger('broker');
@@ -73,21 +75,6 @@ const ALL_SUPPORTED_BROKERS = [
   'Zacks Trade'
 ];
 
-// Create a mock user for demo mode
-const MOCK_USER: SnapTradeUser = {
-  userId: "demo-user",
-  userSecret: "demo-secret"
-};
-
-// Helper function to store a mock user
-const storeMockUser = (mockUser: SnapTradeUser) => {
-  // Check if we're in demo mode
-  if (getSnapTradeConfig().isDemo) {
-    brokerLogger.debug('Using demo mode for storing mock user');
-    StorageHelpers.saveUser(mockUser);
-  }
-};
-
 // Storage key for broker session persistence
 const SESSION_STORAGE_KEY = 'broker_session_state';
 
@@ -111,7 +98,20 @@ const loadBrokerSessionState = () => {
   }
 };
 
-export default function BrokerDashboard() {
+// Define the debug state type
+interface DebugState {
+  brokers?: Brokerage[];
+  connectionStatus?: {
+    isConnected: boolean;
+    connectionCount: number;
+    lastSyncTime: number;
+  };
+  brokerError?: string;
+  loadingBrokers?: boolean;
+  missingBrokers?: string[];
+}
+
+export function BrokerDashboard() {
   const { user } = useAuthStore();
   const { 
     connections, 
@@ -144,18 +144,22 @@ export default function BrokerDashboard() {
     isDebugMode
   } = useDebugStore();
   
-  const [brokers, setBrokers] = useState<SnaptradeBrokerage[]>([]);
+  const [brokers, setBrokers] = useState<Brokerage[]>([]);
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set());
 
+  const config = getSnapTradeConfig();
+  const snapTradeService = new SnapTradeService(config);
+
+  const [connecting, setConnecting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   // Memoize configuration
-  const config = useMemo(() => getSnapTradeConfig(), []);
+  const configMemo = useMemo(() => getSnapTradeConfig(), []);
 
   // Optimized debug logging
   const logDebug = useCallback((message: string, data?: any) => {
-    if (isInitialized) {
-      brokerLogger.debug(message, data);
-    }
-  }, [isInitialized]);
+    brokerLogger.debug(message, data);
+  }, []);
 
   // Sync local brokers state with debug store
   useEffect(() => {
@@ -204,37 +208,6 @@ export default function BrokerDashboard() {
     const initializeService = async () => {
       try {
         const config = getSnapTradeConfig();
-        
-        // Check if we're in demo mode
-        if (config.isDemo) {
-          logDebug('Using demo mode for initialization');
-          // Use mock data for demo mode
-          const mockConnections = [{
-            id: 'demo-connection',
-            brokerageId: 'demo-broker',
-            brokerageName: 'Demo Broker',
-            status: 'CONNECTED',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }];
-          
-          setBrokers([]);
-          setDebugState({
-            brokers: [],
-            connectionStatus: {
-              isConnected: true,
-              connectionCount: mockConnections.length,
-              lastSyncTime: Date.now()
-            }
-          });
-          
-          logDebug('Demo mode initialization completed', { 
-            connectionCount: mockConnections.length
-          });
-          setIsServiceInitialized(true);
-          return;
-        }
-        
         await snapTradeService.initialize(config);
         setIsServiceInitialized(true);
         logDebug('SnapTrade service initialized successfully');
@@ -252,23 +225,17 @@ export default function BrokerDashboard() {
   // Ensure we have valid credentials
   const ensureSnapTradeConfig = useCallback(async () => {
     try {
+      const config = getSnapTradeConfig();
       if (!config.clientId || !config.consumerKey) {
         throw new Error("Missing SnapTrade credentials");
       }
-      
-      // Check for demo credentials
-      if (config.isDemo) {
-        logDebug("Using demo SnapTrade credentials - some features may be limited");
-        setReadOnlyMode(true);
-      }
-      
       return config;
     } catch (error) {
       logDebug("Failed to get SnapTrade config:", error);
       setDebugState({ brokerError: error instanceof Error ? error.message : String(error) });
       return null;
     }
-  }, [config, logDebug]);
+  }, [logDebug]);
 
   // Load broker list without requiring registration
   const loadBrokers = useCallback(async () => {
@@ -277,94 +244,30 @@ export default function BrokerDashboard() {
       return [];
     }
 
-    setDebugState({ loadingBrokers: true, brokerError: null });
-    
     try {
-      const config = await ensureSnapTradeConfig();
-      if (!config) {
-        setDebugState({ loadingBrokers: false });
-        return [];
-      }
-
-      // Initialize SnapTrade service
-      await snapTradeService.initialize(config);
-      
-      // Check if we have a stored user
-      const storedUser = snapTradeService.getUser();
-      if (storedUser) {
-        logDebug('Found stored user session:', storedUser.userId);
-      }
-      
-      // Load brokers (shouldn't require authentication)
-      logDebug('Loading brokers...');
+      setDebugState({ loadingBrokers: true, brokerError: undefined });
       const brokerList = await snapTradeService.getBrokerages();
-      logDebug('Loaded brokers:', brokerList);
-      
-      // Log the structure of the first broker to understand the data format
-      if (brokerList.length > 0) {
-        logDebug('First broker structure:', JSON.stringify(brokerList[0], null, 2));
-      }
-      
-      // Update both local state and debug store
-      setBrokers(brokerList);
-      setDebugState({ 
-        brokers: brokerList,
-        loadingBrokers: false,
-        isInitialized: true
+      // Sort brokers alphabetically by name, handling undefined names
+      const sortedBrokers = [...brokerList].sort((a, b) => {
+        const nameA = a.name || '';
+        const nameB = b.name || '';
+        return nameA.localeCompare(nameB);
       });
-      logDebug('Setting broker state with length:', brokerList.length);
-
-      // Check for missing brokers with improved matching
-      const loadedBrokerNames = brokerList.map((b: SnaptradeBrokerage) => b.name.toLowerCase());
-      const missing = ALL_SUPPORTED_BROKERS.filter(broker => {
-        const brokerLower = broker.toLowerCase();
-        // Check for exact match or partial match
-        return !loadedBrokerNames.some((name: string) => {
-          // Normalize both names for comparison
-          const normalizedName = name.replace(/[^a-z0-9]/g, '');
-          const normalizedBroker = brokerLower.replace(/[^a-z0-9]/g, '');
-          
-          // Check for exact match
-          if (normalizedName === normalizedBroker) return true;
-          
-          // Check for partial matches
-          if (normalizedName.includes(normalizedBroker) || normalizedBroker.includes(normalizedName)) return true;
-          
-          // Special cases for known variations
-          switch (broker) {
-            case 'Ally Invest':
-              return name.includes('ally') || name.includes('invest');
-            case 'E*TRADE':
-              return name.includes('etrade') || name.includes('e-trade');
-            case 'Firstrade':
-              return name.includes('firstrade');
-            case 'M1 Finance':
-              return name.includes('m1') || name.includes('finance');
-            case 'Merrill Edge':
-            case 'Merrill Lynch':
-              return name.includes('merrill');
-            case 'Tastyworks':
-              return name.includes('tasty') || name.includes('works');
-            case 'Wells Fargo':
-              return name.includes('wells') || name.includes('fargo');
-            default:
-              return false;
-          }
-        });
+      setBrokers(sortedBrokers);
+      setDebugState({
+        brokers: sortedBrokers,
+        loadingBrokers: false
       });
-
-      if (missing.length > 0) {
-        logDebug('Missing brokers after improved matching:', missing);
-        setDebugState({ missingBrokers: missing });
-      }
+      return sortedBrokers;
     } catch (error) {
-      logDebug('Error loading brokers:', error);
+      logDebug('Failed to load brokers:', error);
       setDebugState({ 
         loadingBrokers: false,
         brokerError: error instanceof Error ? error.message : String(error)
       });
+      return [];
     }
-  }, [ensureSnapTradeConfig, logDebug]);
+  }, [logDebug]);
 
   // Initialize component
   useEffect(() => {
@@ -377,12 +280,6 @@ export default function BrokerDashboard() {
   }, [isInitialized, loadBrokers]);
 
   const toggleDescription = (brokerId: string) => {
-    // Check if we're in demo mode
-    if (config.isDemo) {
-      logDebug('Using demo mode for toggle description');
-      return;
-    }
-    
     setExpandedDescriptions(prev => {
       const next = new Set(prev);
       if (next.has(brokerId)) {
@@ -401,12 +298,9 @@ export default function BrokerDashboard() {
       loadingState: { loadingBrokers, isLoading }
     });
 
-    // Sort brokers alphabetically by name
-    const sortedBrokers = [...brokers].sort((a, b) => a.name.localeCompare(b.name));
-
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {sortedBrokers.map((broker) => {
+        {brokers.map((broker) => {
           const isExpanded = expandedDescriptions.has(broker.id);
 
           return (
@@ -478,35 +372,6 @@ export default function BrokerDashboard() {
           hasError: !!brokerError
         });
         
-        // Check if we're in demo mode
-        if (config.isDemo) {
-          logDebug('Using demo mode for visibility change');
-          // Use mock data for demo mode
-          const mockConnections = [{
-            id: 'demo-connection',
-            brokerageId: 'demo-broker',
-            brokerageName: 'Demo Broker',
-            status: 'CONNECTED',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }];
-          
-          setBrokers([]);
-          setDebugState({
-            brokers: [],
-            connectionStatus: {
-              isConnected: true,
-              connectionCount: mockConnections.length,
-              lastSyncTime: Date.now()
-            }
-          });
-          
-          logDebug('Demo mode visibility change completed', { 
-            connectionCount: mockConnections.length
-          });
-          return;
-        }
-        
         // Only refresh if we have a valid user and the component is initialized
         if (snapTradeUser && isInitialized) {
           // Calculate time since last sync (in minutes)
@@ -556,41 +421,46 @@ export default function BrokerDashboard() {
     };
   }, [syncAllData, isInitialized, lastSyncTime, brokers.length, brokerError, config.isDemo]);
 
-  const handleConnect = async (brokerageId: string) => {
+  const handleConnect = useCallback(async (brokerageId: string) => {
     try {
-      // Check if user is registered
-      if (!snapTradeService.isUserRegistered()) {
-        console.log("User not registered, registering now...");
-        const userId = `user-${Date.now()}`;
-        await snapTradeService.registerUser(userId);
-      }
+      setConnecting(true);
+      setError(null);
 
-      // Get user data
-      const user = snapTradeService.getUser();
-      if (!user?.userId || !user?.userSecret) {
-        throw new Error("Failed to get user credentials");
+      // Get stored user credentials
+      const storedUser = StorageHelpers.getUser();
+      let userId: string;
+      let userSecret: string;
+
+      if (config.isDemo) {
+        // Use demo credentials
+        userId = 'demo-user';
+        userSecret = 'demo-secret';
+      } else if (!storedUser) {
+        // Register new user if none exists
+        userId = `user_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        userSecret = await snapTradeService.registerUser(userId);
+        StorageHelpers.saveUser({ userId, userSecret });
+      } else {
+        userId = storedUser.userId;
+        userSecret = storedUser.userSecret;
       }
 
       // Create connection link
-      const connectionLink = await snapTradeService.createConnectionLink(
-        user.userId,
-        user.userSecret
-      );
-
-      // Check if we're in demo mode
-      if (config.isDemo) {
-        logDebug("Using demo mode connection link");
-        // Store demo user credentials for later use
-        storeMockUser(user);
+      const { redirectUri } = await snapTradeService.createConnectionLink(userId, userSecret);
+      if (!redirectUri) {
+        throw new Error('No redirect URI returned');
       }
 
-      // Redirect to authorization URL
-      window.location.href = connectionLink.redirectUri;
+      // Open the connection link in a new window
+      window.location.href = redirectUri;
     } catch (error) {
       console.error("Error connecting to broker:", error);
-      setDebugState({ brokerError: error instanceof Error ? error.message : "Failed to connect to broker" });
+      setError(error instanceof Error ? error.message : "Failed to connect to broker");
+      toast.error("Failed to connect to broker. Please try again.");
+    } finally {
+      setConnecting(false);
     }
-  };
+  }, [snapTradeService, config.isDemo]);
 
   // Update the retry button click handler
   const handleRetry = () => {
@@ -600,35 +470,6 @@ export default function BrokerDashboard() {
     });
     setInitializeAttempts(0);
     initializingRef.current = false;
-    
-    // Check if we're in demo mode
-    if (config.isDemo) {
-      logDebug('Using demo mode for retry');
-      // Use mock data for demo mode
-      const mockConnections = [{
-        id: 'demo-connection',
-        brokerageId: 'demo-broker',
-        brokerageName: 'Demo Broker',
-        status: 'CONNECTED',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }];
-      
-      setBrokers([]);
-      setDebugState({
-        brokers: [],
-        connectionStatus: {
-          isConnected: true,
-          connectionCount: mockConnections.length,
-          lastSyncTime: Date.now()
-        }
-      });
-      
-      logDebug('Demo mode retry completed', { 
-        connectionCount: mockConnections.length
-      });
-      return;
-    }
     
     loadBrokers();
   };
@@ -654,35 +495,6 @@ export default function BrokerDashboard() {
     try {
       setDebugState({ loadingBrokers: true, brokerError: null });
       logDebug('Manually refreshing broker list');
-      
-      // Check if we're in demo mode
-      if (config.isDemo) {
-        logDebug('Using demo mode for refresh');
-        // Use mock data for demo mode
-        const mockConnections = [{
-          id: 'demo-connection',
-          brokerageId: 'demo-broker',
-          brokerageName: 'Demo Broker',
-          status: 'CONNECTED',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        }];
-        
-        setBrokers([]);
-        setDebugState({
-          brokers: [],
-          connectionStatus: {
-            isConnected: true,
-            connectionCount: mockConnections.length,
-            lastSyncTime: Date.now()
-          }
-        });
-        
-        logDebug('Demo mode refresh completed', { 
-          connectionCount: mockConnections.length
-        });
-        return;
-      }
       
       // Refresh both brokers and connections
       const [brokerList, connectionList] = await Promise.all([
@@ -718,7 +530,7 @@ export default function BrokerDashboard() {
     } finally {
       setDebugState({ loadingBrokers: false });
     }
-  }, [logDebug, config.isDemo]);
+  }, [logDebug]);
 
   return (
     <div className="container mx-auto py-6 px-4">

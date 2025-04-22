@@ -104,10 +104,10 @@ export async function generateAuthHeaders(
  * Maps SnapTrade API endpoints to our proxy routes
  */
 const PROXY_ROUTE_MAP: Record<string, string> = {
-  "/snapTrade/registerUser": "/api/snaptrade/register",
-  "/snapTrade/login": "/api/snaptrade/login",
-  "/referenceData/brokerages": "/api/snaptrade/brokerages",
-  "/authorizations": "/api/snaptrade/authorizations",
+  "/snapTrade/registerUser": "/snaptrade/register",
+  "/snapTrade/login": "/snaptrade/login",
+  "/referenceData/brokerages": "/snaptrade/brokerages",
+  "/authorizations": "/snaptrade/authorizations",
   // Add more mappings as needed
 };
 
@@ -117,10 +117,16 @@ const PROXY_ROUTE_MAP: Record<string, string> = {
 function getApiBaseUrl(): string {
   if (typeof window !== "undefined") {
     // Browser environment
-    return import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
+    const baseUrl =
+      import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+    // Remove trailing slash if present
+    return baseUrl.replace(/\/$/, "");
+  } else {
+    // Server environment
+    const baseUrl = process.env.VITE_API_BASE_URL || "http://localhost:3000";
+    // Remove trailing slash if present
+    return baseUrl.replace(/\/$/, "");
   }
-  // Server environment
-  return process.env.VITE_API_BASE_URL || "http://localhost:3000/api";
 }
 
 /**
@@ -140,21 +146,21 @@ export async function makeSnapTradeRequest<T>(
   try {
     // Determine if we're in a browser environment
     const isBrowser = typeof window !== "undefined";
-    
+
     // Always use proxy routes in browser environment to avoid CORS issues
-    // Also use proxy for demo credentials as they may need special handling
-    if (isBrowser || config.isDemo) {
+    if (isBrowser) {
       // In browser: Use proxy routes to avoid CORS issues
-      const proxyRoute = PROXY_ROUTE_MAP[endpoint] || `/api/snaptrade/proxy?endpoint=${encodeURIComponent(endpoint)}`;
+      const proxyRoute =
+        PROXY_ROUTE_MAP[endpoint] ||
+        `/snaptrade/proxy?endpoint=${encodeURIComponent(endpoint)}`;
       const apiBaseUrl = getApiBaseUrl();
-      
+
       console.log(`Making proxy API request to ${apiBaseUrl}${proxyRoute}`, {
         method,
         hasBody: !!body,
         endpoint,
-        isDemo: config.isDemo
       });
-      
+
       // Make request through our proxy
       const response = await fetch(`${apiBaseUrl}${proxyRoute}`, {
         method,
@@ -163,41 +169,52 @@ export async function makeSnapTradeRequest<T>(
         },
         body: body ? JSON.stringify(body) : undefined,
       });
-      
+
       // Handle errors
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: "Unknown error" }));
+        const errorData = await response
+          .json()
+          .catch(() => ({ message: "Unknown error" }));
         console.error(`Proxy API error (${response.status}):`, errorData);
-        throw new Error(`API error: ${response.status} - ${JSON.stringify(errorData)}`);
+        throw new Error(
+          `API error: ${response.status} - ${JSON.stringify(errorData)}`
+        );
       }
-      
+
       // Parse and return response
       return await response.json();
     } else {
       // Server-side: Use direct API call with authentication headers
       // Generate auth headers
       const headers = await generateAuthHeaders(config);
-      
+
       console.log(`Making direct SnapTrade API request to ${endpoint}`, {
         method,
         hasBody: !!body,
         headerCount: Object.keys(headers).length,
       });
-      
+
       // Make request
-      const response = await fetch(`https://api.snaptrade.com/api/v1${endpoint}`, {
-        method,
-        headers,
-        body: body ? JSON.stringify(body) : undefined,
-      });
-      
+      const response = await fetch(
+        `https://api.snaptrade.com/api/v1${endpoint}`,
+        {
+          method,
+          headers,
+          body: body ? JSON.stringify(body) : undefined,
+        }
+      );
+
       // Handle errors
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: "Unknown error" }));
+        const errorData = await response
+          .json()
+          .catch(() => ({ message: "Unknown error" }));
         console.error(`SnapTrade API error (${response.status}):`, errorData);
-        throw new Error(`API error: ${response.status} - ${JSON.stringify(errorData)}`);
+        throw new Error(
+          `API error: ${response.status} - ${JSON.stringify(errorData)}`
+        );
       }
-      
+
       // Parse and return response
       return await response.json();
     }

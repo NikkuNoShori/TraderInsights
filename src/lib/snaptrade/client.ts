@@ -288,31 +288,21 @@ export class SnapTradeService {
     try {
       console.log("Creating connection link:", { userId });
 
-      const response = await fetch("/api/snaptrade/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ userId, userSecret }),
+      if (!this.client) {
+        throw new Error("SnapTrade client not initialized");
+      }
+
+      const response = await this.client.authentication.loginSnapTradeUser({
+        userId,
+        userSecret,
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create connection link");
+      const data = response.data as { redirectUri: string };
+      if (!data.redirectUri) {
+        throw new Error("No redirect URI in response");
       }
 
-      const data = await response.json();
-      console.log("Connection link response:", data);
-
-      // If we're in demo mode, use the mock redirect URI
-      if (data.redirectUri?.includes("demo=true")) {
-        console.log("Using demo mode connection link");
-        // Store the demo user credentials
-        this.userId = data.userId;
-        this.userSecret = data.userSecret;
-        return data.redirectUri;
-      }
-
+      console.log("Connection link created successfully");
       return data.redirectUri;
     } catch (error) {
       console.error("Error creating connection link:", error);

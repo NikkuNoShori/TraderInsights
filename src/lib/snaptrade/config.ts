@@ -55,30 +55,21 @@ function getEnvVariable(key: string): string | undefined {
  * Get SnapTrade configuration
  */
 export function getSnapTradeConfig(): SnapTradeConfig {
-  const config = {
-    clientId: import.meta.env.VITE_SNAPTRADE_CLIENT_ID,
-    consumerKey: import.meta.env.VITE_SNAPTRADE_CONSUMER_KEY,
-    redirectUri: import.meta.env.VITE_SNAPTRADE_REDIRECT_URI,
-    environment: "browser" as const,
-    isDemo: import.meta.env.VITE_SNAPTRADE_IS_DEMO === "true",
-  };
+  const clientId = import.meta.env.VITE_SNAPTRADE_CLIENT_ID;
+  const consumerKey = import.meta.env.VITE_SNAPTRADE_CONSUMER_KEY;
+  const redirectUri = import.meta.env.VITE_SNAPTRADE_REDIRECT_URI;
+  const isDemo = import.meta.env.VITE_APP_ENV === "development";
 
-  // Only log configuration changes, not every access
-  if (
-    !configLogger.lastConfig ||
-    JSON.stringify(configLogger.lastConfig) !== JSON.stringify(config)
-  ) {
-    configLogger.debug("SnapTrade configuration updated", {
-      clientId: config.clientId,
-      hasConsumerKey: !!config.consumerKey,
-      redirectUri: config.redirectUri,
-      environment: config.environment,
-      isDemo: config.isDemo,
-    });
-    configLogger.lastConfig = config;
+  if (!clientId || !consumerKey || !redirectUri) {
+    throw new Error("Missing required SnapTrade configuration");
   }
 
-  return config;
+  return {
+    clientId,
+    consumerKey,
+    redirectUri,
+    isDemo,
+  };
 }
 
 /**

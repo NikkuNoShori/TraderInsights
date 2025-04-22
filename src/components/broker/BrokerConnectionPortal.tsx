@@ -35,7 +35,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { snapTradeService } from '@/services/snaptradeService';
+import { Snaptrade } from 'snaptrade-typescript-sdk';
 import { getSnapTradeConfig } from '@/lib/snaptrade/config';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, Loader2 } from 'lucide-react';
@@ -66,19 +66,35 @@ export function BrokerConnectionPortal({
         setIsLoading(true);
         setError(null);
 
-        // Create connection link
-        const connectionLink = await snapTradeService.createConnectionLink(
-          userId,
-          userSecret
-        );
+        // Get SnapTrade configuration
+        const config = getSnapTradeConfig();
+        
+        // Initialize SnapTrade SDK
+        const snaptrade = new Snaptrade({
+          clientId: config.clientId,
+          consumerKey: config.consumerKey,
+        });
 
-        // Check if we're in demo mode
-        if (getSnapTradeConfig().isDemo) {
-          brokerLogger.debug('Using demo mode connection link');
+        // Create connection link using SDK
+        const response = await snaptrade.authentication.loginSnapTradeUser({
+          userId,
+          userSecret,
+          broker: brokerageId,
+          immediateRedirect: true,
+          connectionType: "read",
+        });
+
+        // Log the response for debugging
+        console.log('SnapTrade login response:', response.data);
+
+        // The response should contain a redirect URI
+        const redirectUri = (response.data as any).redirectURI;
+        if (!redirectUri) {
+          throw new Error('No redirect URI received from SnapTrade');
         }
 
         // Redirect to authorization URL
-        window.location.href = connectionLink.redirectUri;
+        window.location.href = redirectUri;
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to connect to broker';
         brokerLogger.error('Error creating connection link:', errorMessage);
