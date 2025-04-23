@@ -2,55 +2,38 @@ import { Palette } from "lucide-react";
 import { useThemeStore, type Theme } from "@/stores/themeStore";
 import { clsx } from "clsx";
 
-const themes: Array<{ name: Theme; label: string; color: string }> = [
-  { name: "light", label: "Light Mode", color: "bg-gray-100" },
-  { name: "dark", label: "Dark Mode", color: "bg-gray-900" },
-  {
-    name: "system",
-    label: "System",
-    color: "bg-gradient-to-r from-gray-100 to-gray-900",
-  },
+const themes: Array<{ name: Theme; label: string }> = [
+  { name: "light", label: "Light Mode" },
+  { name: "dark", label: "Dark Mode" },
+  { name: "system", label: "System" },
 ];
 
 export function ThemeSelector() {
   const { theme: currentTheme, setTheme } = useThemeStore();
-
-  const getThemeClass = () => {
-    if (currentTheme === "system") {
-      return window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
-    }
-    return currentTheme;
-  };
 
   return (
     <div className="relative group">
       <button
         className={clsx(
           "p-2 rounded-md transition-colors",
-          "hover:bg-gray-100 dark:hover:bg-gray-700",
-          getThemeClass() === "dark" && "bg-gray-700",
-          getThemeClass() === "light" && "bg-gray-100",
+          "hover:bg-muted text-muted hover:text-default",
         )}
       >
         <Palette className="h-5 w-5" />
       </button>
 
-      <div className="absolute right-0 mt-2 w-48 py-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-        {themes.map(({ name, label, color }) => (
+      <div className="absolute right-0 mt-2 w-48 rounded-md bg-card border border-border shadow-lg">
+        {themes.map(({ name, label }) => (
           <button
             key={name}
             onClick={() => setTheme(name)}
             className={clsx(
               "w-full px-4 py-2 text-left text-sm flex items-center space-x-3",
-              "hover:bg-gray-50 dark:hover:bg-gray-700",
-              currentTheme === name && "font-medium",
-              getThemeClass() === "dark" && "bg-gray-700",
-              getThemeClass() === "light" && "bg-gray-100",
+              "hover:bg-muted text-default",
+              currentTheme === name && "font-medium text-primary",
             )}
           >
-            <span className={clsx("w-4 h-4 rounded-full", color)} />
+            <span className="w-4 h-4 rounded-full bg-primary/20" />
             <span>{label}</span>
           </button>
         ))}

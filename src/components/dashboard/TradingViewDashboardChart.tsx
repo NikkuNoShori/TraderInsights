@@ -16,6 +16,19 @@ interface TradingViewDashboardChartProps {
   className?: string;
 }
 
+// Add these type definitions at the top of the file
+interface TradingViewCallback {
+  (): void;
+}
+
+interface TradingViewSymbolCallback {
+  (symbolInfo: any): void;
+}
+
+interface TradingViewHistoryCallback {
+  (bars: any[], meta: { noData: boolean }): void;
+}
+
 /**
  * TradingViewDashboardChart - A component for displaying market data in dashboard cards
  * 
@@ -106,7 +119,7 @@ export function TradingViewDashboardChart({
       "theme": tvConfig.theme,
       "style": style,
       "locale": "en",
-      "toolbar_bg": tvConfig.toolbarBgColor,
+      "toolbar_bg": "var(--card)",
       "enable_publishing": enablePublishing,
       "hide_top_toolbar": !finalShowToolbar,
       "hide_side_toolbar": !finalShowSideToolbar,
@@ -137,8 +150,8 @@ export function TradingViewDashboardChart({
         widgetConfig = {
           ...widgetConfig,
           "dateRange": "12M",
-          "trendLineColor": "rgba(41, 98, 255, 1)",
-          "underLineColor": "rgba(41, 98, 255, 0.3)",
+          "trendLineColor": "var(--primary)",
+          "underLineColor": "var(--primary/30)",
           "isTransparent": false,
           "autosize": true,
           "largeChartUrl": ""
@@ -156,10 +169,10 @@ export function TradingViewDashboardChart({
               interval: interval,
               container_id: chartId,
               datafeed: {
-                onReady: (callback) => {
-                  setTimeout(() => callback({}), 0);
+                onReady: (callback: TradingViewCallback) => {
+                  setTimeout(() => callback(), 0);
                 },
-                resolveSymbol: (symbolName, onSymbolResolvedCallback) => {
+                resolveSymbol: (symbolName: string, onSymbolResolvedCallback: TradingViewSymbolCallback) => {
                   setTimeout(() => {
                     onSymbolResolvedCallback({
                       name: symbolName,
@@ -175,7 +188,13 @@ export function TradingViewDashboardChart({
                     });
                   }, 0);
                 },
-                getBars: (symbolInfo, resolution, from, to, onHistoryCallback) => {
+                getBars: (
+                  symbolInfo: any,
+                  resolution: string,
+                  from: number,
+                  to: number,
+                  onHistoryCallback: TradingViewHistoryCallback
+                ) => {
                   onHistoryCallback([], { noData: true });
                 },
                 subscribeBars: () => {},
@@ -185,7 +204,7 @@ export function TradingViewDashboardChart({
               locale: 'en',
               theme: tvConfig.theme,
               autosize: true,
-              toolbar_bg: tvConfig.toolbarBgColor,
+              toolbar_bg: "var(--card)",
               enable_publishing: enablePublishing,
               hide_top_toolbar: !finalShowToolbar,
               hide_side_toolbar: !finalShowSideToolbar,

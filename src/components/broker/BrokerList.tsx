@@ -1,23 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { SnapTradeService } from '@/lib/snaptrade/client';
-import { SnapTradeConfig } from '@/lib/snaptrade/types';
-
-interface Broker {
-  id: string;
-  name: string;
-  description: string;
-  logo?: string;
-  authType?: string;
-  [key: string]: any; // Allow additional properties
-}
-
-interface BrokerListProps {
-  config: SnapTradeConfig;
-  onSelect: (broker: Broker) => void;
-}
+import { SnapTradeConfig, SnaptradeBrokerage } from '@/lib/snaptrade/types';
+import { BrokerListProps } from './types';
 
 export function BrokerList({ config, onSelect }: BrokerListProps) {
-  const [brokers, setBrokers] = useState<Broker[]>([]);
+  const [brokers, setBrokers] = useState<SnaptradeBrokerage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,7 +30,7 @@ export function BrokerList({ config, onSelect }: BrokerListProps) {
       
       // Filter out brokers without required fields and map to our Broker type
       const validBrokers = brokerList
-        .filter((broker): broker is Broker => 
+        .filter((broker): broker is SnaptradeBrokerage => 
           typeof broker.id === 'string' && 
           typeof broker.name === 'string' && 
           typeof broker.description === 'string'

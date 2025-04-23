@@ -16,9 +16,12 @@
  */
 
 import { SnapTradeConfig } from "./types";
-import { createDebugLogger } from '@/stores/debugStore';
+import { createDebugLogger, DebugLogger } from "@/stores/debugStore";
 
-const configLogger = createDebugLogger('config');
+// Create debug logger
+const configLogger = createDebugLogger("config") as DebugLogger & {
+  lastConfig?: SnapTradeConfig;
+};
 
 /**
  * Get the current environment
@@ -33,7 +36,7 @@ const getEnvironment = (): "browser" | "node" => {
  */
 function getEnvVariable(key: string): string | undefined {
   const environment = getEnvironment();
-  
+
   // For browser environment, look for import.meta.env variables (Vite style)
   if (environment === "browser") {
     // @ts-ignore - Vite specific
@@ -43,60 +46,80 @@ function getEnvVariable(key: string): string | undefined {
     }
     return undefined;
   }
-  
+
   // For Node.js environment (server-side)
-  return process.env[key] || process.env[`VITE_${key}`] || undefined;
+  return process.env[key] || undefined;
 }
+
+const getEnvVar = (name: string): string => {
+  const value = import.meta.env[name];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+};
 
 /**
  * Get SnapTrade configuration
+ * This function returns the configuration object for SnapTrade
+ * The configuration is environment-specific (browser vs node)
  */
 export function getSnapTradeConfig(): SnapTradeConfig {
-  const config = {
-    clientId: import.meta.env.VITE_SNAPTRADE_CLIENT_ID,
-    consumerKey: import.meta.env.VITE_SNAPTRADE_CONSUMER_KEY,
-    redirectUri: import.meta.env.VITE_SNAPTRADE_REDIRECT_URI,
-    environment: 'browser' as const,
-    isDemo: true
+  const environment = getEnvironment();
+  const prefix = environment === "browser" ? "VITE_" : "";
+
+  const clientId = getEnvVar(`${prefix}SNAPTRADE_CLIENT_ID`);
+  const consumerKey = getEnvVar(`${prefix}SNAPTRADE_CONSUMER_KEY`);
+
+  // Use fallback values in development mode
+  if (
+    (!clientId || !consumerKey) &&
+    environment === "browser" &&
+    typeof import.meta !== "undefined" &&
+    (import.meta.env.DEV || import.meta.env.MODE === "development")
+  ) {
+    return {
+      clientId: "TRADING-INSIGHTS-TEST-MJFEC",
+      consumerKey: "zdPiwYb3etVq3uyJMCacZboOLl7ucO9mREL2xdc6Snfat9nLkt",
+      isDemo: true,
+    };
+  }
+
+  if (!clientId || !consumerKey) {
+    throw new Error("Missing required SnapTrade configuration");
+  }
+
+  const config: SnapTradeConfig = {
+    clientId,
+    consumerKey,
+    isDemo:
+      environment === "browser" &&
+      typeof import.meta !== "undefined" &&
+      (import.meta.env.DEV || import.meta.env.MODE === "development"),
   };
 
-  // Only log configuration changes, not every access
-  if (!configLogger.lastConfig || JSON.stringify(configLogger.lastConfig) !== JSON.stringify(config)) {
-    configLogger.debug('SnapTrade configuration updated', {
-      clientId: config.clientId,
-      hasConsumerKey: !!config.consumerKey,
-      redirectUri: config.redirectUri,
-      environment: config.environment,
-      isDemo: config.isDemo
-    });
-    configLogger.lastConfig = config;
-  }
+  // Log the config (without sensitive data)
+  configLogger.debug("SnapTrade config loaded", {
+    hasClientId: !!config.clientId,
+    hasConsumerKey: !!config.consumerKey,
+    isDemo: config.isDemo,
+  });
+
+  // Store the last config for debugging
+  configLogger.lastConfig = config;
 
   return config;
 }
 
 /**
- * Verify SnapTrade configuration
- * @returns boolean indicating if configuration is valid
+ * Verify that the SnapTrade configuration is valid
+ * This is a helper function to check if the configuration is properly set up
  */
 export function verifySnapTradeConfig(): boolean {
   try {
     const config = getSnapTradeConfig();
-    const isBrowser = typeof window !== "undefined";
-    return (
-      !!config.clientId &&
-      !!config.redirectUri &&
-      (isBrowser ? !!config.consumerKey : !!config.consumerKey)
-    );
+    return !!config.clientId && !!config.consumerKey;
   } catch (error) {
-    console.error("SnapTrade configuration verification failed:", error);
     return false;
-  }
-}
-
-// Add type augmentation for the logger
-declare module '@/stores/debugStore' {
-  interface DebugLogger {
-    lastConfig?: SnapTradeConfig;
   }
 } 

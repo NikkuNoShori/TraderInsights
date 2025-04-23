@@ -60,8 +60,8 @@ export const DASHBOARD_CHART_HEIGHT = 300;
  */
 export const getRechartsConfig = (isDarkMode: boolean) => ({
   colors: CHART_COLORS,
-  gridColor: isDarkMode ? "#2B2B43" : "#e1e3eb",
-  textColor: isDarkMode ? "#d1d4dc" : "#131722",
+  gridColor: isDarkMode ? "var(--chart-grid)" : "var(--chart-grid)",
+  textColor: isDarkMode ? "var(--chart-text)" : "var(--chart-text)",
   margins: CHART_MARGINS.medium,
   height: DASHBOARD_CHART_HEIGHT,
 });
@@ -72,8 +72,8 @@ export const getRechartsConfig = (isDarkMode: boolean) => ({
 export const getTradingViewConfig = (isDarkMode: boolean) => ({
   height: DASHBOARD_CHART_HEIGHT,
   theme: isDarkMode ? "dark" : "light",
-  backgroundColor: isDarkMode ? "#1a1b1e" : "#ffffff",
-  toolbarBgColor: isDarkMode ? "#1a1b1e" : "#f8f9fa",
+  backgroundColor: isDarkMode ? "var(--background)" : "var(--background)",
+  toolbarBgColor: isDarkMode ? "var(--card)" : "var(--card)",
   showToolbar: false,
   showSideToolbar: false,
 }); 

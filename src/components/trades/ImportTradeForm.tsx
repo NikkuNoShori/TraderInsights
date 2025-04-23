@@ -12,11 +12,12 @@ import type { Trade } from "@/types/trade";
 import { processFile } from "@/utils/fileProcessing";
 import { toast } from "react-hot-toast";
 import { transformTrade } from "@/utils/brokerTransforms";
-import { snapTradeService } from "@/services/snaptradeService";
+import { SnapTradeClient } from "@/lib/snaptrade/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatDistanceToNow } from "date-fns";
-import { BrokerConnectionPortal } from "@/components/broker-connection-portal";
+import { BrokerConnectionPortal } from "@/components/broker/BrokerConnectionPortal";
 import { SnapTradeConfig } from "@/lib/snaptrade/types";
+import { getSnapTradeConfig } from "@/lib/snaptrade/config";
 
 interface RateLimitError extends Error {
   resetAt: number;
@@ -44,30 +45,32 @@ export function ImportTradeForm({
   const [userSecret, setUserSecret] = useState<string>("");
   const [isInitializing, setIsInitializing] = useState(true);
 
+  const snapTradeClient = new SnapTradeClient(getSnapTradeConfig());
+
   useEffect(() => {
     const initializeSnapTrade = async () => {
       try {
         setIsInitializing(true);
         
         // Check if user is already registered
-        if (!snapTradeService.isUserRegistered() && user) {
+        if (!snapTradeClient.isUserRegistered() && user) {
           // Register the user
-          await snapTradeService.registerUser(user.id);
+          await snapTradeClient.registerUser(user.id);
         }
 
         // Get SnapTrade configuration
-        const config = await snapTradeService.getConfig();
+        const config = getSnapTradeConfig();
         setSnapTradeConfig(config);
 
         // Get user credentials
-        const storedUser = snapTradeService.getUser();
+        const storedUser = snapTradeClient.getUser();
         if (storedUser) {
           setUserId(storedUser.userId);
           setUserSecret(storedUser.userSecret);
         }
 
         // Fetch supported brokerages
-        const brokers = await snapTradeService.getBrokerages();
+        const brokers = await snapTradeClient.getBrokerages();
         setBrokerages(brokers);
       } catch (error) {
         console.error('Failed to initialize SnapTrade:', error);
@@ -87,12 +90,12 @@ export function ImportTradeForm({
 
     // Update rate limit info every minute
     const interval = setInterval(() => {
-      const info = snapTradeService.getRateLimitInfo();
+      const info = snapTradeClient.getRateLimitInfo();
       setRateLimitInfo(info);
     }, 60000);
 
     // Initial rate limit info
-    const info = snapTradeService.getRateLimitInfo();
+    const info = snapTradeClient.getRateLimitInfo();
     setRateLimitInfo(info);
 
     return () => clearInterval(interval);
@@ -149,10 +152,10 @@ export function ImportTradeForm({
   const handleConnectBroker = async () => {
     try {
       // Ensure user is registered before opening portal
-      if (!snapTradeService.isUserRegistered() && user) {
-        await snapTradeService.registerUser(user.id);
+      if (!snapTradeClient.isUserRegistered() && user) {
+        await snapTradeClient.registerUser(user.id);
         // Update stored user credentials
-        const storedUser = snapTradeService.getUser();
+        const storedUser = snapTradeClient.getUser();
         if (storedUser) {
           setUserId(storedUser.userId);
           setUserSecret(storedUser.userSecret);
@@ -174,7 +177,7 @@ export function ImportTradeForm({
   const handleConnectionSuccess = async (authorizationId: string) => {
     try {
       // Refresh the brokerages list to include the newly connected broker
-      const brokers = await snapTradeService.getBrokerages();
+      const brokers = await snapTradeClient.getBrokerages();
       setBrokerages(brokers);
       toast.success('Broker connected successfully!');
     } catch (error) {

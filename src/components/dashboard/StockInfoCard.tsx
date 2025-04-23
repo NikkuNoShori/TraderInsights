@@ -12,73 +12,50 @@ interface StockInfoCardProps {
 }
 
 export function StockInfoCard({ 
-  className = "",
+  className = "", 
   defaultSymbol = "NASDAQ:AAPL" 
 }: StockInfoCardProps) {
   const [symbol, setSymbol] = useState(defaultSymbol);
   const [inputSymbol, setInputSymbol] = useState(defaultSymbol);
-  const [key, setKey] = useState(Date.now()); // Add a key to force re-render when symbol changes
+  const [key, setKey] = useState(0);
 
   const handleSymbolChange = () => {
-    if (inputSymbol && inputSymbol !== symbol) {
-      setSymbol(inputSymbol);
-      setKey(Date.now()); // Update key to force re-render
-    }
+    setSymbol(inputSymbol);
+    setKey(prev => prev + 1);
   };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSymbolChange();
-    }
-  };
-
-  // Calculate heights for the two charts
-  const symbolInfoHeight = 120;
-  const chartHeight = DASHBOARD_CHART_HEIGHT;
-  const totalHeight = symbolInfoHeight + chartHeight + 16; // 16px for gap
 
   return (
-    <Card className={`${className}`}>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-medium">Stock Information</CardTitle>
+    <Card className={className}>
+      <CardHeader>
+        <CardTitle>Stock Information</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex gap-2 mb-4">
-          <Input
-            placeholder="Enter symbol (e.g., NASDAQ:AAPL)"
-            value={inputSymbol}
-            onChange={(e) => setInputSymbol(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="flex-1"
-          />
-          <Button onClick={handleSymbolChange} size="sm">
-            <Search className="h-4 w-4 mr-2" />
-            Search
-          </Button>
-        </div>
-        
-        <div className="grid grid-cols-1 gap-4" style={{ height: `${totalHeight}px` }}>
-          <div style={{ height: `${symbolInfoHeight}px` }}>
-            <TradingViewDashboardChart 
-              key={`symbol-${key}`}
+        <div className="flex flex-col space-y-4">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex-1">
+              <Input
+                type="text"
+                value={inputSymbol}
+                onChange={(e) => setInputSymbol(e.target.value)}
+                placeholder="Enter symbol (e.g., NASDAQ:AAPL)"
+                className="w-full"
+              />
+            </div>
+            <Button onClick={handleSymbolChange}>
+              <Search className="h-4 w-4 mr-2" />
+              Search
+            </Button>
+          </div>
+
+          <div className="mt-4">
+            <TradingViewDashboardChart
+              key={`${symbol}-${key}`}
               symbol={symbol}
               chartType="symbol"
-              height={symbolInfoHeight}
-              allowSymbolChange={false}
-            />
-          </div>
-          
-          <div style={{ height: `${chartHeight}px` }}>
-            <TradingViewDashboardChart 
-              key={`chart-${key}`}
-              symbol={symbol}
-              chartType="advanced"
-              height={chartHeight}
-              style="1"
+              height={DASHBOARD_CHART_HEIGHT}
               showToolbar={false}
               showSideToolbar={false}
               allowSymbolChange={false}
-              studies={["Volume@tv-basicstudies", "MACD@tv-basicstudies"]}
             />
           </div>
         </div>
