@@ -5,12 +5,14 @@
 
 import type {
   BrokerageAuthorization,
-  Account,
-  Position,
-  Balance,
+  Account as SDKAccount,
+  Position as SDKPosition,
+  Balance as SDKBalance,
   AccountOrderRecord,
   AccountHoldingsAccount,
   Brokerage,
+  PositionSymbol,
+  BalanceCurrency,
 } from "snaptrade-typescript-sdk";
 
 /**
@@ -45,17 +47,17 @@ export type SnapTradeConnection = BrokerageAuthorization;
 /**
  * SnapTrade account
  */
-export type SnapTradeAccount = Account;
+export type SnapTradeAccount = SDKAccount;
 
 /**
  * SnapTrade position
  */
-export type SnapTradePosition = Position;
+export type SnapTradePosition = SDKPosition;
 
 /**
  * SnapTrade balance
  */
-export type SnapTradeBalance = Balance;
+export type SnapTradeBalance = SDKBalance;
 
 /**
  * SnapTrade order
@@ -70,42 +72,7 @@ export type SnapTradeHoldings = AccountHoldingsAccount;
 /**
  * SnapTrade brokerage
  */
-export interface SnaptradeBrokerage {
-  id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  url: string;
-  display_name?: string;
-  aws_s3_logo_url?: string;
-  aws_s3_square_logo_url?: string;
-  status?: string;
-  release_stage?: string;
-  enabled?: boolean;
-  maintenance_mode?: boolean;
-  allows_fractional_units?: boolean | null;
-  allows_trading?: boolean | null;
-  has_reporting?: boolean | null;
-  is_real_time_connection?: boolean;
-  authorization_types?: Array<any>;
-  exchanges?: string[];
-  is_degraded?: boolean;
-  allows_cryptocurrency_symbols?: boolean;
-  allows_cryptocurrency_and_regular_securities?: boolean;
-  brokerage_type?: {
-    id: string;
-    name: string;
-  };
-  // These appear to be derived properties not in the raw API response
-  isOAuthSupported?: boolean;
-  isCredentialsSupported?: boolean;
-  logo?: string; // Fallback for backward compatibility
-}
-
-export interface ConnectionLinkResponse {
-  redirectURI: string;
-  sessionId: string;
-}
+export type SnaptradeBrokerage = Brokerage;
 
 export interface ConnectionOptions {
   immediateRedirect?: boolean;
@@ -119,49 +86,10 @@ export interface SnapTradeError extends Error {
   details?: unknown;
 }
 
-export type BrokerageList = Brokerage[];
-export type BrokerageAuthorizationList = BrokerageAuthorization[];
-
-export interface Account {
-  id: string;
-  name: string;
-  type: string;
-  number: string;
-  institution: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
+export interface ConnectionLinkResponse {
+  redirectURI: string;
+  sessionId: string;
+  status?: string;
 }
 
-export interface Position {
-  id: string;
-  symbol: string;
-  quantity: number;
-  price: number;
-  value: number;
-  currency: string;
-  accountId: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Balance {
-  id: string;
-  currency: string;
-  amount: number;
-  accountId: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Order {
-  id: string;
-  symbol: string;
-  quantity: number;
-  price: number;
-  type: string;
-  status: string;
-  accountId: string;
-  createdAt: string;
-  updatedAt: string;
-} 
+export type BrokerageList = Brokerage[]; 

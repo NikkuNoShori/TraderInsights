@@ -1,89 +1,134 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { snapTradeService } from "../../services/snaptradeService";
+import { Request, Response } from "express";
+import { SnapTradeClient } from "../../lib/snaptrade/client";
 import { getSnapTradeConfig } from "../../lib/snaptrade/config";
+import { generateSnapTradeAuth } from "../../lib/snaptrade/auth";
 
-const config = getSnapTradeConfig();
+const snapTradeClient = new SnapTradeClient(getSnapTradeConfig());
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export const checkApiStatus = async (req: Request, res: Response) => {
   try {
-    const { method, body, query } = req;
-
-    switch (method) {
-      case "GET":
-        if (req.url?.includes("/status")) {
-          const status = await snapTradeService.checkApiStatus();
-          res.status(200).json(status);
-        } else if (req.url?.includes("/connections")) {
-          const connections =
-            await snapTradeService.connections.listBrokerageAuthorizations({
-              userId: query.userId as string,
-              userSecret: query.userSecret as string,
-            });
-          res.status(200).json(connections);
-        } else if (req.url?.includes("/accounts")) {
-          if (req.url?.includes("/positions")) {
-            const accountId = req.url.split("/")[4];
-            const positions =
-              await snapTradeService.accountInformation.getUserAccountPositions(
-                {
-                  userId: query.userId as string,
-                  userSecret: query.userSecret as string,
-                  accountId,
-                }
-              );
-            res.status(200).json(positions);
-          } else if (req.url?.includes("/balance")) {
-            const accountId = req.url.split("/")[4];
-            const balance =
-              await snapTradeService.accountInformation.getUserAccountBalance({
-                userId: query.userId as string,
-                userSecret: query.userSecret as string,
-                accountId,
-              });
-            res.status(200).json(balance);
-          } else if (req.url?.includes("/orders")) {
-            const accountId = req.url.split("/")[4];
-            const orders =
-              await snapTradeService.accountInformation.getUserAccountOrders({
-                userId: query.userId as string,
-                userSecret: query.userSecret as string,
-                accountId,
-              });
-            res.status(200).json(orders);
-          } else {
-            const accounts =
-              await snapTradeService.accountInformation.listUserAccounts({
-                userId: query.userId as string,
-                userSecret: query.userSecret as string,
-              });
-            res.status(200).json(accounts);
-          }
-        } else {
-          res.status(404).json({ error: "Not Found" });
-        }
-        break;
-
-      case "POST":
-        const { userId } = body;
-        const user = await snapTradeService.registerUser(userId);
-        res.status(200).json(user);
-        break;
-
-      case "DELETE":
-        const { userId: deleteUserId } = body;
-        await snapTradeService.deleteUser(deleteUserId);
-        res.status(200).json({ message: "User deleted successfully" });
-        break;
-
-      default:
-        res.setHeader("Allow", ["GET", "POST", "DELETE"]);
-        res.status(405).end(`Method ${method} Not Allowed`);
-    }
+    const status = await snapTradeClient.initialize();
+    res.json({ status: "ok", message: "SnapTrade API is accessible" });
   } catch (error) {
-    console.error("Error in SnapTrade API route:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error("SnapTrade API status check failed:", error);
+    res
+      .status(500)
+      .json({ status: "error", message: "SnapTrade API is not accessible" });
   }
-}
+};
+
+export const listConnections = async (req: Request, res: Response) => {
+  try {
+    const auth = await generateSnapTradeAuth(getSnapTradeConfig());
+    const connections = await snapTradeClient.getConnections();
+    res.json(connections);
+  } catch (error) {
+    console.error("Failed to list connections:", error);
+    res.status(500).json({ error: "Failed to list connections" });
+  }
+};
+
+export const getAccountPositions = async (req: Request, res: Response) => {
+  try {
+    const { userId, userSecret, accountId } = req.body;
+    if (!userId || !userSecret || !accountId) {
+      return res.status(400).json({ error: "Missing required parameters" });
+    }
+
+    const positions = await snapTradeClient.getAccountPositions({
+      userId,
+      userSecret,
+      accountId,
+    });
+    res.json(positions);
+  } catch (error) {
+    console.error("Failed to get account positions:", error);
+    res.status(500).json({ error: "Failed to get account positions" });
+  }
+};
+
+export const getAccountBalance = async (req: Request, res: Response) => {
+  try {
+    const { userId, userSecret, accountId } = req.body;
+    if (!userId || !userSecret || !accountId) {
+      return res.status(400).json({ error: "Missing required parameters" });
+    }
+
+    const balances = await snapTradeClient.getAccountBalances({
+      userId,
+      userSecret,
+      accountId,
+    });
+    res.json(balances);
+  } catch (error) {
+    console.error("Failed to get account balance:", error);
+    res.status(500).json({ error: "Failed to get account balance" });
+  }
+};
+
+export const getAccountOrders = async (req: Request, res: Response) => {
+  try {
+    const { userId, userSecret, accountId } = req.body;
+    if (!userId || !userSecret || !accountId) {
+      return res.status(400).json({ error: "Missing required parameters" });
+    }
+
+    const orders = await snapTradeClient.getAccountOrders({
+      userId,
+      userSecret,
+      accountId,
+    });
+    res.json(orders);
+  } catch (error) {
+    console.error("Failed to get account orders:", error);
+    res.status(500).json({ error: "Failed to get account orders" });
+  }
+};
+
+export const listUserAccounts = async (req: Request, res: Response) => {
+  try {
+    const { userId, userSecret } = req.body;
+    if (!userId || !userSecret) {
+      return res.status(400).json({ error: "Missing required parameters" });
+    }
+
+    const accounts = await snapTradeClient.getAccounts({
+      userId,
+      userSecret,
+    });
+    res.json(accounts);
+  } catch (error) {
+    console.error("Failed to list user accounts:", error);
+    res.status(500).json({ error: "Failed to list user accounts" });
+  }
+};
+
+export const registerUser = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.body;
+    if (!userId) {
+      return res.status(400).json({ error: "Missing userId parameter" });
+    }
+
+    const user = await snapTradeClient.registerUser(userId);
+    res.json(user);
+  } catch (error) {
+    console.error("Failed to register user:", error);
+    res.status(500).json({ error: "Failed to register user" });
+  }
+};
+
+export const deleteUser = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.body;
+    if (!userId) {
+      return res.status(400).json({ error: "Missing userId parameter" });
+    }
+
+    await snapTradeClient.deleteUser(userId);
+    res.json({ message: "User deleted successfully" });
+  } catch (error) {
+    console.error("Failed to delete user:", error);
+    res.status(500).json({ error: "Failed to delete user" });
+  }
+};

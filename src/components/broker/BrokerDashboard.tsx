@@ -193,7 +193,7 @@ export function BrokerDashboard() {
   // Save session state on component updates
   useEffect(() => {
     if (isInitialized) {
-      const snapTradeUser = snapTradeClient.getUser();
+      const snapTradeUser = StorageHelpers.getUser();
       saveBrokerSessionState({
         readOnlyMode,
         isInitialized,
@@ -203,38 +203,54 @@ export function BrokerDashboard() {
     }
   }, [readOnlyMode, isInitialized, lastSyncTime]);
 
+  // Sync data periodically
+  useEffect(() => {
+    if (isInitialized && connections.length > 0) {
+      const interval = setInterval(() => {
+        syncAllData();
+      }, 30000); // Sync every 30 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [syncAllData, isInitialized, connections.length]);
+
   // Initialize SnapTrade service
   useEffect(() => {
-    const initializeService = async () => {
+    const initialize = async () => {
       try {
+        setDebugState({ isInitialized: false });
         await snapTradeClient.initialize();
-        setIsServiceInitialized(true);
-        logDebug('SnapTrade service initialized successfully');
+        setDebugState({ isInitialized: true });
       } catch (error) {
-        logDebug('Failed to initialize SnapTrade service:', error);
-        toast.error('Failed to initialize broker service. Please try again.');
+        console.error("Failed to initialize SnapTrade:", error);
+        toast.error("Failed to initialize SnapTrade service");
       }
     };
 
-    if (!isServiceInitialized) {
-      initializeService();
-    }
-  }, [isServiceInitialized, logDebug]);
+    initialize();
+  }, [setDebugState]);
 
   // Ensure we have valid credentials
-  const ensureSnapTradeConfig = useCallback(async () => {
-    try {
-      const config = getSnapTradeConfig();
-      if (!config.clientId || !config.consumerKey) {
-        throw new Error("Missing SnapTrade credentials");
+  useEffect(() => {
+    const checkCredentials = async () => {
+      const snapTradeUser = StorageHelpers.getUser();
+      if (!snapTradeUser) {
+        toast.error("No SnapTrade credentials found");
+        return;
       }
-      return config;
-    } catch (error) {
-      logDebug("Failed to get SnapTrade config:", error);
-      setDebugState({ brokerError: error instanceof Error ? error.message : String(error) });
-      return null;
+
+      try {
+        await snapTradeClient.registerUser(snapTradeUser.userId);
+      } catch (error) {
+        console.error("Failed to register user:", error);
+        toast.error("Failed to register user with SnapTrade");
+      }
+    };
+
+    if (isInitialized) {
+      checkCredentials();
     }
-  }, [logDebug]);
+  }, [isInitialized]);
 
   // Load broker list without requiring registration
   const loadBrokers = useCallback(async () => {
@@ -363,7 +379,7 @@ export function BrokerDashboard() {
       
       // Only proceed if the tab is visible and component is mounted
       if (document.visibilityState === 'visible' && isMountedRef.current) {
-        const snapTradeUser = snapTradeClient.getUser();
+        const snapTradeUser = StorageHelpers.getUser();
         logDebug('Tab visible, checking conditions:', {
           hasUser: !!snapTradeUser,
           isInitialized,
@@ -421,68 +437,77 @@ export function BrokerDashboard() {
     };
   }, [syncAllData, isInitialized, lastSyncTime, brokers.length, brokerError, config.isDemo]);
 
+  // Handle broker connection
   const handleConnectBroker = async (broker: Brokerage) => {
     try {
       setConnecting(true);
       setError(null);
-
-      // Register a new user with a unique ID
-      const userId = `user-${Date.now()}`;
-      console.log("Registering user with ID:", userId);
-      await snapTradeClient.registerUser(userId);
       
-      const user = snapTradeClient.getUser();
-      console.log("User after registration:", user);
-      
-      if (!user || !user.userSecret) {
-        throw new Error("Failed to register user: missing userSecret");
+      // Get or create user
+      let user = StorageHelpers.getUser();
+      if (!user) {
+        const authUser = useAuthStore.getState().user;
+        if (!authUser?.id) {
+          throw new Error('User ID is required');
+        }
+        const newUser = await snapTradeClient.registerUser(authUser.id);
+        if (!newUser.userId || !newUser.userSecret) {
+          throw new Error('Failed to register user: missing credentials');
+        }
+        user = {
+          userId: newUser.userId,
+          userSecret: newUser.userSecret
+        };
+        StorageHelpers.saveUser(user);
       }
 
-      // Create connection link with broker slug and options
-      console.log("Creating connection link for broker:", broker.slug);
-      const { redirectURI, sessionId } = await snapTradeClient.createConnectionLink(
-        user.userId,
-        user.userSecret,
-        broker.slug || '',
-        {
-          immediateRedirect: true,
-          connectionType: 'read',
-          connectionPortalVersion: 'v4'
-          // Let the SnapTrade SDK handle the redirect URL
-        }
-      );
-
-      console.log("Connection link created:", { redirectURI, sessionId });
-
-      // Save session info for callback handling
-      StorageHelpers.saveConnectionSession({
-        sessionId,
-        userId: user.userId,
-        userSecret: user.userSecret,
-        brokerSlug: broker.slug || ''
-      });
-
-      // Redirect to broker connection page
-      console.log("Redirecting to:", redirectURI);
-      window.location.href = redirectURI;
-    } catch (error) {
-      console.error("Error connecting to broker:", error);
-      setError(error instanceof Error ? error.message : "Failed to connect to broker");
+      // Get connection link
+      const response = await snapTradeClient.getConnections(user.userId, user.userSecret);
+      const connection = response.find(conn => conn.brokerage_authorization?.brokerage?.id === broker.id);
+      
+      if (connection) {
+        // Use existing connection
+        setConnectingBrokerId(broker.id || null);
+      } else {
+        // Create new connection
+        setConnectingBrokerId(broker.id || null);
+        // Note: The actual connection flow should be handled by BrokerConnectionPortal
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to connect broker');
+      toast.error('Failed to connect broker');
     } finally {
       setConnecting(false);
     }
   };
 
-  // Update the retry button click handler
-  const handleRetry = () => {
-    setDebugState({ 
-      brokerError: null,
-      isInitialized: false
-    });
-    setInitializeAttempts(0);
-    initializingRef.current = false;
-    
-    loadBrokers();
+  // Handle retry
+  const handleRetryConnection = async () => {
+    try {
+      setError(null);
+      const user = StorageHelpers.getUser();
+      if (!user) {
+        throw new Error('No user found');
+      }
+      await snapTradeClient.getConnections(user.userId, user.userSecret);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to retry connection');
+    }
+  };
+
+  // Handle reset connection
+  const handleResetConnection = async () => {
+    try {
+      setError(null);
+      const user = StorageHelpers.getUser();
+      if (!user) {
+        throw new Error('No user found');
+      }
+      await snapTradeClient.getConnections(user.userId, user.userSecret);
+      StorageHelpers.clearConnectionSession();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to reset connection');
+    }
   };
 
   // Update debug store when state changes
@@ -507,10 +532,15 @@ export function BrokerDashboard() {
       setDebugState({ loadingBrokers: true, brokerError: null });
       logDebug('Manually refreshing broker list');
       
+      const user = StorageHelpers.getUser();
+      if (!user) {
+        throw new Error('No user found');
+      }
+      
       // Refresh both brokers and connections
       const [brokerList, connectionList] = await Promise.all([
         snapTradeClient.getBrokerages(),
-        snapTradeClient.getConnections().catch(() => []) as Promise<SnapTradeConnection[]>
+        snapTradeClient.getConnections(user.userId, user.userSecret).catch(() => []) as Promise<SnapTradeConnection[]>
       ]);
       
       setBrokers(brokerList);
@@ -542,6 +572,34 @@ export function BrokerDashboard() {
       setDebugState({ loadingBrokers: false });
     }
   }, [logDebug]);
+
+  const handleConnect = async () => {
+    try {
+      const userId = `user-${Date.now()}`;
+      const userData = await snapTradeClient.registerUser(userId);
+      if (userData && userData.userId && userData.userSecret) {
+        const user: SnapTradeUser = {
+          userId: userData.userId,
+          userSecret: userData.userSecret
+        };
+        StorageHelpers.saveUser(user);
+        toast.success("Successfully connected to SnapTrade");
+      }
+    } catch (error) {
+      console.error("Failed to connect:", error);
+      toast.error("Failed to connect to SnapTrade");
+    }
+  };
+
+  const handleDisconnect = async () => {
+    try {
+      StorageHelpers.clearAll();
+      toast.success("Successfully disconnected from SnapTrade");
+    } catch (error) {
+      console.error("Failed to disconnect:", error);
+      toast.error("Failed to disconnect from SnapTrade");
+    }
+  };
 
   return (
     <div className="container mx-auto py-6 px-4">
@@ -579,6 +637,14 @@ export function BrokerDashboard() {
 
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleResetConnection}
+            disabled={loadingBrokers}
+          >
+            Reset Connection
+          </Button>
           <Button
             variant="outline"
             size="sm"

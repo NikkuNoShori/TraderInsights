@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { snapTradeService } from "@/services/snaptradeService";
+import { snaptradeService } from "@/services/snaptradeService";
 
 export const SnapTradeTest: React.FC = () => {
   const [status, setStatus] = useState<string>("");
@@ -8,7 +8,7 @@ export const SnapTradeTest: React.FC = () => {
   useEffect(() => {
     const testConnection = async () => {
       try {
-        const apiStatus = await snapTradeService.checkApiStatus();
+        const apiStatus = await snaptradeService.initialize();
         setStatus(JSON.stringify(apiStatus, null, 2));
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unknown error occurred");
