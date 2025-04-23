@@ -6,7 +6,6 @@ import { FormInput } from "@/components/ui/FormInput";
 import { LoadingButton } from "@/components/LoadingButton";
 import { useAuthStore } from "@/stores/authStore";
 import { clearDeveloperMode } from "@/lib/utils/auth";
-import { Logo } from "@/components/ui";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -90,77 +89,65 @@ export default function Login() {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-header">
-        <Logo className="h-12 w-auto mb-4" />
-        <h1 className="auth-title">Welcome to Trading Insights</h1>
-        <p className="auth-subtitle">
-          {isSignUp ? "Create your account" : "Sign in to your account"}
-        </p>
+    <form onSubmit={handleSubmit} className="w-full space-y-4">
+      <FormInput
+        type="email"
+        label="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="Enter your email"
+        required
+        autoComplete="email"
+      />
+
+      <FormInput
+        type="password"
+        label="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder={isSignUp ? "Create a password" : "Enter your password"}
+        required
+        autoComplete={isSignUp ? "new-password" : "current-password"}
+      />
+
+      {error && (
+        <div className="text-sm text-error">
+          {error.message}
+        </div>
+      )}
+
+      <div className="space-y-4">
+        <LoadingButton
+          type="submit"
+          isLoading={isLoading}
+          className="w-full bg-primary text-primary-foreground hover:opacity-90"
+        >
+          {isSignUp ? "Create Account" : "Sign In"}
+        </LoadingButton>
+
+        <button
+          type="button"
+          onClick={() => {
+            setIsSignUp(!isSignUp);
+            resetState();
+          }}
+          className="w-full text-sm text-muted hover:text-default transition-colors"
+        >
+          {isSignUp
+            ? "Already have an account? Sign in"
+            : "Don't have an account? Sign up"}
+        </button>
+
+        {!isSignUp && (
+          <button
+            type="button"
+            onClick={() => navigate("/auth/request-reset")}
+            className="w-full text-sm text-muted hover:text-default transition-colors"
+          >
+            Forgot your password?
+          </button>
+        )}
       </div>
-
-      <div className="auth-card">
-        <form onSubmit={handleSubmit} className="auth-form">
-          <FormInput
-            type="email"
-            label="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter your email"
-            required
-            autoComplete="email"
-          />
-
-          <FormInput
-            type="password"
-            label="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder={isSignUp ? "Create a password" : "Enter your password"}
-            required
-            autoComplete={isSignUp ? "new-password" : "current-password"}
-          />
-
-          {error && (
-            <div className="text-sm text-error">
-              {error.message}
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <LoadingButton
-              type="submit"
-              isLoading={isLoading}
-              className="w-full bg-primary text-primary-foreground hover:opacity-90"
-            >
-              {isSignUp ? "Create Account" : "Sign In"}
-            </LoadingButton>
-
-            <button
-              type="button"
-              onClick={() => {
-                setIsSignUp(!isSignUp);
-                resetState();
-              }}
-              className="w-full text-sm text-muted hover:text-default transition-colors"
-            >
-              {isSignUp
-                ? "Already have an account? Sign in"
-                : "Don't have an account? Sign up"}
-            </button>
-
-            {!isSignUp && (
-              <button
-                type="button"
-                onClick={() => navigate("/auth/request-reset")}
-                className="w-full text-sm text-muted hover:text-default transition-colors"
-              >
-                Forgot your password?
-              </button>
-            )}
-          </div>
-        </form>
-      </div>
-    </div>
+    </form>
   );
 }

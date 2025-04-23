@@ -13,7 +13,7 @@ import Settings from "./views/Settings";
 import Login from "./views/auth/Login";
 import RequestPasswordReset from "./views/auth/RequestPasswordReset";
 import ResetPassword from "./views/auth/ResetPassword";
-import BrokerCallback from "./views/auth/BrokerCallback";
+import SnapTradeCallback from "./pages/snaptrade-callback";
 import { AuthGuard } from "./components/AuthGuard";
 import { AuthLayout } from "./components/auth/AuthLayout";
 import { AppProvider } from "./providers/AppProvider";
@@ -54,11 +54,51 @@ export default function App() {
             <Route path="contact" element={<ContactPage />} />
 
             {/* Auth routes */}
-            <Route path="/auth" element={<AuthLayout title="Authentication" subtitle="Sign in to your account" />}>
-              <Route path="login" element={<Login />} />
-              <Route path="request-reset" element={<RequestPasswordReset />} />
-              <Route path="reset-password" element={<ResetPassword />} />
-              <Route path="broker-callback" element={<BrokerCallback />} />
+            <Route path="/auth" element={<Outlet />}>
+              <Route
+                path="login"
+                element={
+                  <AuthLayout
+                    title="Welcome to TraderInsights"
+                    subtitle="Sign in to your account"
+                  >
+                    <Login />
+                  </AuthLayout>
+                }
+              />
+              <Route
+                path="request-reset"
+                element={
+                  <AuthLayout
+                    title="Reset Password"
+                    subtitle="Enter your email to reset your password"
+                  >
+                    <RequestPasswordReset />
+                  </AuthLayout>
+                }
+              />
+              <Route
+                path="reset-password"
+                element={
+                  <AuthLayout
+                    title="Set New Password"
+                    subtitle="Enter your new password"
+                  >
+                    <ResetPassword />
+                  </AuthLayout>
+                }
+              />
+              <Route
+                path="broker-callback"
+                element={
+                  <AuthLayout
+                    title="Connecting to Broker"
+                    subtitle="Please wait while we complete the connection..."
+                  >
+                    <SnapTradeCallback />
+                  </AuthLayout>
+                }
+              />
               <Route index element={<Navigate to="login" replace />} />
             </Route>
 

@@ -10,6 +10,7 @@ import type {
   Balance,
   AccountOrderRecord,
   AccountHoldingsAccount,
+  Brokerage,
 } from "snaptrade-typescript-sdk";
 
 /**
@@ -99,4 +100,68 @@ export interface SnaptradeBrokerage {
   isOAuthSupported?: boolean;
   isCredentialsSupported?: boolean;
   logo?: string; // Fallback for backward compatibility
+}
+
+export interface ConnectionLinkResponse {
+  redirectURI: string;
+  sessionId: string;
+}
+
+export interface ConnectionOptions {
+  immediateRedirect?: boolean;
+  connectionType?: "read" | "trade";
+  connectionPortalVersion?: "v4";
+  reconnect?: string;
+}
+
+export interface SnapTradeError extends Error {
+  code?: string;
+  details?: unknown;
+}
+
+export type BrokerageList = Brokerage[];
+export type BrokerageAuthorizationList = BrokerageAuthorization[];
+
+export interface Account {
+  id: string;
+  name: string;
+  type: string;
+  number: string;
+  institution: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Position {
+  id: string;
+  symbol: string;
+  quantity: number;
+  price: number;
+  value: number;
+  currency: string;
+  accountId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Balance {
+  id: string;
+  currency: string;
+  amount: number;
+  accountId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Order {
+  id: string;
+  symbol: string;
+  quantity: number;
+  price: number;
+  type: string;
+  status: string;
+  accountId: string;
+  createdAt: string;
+  updatedAt: string;
 } 

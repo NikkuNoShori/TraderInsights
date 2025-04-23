@@ -30,7 +30,7 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import { useBrokerDataStore } from '@/stores/brokerDataStore';
-import { snapTradeService } from '@/services/snaptradeService';
+import { SnapTradeClient } from '@/lib/snaptrade/client';
 import { getSnapTradeConfig } from '@/lib/snaptrade/config';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
@@ -41,8 +41,7 @@ import { Tooltip } from '@/components/ui/Tooltip';
 import { useDebugStore } from '@/stores/debugStore';
 import { createDebugLogger } from '@/stores/debugStore';
 import { BrokerList } from './BrokerList';
-import { BrokerConnectionPortal } from './BrokerConnectionPortal';
-import { SnapTradeService } from '@/lib/snaptrade/snaptradeService';
+import { BrokerConnectionPortal } from '@/components/broker/BrokerConnectionPortal';
 import { Brokerage } from 'snaptrade-typescript-sdk';
 
 // Create debug logger
@@ -149,7 +148,7 @@ export function BrokerDashboard() {
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set());
 
   const config = getSnapTradeConfig();
-  const snapTradeService = new SnapTradeService(config);
+  const snapTradeClient = new SnapTradeClient(config);
 
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -194,7 +193,7 @@ export function BrokerDashboard() {
   // Save session state on component updates
   useEffect(() => {
     if (isInitialized) {
-      const snapTradeUser = snapTradeService.getUser();
+      const snapTradeUser = snapTradeClient.getUser();
       saveBrokerSessionState({
         readOnlyMode,
         isInitialized,
@@ -208,8 +207,7 @@ export function BrokerDashboard() {
   useEffect(() => {
     const initializeService = async () => {
       try {
-        const config = getSnapTradeConfig();
-        await snapTradeService.initialize(config);
+        await snapTradeClient.initialize();
         setIsServiceInitialized(true);
         logDebug('SnapTrade service initialized successfully');
       } catch (error) {
@@ -240,14 +238,14 @@ export function BrokerDashboard() {
 
   // Load broker list without requiring registration
   const loadBrokers = useCallback(async () => {
-    if (!snapTradeService) {
+    if (!snapTradeClient) {
       logDebug('SnapTrade service not initialized');
       return [];
     }
 
     try {
       setDebugState({ loadingBrokers: true, brokerError: undefined });
-      const brokerList = await snapTradeService.getBrokerages();
+      const brokerList = await snapTradeClient.getBrokerages();
       // Sort brokers alphabetically by name, handling undefined names
       const sortedBrokers = [...brokerList].sort((a, b) => {
         const nameA = a.name || '';
@@ -365,7 +363,7 @@ export function BrokerDashboard() {
       
       // Only proceed if the tab is visible and component is mounted
       if (document.visibilityState === 'visible' && isMountedRef.current) {
-        const snapTradeUser = snapTradeService.getUser();
+        const snapTradeUser = snapTradeClient.getUser();
         logDebug('Tab visible, checking conditions:', {
           hasUser: !!snapTradeUser,
           isInitialized,
@@ -431,9 +429,9 @@ export function BrokerDashboard() {
       // Register a new user with a unique ID
       const userId = `user-${Date.now()}`;
       console.log("Registering user with ID:", userId);
-      await snapTradeService.registerUser(userId);
+      await snapTradeClient.registerUser(userId);
       
-      const user = snapTradeService.getUser();
+      const user = snapTradeClient.getUser();
       console.log("User after registration:", user);
       
       if (!user || !user.userSecret) {
@@ -442,7 +440,7 @@ export function BrokerDashboard() {
 
       // Create connection link with broker slug and options
       console.log("Creating connection link for broker:", broker.slug);
-      const { redirectURI, sessionId } = await snapTradeService.createConnectionLink(
+      const { redirectURI, sessionId } = await snapTradeClient.createConnectionLink(
         user.userId,
         user.userSecret,
         broker.slug || '',
@@ -511,8 +509,8 @@ export function BrokerDashboard() {
       
       // Refresh both brokers and connections
       const [brokerList, connectionList] = await Promise.all([
-        snapTradeService.getBrokerages(),
-        snapTradeService.connections.list().catch(() => []) as Promise<SnapTradeConnection[]>
+        snapTradeClient.getBrokerages(),
+        snapTradeClient.getConnections().catch(() => []) as Promise<SnapTradeConnection[]>
       ]);
       
       setBrokers(brokerList);

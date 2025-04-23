@@ -1,23 +1,16 @@
-/**
- * BrokerCallback Page
- * 
- * Handles the OAuth callback after a user connects their brokerage account.
- * This page receives the authorization code and completes the connection process.
- */
-
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { snapTradeService } from '@/services/snaptradeService';
-import { StorageHelpers } from '@/lib/snaptrade/storage';
-import { toast } from 'react-hot-toast';
-import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks/useAuth';
+import { AlertCircle, Loader2 } from 'lucide-react';
+import { createDebugLogger } from '@/stores/debugStore';
+import { SnapTradeClient } from '@/lib/snaptrade';
+import type { SnapTradeError } from '@/lib/snaptrade';
+
+const logger = createDebugLogger('broker' as any); // TODO: Add 'broker' to DebugCategory type
 
 export default function BrokerCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,21 +25,22 @@ export default function BrokerCallback() {
           throw new Error('Missing required parameters');
         }
 
-        // Store user credentials
-        StorageHelpers.saveUser({ userId, userSecret });
+        // Initialize SnapTrade client
+        const client = new SnapTradeClient();
+        client.setUser({ userId, userSecret });
 
-        // Check if user is registered
-        const isRegistered = snapTradeService.isUserRegistered();
-        
-        if (isRegistered) {
-          toast.success('Your brokerage account has been connected successfully.');
-          navigate('/app/dashboard');
-        } else {
-          setError('Failed to connect brokerage account. Please try again.');
+        // Verify the connection
+        const connections = await client.getConnections();
+        if (connections.length === 0) {
+          throw new Error('No connections found');
         }
+
+        logger.debug('Broker connection successful:', { userId, sessionId });
+        navigate('/app/dashboard');
       } catch (err) {
-        console.error('Error handling broker callback:', err);
-        setError(err instanceof Error ? err.message : 'An error occurred');
+        const errorMessage = err instanceof Error ? err.message : 'Failed to process broker connection';
+        logger.error('Error handling broker callback:', errorMessage);
+        setError(errorMessage);
       } finally {
         setIsLoading(false);
       }
@@ -66,6 +60,7 @@ export default function BrokerCallback() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <AlertCircle className="h-8 w-8 text-error mb-4" />
         <div className="text-error mb-4">{error}</div>
         <Button onClick={() => navigate('/app/settings')}>
           Return to Settings

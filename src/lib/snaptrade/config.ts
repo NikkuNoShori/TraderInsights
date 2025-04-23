@@ -51,6 +51,14 @@ function getEnvVariable(key: string): string | undefined {
   return process.env[key] || undefined;
 }
 
+const getEnvVar = (name: string): string => {
+  const value = import.meta.env[name];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+};
+
 /**
  * Get SnapTrade configuration
  * This function returns the configuration object for SnapTrade
@@ -60,8 +68,8 @@ export function getSnapTradeConfig(): SnapTradeConfig {
   const environment = getEnvironment();
   const prefix = environment === "browser" ? "VITE_" : "";
 
-  const clientId = getEnvVariable(`${prefix}SNAPTRADE_CLIENT_ID`);
-  const consumerKey = getEnvVariable(`${prefix}SNAPTRADE_CONSUMER_KEY`);
+  const clientId = getEnvVar(`${prefix}SNAPTRADE_CLIENT_ID`);
+  const consumerKey = getEnvVar(`${prefix}SNAPTRADE_CONSUMER_KEY`);
 
   // Use fallback values in development mode
   if (

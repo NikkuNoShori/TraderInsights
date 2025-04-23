@@ -1,15 +1,16 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { snapTradeService } from "../services/snaptradeService";
-import { SnapTradeUser } from "../lib/snaptrade/types";
-import { StorageHelpers } from "../lib/storage";
-import type {
+import { SnapTradeClient } from "@/lib/snaptrade/client";
+import { getSnapTradeConfig } from "@/lib/snaptrade/config";
+import {
+  SnapTradeUser,
   SnapTradeConnection,
   SnapTradeAccount,
   SnapTradePosition,
   SnapTradeBalance,
   SnapTradeOrder,
 } from "@/lib/snaptrade/types";
+import { StorageHelpers } from "../lib/storage";
 
 interface BrokerDataState {
   // Data

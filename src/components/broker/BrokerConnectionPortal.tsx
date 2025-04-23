@@ -1,47 +1,12 @@
-/**
- * BrokerConnectionPortal Component
- * 
- * A modal component that handles the OAuth flow for connecting brokerage accounts.
- * Used as a reusable portal for broker connections across different parts of the application.
- * 
- * Features:
- * - Manages broker OAuth authentication flow
- * - Handles connection success/failure states
- * - Provides user feedback during connection process
- * - Supports custom success/error callbacks
- * 
- * Usage:
- * ```tsx
- * <BrokerConnectionPortal
- *   brokerageId={brokerageId}
- *   userId={userId}
- *   userSecret={userSecret}
- *   onError={handleError}
- * />
- * ```
- * 
- * Props:
- * @prop {string} brokerageId - Brokerage identifier
- * @prop {string} userId - User identifier for SnapTrade
- * @prop {string} userSecret - User secret for SnapTrade authentication
- * @prop {(error: string) => void} onError - Optional callback on connection error
- * 
- * Used By:
- * - ImportTradeForm: For connecting brokers during trade import
- * 
- * @see src/components/trades/ImportTradeForm.tsx
- * @see src/components/broker/BrokerDashboard.tsx
- */
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Snaptrade } from 'snaptrade-typescript-sdk';
-import { getSnapTradeConfig } from '@/lib/snaptrade/config';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { createDebugLogger } from '@/stores/debugStore';
+import { SnapTradeClient } from '@/lib/snaptrade';
+import type { SnapTradeError } from '@/lib/snaptrade';
 
-const brokerLogger = createDebugLogger('broker');
+const logger = createDebugLogger('broker' as any); // TODO: Add 'broker' to DebugCategory type
 
 interface BrokerConnectionPortalProps {
   brokerageId: string;
@@ -66,38 +31,23 @@ export function BrokerConnectionPortal({
         setIsLoading(true);
         setError(null);
 
-        // Get SnapTrade configuration
-        const config = getSnapTradeConfig();
-        
-        // Initialize SnapTrade SDK
-        const snaptrade = new Snaptrade({
-          clientId: config.clientId,
-          consumerKey: config.consumerKey,
-        });
-
-        // Create connection link using SDK
-        const response = await snaptrade.authentication.loginSnapTradeUser({
+        const client = new SnapTradeClient();
+        const response = await client.createConnectionLink(
           userId,
           userSecret,
-          broker: brokerageId,
-          immediateRedirect: true,
-          connectionType: "read",
-        });
+          brokerageId,
+          {
+            immediateRedirect: true,
+            connectionType: 'read',
+            connectionPortalVersion: 'v4'
+          }
+        );
 
-        // Log the response for debugging
-        console.log('SnapTrade login response:', response.data);
-
-        // The response should contain a redirect URI
-        const redirectUri = (response.data as any).redirectURI;
-        if (!redirectUri) {
-          throw new Error('No redirect URI received from SnapTrade');
-        }
-
-        // Redirect to authorization URL
-        window.location.href = redirectUri;
+        logger.debug('SnapTrade login response:', response);
+        window.location.href = response.redirectURI;
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to connect to broker';
-        brokerLogger.error('Error creating connection link:', errorMessage);
+        logger.error('Error creating connection link:', errorMessage);
         setError(errorMessage);
         onError?.(errorMessage);
       } finally {
@@ -110,11 +60,8 @@ export function BrokerConnectionPortal({
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center p-4">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="mt-2 text-sm text-muted-foreground">
-          Initializing broker connection...
-        </p>
+      <div className="flex items-center justify-center p-4">
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
@@ -122,14 +69,10 @@ export function BrokerConnectionPortal({
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center p-4">
-        <AlertCircle className="h-8 w-8 text-destructive" />
-        <p className="mt-2 text-sm text-destructive">{error}</p>
-        <Button
-          variant="outline"
-          className="mt-4"
-          onClick={() => navigate('/app/broker-dashboard')}
-        >
-          Return to Dashboard
+        <AlertCircle className="h-8 w-8 text-error mb-4" />
+        <div className="text-error mb-4">{error}</div>
+        <Button onClick={() => navigate('/app/settings')}>
+          Return to Settings
         </Button>
       </div>
     );
