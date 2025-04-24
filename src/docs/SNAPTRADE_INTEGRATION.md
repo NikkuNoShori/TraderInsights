@@ -1,155 +1,151 @@
-# SnapTrade Integration Progress
+# SnapTrade Integration
 
 ## Overview
 
-This document tracks the progress of the SnapTrade API integration for TraderInsights. The integration is being implemented in phases, focusing on MVP features first.
+This document describes the integration of SnapTrade's API into our application. We use the official `snaptrade-typescript-sdk` package with a custom wrapper for enhanced functionality.
 
-## Current Status
+## Implementation Details
 
-### Core Infrastructure (90% Complete) ✅
-- [x] Client setup and configuration
-- [x] Service layer implementation
-- [x] Authentication flow with OAuth
-- [x] Type definitions
-- [x] Storage helpers
-- [x] OAuth callback handling
-- [x] Rate limiting implementation
-- [x] Error handling
-- [ ] Comprehensive logging
+### Client Layer
 
-### UI Components (75% Complete) ⏳
-- [x] SnapTradeDemo component
-- [x] OAuth callback page
-- [x] Broker selection UI
-- [x] Account connection UI
-- [x] Holdings display
-- [x] Basic error feedback
-- [ ] Main dashboard integration
-- [ ] Trade import UI
-- [ ] Account management UI
-- [ ] Loading states and feedback
-- [ ] Error handling UI
+The client layer (`src/lib/snaptrade/client.ts`) provides a wrapper around the official SDK:
 
-### API Integration (85% Complete) ⏳
-- [x] User registration
-- [x] Brokerage listing
-- [x] Connection management
-- [x] Account information retrieval
-- [x] Holdings retrieval
-- [x] Balance retrieval
-- [x] Order retrieval
-- [x] Rate limit handling
-- [ ] Real-time data syncing
-- [ ] Trade execution
-- [ ] Error handling improvements
+```typescript
+export class SnapTradeClient {
+  private client: Snaptrade;
+  private isInitialized: boolean = false;
 
-### Data Transformation (60% Complete) ⏳
-- [x] Basic data mapping
-- [x] Account data transformation
-- [x] Holdings data transformation
-- [x] Balance data transformation
-- [ ] Historical data migration
-- [ ] Data validation
-- [ ] Trade normalization
-- [ ] Position tracking
-- [ ] Performance metrics
-- [ ] Data consistency checks
+  constructor(config: SnapTradeConfig) {
+    this.client = new Snaptrade({
+      clientId: config.clientId,
+      consumerKey: config.consumerKey,
+      basePath: "https://api.snaptrade.com/api/v1"
+    });
+  }
 
-### Testing (70% Complete) ⏳
-- [x] Mock data generation
-- [x] Basic integration tests
-- [x] Authentication tests
-- [x] Rate limit tests
-- [ ] End-to-end testing
-- [ ] Error scenario testing
-- [ ] Performance testing
-- [ ] Data validation tests
-- [ ] UI component tests
+  async initialize(): Promise<void> {
+    if (!this.isInitialized) {
+      await this.client.initialize();
+      this.isInitialized = true;
+    }
+  }
 
-## MVP Requirements
-
-### Phase 1: Core Integration (100% Complete) ✅
-1. [x] Basic authentication and user registration
-2. [x] Account connection and management
-3. [x] Trade history import
-4. [x] Basic position tracking
-5. [x] Essential error handling
-
-### Phase 2: Data Management (75% Complete) ⏳
-1. [x] Trade data transformation
-2. [x] Historical data import
-3. [x] Position synchronization
-4. [ ] Basic performance metrics
-5. [ ] Data validation
-
-### Phase 3: UI/UX (60% Complete) ⏳
-1. [x] Account management interface
-2. [x] Trade import workflow
-3. [x] Position display
-4. [ ] Basic error feedback
-5. [ ] Loading states
-
-## Overall MVP Progress: 78% Complete
-
-### Completed MVP Features
-1. ✅ Secure OAuth authentication
-2. ✅ Multi-broker support
-3. ✅ Account connection
-4. ✅ Basic data retrieval
-5. ✅ Position tracking
-6. ✅ Rate limiting
-7. ✅ Error handling
-8. ✅ Basic UI components
-
-### Remaining MVP Tasks
-1. ⏳ Main dashboard integration
-2. ⏳ Trade import UI
-3. ⏳ Data validation
-4. ⏳ Loading states
-5. ⏳ Error feedback
-6. ⏳ End-to-end testing
-
-## VIP Features (Post-MVP)
-1. Real-time data syncing
-2. Advanced trade execution
-3. Advanced performance metrics
-4. Custom data mapping
-5. Advanced error handling
-6. Rate limit optimization
-7. Advanced UI features
-
-## Next Steps
-
-### Immediate Tasks (MVP Priority)
-1. Complete trade import UI
-2. Implement data validation
-3. Add loading states and error feedback
-4. Set up end-to-end testing
-5. Integrate with main dashboard
-
-### Technical Debt
-1. Improve error handling
-2. Add comprehensive logging
-3. Optimize rate limiting
-4. Enhance data validation
-5. Improve test coverage
-
-## Environment Variables
-
-```env
-# SnapTrade API Configuration
-NEXT_PUBLIC_SNAPTRADE_CLIENT_ID=your_client_id
-NEXT_PUBLIC_SNAPTRADE_CONSUMER_KEY=your_consumer_key
-NEXT_PUBLIC_SNAPTRADE_REDIRECT_URI=http://localhost:3000/snaptrade-callback
-
-# Rate Limiting
-NEXT_PUBLIC_SNAPTRADE_RATE_LIMIT_MAX=5
-NEXT_PUBLIC_SNAPTRADE_RATE_LIMIT_WINDOW=10
+  // ... other methods
+}
 ```
 
-## Resources
-- [SnapTrade Documentation](https://docs.snaptrade.com)
-- [SnapTrade TypeScript SDK](https://github.com/passiv/snaptrade-typescript-sdk)
-- [SnapTrade API Reference](https://docs.snaptrade.com/reference)
-- [Migration Guide](./MIGRATION_GUIDE.md)
-- [Security Assessment](./SECURITY_ASSESSMENT.md) 
+### Connection Flow
+
+The connection flow is implemented in `src/components/broker/BrokerConnectionPortal.tsx`:
+
+1. User selects a broker
+2. Component initializes SnapTrade client
+3. Gets connection URL using the connections API
+4. Redirects to SnapTrade's connection portal
+5. Handles callback and stores session information
+
+### Error Handling
+
+All SnapTrade errors are handled through our custom `SnapTradeError` type:
+
+```typescript
+interface SnapTradeError {
+  message: string;
+  code?: string;
+  status?: number;
+}
+```
+
+### Session Management
+
+Connection sessions are managed through `StorageHelpers`:
+
+```typescript
+interface ConnectionSession {
+  sessionId: string;
+  userId: string;
+  userSecret: string;
+  brokerId: string;
+  redirectUrl: string;
+  createdAt: number;
+  status: 'pending' | 'completed' | 'failed';
+}
+```
+
+## Usage Examples
+
+### Initializing the Client
+
+```typescript
+const config = await StorageHelpers.getSnapTradeConfig();
+const client = new SnapTradeClient(config);
+await client.initialize();
+```
+
+### Connecting to a Broker
+
+```typescript
+const session = await client.getConnections(userId, userSecret);
+const connectionUrl = session.redirectUrl;
+// Redirect to connectionUrl
+```
+
+### Handling Callbacks
+
+```typescript
+const session = await StorageHelpers.getConnectionSession();
+if (session.status === 'completed') {
+  // Connection successful
+} else {
+  // Handle error
+}
+```
+
+## Best Practices
+
+1. **Initialization**: Always initialize the client before making API calls
+2. **Error Handling**: Use try-catch blocks and handle SnapTradeError specifically
+3. **Session Management**: Store session information securely
+4. **Configuration**: Keep configuration in environment variables
+5. **Testing**: Use mock data for development and testing
+
+## Troubleshooting
+
+### Common Issues
+
+1. **CORS Errors**: Ensure you're using the correct API endpoint
+2. **Initialization Errors**: Check if the client is properly initialized
+3. **Session Errors**: Verify session information is stored correctly
+4. **Configuration Errors**: Validate all required configuration parameters
+
+### Debugging
+
+1. Enable detailed logging in development
+2. Check network requests in browser dev tools
+3. Verify session storage contents
+4. Test with mock data first
+
+## Security Considerations
+
+1. **Authentication**: All API requests are signed with HMAC-SHA256
+2. **Data Protection**: Sensitive information is stored securely
+3. **Session Security**: Session information is encrypted
+4. **Environment Security**: Use environment variables for configuration
+
+## Testing
+
+The integration includes test scripts:
+
+```bash
+# Run with mock data
+npm run test:snaptrade -- --mock
+
+# Run with real data
+npm run test:snaptrade
+```
+
+## References
+
+- [SnapTrade API Documentation](https://docs.snaptrade.com)
+- [SnapTrade TypeScript SDK](https://github.com/snaptrade/snaptrade-typescript-sdk)
+- [SnapTrade React SDK](https://github.com/snaptrade/snaptrade-react-sdk) 

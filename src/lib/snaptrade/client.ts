@@ -37,10 +37,8 @@ export class SnapTradeClient {
     const configuration = new Configuration({
       clientId: config.clientId,
       consumerKey: config.consumerKey,
-      // Demo mode uses a different base URL
-      basePath: config.isDemo
-        ? "https://demo-api.snaptrade.com/api/v1"
-        : "https://api.snaptrade.com/api/v1",
+      // Always use production endpoint as per SDK documentation
+      basePath: "https://api.snaptrade.com/api/v1",
     });
     this.client = new Snaptrade(configuration);
   }
@@ -195,6 +193,49 @@ export class SnapTradeClient {
         `Failed to get account orders: ${error}`
       ) as SnapTradeError;
       err.code = "ORDERS_ERROR";
+      err.details = error;
+      throw err;
+    }
+  }
+
+  async createConnectionLink(
+    userId: string,
+    userSecret: string,
+    brokerageId: string,
+    options: {
+      immediateRedirect: boolean;
+      connectionType: "read" | "trade";
+      connectionPortalVersion: "v4";
+    }
+  ): Promise<{ sessionId: string; redirectURI: string }> {
+    try {
+      // Get existing connections
+      const connections = await this.getConnections(userId, userSecret);
+
+      // Check if we need to reconnect an existing connection
+      const existingConnection = connections.find(
+        (conn) => conn.brokerage_authorization?.brokerage?.id === brokerageId
+      );
+
+      if (existingConnection) {
+        // Reconnect existing connection
+        return {
+          sessionId: existingConnection.sessionId,
+          redirectURI: `https://app.snaptrade.com/connect?sessionId=${existingConnection.sessionId}&userId=${userId}&userSecret=${userSecret}`,
+        };
+      } else {
+        // Create new connection
+        const sessionId = `session-${Date.now()}`;
+        return {
+          sessionId,
+          redirectURI: `https://app.snaptrade.com/connect?sessionId=${sessionId}&userId=${userId}&userSecret=${userSecret}&brokerageId=${brokerageId}&connectionType=${options.connectionType}`,
+        };
+      }
+    } catch (error) {
+      const err = new Error(
+        `Failed to create connection link: ${error}`
+      ) as SnapTradeError;
+      err.code = "CONNECTION_LINK_ERROR";
       err.details = error;
       throw err;
     }

@@ -26,6 +26,7 @@ export const STORAGE_KEYS = {
   BALANCES: "snaptrade_balances",
   CONFIG: "snaptrade_config",
   CONNECTION_SESSION: "snaptrade_connection_session",
+  CONNECTION_SESSIONS: "snaptrade_connection_sessions",
 } as const;
 
 // Define the connection session type
@@ -33,7 +34,12 @@ interface ConnectionSession {
   sessionId: string;
   userId: string;
   userSecret: string;
-  brokerSlug: string;
+  brokerId: string;
+  redirectUrl: string;
+  createdAt: number;
+  status: "pending" | "completed" | "failed";
+  authorizationId?: string;
+  error?: string;
 }
 
 // Storage helpers
@@ -149,20 +155,32 @@ export const StorageHelpers = {
     });
   },
 
-  // Connection session
-  getConnectionSession: (): ConnectionSession | null => {
-    const data = StorageHelpers.getItem(STORAGE_KEYS.CONNECTION_SESSION);
-    return data ? JSON.parse(data) : null;
-  },
-
+  // Connection session management
   saveConnectionSession: (session: ConnectionSession): void => {
+    const sessions = StorageHelpers.getConnectionSessions();
+    sessions[session.brokerId] = session;
     StorageHelpers.setItem(
-      STORAGE_KEYS.CONNECTION_SESSION,
-      JSON.stringify(session)
+      STORAGE_KEYS.CONNECTION_SESSIONS,
+      JSON.stringify(sessions)
     );
   },
 
-  clearConnectionSession: (): void => {
-    StorageHelpers.removeItem(STORAGE_KEYS.CONNECTION_SESSION);
+  getConnectionSession: (brokerId: string): ConnectionSession | null => {
+    const sessions = StorageHelpers.getConnectionSessions();
+    return sessions[brokerId] || null;
+  },
+
+  getConnectionSessions: (): Record<string, ConnectionSession> => {
+    const data = StorageHelpers.getItem(STORAGE_KEYS.CONNECTION_SESSIONS);
+    return data ? JSON.parse(data) : {};
+  },
+
+  clearConnectionSession: (brokerId: string): void => {
+    const sessions = StorageHelpers.getConnectionSessions();
+    delete sessions[brokerId];
+    StorageHelpers.setItem(
+      STORAGE_KEYS.CONNECTION_SESSIONS,
+      JSON.stringify(sessions)
+    );
   },
 }; 

@@ -440,82 +440,60 @@ export const fetchAlphaVantageWithRateLimit = async (url: string) => {
 
 ## SnapTrade Integration
 
-### Overview
+The SnapTrade integration uses the official `snaptrade-typescript-sdk` package. We have implemented a custom wrapper around the SDK that provides additional benefits:
 
-SnapTrade integration is used for importing trade data and connecting to multiple brokerages. See the [SnapTrade Integration](./SNAPTRADE_INTEGRATION.md) document for detailed information.
+1. **Consistent Error Handling**: The wrapper standardizes error handling across all SnapTrade API calls
+2. **Type Safety**: Enhanced type safety through custom type definitions
+3. **Centralized Configuration**: Single source of truth for SDK configuration
+4. **Easy SDK Implementation Switching**: Ability to switch SDK implementations if needed
 
-### Key Features
+### SDK Configuration
 
-- Multi-broker support through OAuth
-- Trade history import
-- Position data import
-- Order data import
-- Performance analysis
-- Rate limiting and quota management
-
-### Data Models
+The SDK is configured in `src/lib/snaptrade/client.ts`:
 
 ```typescript
-// src/types/snaptrade.ts
+const snaptrade = new Snaptrade({
+  clientId: config.clientId,
+  consumerKey: config.consumerKey,
+  basePath: "https://api.snaptrade.com/api/v1" // Production endpoint
+});
+```
 
-interface SnapTradeAccount {
-  id: string;
-  name: string;
-  type: string;
-  institution: string;
-  status: string;
-  balances: SnapTradeBalance[];
-  holdings: SnapTradeHolding[];
-  orders: SnapTradeOrder[];
-}
+### Connection Flow
 
-interface SnapTradeBalance {
-  currency: string;
-  cash: number;
-  marketValue: number;
-  totalValue: number;
-  buyingPower: number;
-}
+The connection flow is implemented in `src/components/broker/BrokerConnectionPortal.tsx`:
 
-interface SnapTradeHolding {
-  symbol: string;
-  quantity: number;
-  averagePrice: number;
-  marketValue: number;
-  unrealizedPnl: number;
-  realizedPnl: number;
-}
+1. Initialize the SnapTrade client with configuration
+2. Store session information for tracking
+3. Get connection URL using the connections API
+4. Redirect to the SnapTrade connection portal
 
-interface SnapTradeOrder {
-  id: string;
-  symbol: string;
-  side: "BUY" | "SELL";
-  type: "MARKET" | "LIMIT" | "STOP" | "STOP_LIMIT";
-  quantity: number;
-  price?: number;
-  status: string;
-  filledQuantity: number;
-  filledPrice?: number;
-  createdAt: string;
-  updatedAt: string;
+### Error Handling
+
+All SnapTrade errors are handled through our custom `SnapTradeError` type:
+
+```typescript
+interface SnapTradeError {
+  message: string;
+  code?: string;
+  status?: number;
 }
 ```
 
-### Rate Limiting
+### Session Management
 
-SnapTrade has rate limits based on the subscription tier:
-
-- **Free Tier**: 5 requests per 15 minutes
-- **Premium Tier**: Higher limits based on subscription
+Connection sessions are managed through `StorageHelpers`:
 
 ```typescript
-// Using the rate limiter
-const rateLimiter = new RateLimiter(5, 15 * 60 * 1000); // 5 requests per 15 minutes
-
-export const fetchSnapTradeWithRateLimit = async (url: string) => {
-  await rateLimiter.throttle();
-  return fetch(url);
-};
+interface ConnectionSession {
+  sessionId: string;
+  userId: string;
+  userSecret: string;
+  brokerId: string;
+  redirectUrl: string;
+  createdAt: number;
+  status: 'pending' | 'completed' | 'failed';
+}
 ```
 
 ## Supabase Integration
@@ -955,104 +933,4 @@ async function getUserConnections(): Promise<SnapTradeConnection[]>
 
 Retrieves user's accounts.
 
-```typescript
-async function getUserAccounts(): Promise<SnapTradeAccount[]>
 ```
-
-### Data Retrieval
-
-#### getAccountHoldings
-
-Retrieves account holdings.
-
-```typescript
-async function getAccountHoldings(accountId: string): Promise<SnapTradeHolding[]>
-```
-
-#### getAccountBalances
-
-Retrieves account balances.
-
-```typescript
-async function getAccountBalances(accountId: string): Promise<SnapTradeBalance[]>
-```
-
-#### getAccountOrders
-
-Retrieves account orders.
-
-```typescript
-async function getAccountOrders(accountId: string): Promise<SnapTradeOrder[]>
-```
-
-## Rate Limiting
-
-SnapTrade has rate limits based on the subscription tier:
-
-- **Free Tier**: 5 requests per 15 minutes
-- **Premium Tier**: Higher limits based on subscription
-
-```typescript
-// Using the rate limiter
-const rateLimiter = new RateLimiter(5, 15 * 60 * 1000); // 5 requests per 15 minutes
-
-export const fetchSnapTradeWithRateLimit = async (url: string) => {
-  await rateLimiter.throttle();
-  return fetch(url);
-};
-```
-
-## Error Handling
-
-The API includes comprehensive error handling:
-
-```typescript
-try {
-  const response = await snapTradeService.getAccountHoldings(accountId);
-} catch (error) {
-  if (error instanceof SnapTradeError) {
-    // Handle SnapTrade specific errors
-    console.error('SnapTrade error:', error.message);
-  } else {
-    // Handle other errors
-    console.error('Unexpected error:', error);
-  }
-}
-```
-
-## Security Considerations
-
-1. **Authentication**:
-   - All API requests are signed with HMAC-SHA256
-   - Timestamps are validated to prevent replay attacks
-   - User credentials are never stored
-
-2. **Data Protection**:
-   - Sensitive information is stored in environment variables
-   - No credential storage in the application
-   - Rate limiting prevents abuse
-
-3. **Environment Security**:
-   - Browser environment uses Web Crypto API
-   - Node.js environment uses crypto module
-   - Secure token storage in both environments
-
-## Testing
-
-The API includes a test script that can be run from the command line:
-
-```bash
-# Run with mock data
-npm run test:snaptrade -- --mock
-
-# Run with real data (requires environment variables)
-npm run test:snaptrade
-```
-
-The test script verifies:
-
-1. User registration
-2. Brokerage listing
-3. Connection management
-4. Account information retrieval
-5. Holdings, balances, and orders retrieval 

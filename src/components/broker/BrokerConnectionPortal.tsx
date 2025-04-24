@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { createDebugLogger } from '@/stores/debugStore';
-import { SnapTradeClient } from '@/lib/snaptrade';
+import { Snaptrade } from 'snaptrade-typescript-sdk';
+import { StorageHelpers } from '@/lib/snaptrade/storage';
 import type { SnapTradeError } from '@/lib/snaptrade';
 
-const logger = createDebugLogger('broker' as any); // TODO: Add 'broker' to DebugCategory type
+const logger = createDebugLogger('broker' as any);
 
 interface BrokerConnectionPortalProps {
   brokerageId: string;
@@ -31,23 +32,49 @@ export function BrokerConnectionPortal({
         setIsLoading(true);
         setError(null);
 
-        const client = new SnapTradeClient();
-        const response = await client.createConnectionLink(
+        // Get the SnapTrade configuration
+        const config = StorageHelpers.getConfig();
+        if (!config) {
+          throw new Error('SnapTrade configuration not found');
+        }
+
+        // Initialize the SnapTrade client
+        const snaptrade = new Snaptrade({
+          clientId: config.clientId,
+          consumerKey: config.consumerKey,
+          // Use production endpoint as per SDK documentation
+          basePath: "https://api.snaptrade.com/api/v1"
+        });
+
+        // Store the session information
+        StorageHelpers.saveConnectionSession({
+          sessionId: 'pending',
           userId,
           userSecret,
-          brokerageId,
-          {
-            immediateRedirect: true,
-            connectionType: 'read',
-            connectionPortalVersion: 'v4'
-          }
-        );
+          brokerId: brokerageId,
+          redirectUrl: window.location.href,
+          createdAt: Date.now(),
+          status: 'pending'
+        });
 
-        logger.debug('SnapTrade login response:', response);
-        window.location.href = response.redirectURI;
+        // Get the connection URL using the connections API
+        const response = await snaptrade.connections.listBrokerageAuthorizations({
+          userId,
+          userSecret
+        });
+
+        if (!response.data || response.data.length === 0) {
+          throw new Error('Failed to get connection URL from SnapTrade');
+        }
+
+        logger.debug('SnapTrade connection response:', response.data);
+
+        // Redirect to the SnapTrade connection portal
+        window.location.href = response.data[0].redirectURI;
+
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to connect to broker';
-        logger.error('Error creating connection link:', errorMessage);
+        logger.error('Error initializing connection:', errorMessage);
         setError(errorMessage);
         onError?.(errorMessage);
       } finally {
