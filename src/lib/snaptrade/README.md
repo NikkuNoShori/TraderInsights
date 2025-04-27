@@ -304,4 +304,5 @@ The `types.ts` file provides TypeScript type definitions for the SnapTrade integ
 
 ## License
 
-This integration is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details. 
+This integration is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
+

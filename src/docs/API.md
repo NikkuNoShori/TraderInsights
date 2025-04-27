@@ -1,6 +1,6 @@
 # API Documentation
 
-This document provides comprehensive documentation for the API integrations used in TraderInsights.
+This document provides an overview of the APIs used in TraderInsights.
 
 ## Overview
 
@@ -438,63 +438,105 @@ export const fetchAlphaVantageWithRateLimit = async (url: string) => {
 };
 ```
 
-## SnapTrade Integration
+## SnapTrade API
 
-The SnapTrade integration uses the official `snaptrade-typescript-sdk` package. We have implemented a custom wrapper around the SDK that provides additional benefits:
-
-1. **Consistent Error Handling**: The wrapper standardizes error handling across all SnapTrade API calls
-2. **Type Safety**: Enhanced type safety through custom type definitions
-3. **Centralized Configuration**: Single source of truth for SDK configuration
-4. **Easy SDK Implementation Switching**: Ability to switch SDK implementations if needed
-
-### SDK Configuration
-
-The SDK is configured in `src/lib/snaptrade/client.ts`:
-
+### Configuration
 ```typescript
-const snaptrade = new Snaptrade({
-  clientId: config.clientId,
-  consumerKey: config.consumerKey,
-  basePath: "https://api.snaptrade.com/api/v1" // Production endpoint
-});
-```
-
-### Connection Flow
-
-The connection flow is implemented in `src/components/broker/BrokerConnectionPortal.tsx`:
-
-1. Initialize the SnapTrade client with configuration
-2. Store session information for tracking
-3. Get connection URL using the connections API
-4. Redirect to the SnapTrade connection portal
-
-### Error Handling
-
-All SnapTrade errors are handled through our custom `SnapTradeError` type:
-
-```typescript
-interface SnapTradeError {
-  message: string;
-  code?: string;
-  status?: number;
+interface SnapTradeConfig {
+  clientId: string;
+  consumerKey: string;
+  basePath: string;
 }
 ```
 
-### Session Management
-
-Connection sessions are managed through `StorageHelpers`:
-
+### Authentication
 ```typescript
-interface ConnectionSession {
-  sessionId: string;
+interface SnapTradeAuth {
   userId: string;
   userSecret: string;
-  brokerId: string;
-  redirectUrl: string;
-  createdAt: number;
-  status: 'pending' | 'completed' | 'failed';
 }
 ```
+
+### Account Information
+```typescript
+interface SnapTradeAccount {
+  id: string;
+  name: string;
+  number: string;
+  type: string;
+  status: string;
+  currency: string;
+  institution: {
+    id: string;
+    name: string;
+  };
+}
+```
+
+### Positions
+```typescript
+interface SnapTradePosition {
+  symbol: string;
+  units: number;
+  price: number;
+  currency: string;
+  marketValue: number;
+}
+```
+
+### Balances
+```typescript
+interface SnapTradeBalance {
+  currency: string;
+  cash: number;
+  marketValue: number;
+  totalEquity: number;
+}
+```
+
+### Orders
+```typescript
+interface SnapTradeOrder {
+  id: string;
+  symbol: string;
+  units: number;
+  price: number;
+  currency: string;
+  status: string;
+  type: string;
+  side: string;
+  timeInForce: string;
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+### Error Handling
+```typescript
+interface SnapTradeError extends Error {
+  code: string;
+  details?: unknown;
+}
+```
+
+## Development Guidelines
+
+1. **Environment Setup**:
+   - Set up environment variables
+   - Configure API endpoints
+   - Initialize API clients
+
+2. **Testing**:
+   - Use test environment for development
+   - Test with mock data
+   - Implement proper error handling
+   - Test both success and failure scenarios
+
+3. **Code Organization**:
+   - Keep API related code in `src/lib/api/`
+   - Use TypeScript for type safety
+   - Follow project conventions
+   - Document all public methods
 
 ## Supabase Integration
 
@@ -773,164 +815,3 @@ export const useStockPrices = (symbol: string, from: string, to: string) => {
 3. **Error Reporting**: Implement centralized error reporting
 4. **Rate Limit Handling**: Improve rate limit handling with backoff strategies
 5. **API Versioning**: Handle API versioning gracefully
-
-# SnapTrade API Documentation
-
-This document provides detailed information about the SnapTrade API integration in TraderInsights.
-
-## SDK Types and Interfaces
-
-The SnapTrade integration uses the official `snaptrade-typescript-sdk` package. Here are the key types and interfaces:
-
-### SnapTradeConfig
-
-Configuration for the SnapTrade integration.
-
-```typescript
-interface SnapTradeConfig {
-  clientId: string;          // SnapTrade client ID
-  consumerKey: string;       // SnapTrade consumer key (used for authentication)
-  redirectUri?: string;      // OAuth redirect URI
-  isDemo?: boolean;          // Flag indicating if using demo credentials
-}
-```
-
-### SnapTradeAccount
-
-Represents a user's brokerage account.
-
-```typescript
-interface SnapTradeAccount {
-  id: string;               // Unique account identifier
-  name: string;             // Account name
-  type: string;             // Account type (e.g., "MARGIN", "CASH")
-  institution: string;      // Brokerage institution name
-  status: string;           // Account status
-  balances: SnapTradeBalance[];  // Account balances
-  holdings: SnapTradeHolding[];  // Account holdings
-  orders: SnapTradeOrder[];      // Account orders
-}
-```
-
-### SnapTradeBalance
-
-Represents an account balance.
-
-```typescript
-interface SnapTradeBalance {
-  currency: string;         // Currency code (e.g., "USD")
-  cash: number;            // Cash balance
-  marketValue: number;     // Market value of holdings
-  totalValue: number;      // Total account value
-  buyingPower: number;     // Available buying power
-}
-```
-
-### SnapTradeHolding
-
-Represents a position in an account.
-
-```typescript
-interface SnapTradeHolding {
-  symbol: string;          // Security symbol
-  quantity: number;        // Number of shares/units
-  averagePrice: number;    // Average purchase price
-  marketValue: number;     // Current market value
-  unrealizedPnl: number;   // Unrealized profit/loss
-  realizedPnl: number;     // Realized profit/loss
-}
-```
-
-### SnapTradeOrder
-
-Represents an order in an account.
-
-```typescript
-interface SnapTradeOrder {
-  id: string;              // Unique order identifier
-  symbol: string;          // Security symbol
-  side: "BUY" | "SELL";   // Order side
-  type: "MARKET" | "LIMIT" | "STOP" | "STOP_LIMIT";  // Order type
-  quantity: number;        // Order quantity
-  price?: number;          // Order price (for limit orders)
-  status: string;          // Order status
-  filledQuantity: number;  // Filled quantity
-  filledPrice?: number;    // Average fill price
-  createdAt: string;       // Order creation timestamp
-  updatedAt: string;       // Last update timestamp
-}
-```
-
-## API Methods
-
-### Authentication
-
-#### generateSnapTradeAuth
-
-Generates authentication credentials for SnapTrade.
-
-```typescript
-async function generateSnapTradeAuth(config: SnapTradeConfig): Promise<{
-  clientId: string;
-  timestamp: string;
-  signature: string;
-}>
-```
-
-#### createSnapTradeClient
-
-Creates a SnapTrade client instance.
-
-```typescript
-async function createSnapTradeClient(config: SnapTradeConfig): Promise<Snaptrade>
-```
-
-### User Management
-
-#### registerUser
-
-Registers a new user with SnapTrade.
-
-```typescript
-async function registerUser(userId: string): Promise<string>
-```
-
-#### login
-
-Logs in a user with SnapTrade.
-
-```typescript
-async function login(userId: string, userSecret: string): Promise<void>
-```
-
-### Account Management
-
-#### getBrokerages
-
-Retrieves available brokerages.
-
-```typescript
-async function getBrokerages(): Promise<Brokerage[]>
-```
-
-#### createConnectionLink
-
-Creates a connection link for OAuth authentication.
-
-```typescript
-async function createConnectionLink(brokerageId: string): Promise<string>
-```
-
-#### getUserConnections
-
-Retrieves user's brokerage connections.
-
-```typescript
-async function getUserConnections(): Promise<SnapTradeConnection[]>
-```
-
-#### getUserAccounts
-
-Retrieves user's accounts.
-
-```

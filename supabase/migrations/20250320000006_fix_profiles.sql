@@ -15,7 +15,9 @@ WHERE NOT EXISTS (
 
 -- Ensure the trigger exists for future users
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-DROP FUNCTION IF EXISTS public.handle_new_user();
+
+-- Drop the function with CASCADE to handle dependencies
+DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$

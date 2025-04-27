@@ -1,23 +1,60 @@
-export interface BrokerProfile {
+export interface Broker {
   id: string;
-  user_id: string;
-  name: string; // e.g., "Charles Schwab (New)"
-  type: "charlesschwab" | "tdameritrade" | "ibkr" | "webull" | "other";
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  name: string;
+  type: BrokerType;
+  status: "active" | "inactive" | "pending" | "error";
 }
 
-export type BrokerType = "charlesschwab" | "tdameritrade" | "ibkr" | "webull" | "snaptrade" | "other";
+export type BrokerType = "schwab" | "snaptrade";
 
 // Charles Schwab CSV format
 export interface SchwabTradeImport {
-  Date: string; // "12/6/2024"
-  Action: string; // "Buy" | "Sell"
-  Symbol: string; // "ZENA"
-  Description: string; // "ZENATECH INC F"
-  Quantity: number; // 55
-  Price: number; // 6.22
-  Fees: number; // Optional
-  Amount: number; // -342.10
+  Date: string;
+  Symbol: string;
+  Action: string;
+  Quantity: number;
+  Price: number;
+  Fees: number;
+  Amount: number;
+  Description: string;
 }
+
+// Map broker types to display names
+export const brokerNames: Record<BrokerType, string> = {
+  schwab: "Charles Schwab",
+  snaptrade: "SnapTrade",
+};
+
+export interface BrokerConnection {
+  id: string;
+  broker: BrokerType;
+  userId: string;
+  status: "connected" | "disconnected";
+  lastSynced?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BrokerAccount {
+  id: string;
+  broker: BrokerType;
+  userId: string;
+  name: string;
+  type: string;
+  status: "active" | "inactive";
+  balance?: number;
+  currency?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BrokerConfig {
+  displayName: string;
+  type: BrokerType;
+  enabled: boolean;
+}
+
+export const BROKER_DISPLAY_NAMES: Record<BrokerType, string> = {
+  schwab: "Charles Schwab",
+  snaptrade: "SnapTrade",
+};

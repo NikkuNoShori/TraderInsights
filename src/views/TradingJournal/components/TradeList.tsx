@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TimeframeSelector } from "@/components/ui/TimeframeSelector";
 
 const TRADE_DETAILS_COLUMNS = [
   { id: 'order_type', label: 'Order Type', defaultVisible: true },

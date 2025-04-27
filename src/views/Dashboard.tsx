@@ -42,12 +42,10 @@ export default function Dashboard() {
       return (
         <div className="mb-6 p-4 border border-destructive/20 rounded-lg bg-destructive/10">
           <h3 className="font-medium text-destructive mb-1">Connection Error</h3>
-          <p className="text-sm text-destructive/80">{error}</p>
-          {error && (
-            <Button variant="outline" className="mt-2" onClick={() => window.location.href = '/app/broker-dashboard'}>
-              Try Again
-            </Button>
-          )}
+          <p className="text-sm text-destructive/80">{error.message || String(error)}</p>
+          <Button variant="outline" className="mt-2" onClick={() => window.location.href = '/app/broker-dashboard'}>
+            Try Again
+          </Button>
         </div>
       );
     }
@@ -86,7 +84,7 @@ export default function Dashboard() {
           )}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {connections.map((connection) => (
+          {connections.map((connection: any) => (
             <div key={connection.id} className="p-4 border border-border rounded-lg">
               <div className="flex items-center space-x-3">
                 {connection.brokerLogo && (

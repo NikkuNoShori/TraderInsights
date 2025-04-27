@@ -1,30 +1,17 @@
-import { Router } from "express";
-import { SnapTradeClient } from "@/lib/snaptrade/client";
-import { SnapTradeError } from "@/lib/snaptrade/types";
+import { Router, Request, Response, RequestHandler } from "express";
+import { snapTradeClient } from "@/lib/snaptrade/client";
+import { SnapTradeError } from "@/lib/snaptrade/errors";
 
-const router = Router();
-const client = new SnapTradeClient({
-  clientId: process.env.SNAPTRADE_CLIENT_ID!,
-  consumerKey: process.env.SNAPTRADE_CONSUMER_KEY!,
-  isDemo: process.env.NODE_ENV === "development",
-});
+const router: Router = Router();
+const client = snapTradeClient;
 
-// Initialize SnapTrade client
-router.get("/initialize", async (req, res) => {
-  try {
-    const status = await client.initialize();
-    res.json(status);
-  } catch (error) {
-    if (error instanceof SnapTradeError) {
-      res.status(error.status).json({ error: error.message });
-    } else {
-      res.status(500).json({ error: "Internal server error" });
-    }
-  }
-});
+interface QueryParams {
+  userId?: string;
+  userSecret?: string;
+}
 
-// Register user
-router.post("/register", async (req, res) => {
+// Register endpoint
+router.post("/register", (async (req: Request, res: Response) => {
   try {
     const { userId } = req.body;
     const response = await client.registerUser(userId);
@@ -36,10 +23,10 @@ router.post("/register", async (req, res) => {
       res.status(500).json({ error: "Internal server error" });
     }
   }
-});
+}) as RequestHandler);
 
-// Get brokerages
-router.get("/brokerages", async (req, res) => {
+// List brokerages endpoint
+router.get("/brokerages", (async (_req: Request, res: Response) => {
   try {
     const brokerages = await client.getBrokerages();
     res.json(brokerages);
@@ -50,16 +37,19 @@ router.get("/brokerages", async (req, res) => {
       res.status(500).json({ error: "Internal server error" });
     }
   }
-});
+}) as RequestHandler);
 
-// Get connections
-router.get("/connections", async (req, res) => {
+// List connections endpoint
+router.get("/connections", (async (req: Request, res: Response) => {
   try {
-    const { userId } = req.query;
+    const { userId, userSecret } = req.query as QueryParams;
     if (!userId || typeof userId !== "string") {
       return res.status(400).json({ error: "userId is required" });
     }
-    const connections = await client.getConnections(userId);
+    if (!userSecret || typeof userSecret !== "string") {
+      return res.status(400).json({ error: "userSecret is required" });
+    }
+    const connections = await client.getConnections(userId, userSecret);
     res.json(connections);
   } catch (error) {
     if (error instanceof SnapTradeError) {
@@ -68,16 +58,19 @@ router.get("/connections", async (req, res) => {
       res.status(500).json({ error: "Internal server error" });
     }
   }
-});
+}) as RequestHandler);
 
-// Get accounts
-router.get("/accounts", async (req, res) => {
+// List accounts endpoint
+router.get("/accounts", (async (req: Request, res: Response) => {
   try {
-    const { userId } = req.query;
+    const { userId, userSecret } = req.query as QueryParams;
     if (!userId || typeof userId !== "string") {
       return res.status(400).json({ error: "userId is required" });
     }
-    const accounts = await client.getAccounts(userId);
+    if (!userSecret || typeof userSecret !== "string") {
+      return res.status(400).json({ error: "userSecret is required" });
+    }
+    const accounts = await client.getAccounts(userId, userSecret);
     res.json(accounts);
   } catch (error) {
     if (error instanceof SnapTradeError) {
@@ -86,17 +79,27 @@ router.get("/accounts", async (req, res) => {
       res.status(500).json({ error: "Internal server error" });
     }
   }
-});
+}) as RequestHandler);
 
-// Get account positions
-router.get("/accounts/:accountId/positions", async (req, res) => {
+// Get account positions endpoint
+router.get("/accounts/:accountId/positions", (async (
+  req: Request,
+  res: Response
+) => {
   try {
-    const { userId } = req.query;
+    const { userId, userSecret } = req.query as QueryParams;
     const { accountId } = req.params;
     if (!userId || typeof userId !== "string") {
       return res.status(400).json({ error: "userId is required" });
     }
-    const positions = await client.getAccountPositions(userId, accountId);
+    if (!userSecret || typeof userSecret !== "string") {
+      return res.status(400).json({ error: "userSecret is required" });
+    }
+    const positions = await client.getAccountPositions(
+      userId,
+      userSecret,
+      accountId
+    );
     res.json(positions);
   } catch (error) {
     if (error instanceof SnapTradeError) {
@@ -105,17 +108,27 @@ router.get("/accounts/:accountId/positions", async (req, res) => {
       res.status(500).json({ error: "Internal server error" });
     }
   }
-});
+}) as RequestHandler);
 
-// Get account balances
-router.get("/accounts/:accountId/balances", async (req, res) => {
+// Get account balances endpoint
+router.get("/accounts/:accountId/balances", (async (
+  req: Request,
+  res: Response
+) => {
   try {
-    const { userId } = req.query;
+    const { userId, userSecret } = req.query as QueryParams;
     const { accountId } = req.params;
     if (!userId || typeof userId !== "string") {
       return res.status(400).json({ error: "userId is required" });
     }
-    const balances = await client.getAccountBalances(userId, accountId);
+    if (!userSecret || typeof userSecret !== "string") {
+      return res.status(400).json({ error: "userSecret is required" });
+    }
+    const balances = await client.getAccountBalances(
+      userId,
+      userSecret,
+      accountId
+    );
     res.json(balances);
   } catch (error) {
     if (error instanceof SnapTradeError) {
@@ -124,17 +137,27 @@ router.get("/accounts/:accountId/balances", async (req, res) => {
       res.status(500).json({ error: "Internal server error" });
     }
   }
-});
+}) as RequestHandler);
 
-// Get account orders
-router.get("/accounts/:accountId/orders", async (req, res) => {
+// Get account orders endpoint
+router.get("/accounts/:accountId/orders", (async (
+  req: Request,
+  res: Response
+) => {
   try {
-    const { userId } = req.query;
+    const { userId, userSecret } = req.query as QueryParams;
     const { accountId } = req.params;
     if (!userId || typeof userId !== "string") {
       return res.status(400).json({ error: "userId is required" });
     }
-    const orders = await client.getAccountOrders(userId, accountId);
+    if (!userSecret || typeof userSecret !== "string") {
+      return res.status(400).json({ error: "userSecret is required" });
+    }
+    const orders = await client.getUserAccountOrders(
+      userId,
+      userSecret,
+      accountId
+    );
     res.json(orders);
   } catch (error) {
     if (error instanceof SnapTradeError) {
@@ -143,6 +166,10 @@ router.get("/accounts/:accountId/orders", async (req, res) => {
       res.status(500).json({ error: "Internal server error" });
     }
   }
-});
+}) as RequestHandler);
+
+export const snaptradeApi = {
+  client: snapTradeClient,
+};
 
 export default router;

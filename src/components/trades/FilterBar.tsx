@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Filter, X } from "lucide-react";
 import { useFilterStore } from "@/stores/filterStore";
 import { Checkbox } from "@/components/ui/checkbox";
-import { TimeframeSelector } from "@/components/ui/timeframeSelector";
+import { TimeframeSelector } from "@/components/ui/TimeframeSelector";
 
 const BROKERS = [
   { id: "webull", name: "Webull" },

@@ -2,11 +2,13 @@ import { Trade } from "@/types/trade";
 import { formatTradeValue } from "@/utils/trade";
 import React from "react";
 
-const BROKER_NAMES: Record<string, string> = {
-  webull: "Webull",
-  schwab: "Charles Schwab",
-  td: "TD Ameritrade",
+// Map broker names to display names
+const brokerDisplayNames = {
+  charlesschwab: "Charles Schwab",
+  tdameritrade: "TD Ameritrade",
   ibkr: "Interactive Brokers",
+  snaptrade: "SnapTrade",
+  other: "Other",
 };
 
 export interface TradeColumn {
@@ -42,7 +44,7 @@ export const TRADE_COLUMNS: TradeColumn[] = [
     accessor: "broker_id",
     sortable: true,
     defaultVisible: true,
-    renderCell: (value) => BROKER_NAMES[value as string] || value || "-",
+    renderCell: (value) => brokerDisplayNames[value as string] || value || "-",
   },
   {
     id: "symbol",

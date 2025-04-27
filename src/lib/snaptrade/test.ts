@@ -12,15 +12,14 @@
  * - Run with real API: npm run test:snaptrade
  */
 
-import { SnapTradeClient } from "./client";
-import { getSnapTradeConfig } from "./config";
+import snapTradeClient from "./client";
+import { createConfig } from "./config";
 import {
   SnapTradeConnection,
   SnapTradeAccount,
   SnapTradePosition,
   SnapTradeBalance,
   SnapTradeOrder,
-  OrderStatus,
 } from "./types";
 
 // Check if we're in a Node.js environment and mock the window object if needed
@@ -140,7 +139,7 @@ const generateMockOrders = (): SnapTradeOrder[] => {
       side: "BUY",
       quantity: 100,
       price: 150.0,
-      status: OrderStatus.FILLED,
+      status: "FILLED",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
@@ -150,7 +149,7 @@ const generateMockOrders = (): SnapTradeOrder[] => {
       side: "SELL",
       quantity: 50,
       price: 300.0,
-      status: OrderStatus.FILLED,
+      status: "FILLED",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
@@ -184,51 +183,27 @@ async function runTests() {
   try {
     console.log("Starting SnapTrade integration tests...");
 
-    // Initialize SnapTrade client
-    const snapTradeClient = new SnapTradeClient(TEST_CONFIG);
-    await snapTradeClient.initialize();
-    console.log("SnapTrade client initialized successfully");
-
     // Register test user
-    const user = await snapTradeClient.registerUser(TEST_USER_ID);
+    const user = await snapTradeClient.registerUser();
     console.log("Test user registered successfully:", user);
 
     // Get brokerages
-    const brokerages = await snapTradeClient.getBrokerages();
+    const brokerages = await snapTradeClient.getBrokerageList();
     console.log("Available brokerages:", brokerages);
 
-    // Get connections
-    const connections = await snapTradeClient.getConnections();
-    console.log("User connections:", connections);
-
     // Get accounts
-    const accounts = await snapTradeClient.getAccounts({
-      userId: user.userId,
-      userSecret: user.userSecret,
-    });
+    const accounts = await snapTradeClient.getUserAccounts();
     console.log("User accounts:", accounts);
 
     // Get account data
     for (const account of accounts) {
-      const holdings = await snapTradeClient.getAccountPositions({
-        userId: user.userId,
-        userSecret: user.userSecret,
-        accountId: account.id,
-      });
+      const holdings = await snapTradeClient.getAccountHoldings(account.id);
       console.log(`Holdings for account ${account.id}:`, holdings);
 
-      const balances = await snapTradeClient.getAccountBalances({
-        userId: user.userId,
-        userSecret: user.userSecret,
-        accountId: account.id,
-      });
+      const balances = await snapTradeClient.getAccountBalance(account.id);
       console.log(`Balances for account ${account.id}:`, balances);
 
-      const orders = await snapTradeClient.getAccountOrders({
-        userId: user.userId,
-        userSecret: user.userSecret,
-        accountId: account.id,
-      });
+      const orders = await snapTradeClient.getUserAccountOrders(account.id);
       console.log(`Orders for account ${account.id}:`, orders);
     }
 

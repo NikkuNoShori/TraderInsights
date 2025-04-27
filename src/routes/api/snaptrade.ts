@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 import { SnapTradeClient } from "../../lib/snaptrade/client";
-import { getSnapTradeConfig } from "../../lib/snaptrade/config";
+import { createConfig } from "../../lib/snaptrade/config";
 import { generateSnapTradeAuth } from "../../lib/snaptrade/auth";
 
-const snapTradeClient = new SnapTradeClient(getSnapTradeConfig());
+const snapTradeClient = new SnapTradeClient(createConfig());
 
 export const checkApiStatus = async (req: Request, res: Response) => {
   try {
@@ -19,7 +19,7 @@ export const checkApiStatus = async (req: Request, res: Response) => {
 
 export const listConnections = async (req: Request, res: Response) => {
   try {
-    const auth = await generateSnapTradeAuth(getSnapTradeConfig());
+    const auth = await generateSnapTradeAuth(createConfig());
     const connections = await snapTradeClient.getConnections();
     res.json(connections);
   } catch (error) {

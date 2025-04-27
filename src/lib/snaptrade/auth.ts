@@ -3,101 +3,128 @@
  * Centralizes authentication logic for SnapTrade API calls
  */
 
-import { SnapTradeConfig } from "./types";
+import { SnapTradeConfig, SnapTradeError, SnapTradeErrorCode } from "./types";
+import HmacSHA256 from "crypto-js/hmac-sha256";
+import Base64 from "crypto-js/enc-base64";
 
 /**
- * Generate a signature for SnapTrade API authentication
- * @param clientId The SnapTrade client ID
- * @param consumerKey The SnapTrade consumer key
- * @param timestamp Unix timestamp
- * @returns Promise that resolves to the signature
+ * Generates authentication headers for SnapTrade API requests
+ * @param config - SnapTrade configuration
+ * @param userId - User ID
+ * @param userSecret - User secret
+ * @returns Headers object with required authentication headers
  */
-export async function generateSignature(
-  clientId: string,
-  consumerKey: string,
-  timestamp: string
-): Promise<string> {
+export function generateAuthHeaders(
+  config: SnapTradeConfig,
+  userId: string,
+  userSecret: string
+): Record<string, string> {
   try {
-    // Message to sign is clientId + timestamp
-    const message = `${clientId}${timestamp}`;
+    const timestamp = Math.floor(Date.now() / 1000).toString();
+    const messageToSign = `${timestamp}${userId}${userSecret}`;
 
-    if (
-      typeof window !== "undefined" &&
-      window.crypto &&
-      window.crypto.subtle
-    ) {
-      // Browser environment: Use Web Crypto API
-      const encoder = new TextEncoder();
-      const key = encoder.encode(consumerKey);
-      const messageBuffer = encoder.encode(message);
+    // Generate signature using HMAC SHA256
+    const signature = HmacSHA256(messageToSign, config.consumerKey);
+    const signatureBase64 = Base64.stringify(signature);
 
-      // Import key for HMAC
-      const cryptoKey = await window.crypto.subtle.importKey(
-        "raw",
-        key,
-        { name: "HMAC", hash: "SHA-256" },
-        false,
-        ["sign"]
-      );
-
-      // Sign the message
-      const signatureBuffer = await window.crypto.subtle.sign(
-        "HMAC",
-        cryptoKey,
-        messageBuffer
-      );
-
-      // Convert to hex string
-      return Array.from(new Uint8Array(signatureBuffer))
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
-    } else {
-      // Node.js environment: Use crypto
-      const crypto = require("crypto");
-      return crypto
-        .createHmac("sha256", consumerKey)
-        .update(message)
-        .digest("hex");
-    }
+    return {
+      Signature: signatureBase64,
+      Timestamp: timestamp,
+      ClientId: config.clientId,
+      UserId: userId,
+      UserSecret: userSecret,
+      "Content-Type": "application/json",
+    };
   } catch (error) {
-    console.error("Failed to generate signature:", error);
-    throw new Error(
-      `Signature generation failed: ${
-        error instanceof Error ? error.message : String(error)
-      }`
+    throw new SnapTradeError(
+      "Failed to generate authentication headers",
+      SnapTradeErrorCode.AUTHENTICATION_ERROR
     );
   }
 }
 
 /**
- * Generate authentication headers for SnapTrade API
- * @param config SnapTrade configuration
- * @returns Promise that resolves to headers object
+ * Validates authentication headers
+ * @param headers - Authentication headers to validate
+ * @throws SnapTradeError if headers are invalid
  */
-export async function generateAuthHeaders(
-  config: SnapTradeConfig
-): Promise<Record<string, string>> {
-  if (!config.clientId || !config.consumerKey) {
-    throw new Error("Missing required SnapTrade configuration");
+export function validateAuthHeaders(headers: Record<string, string>): void {
+  const requiredHeaders = [
+    "Signature",
+    "Timestamp",
+    "ClientId",
+    "UserId",
+    "UserSecret",
+  ];
+
+  for (const header of requiredHeaders) {
+    if (!headers[header]) {
+      throw new SnapTradeError(
+        `Missing required header: ${header}`,
+        SnapTradeErrorCode.AUTHENTICATION_ERROR
+      );
+    }
+  }
+}
+
+/**
+ * Validates user credentials
+ * @param userId - User ID to validate
+ * @param userSecret - User secret to validate
+ * @throws SnapTradeError if credentials are invalid
+ */
+export function validateUserCredentials(
+  userId: string,
+  userSecret: string
+): void {
+  if (!userId || !userSecret) {
+    throw new SnapTradeError(
+      "User credentials are required",
+      SnapTradeErrorCode.AUTHENTICATION_ERROR
+    );
   }
 
-  // Generate timestamp
-  const timestamp = Math.floor(Date.now() / 1000).toString();
+  if (userId.length < 3 || userId.length > 100) {
+    throw new SnapTradeError(
+      "User ID must be between 3 and 100 characters",
+      SnapTradeErrorCode.AUTHENTICATION_ERROR
+    );
+  }
 
-  // Generate signature
-  const signature = await generateSignature(
-    config.clientId,
-    config.consumerKey,
-    timestamp
-  );
+  if (userSecret.length < 32) {
+    throw new SnapTradeError(
+      "User secret must be at least 32 characters",
+      SnapTradeErrorCode.AUTHENTICATION_ERROR
+    );
+  }
+}
 
-  return {
-    "Content-Type": "application/json",
-    Accept: "application/json",
-    Signature: signature,
-    Timestamp: timestamp,
-    ClientId: config.clientId,
-  };
+/**
+ * Validates SnapTrade configuration
+ * @param config - Configuration to validate
+ * @throws SnapTradeError if configuration is invalid
+ */
+export function validateConfig(config: SnapTradeConfig): void {
+  if (!config.clientId || !config.consumerKey) {
+    throw new SnapTradeError(
+      "Client ID and Consumer Key are required",
+      SnapTradeErrorCode.CONFIGURATION_ERROR
+    );
+  }
+
+  if (config.clientId.length < 32) {
+    throw new SnapTradeError(
+      "Client ID must be at least 32 characters",
+      SnapTradeErrorCode.CONFIGURATION_ERROR
+    );
+  }
+
+  if (config.consumerKey.length < 32) {
+    throw new SnapTradeError(
+      "Consumer Key must be at least 32 characters",
+      SnapTradeErrorCode.CONFIGURATION_ERROR
+    );
+  }
 }
 
 /**
@@ -148,7 +175,7 @@ export async function makeSnapTradeRequest<T>(
     const isBrowser = typeof window !== "undefined";
 
     // Generate auth headers for both browser and server environments
-    const headers = await generateAuthHeaders(config);
+    const headers = await generateAuthHeaders(config, "", "");
 
     // Always use proxy routes in browser environment to avoid CORS issues
     if (isBrowser) {

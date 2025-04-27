@@ -1,79 +1,56 @@
-# Broker Components Documentation
+# Broker Components
 
 ## Overview
+This document outlines the broker components used in TraderInsights for integrating with various brokerage platforms.
 
-The broker integration system allows users to connect their brokerage accounts through SnapTrade's API. This document outlines the key components and their relationships.
+## SnapTrade Integration
 
-## Components
+### Features
+- Official SnapTrade SDK integration
+- Secure authentication
+- Account management
+- Position tracking
+- Order management
 
-### BrokerDashboard (`src/components/BrokerDashboard.tsx`)
-- **Purpose**: Main interface for managing broker connections
-- **Route**: `/app/broker-dashboard`
-- **Features**:
-  - Displays available brokers in a grid layout
-  - Handles broker connection initialization
-  - Manages SnapTrade user registration
-  - Supports demo/test mode
-  - Includes debug tools and logging
-  - Persists session state
+### Configuration
+```typescript
+const config = {
+  clientId: process.env.NEXT_PUBLIC_SNAPTRADE_CLIENT_ID,
+  consumerKey: process.env.NEXT_PUBLIC_SNAPTRADE_CONSUMER_KEY,
+  basePath: "https://api.snaptrade.com/api/v1",
+};
+```
 
-### BrokerConnectionPortal (`src/components/broker-connection-portal.tsx`)
-- **Purpose**: Handles OAuth flow for broker connections
-- **Usage**: Modal component used across the application
-- **Features**:
-  - Manages broker OAuth authentication
-  - Handles success/failure states
-  - Provides user feedback
-  - Supports custom callbacks
+### Authentication
+```typescript
+const { userSecret } = await snaptrade.authentication.registerSnapTradeUser({
+  userId: "unique_user_id",
+});
+```
 
-## State Management
-
-### Stores
-- `useBrokerDataStore`: Manages broker connections and account data
-- `useDebugStore`: Handles development and testing features
-- `useAuthStore`: Manages user authentication
-
-### Session Persistence
-- Broker connection state is persisted in localStorage
-- SnapTrade user credentials are managed securely
-- Debug state is maintained for development
-
-## Integration Points
-
-### Import Trades
-- The `ImportTradeForm` component uses `BrokerConnectionPortal` for connecting brokers during trade import
-- Located at: `src/components/trades/ImportTradeForm.tsx`
-
-### Dashboard Integration
-- Broker connection status is displayed on the main dashboard
-- Quick access to broker management through dashboard cards
+### Account Management
+```typescript
+const accounts = await snaptrade.accountInformation.listUserAccounts({
+  userId: "unique_user_id",
+  userSecret: "user_secret",
+});
+```
 
 ## Development Guidelines
 
-### Theme Compliance
-- All components use the application's theme system
-- Dark mode support is built-in
-- UI components follow the design system
+1. **Environment Setup**:
+   - Set up environment variables
+   - Configure API endpoints
+   - Initialize broker clients
 
-### Error Handling
-- Connection errors are handled gracefully
-- User feedback is provided through toast notifications
-- Debug mode provides detailed error information
+2. **Testing**:
+   - Use test environment for development
+   - Test with mock data
+   - Implement proper error handling
+   - Test both success and failure scenarios
 
-### Testing
-- Demo mode available for testing without real broker connections
-- Debug tools help track connection states
-- Test credentials can be used in development
-
-## Future Considerations
-
-### Planned Features
-- Support for additional brokers
-- Enhanced error reporting
-- Improved connection status monitoring
-- Real-time data synchronization
-
-### Maintenance
-- Keep `ALL_SUPPORTED_BROKERS` list updated
-- Monitor SnapTrade API changes
-- Update documentation as features are added 
+3. **Code Organization**:
+   - Keep broker related code in `src/lib/broker/`
+   - Use TypeScript for type safety
+   - Follow project conventions
+   - Document all public methods 

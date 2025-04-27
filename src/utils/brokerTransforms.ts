@@ -1,11 +1,25 @@
-import type { Trade } from "@/types/trade";
-import type { BrokerType } from "@/types/broker";
+import { Trade, TradeType, TradeSide, TradeStatus } from "@/types/trade";
+import {
+  SchwabTradeImport,
+  BrokerType,
+  BROKER_DISPLAY_NAMES,
+} from "@/types/broker";
 import type { CreateTradeData } from "@/types/trade";
+import {
+  Position as SnapTradePosition,
+  AccountOrderRecord as SnapTradeOrder,
+  Balance as SnapTradeBalance,
+  Account as SnapTradeAccount,
+  Symbol as SnapTradeSymbol,
+  Status as OrderStatus,
+} from "snaptrade-typescript-sdk";
+import { AccountOrderRecord } from "snaptrade-typescript-sdk";
+import { BrokerConnection, BrokerAccount, Broker } from "@/types/broker";
 
 // Common date/time parsing utility
 export function parseDateTime(
   dateStr: string,
-  timeStr?: string,
+  timeStr?: string
 ): {
   date: string;
   time: string;
@@ -56,49 +70,37 @@ export function parseDateTime(
 
 // Schwab date format: MM/DD/YYYY
 export function transformSchwabTrade(
-  schwabTrade: any,
+  trade: SchwabTradeImport
 ): CreateTradeData {
-  // Schwab provides dates as MM/DD/YYYY and times as HH:MM:SS AM/PM
-  const entryDateTime = parseDateTime(schwabTrade.Date, schwabTrade.Time);
-  const exitDateTime = schwabTrade.ClosedDate
-    ? parseDateTime(schwabTrade.ClosedDate, schwabTrade.ClosedTime)
-    : undefined;
+  const timestamp = new Date(trade.Date).getTime().toString();
 
   return {
-    date: entryDateTime.date,
-    time: entryDateTime.time,
-    timestamp: entryDateTime.timestamp,
-    symbol: schwabTrade.Symbol,
-    type: "stock",
-    side: schwabTrade.Action.toLowerCase().includes("buy") ? "Long" : "Short",
-    direction: schwabTrade.Action.toLowerCase().includes("buy")
-      ? "Long"
-      : "Short",
-    quantity: Number(schwabTrade.Quantity),
-    price: Number(schwabTrade.Price),
-    total: Number(schwabTrade.Quantity) * Number(schwabTrade.Price),
-    entry_date: entryDateTime.date,
-    entry_time: entryDateTime.time,
-    entry_timestamp: entryDateTime.timestamp,
-    entry_price: Number(schwabTrade.Price),
-    exit_date: exitDateTime?.date,
-    exit_time: exitDateTime?.time,
-    exit_timestamp: exitDateTime?.timestamp,
-    exit_price: exitDateTime ? Number(schwabTrade.ClosedPrice) : undefined,
-    status: exitDateTime ? "closed" : "open",
-    notes: `Imported from Charles Schwab`,
-    fees: Number(schwabTrade.Commission || 0),
+    date: trade.Date,
+    time: trade.Date,
+    timestamp,
+    symbol: trade.Symbol,
+    type: "stock" as TradeType,
+    side: trade.Action.toUpperCase().includes("BUY") ? "Long" : "Short",
+    direction: trade.Action.toUpperCase().includes("BUY") ? "Long" : "Short",
+    quantity: trade.Quantity,
+    price: trade.Price,
+    total: trade.Amount,
+    entry_date: trade.Date,
+    entry_time: trade.Date,
+    entry_timestamp: timestamp,
+    entry_price: trade.Price,
+    status: "completed" as TradeStatus,
+    notes: trade.Description,
+    fees: trade.Fees,
   };
 }
 
 // TD Ameritrade date format: YYYY-MM-DD
-export function transformTDAmeritradeTrade(
-  tdTrade: any,
-): CreateTradeData {
+export function transformTDAmeritradeTrade(tdTrade: any): CreateTradeData {
   // TD provides dates in YYYY-MM-DD format and times in 24-hour HH:mm:ss
   const entryDateTime = parseDateTime(
     tdTrade.TransactionDate,
-    tdTrade.TransactionTime,
+    tdTrade.TransactionTime
   );
   const exitDateTime = tdTrade.ClosingDate
     ? parseDateTime(tdTrade.ClosingDate, tdTrade.ClosingTime)
@@ -134,9 +136,7 @@ export function transformTDAmeritradeTrade(
 }
 
 // IBKR date format: YYYY-MM-DD HH:mm:ss
-export function transformIBKRTrade(
-  ibkrTrade: any,
-): CreateTradeData {
+export function transformIBKRTrade(ibkrTrade: any): CreateTradeData {
   // IBKR provides dates in YYYY-MM-DD HH:mm:ss format
   const entryDateTime = parseDateTime(ibkrTrade.DateTime);
   const exitDateTime = ibkrTrade.ClosingDateTime
@@ -168,48 +168,13 @@ export function transformIBKRTrade(
   };
 }
 
-// Webull date format: YYYY-MM-DD HH:mm:ss
-export function transformWebullTrade(
-  webullTrade: any,
-): CreateTradeData {
-  // Webull provides dates in YYYY-MM-DD HH:mm:ss format
-  const entryDateTime = parseDateTime(webullTrade.DateTime);
-  const exitDateTime = webullTrade.ClosingDateTime
-    ? parseDateTime(webullTrade.ClosingDateTime)
-    : undefined;
-
-  return {
-    date: entryDateTime.date,
-    time: entryDateTime.time,
-    timestamp: entryDateTime.timestamp,
-    symbol: webullTrade.Symbol,
-    type: "stock",
-    side: webullTrade.Side.toLowerCase().includes("buy") ? "Long" : "Short",
-    direction: webullTrade.Side.toLowerCase().includes("buy") ? "Long" : "Short",
-    quantity: Number(webullTrade.Quantity),
-    price: Number(webullTrade.Price),
-    total: Number(webullTrade.Quantity) * Number(webullTrade.Price),
-    entry_date: entryDateTime.date,
-    entry_time: entryDateTime.time,
-    entry_timestamp: entryDateTime.timestamp,
-    entry_price: Number(webullTrade.Price),
-    exit_date: exitDateTime?.date,
-    exit_time: exitDateTime?.time,
-    exit_timestamp: exitDateTime?.timestamp,
-    exit_price: exitDateTime ? Number(webullTrade.ClosingPrice) : undefined,
-    status: exitDateTime ? "closed" : "open",
-    notes: `Imported from Webull`,
-    fees: Number(webullTrade.Commission || 0) + Number(webullTrade.Fees || 0),
-  };
-}
-
 // SnapTrade date format: ISO string
-export function transformSnapTradeTrade(
-  snapTrade: any,
-): CreateTradeData {
+export function transformSnapTradeTrade(snapTrade: any): CreateTradeData {
   // SnapTrade provides dates in ISO format
   const entryDateTime = parseDateTime(snapTrade.createdAt);
-  const exitDateTime = snapTrade.filledAt ? parseDateTime(snapTrade.filledAt) : undefined;
+  const exitDateTime = snapTrade.filledAt
+    ? parseDateTime(snapTrade.filledAt)
+    : undefined;
 
   return {
     date: entryDateTime.date,
@@ -231,15 +196,18 @@ export function transformSnapTradeTrade(
     exit_timestamp: exitDateTime?.timestamp,
     exit_price: exitDateTime ? Number(snapTrade.filledPrice) : undefined,
     status: snapTrade.status === "FILLED" ? "closed" : "open",
-    notes: `Imported from ${snapTrade.brokerageName || 'SnapTrade'}`,
+    notes: `Imported from ${snapTrade.brokerageName || "SnapTrade"}`,
     fees: 0, // SnapTrade doesn't provide fee information in orders
   };
 }
 
 // Export a unified transform function that handles any broker
-export function transformTrade(trade: any, broker: BrokerType): CreateTradeData {
+export function transformTrade(
+  trade: any,
+  broker: BrokerType
+): CreateTradeData {
   switch (broker) {
-    case "charlesschwab":
+    case "schwab":
       return transformSchwabTrade(trade);
     case "tdameritrade":
       return transformTDAmeritradeTrade(trade);
@@ -253,4 +221,159 @@ export function transformTrade(trade: any, broker: BrokerType): CreateTradeData 
     default:
       throw new Error(`Unsupported broker type: ${broker}`);
   }
+}
+
+// Remove Webull transforms since we're using SnapTrade
+export function transformBrokerTrade(trade: any, broker: string) {
+  switch (broker.toLowerCase()) {
+    case "charlesschwab":
+      return transformSchwabTrade(trade);
+    case "tdameritrade":
+      return transformTDAmeritradeTrade(trade);
+    case "ibkr":
+      return transformIBKRTrade(trade);
+    default:
+      throw new Error(`Unsupported broker: ${broker}`);
+  }
+}
+
+// Transform Charles Schwab CSV data to Trade objects
+export function transformSchwabTrades(trades: SchwabTradeImport[]): Trade[] {
+  return trades.map((trade) => ({
+    id: generateTradeId(trade),
+    date: new Date(trade.Date).toISOString(),
+    symbol: trade.Symbol,
+    type: trade.Action.toLowerCase() as TradeType,
+    quantity: trade.Quantity,
+    price: trade.Price,
+    fees: trade.Fees || 0,
+    total: Math.abs(trade.Amount),
+    notes: trade.Description || "",
+    source: "charlesschwab" as BrokerType,
+    user_id: "", // Will be set by the service layer
+    time: new Date(trade.Date).toISOString(),
+    timestamp: new Date(trade.Date).getTime().toString(),
+    side: trade.Action.toLowerCase() as TradeSide,
+    direction: trade.Action.toLowerCase() as TradeSide,
+    entry_date: new Date(trade.Date).toISOString(),
+    entry_time: new Date(trade.Date).toISOString(),
+    entry_timestamp: new Date(trade.Date).getTime().toString(),
+    exit_date: "",
+    exit_time: "",
+    exit_timestamp: "",
+    entry_price: trade.Price,
+    status: "COMPLETED" as TradeStatus,
+    created_at: new Date(trade.Date).toISOString(),
+    updated_at: new Date(trade.Date).toISOString(),
+  }));
+}
+
+// Transform SnapTrade position to Trade object
+export function transformSnapTradePosition(
+  position: SnapTradePosition
+): Partial<CreateTradeData> {
+  const units = position.units || 0;
+  const price = position.price || 0;
+
+  return {
+    type: "stock" as TradeType,
+    symbol: getSymbolString(position.symbol),
+    shares: units,
+    price: price,
+    status: "completed" as TradeStatus,
+    side: units > 0 ? ("Long" as TradeSide) : ("Short" as TradeSide),
+    date: new Date().toISOString(),
+    fees: 0,
+    total: units * price,
+  };
+}
+
+// Transform SnapTrade order to Trade object
+export function transformSnapTradeOrder(
+  order: SnapTradeOrder
+): Partial<CreateTradeData> {
+  const units = order.units || 0;
+  const price = order.price || 0;
+
+  return {
+    type: "stock" as TradeType,
+    symbol: order.symbol || "",
+    shares: units,
+    price: price,
+    status: getTradeStatus(order.status),
+    side:
+      order.action === "BUY" ? ("Long" as TradeSide) : ("Short" as TradeSide),
+    date: order.time || new Date().toISOString(),
+    fees: 0,
+    total: units * price,
+  };
+}
+
+// Generate unique trade ID from Schwab trade data
+function generateTradeId(trade?: SchwabTradeImport): string {
+  if (trade) {
+    // Generate ID based on trade data for consistency
+    return `${trade.Date}_${trade.Symbol}_${trade.Action}_${trade.Quantity}_${trade.Price}`.replace(
+      /[^a-zA-Z0-9]/g,
+      "_"
+    );
+  }
+  // Generate random ID if no trade data provided
+  return (
+    Math.random().toString(36).substring(2, 15) +
+    Math.random().toString(36).substring(2, 15)
+  );
+}
+
+export function getBrokerDisplayName(broker: BrokerType): string {
+  const brokerNames: Record<BrokerType, string> = {
+    charlesschwab: "Charles Schwab",
+    snaptrade: "SnapTrade",
+  };
+  return brokerNames[broker] || broker;
+}
+
+// Broker display names
+export const brokerDisplayNames: Record<BrokerType, string> = {
+  schwab: "Charles Schwab",
+  snaptrade: "SnapTrade",
+};
+
+function getTradeStatus(status: OrderStatus): TradeStatus {
+  switch (status) {
+    case OrderStatus.EXECUTED:
+      return "completed";
+    case OrderStatus.CANCELED:
+    case OrderStatus.REJECTED:
+    case OrderStatus.FAILED:
+      return "cancelled";
+    case OrderStatus.PENDING:
+    case OrderStatus.ACCEPTED:
+    default:
+      return "pending";
+  }
+}
+
+function getSymbolString(symbol: SnapTradeSymbol | undefined): string {
+  return symbol?.symbol || "";
+}
+
+export function transformSnapTradeBroker(broker: SnapTradeBrokerage): Broker {
+  if (!broker.name) {
+    throw new Error("Invalid broker data: missing name");
+  }
+
+  // Only map to supported broker types
+  const brokerType: BrokerType = broker.name.toLowerCase().includes("schwab")
+    ? "schwab"
+    : "snaptrade";
+
+  return {
+    id: broker.id,
+    name: broker.name,
+    type: brokerType,
+    display_name: broker.name,
+    logo_url: broker.logo_url,
+    url: broker.url,
+  };
 }

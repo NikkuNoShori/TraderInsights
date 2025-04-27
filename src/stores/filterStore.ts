@@ -6,7 +6,7 @@ import type {
   TradeSide,
   TradeStatus,
 } from "@/types/trade";
-import type { TimeframeOption } from "@/components/ui/timeframeSelector";
+import type { TimeframeOption } from "@/components/ui/TimeframeSelector";
 
 interface FilterState {
   filters: TradeFilters;

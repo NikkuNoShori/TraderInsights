@@ -8,4 +8,4 @@ export type {
   BrokerageAuthorizationList,
   SnapTradeError,
 } from "./types";
-export { getSnapTradeConfig } from "./config";
+export { createConfig } from "./config";

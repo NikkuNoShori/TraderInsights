@@ -1,31 +1,17 @@
 import { NextPage } from 'next';
 import Head from 'next/head';
-import dynamic from 'next/dynamic';
 import Layout from '@/components/Layout';
 import { SnapTradeClient } from '@/lib/snaptrade/client';
-import { getSnapTradeConfig } from '@/lib/snaptrade/config';
+import { createConfig } from '@/lib/snaptrade/config';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-// Import the SnapTradeDemo component with dynamic loading to avoid SSR issues
-const SnapTradeDemo = dynamic(() => import('@/components/SnapTradeDemo'), {
-  ssr: false,
-  loading: () => (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="animate-pulse flex flex-col space-y-4">
-        <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-        <div className="h-32 bg-gray-200 rounded"></div>
-        <div className="h-64 bg-gray-200 rounded"></div>
-      </div>
-    </div>
-  ),
-});
 
 const SnapTradePage: NextPage = () => {
   const [isConnecting, setIsConnecting] = useState(false);
-  const snapTradeClient = new SnapTradeClient(getSnapTradeConfig());
+  const snapTradeClient = new SnapTradeClient(createConfig());
 
   const handleConnect = async () => {
     try {
@@ -85,7 +71,6 @@ const SnapTradePage: NextPage = () => {
             </CardContent>
           </Card>
           
-          <SnapTradeDemo />
         </div>
       </main>
     </Layout>

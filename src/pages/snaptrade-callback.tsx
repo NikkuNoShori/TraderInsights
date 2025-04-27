@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SnapTradeClient } from '@/lib/snaptrade/client';
-import { getSnapTradeConfig } from '@/lib/snaptrade/config';
+import { createConfig } from '@/lib/snaptrade/config';
 import { toast } from 'react-hot-toast';
 
 export default function SnapTradeCallback() {
   const navigate = useNavigate();
-  const snapTradeClient = new SnapTradeClient(getSnapTradeConfig());
+  const snapTradeClient = new SnapTradeClient(createConfig());
 
   useEffect(() => {
     const handleCallback = async () => {

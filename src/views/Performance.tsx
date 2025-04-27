@@ -1,10 +1,7 @@
 import { useState, useMemo, useCallback } from "@/lib/react";
 import { useTrades } from "@/hooks/useTrades";
-import { Spinner } from "@/components/ui/spinner";
-import {
-  TimeframeSelector,
-  type TimeframeOption,
-} from "../components/ui/timeframeSelector";
+import { Spinner } from "@/components/ui/Spinner";
+import { TimeframeSelector, type TimeframeOption } from "@/components/ui/TimeframeSelector";
 import { PerformanceMetrics } from "@/components/dashboard/PerformanceMetrics";
 import { RechartsPnLChart } from "@/components/dashboard/RechartsPnLChart";
 import { WinRateChart } from "@/components/dashboard/WinRateChart";

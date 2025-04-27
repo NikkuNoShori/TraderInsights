@@ -1,8 +1,9 @@
-import type { TimeframeOption } from "@/components/ui/timeframeSelector";
+import type { TimeframeOption } from "@/components/ui/TimeframeSelector";
+import { BrokerType } from "./broker";
 
 export type TradeType = "stock" | "option" | "crypto" | "forex";
 export type TradeSide = "Long" | "Short";
-export type TradeStatus = "open" | "closed" | "pending";
+export type TradeStatus = "pending" | "completed" | "cancelled";
 
 export interface OptionDetails {
   strike: number;
