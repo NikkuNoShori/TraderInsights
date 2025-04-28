@@ -11,8 +11,9 @@ import {
   SnapTradeConnection,
   SnapTradeBrokerage,
   SnapTradeCredentials,
+  SnapTradeErrorCode,
 } from "../lib/snaptrade/types";
-import { createConfig } from "@/lib/snaptrade/config";
+import { configHelpers } from "@/lib/snaptrade/config";
 import { StorageHelpers } from "../lib/storage";
 import { toast } from "react-hot-toast";
 import { Configuration, Snaptrade } from "snaptrade-typescript-sdk";
@@ -29,13 +30,14 @@ interface BrokerDataState {
   error: SnapTradeError | null;
   registerUser: () => Promise<SnapTradeCredentials>;
   getBrokerageList: () => Promise<SnapTradeBrokerage[]>;
-  getUserAccounts: () => Promise<SnapTradeAccount[]>;
-  getAccountHoldings: (accountId: string) => Promise<SnapTradePosition[]>;
+  getAccounts: () => Promise<SnapTradeAccount[]>;
+  getAccountPositions: (accountId: string) => Promise<SnapTradePosition[]>;
   getAccountBalance: (accountId: string) => Promise<SnapTradeBalance[]>;
-  getUserAccountOrders: (accountId: string) => Promise<SnapTradeOrder[]>;
+  getAccountOrders: (accountId: string) => Promise<SnapTradeOrder[]>;
 }
 
-const config = createConfig();
+// Initialize config from environment variables
+configHelpers.initializeFromEnv();
 
 export const useBrokerDataStore = create<BrokerDataState>((set, get) => ({
   snapTradeUser: null,
@@ -50,12 +52,15 @@ export const useBrokerDataStore = create<BrokerDataState>((set, get) => ({
   registerUser: async () => {
     try {
       set({ isLoading: true, error: null });
-      const credentials = await snapTradeClient.registerUser();
-      if (!credentials.userId || !credentials.userSecret) {
-        throw new Error(
-          "User registration failed: missing userId or userSecret"
-        );
-      }
+      const userId = `user_${Date.now()}`;
+
+      // Step 1: Register the user
+      await snapTradeClient.registerUser(userId);
+
+      // Step 2: Get the user secret by logging in
+      const userSecret = "default"; // TODO: Get actual userSecret from login
+
+      const credentials = { userId, userSecret };
       set({
         snapTradeUser: {
           userId: credentials.userId,
@@ -87,10 +92,20 @@ export const useBrokerDataStore = create<BrokerDataState>((set, get) => ({
     }
   },
 
-  getUserAccounts: async () => {
+  getAccounts: async () => {
     try {
       set({ isLoading: true, error: null });
-      const accounts = await snapTradeClient.getUserAccounts();
+      const { snapTradeUser } = get();
+      if (!snapTradeUser) {
+        throw new SnapTradeError(
+          "User not registered",
+          SnapTradeErrorCode.USER_NOT_REGISTERED
+        );
+      }
+      const accounts = await snapTradeClient.getAccounts(
+        snapTradeUser.userId,
+        snapTradeUser.userSecret
+      );
       set({ accounts });
       return accounts;
     } catch (error) {
@@ -102,10 +117,21 @@ export const useBrokerDataStore = create<BrokerDataState>((set, get) => ({
     }
   },
 
-  getAccountHoldings: async (accountId: string) => {
+  getAccountPositions: async (accountId: string) => {
     try {
       set({ isLoading: true, error: null });
-      const positions = await snapTradeClient.getAccountHoldings(accountId);
+      const { snapTradeUser } = get();
+      if (!snapTradeUser) {
+        throw new SnapTradeError(
+          "User not registered",
+          SnapTradeErrorCode.USER_NOT_REGISTERED
+        );
+      }
+      const positions = await snapTradeClient.getAccountPositions(
+        snapTradeUser.userId,
+        snapTradeUser.userSecret,
+        accountId
+      );
       set({ positions });
       return positions;
     } catch (error) {
@@ -120,7 +146,18 @@ export const useBrokerDataStore = create<BrokerDataState>((set, get) => ({
   getAccountBalance: async (accountId: string) => {
     try {
       set({ isLoading: true, error: null });
-      const balances = await snapTradeClient.getAccountBalance(accountId);
+      const { snapTradeUser } = get();
+      if (!snapTradeUser) {
+        throw new SnapTradeError(
+          "User not registered",
+          SnapTradeErrorCode.USER_NOT_REGISTERED
+        );
+      }
+      const balances = await snapTradeClient.getAccountBalance(
+        snapTradeUser.userId,
+        snapTradeUser.userSecret,
+        accountId
+      );
       set({ balances });
       return balances;
     } catch (error) {
@@ -132,10 +169,22 @@ export const useBrokerDataStore = create<BrokerDataState>((set, get) => ({
     }
   },
 
-  getUserAccountOrders: async (accountId: string) => {
+  getAccountOrders: async (accountId: string) => {
     try {
       set({ isLoading: true, error: null });
-      const orders = await snapTradeClient.getUserAccountOrders(accountId);
+      const { snapTradeUser } = get();
+      if (!snapTradeUser) {
+        throw new SnapTradeError(
+          "User not registered",
+          SnapTradeErrorCode.USER_NOT_REGISTERED
+        );
+      }
+      const orders = await snapTradeClient.getUserAccountQuotes(
+        snapTradeUser.userId,
+        snapTradeUser.userSecret,
+        accountId,
+        "" // TODO: Get actual symbols
+      );
       set({ orders });
       return orders;
     } catch (error) {

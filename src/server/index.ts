@@ -6,6 +6,7 @@ import rateLimit from "express-rate-limit";
 import { authRouter } from "./routes/auth";
 import snapTradeRouter from "./api/snaptrade";
 import { serverEnv } from "./utils/env";
+import webhookRoutes from "./routes/webhooks";
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use(limiter);
 // Routes
 app.use("/api/auth", authRouter);
 app.use("/api/snaptrade", snapTradeRouter);
+app.use("/api/webhooks", webhookRoutes);
 
 // Error handling
 app.use(

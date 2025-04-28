@@ -1,39 +1,42 @@
 import { StorageHelpers } from './storage';
+import { SnapTradeError, SnapTradeErrorCode } from "./types";
 
 interface RateLimitConfig {
-  maxRequests: number;  // Maximum requests allowed in the window
-  windowMs: number;     // Time window in milliseconds
+  maxRequests: number; // Maximum requests allowed in the window
+  windowMs: number; // Time window in milliseconds
 }
 
 interface RateLimitInfo {
-  count: number;        // Current request count
-  resetAt: number;      // Timestamp when the window resets
+  count: number; // Current request count
+  resetAt: number; // Timestamp when the window resets
 }
 
 export class RateLimiter {
   private static instance: RateLimiter;
   private config: RateLimitConfig;
+  private requestTimestamps: number[] = [];
 
-  private constructor() {
-    // Get rate limit configuration from environment variables
-    const maxRequests = parseInt(
-      import.meta.env.VITE_SNAPTRADE_RATE_LIMIT_MAX || "5",
-      10
-    );
-    const windowMinutes = parseInt(
-      import.meta.env.VITE_SNAPTRADE_RATE_LIMIT_WINDOW || "15",
-      10
-    );
-
-    this.config = {
-      maxRequests,
-      windowMs: windowMinutes * 60 * 1000,
-    };
+  constructor(config: RateLimitConfig) {
+    this.config = config;
   }
 
   public static getInstance(): RateLimiter {
     if (!RateLimiter.instance) {
-      RateLimiter.instance = new RateLimiter();
+      const maxRequests = parseInt(
+        import.meta.env.VITE_SNAPTRADE_RATE_LIMIT_MAX || "5",
+        10
+      );
+      const windowMinutes = parseInt(
+        import.meta.env.VITE_SNAPTRADE_RATE_LIMIT_WINDOW || "15",
+        10
+      );
+
+      const config = {
+        maxRequests,
+        windowMs: windowMinutes * 60 * 1000,
+      };
+
+      RateLimiter.instance = new RateLimiter(config);
     }
     return RateLimiter.instance;
   }
@@ -49,7 +52,7 @@ export class RateLimiter {
   private getRateLimitInfo(userId: string): RateLimitInfo {
     const key = this.getStorageKey(userId);
     const stored = StorageHelpers.getItem(key);
-    
+
     if (!stored) {
       return {
         count: 0,
@@ -65,7 +68,11 @@ export class RateLimiter {
     StorageHelpers.setItem(key, JSON.stringify(info));
   }
 
-  public checkRateLimit(userId: string): { allowed: boolean; resetAt: number; remaining: number } {
+  public checkRateLimit(userId: string): {
+    allowed: boolean;
+    resetAt: number;
+    remaining: number;
+  } {
     const now = Date.now();
     let info = this.getRateLimitInfo(userId);
 
@@ -113,4 +120,59 @@ export class RateLimiter {
     const { resetAt } = this.checkRateLimit(userId);
     return Math.max(0, resetAt - Date.now());
   }
+
+  private cleanupOldRequests(): void {
+    const now = Date.now();
+    this.requestTimestamps = this.requestTimestamps.filter(
+      (timestamp) => now - timestamp < this.config.windowMs
+    );
+  }
+
+  async waitForSlot(): Promise<void> {
+    this.cleanupOldRequests();
+
+    if (this.requestTimestamps.length >= this.config.maxRequests) {
+      const oldestRequest = this.requestTimestamps[0];
+      const waitTime = this.config.windowMs - (Date.now() - oldestRequest);
+
+      if (waitTime > 0) {
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
+        this.cleanupOldRequests();
+      }
+    }
+
+    this.requestTimestamps.push(Date.now());
+  }
+
+  async execute<T>(fn: () => Promise<T>): Promise<T> {
+    try {
+      await this.waitForSlot();
+      return await fn();
+    } catch (error) {
+      if (error instanceof SnapTradeError) {
+        throw error;
+      }
+      throw new SnapTradeError(
+        `Rate limit execution failed: ${error}`,
+        SnapTradeErrorCode.API_ERROR
+      );
+    }
+  }
+}
+
+// Default rate limit configuration
+const DEFAULT_CONFIG: RateLimitConfig = {
+  maxRequests: 100, // Maximum requests per time window
+  windowMs: 60000, // 1 minute in milliseconds
+};
+
+export const rateLimiter = new RateLimiter(DEFAULT_CONFIG);
+
+// Helper function to create rate-limited API calls
+export function withRateLimit<T>(
+  fn: (...args: any[]) => Promise<T>
+): (...args: any[]) => Promise<T> {
+  return async (...args: any[]) => {
+    return rateLimiter.execute(() => fn(...args));
+  };
 } 

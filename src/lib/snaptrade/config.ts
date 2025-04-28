@@ -11,55 +11,144 @@
  * - "Client Secret" from dashboard → VITE_SNAPTRADE_CONSUMER_KEY
  */
 
-import { SnapTradeConfig } from "./types";
-import { createDebugLogger } from "@/stores/debugStore";
+import { Configuration, Snaptrade } from "snaptrade-typescript-sdk";
+import { SnapTradeConfig, SnapTradeError, SnapTradeErrorCode } from "./types";
+import { errorHelpers } from "./errors";
 
-const configLogger = createDebugLogger("config");
-
-/**
- * Get environment variable
- */
-function getEnvVariable(name: string): string {
-  const value = import.meta.env[name];
-  if (!value) {
-    configLogger.warn(`Environment variable ${name} not found`);
-  }
-  return value || '';
+export interface SnapTradeConfig {
+  clientId: string;
+  consumerKey: string;
+  baseUrl?: string;
+  environment?: "production" | "sandbox";
 }
 
-/**
- * Create SnapTrade configuration
- */
-export const createConfig = (): SnapTradeConfig => {
-  const clientId = getEnvVariable("VITE_SNAPTRADE_CLIENT_ID");
-  const consumerKey = getEnvVariable("VITE_SNAPTRADE_CONSUMER_KEY");
+export class SnapTradeClientConfig {
+  private config: SnapTradeConfig;
+  private sdkConfig: Configuration;
+  private client: Snaptrade;
 
-  if (!clientId || !consumerKey) {
-    throw new Error(
-      "Missing required SnapTrade environment variables. Please check your .env file and ensure VITE_SNAPTRADE_CLIENT_ID and VITE_SNAPTRADE_CONSUMER_KEY are set."
-    );
+  constructor(config: SnapTradeConfig) {
+    this.validateConfig(config);
+    this.config = config;
+
+    this.sdkConfig = new Configuration({
+      clientId: config.clientId,
+      consumerKey: config.consumerKey,
+      baseURL: config.baseUrl,
+    });
+
+    this.client = new Snaptrade(this.sdkConfig);
   }
 
-  configLogger.debug('SnapTrade configuration created', {
-    hasClientId: !!clientId,
-    hasConsumerKey: !!consumerKey,
-  });
-
-  return {
-    clientId,
-    consumerKey,
-  };
-};
-
-/**
- * Verify SnapTrade configuration
- */
-export function verifySnapTradeConfig(): boolean {
-  try {
-    const config = createConfig();
-    return !!config.clientId && !!config.consumerKey;
-  } catch (error) {
-    configLogger.error('Failed to verify SnapTrade configuration', { error });
-    return false;
+  private validateConfig(config: SnapTradeConfig): void {
+    if (!config.clientId || !config.consumerKey) {
+      throw new SnapTradeError({
+        code: SnapTradeErrorCode.API_ERROR,
+        message:
+          "Missing required SnapTrade configuration parameters: clientId and consumerKey are required",
+      });
+    }
   }
-} 
+
+  public getConfig(): SnapTradeConfig {
+    return this.config;
+  }
+
+  public getSDKConfig(): Configuration {
+    return this.sdkConfig;
+  }
+
+  public getClient(): Snaptrade {
+    return this.client;
+  }
+}
+
+class ConfigManager {
+  private config: SnapTradeConfig | null = null;
+
+  private validateConfig(config: SnapTradeConfig): void {
+    if (!config.clientId || !config.consumerKey) {
+      throw new SnapTradeError({
+        code: SnapTradeErrorCode.API_ERROR,
+        message:
+          "Missing required SnapTrade configuration parameters: clientId and consumerKey are required",
+      });
+    }
+  }
+
+  initialize(config: SnapTradeConfig): void {
+    try {
+      this.validateConfig(config);
+      this.config = {
+        ...config,
+        baseUrl: config.baseUrl || "https://api.snaptrade.com/api/v1",
+        environment: config.environment || "production",
+      };
+    } catch (error) {
+      errorHelpers.handleConfigError(error, "Failed to initialize config");
+    }
+  }
+
+  getConfig(): SnapTradeConfig {
+    if (!this.config) {
+      throw new SnapTradeError(
+        "Configuration not initialized",
+        SnapTradeErrorCode.API_ERROR
+      );
+    }
+    return this.config;
+  }
+
+  isInitialized(): boolean {
+    return this.config !== null;
+  }
+
+  getBaseUrl(): string {
+    return this.getConfig().baseUrl || "https://api.snaptrade.com/api/v1";
+  }
+
+  getEnvironment(): "production" | "sandbox" {
+    return this.getConfig().environment || "production";
+  }
+
+  isProduction(): boolean {
+    return this.getEnvironment() === "production";
+  }
+
+  isSandbox(): boolean {
+    return this.getEnvironment() === "sandbox";
+  }
+}
+
+export const configManager = new ConfigManager();
+
+// Helper functions for common configuration tasks
+export const configHelpers = {
+  initializeFromEnv: (): void => {
+    const config: SnapTradeConfig = {
+      clientId: process.env.VITE_SNAPTRADE_CLIENT_ID || "",
+      consumerKey: process.env.VITE_SNAPTRADE_CONSUMER_KEY || "",
+      environment:
+        (process.env.VITE_SNAPTRADE_ENVIRONMENT as "production" | "sandbox") ||
+        "production",
+    };
+
+    configManager.initialize(config);
+  },
+
+  getClientId: (): string => {
+    return configManager.getConfig().clientId;
+  },
+
+  getConsumerKey: (): string => {
+    return configManager.getConfig().consumerKey;
+  },
+
+  getBaseUrl: (): string => {
+    return configManager.getBaseUrl();
+  },
+
+  getEnvironment: (): "production" | "sandbox" => {
+    return configManager.getEnvironment();
+  },
+}; 

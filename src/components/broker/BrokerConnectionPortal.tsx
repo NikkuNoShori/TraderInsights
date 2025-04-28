@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { createDebugLogger } from '@/stores/debugStore';
-import { Snaptrade } from 'snaptrade-typescript-sdk';
+import { SnapTradeClient } from '@/lib/snaptrade/client';
 import { StorageHelpers } from '@/lib/snaptrade/storage';
 import type { SnapTradeError } from '@/lib/snaptrade';
 
@@ -39,38 +39,31 @@ export function BrokerConnectionPortal({
         }
 
         // Initialize the SnapTrade client
-        const snaptrade = new Snaptrade({
-          clientId: config.clientId,
-          consumerKey: config.consumerKey,
-          // Use production endpoint as per SDK documentation
+        const snapTradeClient = new SnapTradeClient({
+          clientId: process.env.NEXT_PUBLIC_SNAPTRADE_CLIENT_ID || "",
+          consumerKey: process.env.NEXT_PUBLIC_SNAPTRADE_CONSUMER_KEY || "",
           basePath: "https://api.snaptrade.com/api/v1"
         });
 
-        // Store the session information
+        // Get the connection URL using the client
+        const redirectUrl = await snapTradeClient.createConnectionLink({
+          broker: brokerageId,
+          immediateRedirect: false
+        });
+
+        // Save the connection session
         StorageHelpers.saveConnectionSession({
-          sessionId: 'pending',
-          userId,
-          userSecret,
+          sessionId: crypto.randomUUID(),
+          userId: snapTradeClient.getUser()?.userId || '',
+          userSecret: snapTradeClient.getUser()?.userSecret || '',
           brokerId: brokerageId,
-          redirectUrl: window.location.href,
+          redirectUrl,
           createdAt: Date.now(),
           status: 'pending'
         });
 
-        // Get the connection URL using the connections API
-        const response = await snaptrade.connections.listBrokerageAuthorizations({
-          userId,
-          userSecret
-        });
-
-        if (!response.data || response.data.length === 0) {
-          throw new Error('Failed to get connection URL from SnapTrade');
-        }
-
-        logger.debug('SnapTrade connection response:', response.data);
-
-        // Redirect to the SnapTrade connection portal
-        window.location.href = response.data[0].redirectURI;
+        // Redirect to the broker connection portal
+        window.location.href = redirectUrl;
 
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to connect to broker';

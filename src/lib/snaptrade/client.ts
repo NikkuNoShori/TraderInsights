@@ -3,250 +3,291 @@
  * This file provides a client for interacting with the SnapTrade API
  */
 
-import { 
-  Configuration, 
-  Snaptrade, 
-  AccountInformationApi, 
-  AuthenticationApi, 
-  ReferenceDataApi,
-  AuthenticationLoginSnapTradeUser200Response,
-  Brokerage,
-  AccountOrderRecord,
-  Account,
-  Balance,
-  Position,
-  UserIDandSecret
-} from "snaptrade-typescript-sdk";
 import {
-  SnapTradeConfig,
+  Configuration,
+  Snaptrade,
+  Account,
+  Position,
+  Balance,
+  BrokerageAuthorization,
+  SymbolsQuotesInner,
+  UserIDandSecret,
+} from "snaptrade-typescript-sdk";
+import { configManager } from "./config";
+import {
   SnapTradeError,
   SnapTradeErrorCode,
-  ConnectionLinkOptions,
+  SnapTradeConfig,
+  SnapTradeUser,
   ConnectionLinkResponse,
-  AccountBalance,
-  UserResponse,
+  ConnectionLinkOptions,
+  BrokerageList,
 } from "./types";
 
 /**
  * SnapTrade API client
- * Implements the official SnapTrade TypeScript SDK
+ * Handles all interactions with the SnapTrade API
  */
 export class SnapTradeClient {
   private client: Snaptrade;
-  private authApi: AuthenticationApi;
-  private accountApi: AccountInformationApi;
-  private referenceApi: ReferenceDataApi;
-  private userId: string;
-  private userSecret: string;
 
   constructor(config: SnapTradeConfig) {
+    if (!config.clientId || !config.consumerKey) {
+      throw new SnapTradeError({
+        code: SnapTradeErrorCode.API_ERROR,
+        message: "Missing required SnapTrade configuration parameters",
+      });
+    }
+
     const configuration = new Configuration({
       clientId: config.clientId,
       consumerKey: config.consumerKey,
+      basePath: "https://api.snaptrade.com/api/v1",
     });
 
     this.client = new Snaptrade(configuration);
-    this.authApi = this.client.authentication;
-    this.accountApi = this.client.accountInformation;
-    this.referenceApi = this.client.referenceData;
-    this.userId = "";
-    this.userSecret = "";
-  }
-
-  // Helper function to validate userId format
-  private validateUserId(userId: string): void {
-    if (!userId) {
-      throw new Error("userId is required for SnapTrade user registration");
-    }
-
-    // Check for email addresses
-    if (userId.includes("@")) {
-      throw new Error("userId cannot be an email address");
-    }
-
-    // Check length and format
-    if (userId.length < 3) {
-      throw new Error("userId must be at least 3 characters long");
-    }
-
-    if (userId.length > 100) {
-      throw new Error("userId must not exceed 100 characters");
-    }
-
-    // Check for invalid characters
-    const invalidChars = /[^a-zA-Z0-9_-]/;
-    if (invalidChars.test(userId)) {
-      throw new Error(
-        "userId can only contain letters, numbers, underscores, and hyphens"
-      );
-    }
   }
 
   /**
-   * Get the underlying Snaptrade client instance
+   * Register a new user with SnapTrade
    */
-  getClient(): Snaptrade {
-    return this.client;
-  }
-
-  /**
-   * Register a new SnapTrade user
-   */
-  async registerUser(): Promise<UserIDandSecret> {
+  async registerUser(userId: string): Promise<SnapTradeUser> {
     try {
-      const response = await this.authApi.registerSnapTradeUser({
-        userId: crypto.randomUUID()
+      const response = await this.client.authentication.registerSnapTradeUser({
+        userId,
       });
-      if (!response.data?.userId || !response.data?.userSecret) {
-        throw new SnapTradeError("Failed to register user", SnapTradeErrorCode.UNKNOWN_ERROR);
-      }
-      this.userId = response.data.userId;
-      this.userSecret = response.data.userSecret;
+      const data = response.data as UserIDandSecret;
+      return {
+        userId: data.userId!,
+        userSecret: data.userSecret!,
+      };
+    } catch (error) {
+      throw new SnapTradeError({
+        code: SnapTradeErrorCode.API_ERROR,
+        message: "Failed to register user",
+        originalError: error,
+      });
+    }
+  }
+
+  /**
+   * Login an existing user
+   */
+  async loginUser(userId: string, userSecret: string): Promise<SnapTradeUser> {
+    try {
+      const response = await this.client.authentication.loginSnapTradeUser({
+        userId,
+        userSecret,
+      });
+      const data = response.data as UserIDandSecret;
+      return {
+        userId: data.userId!,
+        userSecret: data.userSecret!,
+      };
+    } catch (error) {
+      throw new SnapTradeError({
+        code: SnapTradeErrorCode.API_ERROR,
+        message: "Failed to login user",
+        originalError: error,
+      });
+    }
+  }
+
+  /**
+   * Delete a user
+   */
+  async deleteUser(userId: string): Promise<void> {
+    try {
+      await this.client.authentication.deleteSnapTradeUser({
+        userId,
+      });
+    } catch (error) {
+      throw new SnapTradeError({
+        code: SnapTradeErrorCode.API_ERROR,
+        message: "Failed to delete user",
+        originalError: error,
+      });
+    }
+  }
+
+  /**
+   * Get list of available brokerages
+   */
+  async getBrokerageList(): Promise<BrokerageList> {
+    try {
+      const response = await this.client.referenceData.listAllBrokerages();
       return response.data;
     } catch (error) {
-      throw this.handleError(error);
-    }
-  }
-
-  /**
-   * Delete a SnapTrade user
-   */
-  async deleteUser(): Promise<void> {
-    this.ensureAuthenticated();
-    try {
-      await this.authApi.deleteSnapTradeUser({
-        userId: this.userId
+      throw new SnapTradeError({
+        code: SnapTradeErrorCode.API_ERROR,
+        message: "Failed to get brokerage list",
+        originalError: error,
       });
-    } catch (error) {
-      throw this.handleError(error);
     }
   }
 
   /**
-   * Create a connection link for a user
+   * Create a connection link for a brokerage
    */
-  async createConnectionLink(options: ConnectionLinkOptions): Promise<AuthenticationLoginSnapTradeUser200Response> {
-    this.ensureAuthenticated();
+  async createConnectionLink(
+    userId: string,
+    userSecret: string,
+    options: ConnectionLinkOptions
+  ): Promise<ConnectionLinkResponse> {
     try {
-      const response = await this.authApi.loginSnapTradeUser({
-        userId: this.userId,
-        userSecret: this.userSecret,
+      const response = await this.client.authentication.loginSnapTradeUser({
+        userId,
+        userSecret,
         broker: options.broker,
-        immediateRedirect: options.immediateRedirect,
-        customRedirect: options.customRedirect,
       });
-      return response.data;
+
+      const data = response.data as { redirectURI: string };
+      if (!data.redirectURI) {
+        throw new SnapTradeError({
+          code: SnapTradeErrorCode.API_ERROR,
+          message: "Failed to get authorization URL",
+        });
+      }
+
+      return {
+        redirectURI: data.redirectURI,
+      };
     } catch (error) {
-      throw this.handleError(error);
+      if (error instanceof SnapTradeError) {
+        throw error;
+      }
+      throw new SnapTradeError({
+        code: SnapTradeErrorCode.API_ERROR,
+        message: "Failed to create connection link",
+        originalError: error,
+      });
     }
   }
 
   /**
-   * Get list of supported brokerages
+   * Get user's connections
    */
-  async getBrokerageList(): Promise<Brokerage[]> {
+  async getConnections(
+    userId: string,
+    userSecret: string
+  ): Promise<BrokerageAuthorization[]> {
     try {
-      const response = await this.referenceApi.listAllBrokerages();
+      const response = await this.client.connections.listBrokerageAuthorizations({
+        userId,
+        userSecret,
+      });
       return response.data;
     } catch (error) {
-      throw this.handleError(error);
+      throw new SnapTradeError({
+        code: SnapTradeErrorCode.API_ERROR,
+        message: "Failed to get connections",
+        originalError: error,
+      });
     }
   }
 
   /**
    * Get user's accounts
    */
-  async getUserAccounts(): Promise<Account[]> {
-    this.ensureAuthenticated();
+  async getAccounts(userId: string, userSecret: string): Promise<Account[]> {
     try {
-      const response = await this.accountApi.listUserAccounts({
-        userId: this.userId,
-        userSecret: this.userSecret
+      const response = await this.client.accountInformation.listUserAccounts({
+        userId,
+        userSecret,
       });
       return response.data;
     } catch (error) {
-      throw this.handleError(error);
+      throw new SnapTradeError({
+        code: SnapTradeErrorCode.API_ERROR,
+        message: "Failed to get accounts",
+        originalError: error,
+      });
     }
   }
 
   /**
-   * Get account holdings
+   * Get account positions
    */
-  async getAccountHoldings(accountId: string): Promise<Position[]> {
-    this.ensureAuthenticated();
+  async getAccountPositions(
+    userId: string,
+    userSecret: string,
+    accountId: string
+  ): Promise<Position[]> {
     try {
-      const response = await this.accountApi.getUserAccountPositions({
-        userId: this.userId,
-        userSecret: this.userSecret,
-        accountId
+      const response = await this.client.accountInformation.getUserAccountPositions({
+        userId,
+        userSecret,
+        accountId,
       });
       return response.data;
     } catch (error) {
-      throw this.handleError(error);
+      throw new SnapTradeError({
+        code: SnapTradeErrorCode.API_ERROR,
+        message: "Failed to get account positions",
+        originalError: error,
+      });
     }
   }
 
   /**
    * Get account balance
    */
-  async getAccountBalance(accountId: string): Promise<Balance[]> {
-    this.ensureAuthenticated();
+  async getAccountBalance(
+    userId: string,
+    userSecret: string,
+    accountId: string
+  ): Promise<Balance> {
     try {
-      const response = await this.accountApi.getUserAccountBalance({
-        userId: this.userId,
-        userSecret: this.userSecret,
-        accountId
+      const response = await this.client.accountInformation.getUserAccountBalance({
+        userId,
+        userSecret,
+        accountId,
       });
       return response.data;
     } catch (error) {
-      throw this.handleError(error);
+      throw new SnapTradeError({
+        code: SnapTradeErrorCode.API_ERROR,
+        message: "Failed to get account balance",
+        originalError: error,
+      });
     }
   }
 
   /**
-   * Get account orders
+   * Get account quotes
    */
-  async getUserAccountOrders(accountId: string): Promise<AccountOrderRecord[]> {
-    this.ensureAuthenticated();
+  async getAccountQuotes(
+    userId: string,
+    userSecret: string,
+    accountId: string,
+    symbols: string[]
+  ): Promise<SymbolsQuotesInner[]> {
     try {
-      const response = await this.accountApi.getUserAccountOrders({
-        userId: this.userId,
-        userSecret: this.userSecret,
-        accountId
+      const response = await this.client.trading.getUserAccountQuotes({
+        userId,
+        userSecret,
+        accountId,
+        symbols: symbols.join(","),
       });
       return response.data;
     } catch (error) {
-      throw this.handleError(error);
-    }
-  }
-
-  /**
-   * Handle API errors
-   */
-  private handleError(error: unknown): SnapTradeError {
-    if (error instanceof Error) {
-      return new SnapTradeError(error.message, SnapTradeErrorCode.UNKNOWN_ERROR);
-    }
-    return new SnapTradeError("Unknown error occurred", SnapTradeErrorCode.UNKNOWN_ERROR);
-  }
-
-  /**
-   * Check if user is authenticated
-   */
-  private ensureAuthenticated(): void {
-    if (!this.userId || !this.userSecret) {
-      throw new SnapTradeError("User not authenticated", SnapTradeErrorCode.NOT_AUTHENTICATED);
+      throw new SnapTradeError({
+        code: SnapTradeErrorCode.API_ERROR,
+        message: "Failed to get account quotes",
+        originalError: error,
+      });
     }
   }
 }
 
-// Create singleton instance
-const config: SnapTradeConfig = {
-  clientId: import.meta.env.VITE_SNAPTRADE_CLIENT_ID,
-  consumerKey: import.meta.env.VITE_SNAPTRADE_CONSUMER_KEY,
-};
+/**
+ * Create a new SnapTrade client instance
+ */
+export function createSnapTradeClient(): SnapTradeClient {
+  return new SnapTradeClient(configManager.getConfig());
+}
 
-export default new SnapTradeClient(config);
+export const snapTradeClient = createSnapTradeClient();
 
 /**
  * Example usage:
@@ -259,7 +300,7 @@ export default new SnapTradeClient(config);
  * console.log(status.data);
  *
  * // Register a user
- * const { userSecret } = await snapTradeClient.registerUser();
+ * const { userSecret } = await snapTradeClient.registerUser("user123");
  *
  * // Get user holdings
  * const holdings = await snapTradeClient.getHoldings("user123", userSecret);

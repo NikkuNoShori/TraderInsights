@@ -1,110 +1,197 @@
 # SnapTrade Integration
 
 ## Overview
-This document provides an overview of the SnapTrade integration in TraderInsights. The integration uses the official SnapTrade TypeScript SDK to provide brokerage connectivity and trading capabilities.
 
-## Configuration
+This document provides comprehensive documentation for the SnapTrade integration in TraderInsights. The integration uses the official `snaptrade-typescript-sdk` package with custom wrappers for enhanced functionality and security.
 
-### Environment Variables
-```env
-NEXT_PUBLIC_SNAPTRADE_CLIENT_ID=your_client_id
-NEXT_PUBLIC_SNAPTRADE_CONSUMER_KEY=your_consumer_key
+## Directory Structure
+
+```
+src/lib/snaptrade/
+├── client.ts           # Main SDK client implementation
+├── auth.ts             # Authentication utilities
+├── types.ts            # Type definitions
+├── config.ts           # Configuration management
+├── errors.ts           # Error handling
+├── storage.ts          # Secure storage
+├── rateLimiter.ts      # Rate limiting
+└── README.md           # Integration documentation
 ```
 
-### API Configuration
+## Core Components
+
+### Client Implementation (`client.ts`)
+The main client implementation that wraps the official SnapTrade TypeScript SDK:
+
 ```typescript
-const config = {
-  clientId: process.env.NEXT_PUBLIC_SNAPTRADE_CLIENT_ID,
-  consumerKey: process.env.NEXT_PUBLIC_SNAPTRADE_CONSUMER_KEY,
-  basePath: "https://api.snaptrade.com/api/v1",
+export class SnapTradeClient {
+  private client: Snaptrade;
+  private authApi: AuthenticationApi;
+  private accountApi: AccountInformationApi;
+  private referenceApi: ReferenceDataApi;
+  private userId: string;
+  private userSecret: string;
+
+  constructor(config: SnapTradeConfig) {
+    // Implementation details...
+  }
+}
+```
+
+### Authentication (`auth.ts`)
+Handles authentication and security-related functionality:
+
+```typescript
+export function generateAuthHeaders(
+  config: SnapTradeConfig,
+  userId: string,
+  userSecret: string
+): Record<string, string> {
+  // Implementation details...
+}
+```
+
+### Configuration (`config.ts`)
+Manages SnapTrade configuration:
+
+```typescript
+export interface SnapTradeConfig {
+  clientId: string;
+  consumerKey: string;
+  baseUrl?: string;
+  environment?: 'production' | 'sandbox';
+}
+```
+
+### Error Handling (`errors.ts`)
+Centralized error handling:
+
+```typescript
+export class ErrorHandler {
+  static handleError(error: unknown, context: string): never {
+    // Implementation details...
+  }
+}
+```
+
+### Secure Storage (`storage.ts`)
+Handles secure storage of sensitive data:
+
+```typescript
+export interface StoredCredentials {
+  userId: string;
+  userSecret: string;
+  createdAt: number;
+}
+```
+
+### Rate Limiting (`rateLimiter.ts`)
+Manages API rate limiting:
+
+```typescript
+export const rateLimiter = new RateLimiter({
+  maxRequests: 100,
+  timeWindow: 60000
+});
+```
+
+## Usage Examples
+
+### Initializing the Client
+```typescript
+import { configHelpers } from '@/lib/snaptrade/config';
+import { SnapTradeClient } from '@/lib/snaptrade/client';
+
+// Initialize configuration
+configHelpers.initializeFromEnv();
+
+// Create client instance
+const client = new SnapTradeClient(configHelpers.getConfig());
+```
+
+### Creating a Connection
+```typescript
+const createConnection = async (broker: string) => {
+  try {
+    const response = await client.createConnectionLink({
+      broker,
+      immediateRedirect: true,
+      customRedirect: window.location.origin + '/app/broker/connect'
+    });
+    
+    window.location.href = response.redirectURI;
+  } catch (error) {
+    // Handle error using errorHelpers
+  }
 };
 ```
 
-## Authentication
-
-### User Registration
+### Getting Account Information
 ```typescript
-const { userSecret } = await snaptrade.authentication.registerSnapTradeUser({
-  userId: "unique_user_id",
+const getAccounts = async () => {
+  try {
+    const accounts = await client.getUserAccounts();
+    return accounts;
+  } catch (error) {
+    // Handle error using errorHelpers
+  }
+};
+```
+
+## Security Considerations
+
+1. **Authentication**
+   - All API requests are signed with HMAC-SHA256
+   - Credentials are stored securely using encryption
+   - Session information is managed securely
+
+2. **Data Protection**
+   - Sensitive information is encrypted at rest
+   - Secure storage is used for credentials
+   - Rate limiting is implemented to prevent abuse
+
+3. **Error Handling**
+   - All errors are properly typed and handled
+   - Sensitive information is never exposed in error messages
+   - Error logging is implemented securely
+
+## Best Practices
+
+1. **Configuration**
+   - Use environment variables for sensitive data
+   - Validate configuration before use
+   - Support both production and sandbox environments
+
+2. **Error Handling**
+   - Use the provided error handling utilities
+   - Handle specific error types appropriately
+   - Log errors securely
+
+3. **Security**
+   - Never store credentials in plain text
+   - Use secure storage for sensitive data
+   - Implement proper session management
+
+4. **Rate Limiting**
+   - Respect API rate limits
+   - Use the provided rate limiting utilities
+   - Handle rate limit errors gracefully
+
+## Testing
+
+The integration includes test utilities:
+
+```typescript
+describe('SnapTrade Integration', () => {
+  it('should handle authentication correctly', async () => {
+    // Test implementation
+  });
 });
 ```
-
-### User Login
-```typescript
-const { redirectURI } = await snaptrade.authentication.loginSnapTradeUser({
-  userId: "unique_user_id",
-  userSecret: "user_secret",
-});
-```
-
-## Account Management
-
-### List Accounts
-```typescript
-const accounts = await snaptrade.accountInformation.listUserAccounts({
-  userId: "unique_user_id",
-  userSecret: "user_secret",
-});
-```
-
-### Get Account Positions
-```typescript
-const positions = await snaptrade.accountInformation.getUserAccountPositions({
-  userId: "unique_user_id",
-  userSecret: "user_secret",
-  accountId: "account_id",
-});
-```
-
-## Error Handling
-
-### Error Types
-```typescript
-enum SnapTradeErrorCode {
-  INITIALIZATION_ERROR = "INITIALIZATION_ERROR",
-  REGISTRATION_ERROR = "REGISTRATION_ERROR",
-  AUTHENTICATION_ERROR = "AUTHENTICATION_ERROR",
-  CONNECTION_ERROR = "CONNECTION_ERROR",
-  ACCOUNTS_ERROR = "ACCOUNTS_ERROR",
-  POSITIONS_ERROR = "POSITIONS_ERROR",
-  BALANCES_ERROR = "BALANCES_ERROR",
-  ORDERS_ERROR = "ORDERS_ERROR"
-}
-```
-
-### Error Handling Pattern
-```typescript
-try {
-  // API call
-} catch (error) {
-  const err = new Error(`Failed to perform operation: ${error}`) as SnapTradeError;
-  err.code = "ERROR_CODE";
-  err.details = error;
-  throw err;
-}
-```
-
-## Development Guidelines
-
-1. **Environment Setup**:
-   - Set up environment variables
-   - Configure API endpoints
-   - Initialize SnapTrade client
-
-2. **Testing**:
-   - Use test environment for development
-   - Test with mock data
-   - Implement proper error handling
-   - Test both success and failure scenarios
-
-3. **Code Organization**:
-   - Keep SnapTrade related code in `src/lib/snaptrade/`
-   - Use TypeScript for type safety
-   - Follow project conventions
-   - Document all public methods
 
 ## References
 
 - [SnapTrade API Documentation](https://docs.snaptrade.com)
 - [SnapTrade TypeScript SDK](https://github.com/passiv/snaptrade-sdks)
-- [Project Conventions](../CONVENTIONS.md) 
+- [Project Security Guidelines](../SECURITY.md)
+- [Error Handling Guidelines](../ERROR_HANDLING.md) 

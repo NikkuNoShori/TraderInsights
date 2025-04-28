@@ -8,6 +8,8 @@ import {
   SnapTradeConnection,
   SnapTradeAccount,
   SnapTradeConfig,
+  SnapTradeError,
+  SnapTradeErrorCode,
 } from "./types";
 
 // Determine if we're running in a browser or Node.js environment
@@ -78,7 +80,7 @@ export const StorageHelpers = {
   },
 
   // User data
-  getUser: (): SnapTradeUser | null => {
+  getUser: (): { userId: string; userSecret: string } | null => {
     const data = StorageHelpers.getItem(STORAGE_KEYS.USER);
     if (!data) return null;
 
@@ -89,14 +91,14 @@ export const StorageHelpers = {
         console.warn("Invalid SnapTrade user data in storage");
         return null;
       }
-      return user as SnapTradeUser;
+      return user;
     } catch (error) {
       console.error("Error parsing SnapTrade user data:", error);
       return null;
     }
   },
 
-  saveUser: (user: SnapTradeUser): void => {
+  saveUser: (user: { userId: string; userSecret: string }): void => {
     // Validate user object before saving
     if (!user.userId || !user.userSecret) {
       console.warn("Attempted to save invalid SnapTrade user data");
@@ -106,22 +108,22 @@ export const StorageHelpers = {
   },
 
   // Config data
-  getConfig: (): SnapTradeConfig | null => {
+  getConfig: (): any => {
     const data = StorageHelpers.getItem(STORAGE_KEYS.CONFIG);
     return data ? JSON.parse(data) : null;
   },
 
-  setConfig: (config: SnapTradeConfig): void => {
+  setConfig: (config: any): void => {
     StorageHelpers.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(config));
   },
 
   // Connections
-  getConnections: (): SnapTradeConnection[] => {
+  getConnections: (): any[] => {
     const data = StorageHelpers.getItem(STORAGE_KEYS.CONNECTIONS);
     return data ? JSON.parse(data) : [];
   },
 
-  saveConnections: (connections: SnapTradeConnection[]): void => {
+  saveConnections: (connections: any[]): void => {
     StorageHelpers.setItem(
       STORAGE_KEYS.CONNECTIONS,
       JSON.stringify(connections)
@@ -129,12 +131,12 @@ export const StorageHelpers = {
   },
 
   // Accounts
-  getAccounts: (): SnapTradeAccount[] => {
+  getAccounts: (): any[] => {
     const data = StorageHelpers.getItem(STORAGE_KEYS.ACCOUNTS);
     return data ? JSON.parse(data) : [];
   },
 
-  saveAccounts: (accounts: SnapTradeAccount[]): void => {
+  saveAccounts: (accounts: any[]): void => {
     StorageHelpers.setItem(STORAGE_KEYS.ACCOUNTS, JSON.stringify(accounts));
   },
 
@@ -156,7 +158,7 @@ export const StorageHelpers = {
   },
 
   // Connection session management
-  saveConnectionSession: (session: ConnectionSession): void => {
+  saveConnectionSession: (session: any): void => {
     const sessions = StorageHelpers.getConnectionSessions();
     sessions[session.brokerId] = session;
     StorageHelpers.setItem(
@@ -165,12 +167,12 @@ export const StorageHelpers = {
     );
   },
 
-  getConnectionSession: (brokerId: string): ConnectionSession | null => {
+  getConnectionSession: (brokerId: string): any => {
     const sessions = StorageHelpers.getConnectionSessions();
     return sessions[brokerId] || null;
   },
 
-  getConnectionSessions: (): Record<string, ConnectionSession> => {
+  getConnectionSessions: (): Record<string, any> => {
     const data = StorageHelpers.getItem(STORAGE_KEYS.CONNECTION_SESSIONS);
     return data ? JSON.parse(data) : {};
   },
@@ -182,5 +184,134 @@ export const StorageHelpers = {
       STORAGE_KEYS.CONNECTION_SESSIONS,
       JSON.stringify(sessions)
     );
+  },
+};
+
+// Secure storage is only available in browser environment
+export const secureStorage = isBrowser
+  ? {
+      storage: window.localStorage,
+      encryptionKey: process.env.NEXT_PUBLIC_SNAPTRADE_ENCRYPTION_KEY || "",
+
+      encrypt: function (data: string): string {
+        if (!this.encryptionKey) {
+          throw new SnapTradeError(
+            "Encryption key not found",
+            SnapTradeErrorCode.API_ERROR
+          );
+        }
+        return data
+          .split("")
+          .map((char, i) =>
+            String.fromCharCode(
+              char.charCodeAt(0) ^
+                this.encryptionKey.charCodeAt(i % this.encryptionKey.length)
+            )
+          )
+          .join("");
+      },
+
+      decrypt: function (data: string): string {
+        return this.encrypt(data);
+      },
+
+      set: function (key: string, value: any): void {
+        try {
+          const encryptedValue = this.encrypt(JSON.stringify(value));
+          this.storage.setItem(`snaptrade_${key}`, encryptedValue);
+        } catch (error) {
+          throw new SnapTradeError(
+            `Failed to store data: ${error}`,
+            SnapTradeErrorCode.API_ERROR
+          );
+        }
+      },
+
+      get: function (key: string): any {
+        try {
+          const encryptedValue = this.storage.getItem(`snaptrade_${key}`);
+          if (!encryptedValue) return null;
+          const decryptedValue = this.decrypt(encryptedValue);
+          return JSON.parse(decryptedValue);
+        } catch (error) {
+          throw new SnapTradeError(
+            `Failed to retrieve data: ${error}`,
+            SnapTradeErrorCode.API_ERROR
+          );
+        }
+      },
+
+      remove: function (key: string): void {
+        try {
+          this.storage.removeItem(`snaptrade_${key}`);
+        } catch (error) {
+          throw new SnapTradeError(
+            `Failed to remove data: ${error}`,
+            SnapTradeErrorCode.API_ERROR
+          );
+        }
+      },
+
+      clear: function (): void {
+        try {
+          Object.keys(this.storage)
+            .filter((key) => key.startsWith("snaptrade_"))
+            .forEach((key) => this.storage.removeItem(key));
+        } catch (error) {
+          throw new SnapTradeError(
+            `Failed to clear storage: ${error}`,
+            SnapTradeErrorCode.API_ERROR
+          );
+        }
+      },
+    }
+  : null;
+
+// Type definitions for stored data
+export interface StoredCredentials {
+  userId: string;
+  userSecret: string;
+  createdAt: number;
+}
+
+export interface StoredSession {
+  sessionId: string;
+  userId: string;
+  userSecret: string;
+  brokerId: string;
+  redirectUrl: string;
+  createdAt: number;
+  status: "pending" | "completed" | "failed";
+}
+
+// Helper functions for common operations
+export const storageHelpers = {
+  getCredentials: () => {
+    if (!secureStorage) return null;
+    return secureStorage.get("credentials");
+  },
+  setCredentials: (credentials: any) => {
+    if (!secureStorage) return;
+    secureStorage.set("credentials", credentials);
+  },
+  clearCredentials: () => {
+    if (!secureStorage) return;
+    secureStorage.remove("credentials");
+  },
+  getSession: () => {
+    if (!secureStorage) return null;
+    return secureStorage.get("session");
+  },
+  setSession: (session: any) => {
+    if (!secureStorage) return;
+    secureStorage.set("session", session);
+  },
+  clearSession: () => {
+    if (!secureStorage) return;
+    secureStorage.remove("session");
+  },
+  clearAll: () => {
+    if (!secureStorage) return;
+    secureStorage.clear();
   },
 }; 
