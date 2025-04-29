@@ -56,28 +56,32 @@ export type {
  */
 export enum SnapTradeErrorCode {
   API_ERROR = "API_ERROR",
-  VALIDATION_ERROR = "VALIDATION_ERROR",
+  AUTHENTICATION_ERROR = "AUTHENTICATION_ERROR",
   NETWORK_ERROR = "NETWORK_ERROR",
-  USER_NOT_FOUND = "USER_NOT_FOUND",
-  INVALID_CREDENTIALS = "INVALID_CREDENTIALS",
+  VALIDATION_ERROR = "VALIDATION_ERROR",
 }
 
 /**
  * SnapTrade error class
  */
 export class SnapTradeError extends Error {
-  constructor(params: {
+  code: SnapTradeErrorCode;
+  originalError?: unknown;
+
+  constructor({
+    code,
+    message,
+    originalError,
+  }: {
     code: SnapTradeErrorCode;
     message: string;
     originalError?: unknown;
   }) {
-    super(params.message);
-    this.code = params.code;
-    this.originalError = params.originalError;
+    super(message);
+    this.code = code;
+    this.originalError = originalError;
+    this.name = "SnapTradeError";
   }
-
-  code: SnapTradeErrorCode;
-  originalError?: unknown;
 }
 
 /**
@@ -198,40 +202,31 @@ export function isSnapTradeOrder(order: unknown): order is AccountOrderRecord {
 }
 
 // Validation functions
-export function validateUserId(userId: string): ValidationResult {
-  const errors: string[] = [];
+export function validateUserId(userId: string): void {
   if (!userId) {
-    errors.push("User ID is required");
+    throw new SnapTradeError({
+      code: SnapTradeErrorCode.VALIDATION_ERROR,
+      message: "User ID is required",
+    });
   }
-  return {
-    isValid: errors.length === 0,
-    errors,
-  };
 }
 
-export function validateUserSecret(userSecret: string): ValidationResult {
-  const errors: string[] = [];
+export function validateUserSecret(userSecret: string): void {
   if (!userSecret) {
-    errors.push("User secret is required");
+    throw new SnapTradeError({
+      code: SnapTradeErrorCode.VALIDATION_ERROR,
+      message: "User secret is required",
+    });
   }
-  return {
-    isValid: errors.length === 0,
-    errors,
-  };
 }
 
-export function validateConfig(config: SnapTradeConfig): ValidationResult {
-  const errors: string[] = [];
-  if (!config.clientId) {
-    errors.push("Client ID is required");
+export function validateConfig(config: SnapTradeConfig): void {
+  if (!config.clientId || !config.consumerKey) {
+    throw new SnapTradeError({
+      code: SnapTradeErrorCode.VALIDATION_ERROR,
+      message: "Missing required SnapTrade configuration parameters",
+    });
   }
-  if (!config.consumerKey) {
-    errors.push("Consumer key is required");
-  }
-  return {
-    isValid: errors.length === 0,
-    errors,
-  };
 }
 
 export type SnapTradeSDK = Snaptrade;
@@ -271,4 +266,61 @@ export interface BrokerSessionState {
   lastSyncTime?: number;
   selectedAccountId?: string | null;
   expandedDescriptions?: Set<string>;
+}
+
+/**
+ * Account information
+ */
+export interface AccountInfo {
+  id: string;
+  name: string;
+  type: string;
+  number: string;
+  institution: string;
+}
+
+/**
+ * Position information
+ */
+export interface PositionInfo {
+  symbol: string;
+  units: number;
+  price: number;
+  value: number;
+}
+
+/**
+ * Balance information
+ */
+export interface BalanceInfo {
+  currency: string;
+  cash: number;
+  marketValue: number;
+  totalEquity: number;
+}
+
+/**
+ * Order information
+ */
+export interface OrderInfo {
+  id: string;
+  symbol: string;
+  side: "buy" | "sell";
+  quantity: number;
+  price: number;
+  status: string;
+  createdAt: string;
+}
+
+/**
+ * SnapTrade API response types that extend/correct SDK types
+ */
+export interface SnapTradeConnectionResponse {
+  redirectURI: string;
+  sessionId: string;
+}
+
+export interface SnapTradeUser {
+  userId: string;
+  userSecret: string;
 } 

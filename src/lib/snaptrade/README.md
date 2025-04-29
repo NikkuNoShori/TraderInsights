@@ -204,31 +204,6 @@ Potential future enhancements for the SnapTrade integration include:
 
 ## Components
 
-### SnapTradeDemo
-
-The `SnapTradeDemo` component provides a user interface for connecting to brokerages and viewing account information.
-
-```tsx
-import dynamic from 'next/dynamic';
-import Layout from '@/components/Layout';
-
-// Import the SnapTradeDemo component with dynamic loading to avoid SSR issues
-const SnapTradeDemo = dynamic(() => import('@/components/SnapTradeDemo'), {
-  ssr: false,
-});
-
-export default function SnapTradePage() {
-  return (
-    <Layout>
-      <div className="container mx-auto py-8">
-        <h1 className="text-2xl font-bold mb-8">SnapTrade Integration</h1>
-        <SnapTradeDemo />
-      </div>
-    </Layout>
-  );
-}
-```
-
 ### SnapTradeCallback
 
 The `SnapTradeCallback` component handles the OAuth callback from SnapTrade.
@@ -297,7 +272,6 @@ The `types.ts` file provides TypeScript type definitions for the SnapTrade integ
 
 ## Documentation
 
-- [Migration Guide](./MIGRATION_GUIDE.md): Guide for migrating from the WebUll API to SnapTrade
 - [Security Assessment](./SECURITY_ASSESSMENT.md): Security assessment of the SnapTrade integration
 - [SnapTrade Documentation](https://docs.snaptrade.com): Official SnapTrade documentation
 - [SnapTrade TypeScript SDK](https://github.com/passiv/snaptrade-typescript-sdk): Official SnapTrade TypeScript SDK

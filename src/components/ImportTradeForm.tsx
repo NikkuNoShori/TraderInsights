@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { SnapTradeService } from '@/lib/snaptrade/client';
+import { SnapTradeClient } from '@/lib/snaptrade/client';
 import { SnapTradeConfig } from '@/lib/snaptrade/types';
 
 interface ImportTradeFormProps {
@@ -12,7 +12,7 @@ export function ImportTradeForm({ config, userId }: ImportTradeFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [userSecret, setUserSecret] = useState<string | null>(null);
 
-  const snapTradeService = new SnapTradeService(config);
+  const snapTradeClient = new SnapTradeClient(config);
 
   useEffect(() => {
     initializeSnapTrade();
@@ -32,9 +32,9 @@ export function ImportTradeForm({ config, userId }: ImportTradeFormProps) {
       }
 
       // Register new user
-      const newUserSecret = await snapTradeService.registerUser(userId);
-      localStorage.setItem('snaptrade_user_secret', newUserSecret);
-      setUserSecret(newUserSecret);
+      const response = await snapTradeClient.registerUser(userId);
+      localStorage.setItem('snaptrade_user_secret', response.userSecret);
+      setUserSecret(response.userSecret);
     } catch (err) {
       setError('Failed to initialize SnapTrade. Please try again later.');
       console.error('Error initializing SnapTrade:', err);

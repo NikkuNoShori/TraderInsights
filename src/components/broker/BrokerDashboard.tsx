@@ -29,7 +29,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import { useBrokerDataStore } from '@/stores/brokerDataStore';
-import { createConfig } from '@/lib/snaptrade/config';
+import { configManager, configHelpers } from '@/lib/snaptrade/config';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { StorageHelpers } from '@/lib/snaptrade/storage';
 import { useDebugStore } from '@/stores/debugStore';
@@ -71,7 +71,11 @@ export function BrokerDashboard() {
     }
   }, [isDebugMode, user, brokerages, isCategoryEnabled]);
 
-  const config = createConfig();
+  // Initialize configuration if not already done
+  if (!configManager.isInitialized()) {
+    configHelpers.initializeFromEnv();
+  }
+  const config = configManager.getConfig();
 
   // Log configuration only when debug is enabled
   useEffect(() => {

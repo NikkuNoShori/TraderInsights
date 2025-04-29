@@ -1,13 +1,51 @@
-export interface Broker {
-  id: string;
-  name: string;
-  type: BrokerType;
-  status: "active" | "inactive" | "pending" | "error";
+import {
+  Account,
+  AccountBalance,
+  Position,
+  Brokerage,
+} from "snaptrade-typescript-sdk";
+
+// Re-export SnapTrade types with our naming convention
+export type BrokerAccount = Account;
+export type BrokerBalance = AccountBalance;
+export type BrokerPosition = Position;
+export type BrokerOrder = any; // TODO: Update with correct SnapTrade type when available
+
+// Supported broker types through SnapTrade
+export type BrokerType =
+  | "td_ameritrade"
+  | "etrade"
+  | "robinhood"
+  | "webull"
+  | "interactive_brokers";
+
+// Core broker interface
+export interface Broker extends Brokerage {
+  logo?: string;
 }
 
-export type BrokerType = "schwab" | "snaptrade";
+// Broker configuration type
+export interface BrokerConfig {
+  defaultRefreshInterval: number; // Default interval for data refresh
+  maxRefreshInterval: number; // Maximum allowed refresh interval
+  minRefreshInterval: number; // Minimum allowed refresh interval
+  connectionTimeout: number; // Timeout for connection attempts
+  retryAttempts: number; // Number of retry attempts for failed operations
+  retryDelay: number; // Delay between retry attempts
+}
 
-// Charles Schwab CSV format
+// Connection status for a broker
+export interface BrokerConnection {
+  id: string;
+  broker: BrokerType;
+  userId: string;
+  status: "connected" | "disconnected";
+  lastSynced?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Charles Schwab CSV format (kept for historical data import)
 export interface SchwabTradeImport {
   Date: string;
   Symbol: string;
@@ -21,40 +59,17 @@ export interface SchwabTradeImport {
 
 // Map broker types to display names
 export const brokerNames: Record<BrokerType, string> = {
-  schwab: "Charles Schwab",
-  snaptrade: "SnapTrade",
+  td_ameritrade: "TD Ameritrade",
+  etrade: "E*TRADE",
+  robinhood: "Robinhood",
+  webull: "Webull",
+  interactive_brokers: "Interactive Brokers",
 };
 
-export interface BrokerConnection {
-  id: string;
-  broker: BrokerType;
-  userId: string;
-  status: "connected" | "disconnected";
-  lastSynced?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface BrokerAccount {
-  id: string;
-  broker: BrokerType;
-  userId: string;
-  name: string;
-  type: string;
-  status: "active" | "inactive";
-  balance?: number;
-  currency?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface BrokerConfig {
-  displayName: string;
-  type: BrokerType;
-  enabled: boolean;
-}
-
 export const BROKER_DISPLAY_NAMES: Record<BrokerType, string> = {
-  schwab: "Charles Schwab",
-  snaptrade: "SnapTrade",
+  td_ameritrade: "TD Ameritrade",
+  etrade: "E*TRADE",
+  robinhood: "Robinhood",
+  webull: "Webull",
+  interactive_brokers: "Interactive Brokers",
 };

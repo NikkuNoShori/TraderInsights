@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { useForm } from 'react-hook-form';
-import { createConfig } from "@/lib/snaptrade/config";
+import { configManager, configHelpers } from "@/lib/snaptrade/config";
 
 interface SnapTradeFormData {
   clientId: string;
@@ -12,7 +12,12 @@ interface SnapTradeFormData {
 }
 
 export function SnapTradeSettings() {
-  const config = createConfig();
+  // Initialize configuration if not already done
+  if (!configManager.isInitialized()) {
+    configHelpers.initializeFromEnv();
+  }
+  const config = configManager.getConfig();
+  
   const { register, handleSubmit } = useForm<SnapTradeFormData>({
     defaultValues: {
       clientId: config.clientId || '',

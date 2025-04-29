@@ -2,18 +2,30 @@ import { NextPage } from 'next';
 import Head from 'next/head';
 import Layout from '@/components/Layout';
 import { SnapTradeClient } from '@/lib/snaptrade/client';
-import { createConfig } from '@/lib/snaptrade/config';
+import { configManager, configHelpers } from '@/lib/snaptrade/config';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const SnapTradePage: NextPage = () => {
   const [isConnecting, setIsConnecting] = useState(false);
-  const snapTradeClient = new SnapTradeClient(createConfig());
+  const [selectedBroker, setSelectedBroker] = useState('');
+  const [brokerages, setBrokerages] = useState<any[]>([]);
+  
+  // Initialize configuration if not already done
+  if (!configManager.isInitialized()) {
+    configHelpers.initializeFromEnv();
+  }
+  const snapTradeClient = new SnapTradeClient(configManager.getConfig());
 
   const handleConnect = async () => {
+    if (!selectedBroker) {
+      toast.error('Please select a broker first');
+      return;
+    }
+
     try {
       setIsConnecting(true);
       if (!snapTradeClient.isUserRegistered()) {
@@ -22,7 +34,7 @@ const SnapTradePage: NextPage = () => {
       const connectionLink = await snapTradeClient.createConnectionLink(
         snapTradeClient.getUser()?.userId || '',
         snapTradeClient.getUser()?.userSecret || '',
-        'webull' // Default to Webull for now
+        { broker: selectedBroker }
       );
       window.location.href = connectionLink.redirectURI;
     } catch (error) {
@@ -61,13 +73,33 @@ const SnapTradePage: NextPage = () => {
                 </p>
               </div>
 
-              <Button 
-                onClick={handleConnect} 
-                disabled={isConnecting}
-                className="w-full sm:w-auto"
-              >
-                {isConnecting ? 'Connecting...' : 'Connect Brokerage'}
-              </Button>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-text-muted">
+                    Select Broker
+                  </label>
+                  <Select value={selectedBroker} onValueChange={setSelectedBroker}>
+                    <SelectTrigger className="bg-background border-border">
+                      <SelectValue placeholder="Choose a broker" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      {brokerages.map((broker) => (
+                        <SelectItem key={broker.id} value={broker.id}>
+                          {broker.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Button 
+                  onClick={handleConnect} 
+                  disabled={isConnecting || !selectedBroker}
+                  className="w-full sm:w-auto"
+                >
+                  {isConnecting ? 'Connecting...' : 'Connect Brokerage'}
+                </Button>
+              </div>
             </CardContent>
           </Card>
           

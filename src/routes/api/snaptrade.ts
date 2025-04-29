@@ -1,9 +1,13 @@
 import { Request, Response } from "express";
 import { SnapTradeClient } from "../../lib/snaptrade/client";
-import { createConfig } from "../../lib/snaptrade/config";
+import { configManager, configHelpers } from "../../lib/snaptrade/config";
 import { generateSnapTradeAuth } from "../../lib/snaptrade/auth";
 
-const snapTradeClient = new SnapTradeClient(createConfig());
+// Initialize configuration if not already done
+if (!configManager.isInitialized()) {
+  configHelpers.initializeFromEnv();
+}
+const snapTradeClient = new SnapTradeClient(configManager.getConfig());
 
 export const checkApiStatus = async (req: Request, res: Response) => {
   try {
@@ -19,7 +23,7 @@ export const checkApiStatus = async (req: Request, res: Response) => {
 
 export const listConnections = async (req: Request, res: Response) => {
   try {
-    const auth = await generateSnapTradeAuth(createConfig());
+    const auth = await generateSnapTradeAuth(configManager.getConfig());
     const connections = await snapTradeClient.getConnections();
     res.json(connections);
   } catch (error) {

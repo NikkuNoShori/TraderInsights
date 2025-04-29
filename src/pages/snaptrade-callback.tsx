@@ -1,12 +1,17 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SnapTradeClient } from '@/lib/snaptrade/client';
-import { createConfig } from '@/lib/snaptrade/config';
+import { configManager, configHelpers } from '@/lib/snaptrade/config';
 import { toast } from 'react-hot-toast';
 
 export default function SnapTradeCallback() {
   const navigate = useNavigate();
-  const snapTradeClient = new SnapTradeClient(createConfig());
+  
+  // Initialize configuration if not already done
+  if (!configManager.isInitialized()) {
+    configHelpers.initializeFromEnv();
+  }
+  const snapTradeClient = new SnapTradeClient(configManager.getConfig());
 
   useEffect(() => {
     const handleCallback = async () => {

@@ -15,7 +15,7 @@ export default function Dashboard() {
   const { user } = useAuthStore();
   const { trades, fetchTrades } = useTradeStore();
   const { filters } = useFilterStore();
-  const { connections, accounts, isLoading, error } = useBrokerDataStore();
+  const { connections, accounts, isLoading, error, getConnections, getAccounts } = useBrokerDataStore();
   const filteredTrades = useFilteredTrades(trades);
 
   useEffect(() => {
@@ -23,6 +23,22 @@ export default function Dashboard() {
       fetchTrades(user.id);
     }
   }, [user?.id, fetchTrades]);
+
+  // Initialize broker connections and accounts
+  useEffect(() => {
+    const initializeBrokerData = async () => {
+      try {
+        await getConnections();
+        await getAccounts();
+      } catch (error) {
+        console.error('Failed to initialize broker data:', error);
+      }
+    };
+
+    if (user?.id) {
+      initializeBrokerData();
+    }
+  }, [user?.id, getConnections, getAccounts]);
 
   const renderBrokerSection = () => {
     if (isLoading) {
@@ -50,19 +66,20 @@ export default function Dashboard() {
       );
     }
 
-    if (!connections.length) {
+    // Initialize connections array if undefined
+    const brokerConnections = connections || [];
+
+    if (!brokerConnections.length) {
       return (
         <div className="mb-6 p-6 border border-border rounded-lg bg-card">
           <h3 className="text-lg font-medium mb-2">Connect Your Broker</h3>
           <p className="text-muted-foreground mb-4">
             Connect your brokerage account to automatically import your trades and track your portfolio performance.
           </p>
-          {!connections.length && (
-            <Button onClick={() => window.location.href = '/app/broker-dashboard'} className="inline-flex items-center">
-              <Plus className="h-4 w-4 mr-2" />
-              Connect Broker
-            </Button>
-          )}
+          <Button onClick={() => window.location.href = '/app/broker-dashboard'} className="inline-flex items-center">
+            <Plus className="h-4 w-4 mr-2" />
+            Connect Broker
+          </Button>
         </div>
       );
     }
@@ -76,15 +93,13 @@ export default function Dashboard() {
               {accounts.length} account{accounts.length !== 1 ? 's' : ''} connected
             </p>
           </div>
-          {connections.length > 0 && (
-            <Button variant="outline" onClick={() => window.location.href = '/app/broker-dashboard'} className="inline-flex items-center">
-              Manage Brokers
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-          )}
+          <Button variant="outline" onClick={() => window.location.href = '/app/broker-dashboard'} className="inline-flex items-center">
+            Manage Brokers
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {connections.map((connection: any) => (
+          {brokerConnections.map((connection: any) => (
             <div key={connection.id} className="p-4 border border-border rounded-lg">
               <div className="flex items-center space-x-3">
                 {connection.brokerLogo && (

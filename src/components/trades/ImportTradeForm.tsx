@@ -17,7 +17,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { formatDistanceToNow } from "date-fns";
 import { BrokerConnectionPortal } from "@/components/broker/BrokerConnectionPortal";
 import { SnapTradeConfig } from "@/lib/snaptrade/types";
-import { createConfig } from "@/lib/snaptrade/config";
+import { configManager, configHelpers } from "@/lib/snaptrade/config";
 
 interface RateLimitError extends Error {
   resetAt: number;
@@ -45,7 +45,11 @@ export function ImportTradeForm({
   const [userSecret, setUserSecret] = useState<string>("");
   const [isInitializing, setIsInitializing] = useState(true);
 
-  const snapTradeClient = new SnapTradeClient(createConfig());
+  // Initialize configuration from environment variables if not already done
+  if (!configManager.isInitialized()) {
+    configHelpers.initializeFromEnv();
+  }
+  const snapTradeClient = new SnapTradeClient(configManager.getConfig());
 
   useEffect(() => {
     const initializeSnapTrade = async () => {
@@ -59,8 +63,7 @@ export function ImportTradeForm({
         }
 
         // Get SnapTrade configuration
-        const config = createConfig();
-        setSnapTradeConfig(config);
+        setSnapTradeConfig(configManager.getConfig());
 
         // Get user credentials
         const storedUser = snapTradeClient.getUser();

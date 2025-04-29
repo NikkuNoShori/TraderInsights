@@ -36,14 +36,6 @@ export function BrokerList({ config, onSelect }: BrokerListProps) {
           typeof broker.description === 'string'
         );
       
-      console.log('Filtered valid brokers:', validBrokers.length);
-      
-      // Log Webull specifically if found
-      const webull = validBrokers.find(b => b.name.toLowerCase().includes('webull'));
-      if (webull) {
-        console.log('Webull broker details:', JSON.stringify(webull, null, 2));
-      }
-
       setBrokers(validBrokers);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);

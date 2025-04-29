@@ -12,45 +12,44 @@ export function handleError(error: unknown): SnapTradeError {
 
     switch (status) {
       case 401:
-        return new SnapTradeError(
-          "Authentication failed",
-          SnapTradeErrorCode.NOT_AUTHENTICATED,
-          401
-        );
+        return new SnapTradeError({
+          message: "Authentication failed",
+          code: SnapTradeErrorCode.AUTHENTICATION_ERROR,
+          originalError: error,
+        });
       case 403:
-        return new SnapTradeError(
-          "Invalid credentials",
-          SnapTradeErrorCode.INVALID_CREDENTIALS,
-          403
-        );
+        return new SnapTradeError({
+          message: "Invalid credentials",
+          code: SnapTradeErrorCode.AUTHENTICATION_ERROR,
+          originalError: error,
+        });
       case 429:
-        return new SnapTradeError(
-          "Rate limit exceeded",
-          SnapTradeErrorCode.RATE_LIMIT_ERROR,
-          429
-        );
+        return new SnapTradeError({
+          message: "Rate limit exceeded",
+          code: SnapTradeErrorCode.API_ERROR,
+          originalError: error,
+        });
       default:
-        return new SnapTradeError(
-          message || "API request failed",
-          SnapTradeErrorCode.API_ERROR,
-          status || 500
-        );
+        return new SnapTradeError({
+          message: message || "API request failed",
+          code: SnapTradeErrorCode.API_ERROR,
+          originalError: error,
+        });
     }
   }
 
   if (error instanceof Error) {
-    return new SnapTradeError(
-      error.message,
-      SnapTradeErrorCode.UNKNOWN_ERROR,
-      500
-    );
+    return new SnapTradeError({
+      message: error.message,
+      code: SnapTradeErrorCode.API_ERROR,
+      originalError: error,
+    });
   }
 
-  return new SnapTradeError(
-    "An unknown error occurred",
-    SnapTradeErrorCode.UNKNOWN_ERROR,
-    500
-  );
+  return new SnapTradeError({
+    message: "An unknown error occurred",
+    code: SnapTradeErrorCode.API_ERROR,
+  });
 }
 
 export class ErrorHandler {
@@ -60,37 +59,23 @@ export class ErrorHandler {
     }
 
     if (error instanceof Error) {
-      throw new SnapTradeError(
-        `${context}: ${error.message}`,
-        SnapTradeErrorCode.API_ERROR
-      );
+      throw new SnapTradeError({
+        message: `${context}: ${error.message}`,
+        code: SnapTradeErrorCode.API_ERROR,
+        originalError: error,
+      });
     }
 
-    throw new SnapTradeError(
-      `${context}: Unknown error occurred`,
-      SnapTradeErrorCode.UNKNOWN_ERROR
-    );
+    throw new SnapTradeError({
+      message: `${context}: Unknown error occurred`,
+      code: SnapTradeErrorCode.API_ERROR,
+    });
   }
 
   static isAuthError(error: unknown): boolean {
     return (
       error instanceof SnapTradeError &&
-      (error.code === SnapTradeErrorCode.NOT_AUTHENTICATED ||
-        error.code === SnapTradeErrorCode.INVALID_CREDENTIALS)
-    );
-  }
-
-  static isConfigError(error: unknown): boolean {
-    return (
-      error instanceof SnapTradeError &&
-      error.code === SnapTradeErrorCode.CONFIGURATION_ERROR
-    );
-  }
-
-  static isStorageError(error: unknown): boolean {
-    return (
-      error instanceof SnapTradeError &&
-      error.code === SnapTradeErrorCode.STORAGE_ERROR
+      error.code === SnapTradeErrorCode.AUTHENTICATION_ERROR
     );
   }
 
@@ -101,11 +86,26 @@ export class ErrorHandler {
     );
   }
 
+  static isNetworkError(error: unknown): boolean {
+    return (
+      error instanceof SnapTradeError &&
+      error.code === SnapTradeErrorCode.NETWORK_ERROR
+    );
+  }
+
+  static isValidationError(error: unknown): boolean {
+    return (
+      error instanceof SnapTradeError &&
+      error.code === SnapTradeErrorCode.VALIDATION_ERROR
+    );
+  }
+
   static createError(
     message: string,
-    code: SnapTradeErrorCode
+    code: SnapTradeErrorCode,
+    originalError?: unknown
   ): SnapTradeError {
-    return new SnapTradeError(message, code);
+    return new SnapTradeError({ message, code, originalError });
   }
 
   static wrapError(error: unknown, context: string): SnapTradeError {
@@ -114,16 +114,17 @@ export class ErrorHandler {
     }
 
     if (error instanceof Error) {
-      return new SnapTradeError(
-        `${context}: ${error.message}`,
-        SnapTradeErrorCode.API_ERROR
-      );
+      return new SnapTradeError({
+        message: `${context}: ${error.message}`,
+        code: SnapTradeErrorCode.API_ERROR,
+        originalError: error,
+      });
     }
 
-    return new SnapTradeError(
-      `${context}: Unknown error occurred`,
-      SnapTradeErrorCode.UNKNOWN_ERROR
-    );
+    return new SnapTradeError({
+      message: `${context}: Unknown error occurred`,
+      code: SnapTradeErrorCode.API_ERROR,
+    });
   }
 }
 
@@ -136,22 +137,22 @@ export const errorHelpers = {
     throw ErrorHandler.wrapError(error, context);
   },
 
-  handleConfigError: (error: unknown, context: string): never => {
-    if (ErrorHandler.isConfigError(error)) {
-      throw error;
-    }
-    throw ErrorHandler.wrapError(error, context);
-  },
-
-  handleStorageError: (error: unknown, context: string): never => {
-    if (ErrorHandler.isStorageError(error)) {
-      throw error;
-    }
-    throw ErrorHandler.wrapError(error, context);
-  },
-
   handleApiError: (error: unknown, context: string): never => {
     if (ErrorHandler.isApiError(error)) {
+      throw error;
+    }
+    throw ErrorHandler.wrapError(error, context);
+  },
+
+  handleNetworkError: (error: unknown, context: string): never => {
+    if (ErrorHandler.isNetworkError(error)) {
+      throw error;
+    }
+    throw ErrorHandler.wrapError(error, context);
+  },
+
+  handleValidationError: (error: unknown, context: string): never => {
+    if (ErrorHandler.isValidationError(error)) {
       throw error;
     }
     throw ErrorHandler.wrapError(error, context);

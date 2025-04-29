@@ -1,89 +1,67 @@
-export const UNSUPPORTED_BROKERS = [
-  "alpaca",
-  "fidelity",
-  "questrade",
-  "tradestation",
-  "tradier",
-] as const;
+import { BrokerConfig } from "@/types/broker";
 
-export const BROKER_LIMITATIONS = {
-  dataFrequency: "daily",
-  dataTypes: ["positions", "orders", "transactions", "balances"],
-  isReadOnly: true,
-} as const;
+// Core configuration for broker connections through SnapTrade
+export const brokerConfig: BrokerConfig = {
+  defaultRefreshInterval: 5 * 60 * 1000, // 5 minutes
+  maxRefreshInterval: 30 * 60 * 1000, // 30 minutes
+  minRefreshInterval: 60 * 1000, // 1 minute
+  connectionTimeout: 30 * 1000, // 30 seconds
+  retryAttempts: 3,
+  retryDelay: 1000, // 1 second
+};
 
-export interface BrokerSupport {
-  name: string;
-  id: string;
-  isSupported: boolean;
-  reasonIfUnsupported?: string;
-  logo?: string;
-}
-
-export const SUPPORTED_BROKERS: BrokerSupport[] = [
+// These brokers are supported through SnapTrade's OAuth integration
+export const SUPPORTED_BROKERS = [
   {
     name: "TD Ameritrade",
     id: "td_ameritrade",
-    isSupported: true,
     logo: "/broker-logos/td-ameritrade.png",
   },
   {
     name: "E*TRADE",
     id: "etrade",
-    isSupported: true,
     logo: "/broker-logos/etrade.png",
   },
   {
     name: "Robinhood",
     id: "robinhood",
-    isSupported: true,
     logo: "/broker-logos/robinhood.png",
   },
   {
     name: "Webull",
     id: "webull",
-    isSupported: true,
     logo: "/broker-logos/webull.png",
   },
   {
     name: "Interactive Brokers",
     id: "interactive_brokers",
-    isSupported: true,
     logo: "/broker-logos/interactive-brokers.png",
   },
-  {
-    name: "Alpaca",
-    id: "alpaca",
-    isSupported: false,
-    reasonIfUnsupported: "Not supported in current plan",
-    logo: "/broker-logos/alpaca.png",
+] as const;
+
+// Broker display information (used for UI)
+export const BROKER_METADATA = {
+  td_ameritrade: {
+    name: "TD Ameritrade",
+    logo: "/broker-logos/td-ameritrade.png",
   },
-  {
-    name: "Fidelity",
-    id: "fidelity",
-    isSupported: false,
-    reasonIfUnsupported: "Not supported in current plan",
-    logo: "/broker-logos/fidelity.png",
+  etrade: {
+    name: "E*TRADE",
+    logo: "/broker-logos/etrade.png",
   },
-  {
-    name: "Questrade",
-    id: "questrade",
-    isSupported: false,
-    reasonIfUnsupported: "Not supported in current plan",
-    logo: "/broker-logos/questrade.png",
+  robinhood: {
+    name: "Robinhood",
+    logo: "/broker-logos/robinhood.png",
   },
-  {
-    name: "TradeStation",
-    id: "tradestation",
-    isSupported: false,
-    reasonIfUnsupported: "Not supported in current plan",
-    logo: "/broker-logos/tradestation.png",
+  webull: {
+    name: "Webull",
+    logo: "/broker-logos/webull.png",
   },
-  {
-    name: "Tradier",
-    id: "tradier",
-    isSupported: false,
-    reasonIfUnsupported: "Not supported in current plan",
-    logo: "/broker-logos/tradier.png",
+  interactive_brokers: {
+    name: "Interactive Brokers",
+    logo: "/broker-logos/interactive-brokers.png",
   },
-];
+} as const;
+
+// Broker list is now dynamically fetched from SnapTrade
+// No hardcoded broker configurations needed

@@ -3,18 +3,31 @@ import {
   SchwabTradeImport,
   BrokerType,
   BROKER_DISPLAY_NAMES,
+  BrokerAccount,
+  BrokerPosition,
+  Broker,
 } from "@/types/broker";
 import type { CreateTradeData } from "@/types/trade";
 import {
-  Position as SnapTradePosition,
-  AccountOrderRecord as SnapTradeOrder,
-  Balance as SnapTradeBalance,
-  Account as SnapTradeAccount,
+  Position,
+  AccountOrderRecord,
+  Balance,
+  Account,
   Symbol as SnapTradeSymbol,
-  Status as OrderStatus,
+  OrderStatus,
+  Brokerage as SnapTradeBrokerage,
+  UniversalSymbol,
+  AccountOrderRecordStatus,
+  PositionSymbol,
 } from "snaptrade-typescript-sdk";
-import { AccountOrderRecord } from "snaptrade-typescript-sdk";
-import { BrokerConnection, BrokerAccount, Broker } from "@/types/broker";
+
+type SnapTradeOrderStatus =
+  | "Filled"
+  | "Cancelled"
+  | "Pending"
+  | "Accepted"
+  | "Failed"
+  | "Rejected";
 
 // Common date/time parsing utility
 export function parseDateTime(
@@ -96,7 +109,9 @@ export function transformSchwabTrade(
 }
 
 // TD Ameritrade date format: YYYY-MM-DD
-export function transformTDAmeritradeTrade(tdTrade: any): CreateTradeData {
+export function transformTDAmeritradeTrade(
+  tdTrade: Record<string, any>
+): CreateTradeData {
   // TD provides dates in YYYY-MM-DD format and times in 24-hour HH:mm:ss
   const entryDateTime = parseDateTime(
     tdTrade.TransactionDate,
@@ -129,14 +144,16 @@ export function transformTDAmeritradeTrade(tdTrade: any): CreateTradeData {
     exit_time: exitDateTime?.time,
     exit_timestamp: exitDateTime?.timestamp,
     exit_price: exitDateTime ? Number(tdTrade.ClosingPrice) : undefined,
-    status: exitDateTime ? "closed" : "open",
+    status: exitDateTime ? "completed" : "pending",
     notes: `Imported from TD Ameritrade`,
     fees: Number(tdTrade.Commission || 0) + Number(tdTrade.Fees || 0),
   };
 }
 
 // IBKR date format: YYYY-MM-DD HH:mm:ss
-export function transformIBKRTrade(ibkrTrade: any): CreateTradeData {
+export function transformIBKRTrade(
+  ibkrTrade: Record<string, any>
+): CreateTradeData {
   // IBKR provides dates in YYYY-MM-DD HH:mm:ss format
   const entryDateTime = parseDateTime(ibkrTrade.DateTime);
   const exitDateTime = ibkrTrade.ClosingDateTime
@@ -162,28 +179,39 @@ export function transformIBKRTrade(ibkrTrade: any): CreateTradeData {
     exit_time: exitDateTime?.time,
     exit_timestamp: exitDateTime?.timestamp,
     exit_price: exitDateTime ? Number(ibkrTrade.ClosingPrice) : undefined,
-    status: exitDateTime ? "closed" : "open",
+    status: exitDateTime ? "completed" : "pending",
     notes: `Imported from Interactive Brokers`,
     fees: Number(ibkrTrade.Commission || 0) + Number(ibkrTrade.Fees || 0),
   };
 }
 
 // SnapTrade date format: ISO string
-export function transformSnapTradeTrade(snapTrade: any): CreateTradeData {
+export function transformSnapTradeTrade(
+  snapTrade: AccountOrderRecord
+): CreateTradeData {
   // SnapTrade provides dates in ISO format
-  const entryDateTime = parseDateTime(snapTrade.createdAt);
-  const exitDateTime = snapTrade.filledAt
-    ? parseDateTime(snapTrade.filledAt)
+  const entryDateTime = parseDateTime(
+    snapTrade.created_at || new Date().toISOString()
+  );
+  const exitDateTime = snapTrade.filled_at
+    ? parseDateTime(snapTrade.filled_at)
     : undefined;
+
+  const symbolStr = getSymbolString(snapTrade.symbol);
+  const orderStatus = snapTrade.status
+    ? ((typeof snapTrade.status === "string"
+        ? snapTrade.status
+        : snapTrade.status.toString()) as SnapTradeOrderStatus)
+    : "Pending";
 
   return {
     date: entryDateTime.date,
     time: entryDateTime.time,
     timestamp: entryDateTime.timestamp,
-    symbol: snapTrade.symbol,
+    symbol: symbolStr,
     type: "stock",
-    side: snapTrade.action === "BUY" ? "Long" : "Short",
-    direction: snapTrade.action === "BUY" ? "Long" : "Short",
+    side: snapTrade.order_type === "BUY" ? "Long" : "Short",
+    direction: snapTrade.order_type === "BUY" ? "Long" : "Short",
     quantity: Number(snapTrade.quantity),
     price: Number(snapTrade.price),
     total: Number(snapTrade.quantity) * Number(snapTrade.price),
@@ -194,46 +222,40 @@ export function transformSnapTradeTrade(snapTrade: any): CreateTradeData {
     exit_date: exitDateTime?.date,
     exit_time: exitDateTime?.time,
     exit_timestamp: exitDateTime?.timestamp,
-    exit_price: exitDateTime ? Number(snapTrade.filledPrice) : undefined,
-    status: snapTrade.status === "FILLED" ? "closed" : "open",
-    notes: `Imported from ${snapTrade.brokerageName || "SnapTrade"}`,
+    exit_price: exitDateTime ? Number(snapTrade.filled_price) : undefined,
+    status: getTradeStatus(orderStatus),
+    notes: `Imported from ${snapTrade.brokerage_name || "SnapTrade"}`,
     fees: 0, // SnapTrade doesn't provide fee information in orders
   };
 }
 
 // Export a unified transform function that handles any broker
 export function transformTrade(
-  trade: any,
+  trade: Record<string, any>,
   broker: BrokerType
 ): CreateTradeData {
   switch (broker) {
-    case "schwab":
-      return transformSchwabTrade(trade);
-    case "tdameritrade":
+    case "td_ameritrade":
       return transformTDAmeritradeTrade(trade);
-    case "ibkr":
+    case "interactive_brokers":
       return transformIBKRTrade(trade);
-    case "webull":
-      // Webull trades now come through SnapTrade in IBKR format
-      return transformIBKRTrade(trade);
-    case "snaptrade":
-      return transformSnapTradeTrade(trade);
     default:
       throw new Error(`Unsupported broker type: ${broker}`);
   }
 }
 
 // Remove Webull transforms since we're using SnapTrade
-export function transformBrokerTrade(trade: any, broker: string) {
-  switch (broker.toLowerCase()) {
-    case "charlesschwab":
-      return transformSchwabTrade(trade);
-    case "tdameritrade":
+export function transformBrokerTrade(
+  trade: Record<string, any>,
+  broker: BrokerType
+): CreateTradeData {
+  switch (broker) {
+    case "td_ameritrade":
       return transformTDAmeritradeTrade(trade);
-    case "ibkr":
+    case "interactive_brokers":
       return transformIBKRTrade(trade);
     default:
-      throw new Error(`Unsupported broker: ${broker}`);
+      throw new Error(`Unsupported broker type: ${broker}`);
   }
 }
 
@@ -262,7 +284,7 @@ export function transformSchwabTrades(trades: SchwabTradeImport[]): Trade[] {
     exit_time: "",
     exit_timestamp: "",
     entry_price: trade.Price,
-    status: "COMPLETED" as TradeStatus,
+    status: "completed" as TradeStatus,
     created_at: new Date(trade.Date).toISOString(),
     updated_at: new Date(trade.Date).toISOString(),
   }));
@@ -270,42 +292,53 @@ export function transformSchwabTrades(trades: SchwabTradeImport[]): Trade[] {
 
 // Transform SnapTrade position to Trade object
 export function transformSnapTradePosition(
-  position: SnapTradePosition
+  position: Position
 ): Partial<CreateTradeData> {
-  const units = position.units || 0;
-  const price = position.price || 0;
+  const timestamp = new Date().toISOString();
+  const dateTime = parseDateTime(timestamp);
 
   return {
-    type: "stock" as TradeType,
+    date: dateTime.date,
+    time: dateTime.time,
+    timestamp: dateTime.timestamp,
     symbol: getSymbolString(position.symbol),
-    shares: units,
-    price: price,
+    type: "stock",
+    side: Number(position.units) > 0 ? "Long" : "Short",
+    direction: Number(position.units) > 0 ? "Long" : "Short",
+    quantity: Math.abs(Number(position.units)),
+    price: Number(position.price),
+    total: Math.abs(Number(position.units)) * Number(position.price),
+    entry_date: dateTime.date,
+    entry_time: dateTime.time,
+    entry_timestamp: timestamp,
+    entry_price: Number(position.price),
     status: "completed" as TradeStatus,
-    side: units > 0 ? ("Long" as TradeSide) : ("Short" as TradeSide),
-    date: new Date().toISOString(),
-    fees: 0,
-    total: units * price,
   };
 }
 
 // Transform SnapTrade order to Trade object
 export function transformSnapTradeOrder(
-  order: SnapTradeOrder
+  order: AccountOrderRecord
 ): Partial<CreateTradeData> {
-  const units = order.units || 0;
-  const price = order.price || 0;
+  const timestamp = order.created_at || new Date().toISOString();
+  const dateTime = parseDateTime(timestamp);
 
   return {
-    type: "stock" as TradeType,
-    symbol: order.symbol || "",
-    shares: units,
-    price: price,
+    date: dateTime.date,
+    time: dateTime.time,
+    timestamp: dateTime.timestamp,
+    symbol: getSymbolString(order.symbol),
+    type: "stock",
+    side: order.order_type === "BUY" ? "Long" : "Short",
+    direction: order.order_type === "BUY" ? "Long" : "Short",
+    quantity: Number(order.quantity),
+    price: Number(order.price),
+    total: Number(order.quantity) * Number(order.price),
+    entry_date: dateTime.date,
+    entry_time: dateTime.time,
+    entry_timestamp: timestamp,
+    entry_price: Number(order.price),
     status: getTradeStatus(order.status),
-    side:
-      order.action === "BUY" ? ("Long" as TradeSide) : ("Short" as TradeSide),
-    date: order.time || new Date().toISOString(),
-    fees: 0,
-    total: units * price,
   };
 }
 
@@ -326,11 +359,7 @@ function generateTradeId(trade?: SchwabTradeImport): string {
 }
 
 export function getBrokerDisplayName(broker: BrokerType): string {
-  const brokerNames: Record<BrokerType, string> = {
-    charlesschwab: "Charles Schwab",
-    snaptrade: "SnapTrade",
-  };
-  return brokerNames[broker] || broker;
+  return BROKER_DISPLAY_NAMES[broker] || broker;
 }
 
 // Broker display names
@@ -339,41 +368,33 @@ export const brokerDisplayNames: Record<BrokerType, string> = {
   snaptrade: "SnapTrade",
 };
 
-function getTradeStatus(status: OrderStatus): TradeStatus {
+function getTradeStatus(status: SnapTradeOrderStatus): TradeStatus {
   switch (status) {
-    case OrderStatus.EXECUTED:
+    case "Filled":
       return "completed";
-    case OrderStatus.CANCELED:
-    case OrderStatus.REJECTED:
-    case OrderStatus.FAILED:
+    case "Cancelled":
+    case "Failed":
+    case "Rejected":
       return "cancelled";
-    case OrderStatus.PENDING:
-    case OrderStatus.ACCEPTED:
+    case "Pending":
+    case "Accepted":
     default:
       return "pending";
   }
 }
 
-function getSymbolString(symbol: SnapTradeSymbol | undefined): string {
-  return symbol?.symbol || "";
+function getSymbolString(symbol: unknown): string {
+  if (!symbol) return "";
+  if (typeof symbol === "string") return symbol;
+  if (typeof symbol === "object" && symbol && "symbol" in symbol) {
+    return (symbol as { symbol: string }).symbol || "";
+  }
+  return "";
 }
 
 export function transformSnapTradeBroker(broker: SnapTradeBrokerage): Broker {
-  if (!broker.name) {
-    throw new Error("Invalid broker data: missing name");
-  }
-
-  // Only map to supported broker types
-  const brokerType: BrokerType = broker.name.toLowerCase().includes("schwab")
-    ? "schwab"
-    : "snaptrade";
-
   return {
-    id: broker.id,
-    name: broker.name,
-    type: brokerType,
-    display_name: broker.name,
-    logo_url: broker.logo_url,
-    url: broker.url,
+    ...broker,
+    logo: `/images/brokers/${broker.id}.png`,
   };
 }
