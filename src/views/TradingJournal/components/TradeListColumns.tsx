@@ -2,15 +2,6 @@ import { Trade } from "@/types/trade";
 import { formatTradeValue } from "@/utils/trade";
 import React from "react";
 
-// Map broker names to display names
-const brokerDisplayNames = {
-  charlesschwab: "Charles Schwab",
-  tdameritrade: "TD Ameritrade",
-  ibkr: "Interactive Brokers",
-  snaptrade: "SnapTrade",
-  other: "Other",
-};
-
 export interface TradeColumn {
   id: keyof Trade | string;
   label: string;
@@ -37,14 +28,6 @@ export const TRADE_COLUMNS: TradeColumn[] = [
     sortable: true,
     defaultVisible: true,
     renderCell: (value) => value,
-  },
-  {
-    id: "broker_id",
-    label: "Broker",
-    accessor: "broker_id",
-    sortable: true,
-    defaultVisible: true,
-    renderCell: (value) => brokerDisplayNames[value as string] || value || "-",
   },
   {
     id: "symbol",
@@ -91,7 +74,7 @@ export const TRADE_COLUMNS: TradeColumn[] = [
     sortable: true,
     defaultVisible: true,
     renderCell: (value, trade) => {
-      if (trade.status !== "closed" || value === undefined) return "-";
+      if (trade.status !== "completed" || value === undefined) return "-";
       return (
         <span className={value > 0 ? "text-green-600" : "text-red-600"}>
           {value > 0 ? "+" : ""}

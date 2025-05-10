@@ -25,13 +25,6 @@ export function TradeCell({ columnId, trade, value }: TradeCellProps) {
     case "time":
       return <span className="font-medium text-muted-foreground">{value}</span>;
 
-    case "broker_id":
-      return (
-        <span className="inline-block px-2 py-1 rounded-md text-sm font-medium bg-muted/50 text-muted-foreground">
-          {value || "-"}
-        </span>
-      );
-
     case "side":
       return (
         <span

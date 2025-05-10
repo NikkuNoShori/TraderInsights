@@ -54,13 +54,6 @@ export function useFilteredTrades(trades: Trade[]) {
       });
     }
 
-    // Filter by broker
-    if (filters.brokers && filters.brokers.length > 0) {
-      filteredTrades = filteredTrades.filter(
-        (trade) => trade.broker_id && filters.brokers?.includes(trade.broker_id)
-      );
-    }
-
     // Filter by date range
     if (filters.dateRange) {
       const [startDate, endDate] = filters.dateRange;

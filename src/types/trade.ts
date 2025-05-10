@@ -1,5 +1,4 @@
 import type { TimeframeOption } from "@/components/ui/TimeframeSelector";
-import { BrokerType } from "./broker";
 
 export type TradeType = "stock" | "option" | "crypto" | "forex";
 export type TradeSide = "Long" | "Short";
@@ -15,7 +14,6 @@ export interface OptionDetails {
 export interface BaseTrade {
   id: string;
   user_id: string;
-  broker_id?: string;
   date: string;
   time: string;
   timestamp: string;
@@ -97,7 +95,6 @@ export type DatabaseTrade = Pick<
 >;
 
 export interface TradeFilters {
-  brokers?: string[];
   dateRange?: [Date, Date];
   symbols?: string[];
   types?: TradeType[];

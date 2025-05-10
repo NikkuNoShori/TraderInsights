@@ -207,19 +207,6 @@ export default function TradeDetails() {
           </div>
         </div>
 
-        {/* Broker Info Card */}
-        <div className="col-span-12 md:col-span-6 bg-card rounded-lg p-4 border border-default">
-          <h2 className="text-sm font-semibold mb-3">Broker Details</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <dt className="text-xs text-muted-foreground">Broker</dt>
-              <dd className="text-sm font-medium capitalize">
-                {trade.broker_id || "Manual Entry"}
-              </dd>
-            </div>
-          </div>
-        </div>
-
         {/* Notes Card */}
         {trade.notes && (
           <div className="col-span-12 bg-card rounded-lg p-4 border border-default">

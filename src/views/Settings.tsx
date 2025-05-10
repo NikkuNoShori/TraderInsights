@@ -11,7 +11,6 @@ import { DebugSettings } from '@/components/settings/DebugSettings';
 import { SecuritySettings } from '@/components/settings/SecuritySettings';
 import { ProfileSettings } from '@/components/settings/ProfileSettings';
 import { DataSettings } from '@/components/settings/DataSettings';
-import { SnapTradeSettings } from '@/components/settings/SnapTradeSettings';
 
 export default function Settings() {
   const { user, profile, setProfile } = useAuthStore();
@@ -68,7 +67,6 @@ export default function Settings() {
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="data">Data</TabsTrigger>
             <TabsTrigger value="security">Security</TabsTrigger>
-            <TabsTrigger value="snaptrade">SnapTrade</TabsTrigger>
             <TabsTrigger value="appearance">Appearance</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
             <TabsTrigger value="debug">Debug</TabsTrigger>
@@ -84,10 +82,6 @@ export default function Settings() {
 
           <TabsContent value="security">
             <SecuritySettings />
-          </TabsContent>
-
-          <TabsContent value="snaptrade">
-            <SnapTradeSettings />
           </TabsContent>
 
           <TabsContent value="appearance">

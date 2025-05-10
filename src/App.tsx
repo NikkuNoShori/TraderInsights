@@ -13,7 +13,6 @@ import Settings from "./views/Settings";
 import Login from "./views/auth/Login";
 import RequestPasswordReset from "./views/auth/RequestPasswordReset";
 import ResetPassword from "./views/auth/ResetPassword";
-import SnapTradeCallback from "./pages/snaptrade-callback";
 import { AuthGuard } from "./components/AuthGuard";
 import { AuthLayout } from "./components/auth/AuthLayout";
 import { AppProvider } from "./providers/AppProvider";
@@ -25,8 +24,6 @@ import Stocks from "./views/Stocks";
 import Playbook from "./views/Playbook";
 import Portfolios from "./views/Portfolios";
 import { useResetFilters } from "./hooks/useResetFilters";
-import { BrokerDashboard } from "./components/broker/BrokerDashboard";
-import { SnapTradeTest } from "./components/test/SnapTradeTest";
 import ContactPage from "./views/ContactUs";
 
 function ProtectedLayout() {
@@ -88,17 +85,6 @@ export default function App() {
                   </AuthLayout>
                 }
               />
-              <Route
-                path="broker-callback"
-                element={
-                  <AuthLayout
-                    title="Connecting to Broker"
-                    subtitle="Please wait while we complete the connection..."
-                  >
-                    <SnapTradeCallback />
-                  </AuthLayout>
-                }
-              />
               <Route index element={<Navigate to="login" replace />} />
             </Route>
 
@@ -109,9 +95,7 @@ export default function App() {
               <Route path="journal" element={<TradingJournal />} />
               <Route path="journal/:id" element={<TradeDetails />} />
               <Route path="performance" element={<Performance />} />
-              <Route path="broker-dashboard" element={<BrokerDashboard />} />
               <Route path="settings/*" element={<Settings />} />
-              <Route path="snaptrade-test" element={<SnapTradeTest />} />
 
               {/* Feature Routes */}
               <Route path="playbook" element={<Playbook />} />

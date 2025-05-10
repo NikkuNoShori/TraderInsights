@@ -1,11 +1,5 @@
 import "@testing-library/jest-dom";
 
-// Mock environment variables
-process.env.NEXT_PUBLIC_SNAPTRADE_CLIENT_ID = "test-client-id";
-process.env.NEXT_PUBLIC_SNAPTRADE_CONSUMER_KEY = "test-consumer-key";
-process.env.NEXT_PUBLIC_SNAPTRADE_ENVIRONMENT = "sandbox";
-process.env.NEXT_PUBLIC_SNAPTRADE_ENCRYPTION_KEY = "test-encryption-key";
-
 // Mock localStorage
 const localStorageMock = {
   getItem: jest.fn(),

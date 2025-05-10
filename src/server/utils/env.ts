@@ -7,17 +7,6 @@ export const serverEnv = {
   apiRateLimit: parseInt(process.env.VITE_API_RATE_LIMIT || "100"),
   supabaseUrl: process.env.VITE_SUPABASE_URL,
   supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY,
-  snapTrade: {
-    clientId:
-      process.env.SNAPTRADE_CLIENT_ID || process.env.VITE_SNAPTRADE_CLIENT_ID,
-    consumerKey:
-      process.env.SNAPTRADE_CONSUMER_KEY ||
-      process.env.VITE_SNAPTRADE_CONSUMER_KEY,
-    redirectUri:
-      process.env.SNAPTRADE_REDIRECT_URI ||
-      process.env.VITE_SNAPTRADE_REDIRECT_URI ||
-      "http://localhost:5173/broker-callback",
-  },
 };
 
 // Validate required environment variables

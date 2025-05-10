@@ -13,7 +13,6 @@ interface FilterState {
   sessionId: string;
   setFilters: (filters: Partial<TradeFilters>) => void;
   clearFilters: () => void;
-  toggleBroker: (brokerId: string) => void;
   toggleSymbol: (symbol: string) => void;
   toggleType: (type: TradeType) => void;
   toggleSide: (side: TradeSide) => void;
@@ -25,7 +24,6 @@ interface FilterState {
 }
 
 const defaultFilters: TradeFilters = {
-  brokers: [],
   dateRange: undefined,
   symbols: [],
   types: [],
@@ -60,21 +58,6 @@ export const useFilterStore = create<FilterState>()(
       clearFilters: () =>
         set({
           filters: { ...defaultFilters },
-        }),
-
-      toggleBroker: (brokerId) =>
-        set((state) => {
-          const brokers = state.filters.brokers || [];
-          const newBrokers = brokers.includes(brokerId)
-            ? brokers.filter((id) => id !== brokerId)
-            : [...brokers, brokerId];
-
-          return {
-            filters: {
-              ...state.filters,
-              brokers: newBrokers,
-            },
-          };
         }),
 
       toggleSymbol: (symbol) =>

@@ -4,14 +4,7 @@ import path from "path";
 
 export default defineConfig(({ mode }) => {
   // Load env variables from .env files
-  const env = loadEnv(mode, process.cwd(), ["VITE_", "SNAPTRADE_"]);
-
-  console.log("Vite config environment:", {
-    mode,
-    hasSnapTradeClientId: !!env.VITE_SNAPTRADE_CLIENT_ID,
-    hasSnapTradeConsumerKey: !!env.VITE_SNAPTRADE_CONSUMER_KEY,
-    hasSnapTradeWebhookUrl: !!env.VITE_SNAPTRADE_WEBHOOK_URL,
-  });
+  const env = loadEnv(mode, process.cwd(), ["VITE_"]);
 
   return {
     plugins: [react()],
@@ -52,12 +45,6 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           secure: false,
         },
-        // For SnapTrade webhooks
-        "/webhooks/snaptrade": {
-          target: "http://localhost:3000",
-          changeOrigin: true,
-          secure: false,
-        },
       },
       hmr: {
         protocol: "ws",
@@ -77,7 +64,6 @@ export default defineConfig(({ mode }) => {
             ui: ["@radix-ui/react-dialog", "@radix-ui/react-dropdown-menu"],
             charts: ["recharts"],
             utils: ["date-fns", "axios"],
-            snaptrade: ["snaptrade-typescript-sdk"],
           },
         },
       },
@@ -98,23 +84,6 @@ export default defineConfig(({ mode }) => {
           env.VITE_ENABLE_PAPER_TRADING
         ),
         VITE_ENABLE_ANALYTICS: JSON.stringify(env.VITE_ENABLE_ANALYTICS),
-        // SnapTrade configuration
-        VITE_SNAPTRADE_CLIENT_ID: JSON.stringify(env.VITE_SNAPTRADE_CLIENT_ID),
-        VITE_SNAPTRADE_CONSUMER_KEY: JSON.stringify(
-          env.VITE_SNAPTRADE_CONSUMER_KEY
-        ),
-        VITE_SNAPTRADE_WEBHOOK_URL: JSON.stringify(
-          env.VITE_SNAPTRADE_WEBHOOK_URL
-        ),
-        VITE_SNAPTRADE_RATE_LIMIT: JSON.stringify(
-          env.VITE_SNAPTRADE_RATE_LIMIT || "100"
-        ),
-        VITE_SNAPTRADE_RATE_WINDOW: JSON.stringify(
-          env.VITE_SNAPTRADE_RATE_WINDOW || "60000"
-        ),
-        VITE_SNAPTRADE_ENVIRONMENT: JSON.stringify(
-          env.VITE_SNAPTRADE_ENVIRONMENT || "sandbox"
-        ),
       },
     },
   };

@@ -10,12 +10,9 @@ import { Filter, X } from "lucide-react";
 import { useFilterStore } from "@/stores/filterStore";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TimeframeSelector } from "@/components/ui/TimeframeSelector";
-import { SUPPORTED_BROKERS } from "@/config/brokers";
-import { useBrokerDataStore } from "@/stores/brokerDataStore";
 
 export function FilterBar() {
-  const { filters, toggleBroker, clearFilters, setTimeframe } = useFilterStore();
-  const { brokerages } = useBrokerDataStore();
+  const { filters, clearFilters, setTimeframe } = useFilterStore();
   const [isOpen, setIsOpen] = useState(false);
 
   const activeFilterCount = Object.entries(filters)
@@ -30,14 +27,6 @@ export function FilterBar() {
       return value !== undefined;
     })
     .length;
-
-  // Use brokerages from SnapTrade if available, otherwise fall back to supported brokers
-  const availableBrokers = brokerages.length > 0 
-    ? brokerages.map(broker => ({
-        id: broker.id,
-        name: broker.name
-      }))
-    : SUPPORTED_BROKERS;
 
   return (
     <div className="flex items-center gap-2">
@@ -76,27 +65,6 @@ export function FilterBar() {
                   Clear all
                 </Button>
               )}
-            </div>
-            <Separator />
-            <div className="space-y-2">
-              <h5 className="text-sm font-medium mb-2">Brokers</h5>
-              <div className="grid grid-cols-2 gap-2">
-                {availableBrokers.map((broker) => (
-                  <div key={broker.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={broker.id}
-                      checked={filters.brokers?.includes(broker.id)}
-                      onCheckedChange={() => toggleBroker(broker.id)}
-                    />
-                    <label
-                      htmlFor={broker.id}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      {broker.name}
-                    </label>
-                  </div>
-                ))}
-              </div>
             </div>
             <Separator />
             <div className="space-y-2">
