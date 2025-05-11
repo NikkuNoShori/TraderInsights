@@ -10,7 +10,8 @@
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "test:snaptrade": "tsx scripts/test-snaptrade.ts"
+    "test:snaptrade": "tsx scripts/test-snaptrade.ts",
+    "validate:snaptrade": "tsx scripts/validate-snaptrade-endpoints.ts"
   },
   "overrides": {
     "axios": "^1.8.2",
@@ -73,7 +74,8 @@
     "react-resize-detector": "^11.0.1",
     "react-router-dom": "^6.20.0",
     "recharts": "^2.14.1",
-    "snaptrade-typescript-sdk": "^9.0.97",
+    "snaptrade-react": "^3.2.1",
+    "snaptrade-typescript-sdk": "^9.0.102",
     "sonner": "^2.0.3",
     "tailwind-merge": "^2.6.0",
     "tailwindcss": "^3.4.17",

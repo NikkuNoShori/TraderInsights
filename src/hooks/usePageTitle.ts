@@ -16,6 +16,7 @@ const routeTitles: Record<string, string> = {
   "/app/settings/notifications": "Notification Settings",
   "/app/settings/brokers": "Broker Settings",
   "/app/playbook": "Playbook",
+  "/app/broker-dashboard": "Broker Dashboard",
   "/auth/login": "Login",
 };
 

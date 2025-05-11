@@ -56,5 +56,10 @@ export const ROUTES: Record<string, RouteConfig> = {
     path: "/app/portfolios",
     label: "Portfolios",
     requiresAuth: true,
-  }
+  },
+  brokerDashboard: {
+    path: "/app/broker-dashboard",
+    label: "Broker Dashboard",
+    requiresAuth: true,
+  },
 };

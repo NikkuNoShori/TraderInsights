@@ -4,13 +4,7 @@ import path from "path";
 
 export default defineConfig(({ mode }) => {
   // Load env variables from .env files
-  const env = loadEnv(mode, process.cwd(), ["VITE_", "SNAPTRADE_"]);
-
-  console.log("Vite config environment:", {
-    mode,
-    hasSnapTradeClientId: !!env.VITE_SNAPTRADE_CLIENT_ID,
-    hasSnapTradeConsumerKey: !!env.VITE_SNAPTRADE_CONSUMER_KEY,
-  });
+  const env = loadEnv(mode, process.cwd(), ""); // Allow all env vars, not just VITE_ prefixed
 
   return {
     plugins: [react()],
@@ -45,11 +39,126 @@ export default defineConfig(({ mode }) => {
       host: true,
       open: false,
       proxy: {
-        // For local Next.js API routes
+        // Ensure the API server is running on port 3000 (npm run server)
         "/api": {
           target: "http://localhost:3000",
           changeOrigin: true,
           secure: false,
+          rewrite: (path) => path,
+          configure: (proxy, options) => {
+            // Add logging for API requests
+            proxy.on("error", (err, req, res) => {
+              console.error("API proxy error:", err);
+            });
+
+            proxy.on("proxyReq", (proxyReq, req, res) => {
+              console.log(`Proxying API request: ${req.method} ${req.url}`);
+            });
+
+            proxy.on("proxyRes", (proxyRes, req, res) => {
+              console.log(
+                `API response: ${proxyRes.statusCode} for ${req.method} ${req.url}`
+              );
+            });
+          },
+        },
+        // Proxy for SnapTrade API to handle CORS issues
+        "/snaptrade-api": {
+          target: "https://api.snaptrade.com",
+          changeOrigin: true,
+          secure: true,
+          rewrite: (path) => path.replace(/^\/snaptrade-api/, "/api/v1"),
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+          },
+          configure: (proxy, options) => {
+            // Add response interceptor for debugging
+            proxy.on("error", (err, req, res) => {
+              console.error("Proxy error:", err);
+              console.error("Original request details:", {
+                method: req.method,
+                url: req.url,
+                headers: req.headers,
+              });
+            });
+
+            proxy.on("proxyReq", (proxyReq, req, res) => {
+              // Log the outgoing request details
+              console.log(
+                `Proxying request to SnapTrade API: ${req.method} ${req.url}`
+              );
+
+              // Get the request body for debugging if available
+              // Use type assertion to handle body, which might be added by middleware
+              const reqWithBody = req as any;
+              if (reqWithBody.body) {
+                try {
+                  if (typeof reqWithBody.body === "object") {
+                    const reqBody = JSON.stringify(reqWithBody.body);
+                    console.log(`Request body: ${reqBody}`);
+                  } else if (typeof reqWithBody.body === "string") {
+                    console.log(`Request body: ${reqWithBody.body}`);
+                  }
+                } catch (err) {
+                  console.log("Unable to log request body");
+                }
+              }
+
+              // Log SnapTrade specific headers
+              if (req.headers["client-id"]) {
+                console.log(`Client ID: ${req.headers["client-id"]}`);
+              }
+
+              // Log the URL that will be requested after rewrite
+              const rewrittenUrl = req.url?.replace(
+                /^\/snaptrade-api/,
+                "/api/v1"
+              );
+              console.log(`After rewrite: ${req.method} ${rewrittenUrl}`);
+            });
+
+            proxy.on("proxyRes", (proxyRes, req, res) => {
+              const statusCode = proxyRes.statusCode || 0;
+              console.log(
+                `Received response from SnapTrade: ${statusCode} for ${req.method} ${req.url}`
+              );
+
+              // Always log headers for debugging
+              console.log("Response headers:", proxyRes.headers);
+
+              // Log response body for inspection, especially on errors
+              if (statusCode >= 400) {
+                console.error(
+                  `SnapTrade API error: ${statusCode} ${proxyRes.statusMessage}`
+                );
+                let rawData = "";
+
+                proxyRes.on("data", (chunk) => {
+                  rawData += chunk;
+                });
+
+                proxyRes.on("end", () => {
+                  try {
+                    console.error("SnapTrade error response body:", rawData);
+
+                    // Try to parse JSON errors for better debugging
+                    try {
+                      const parsedError = JSON.parse(rawData);
+                      console.error("Parsed error:", parsedError);
+                      if (parsedError.detail) {
+                        console.error("Error detail:", parsedError.detail);
+                      }
+                    } catch (e) {
+                      // Not JSON or couldn't parse
+                      console.error("Could not parse error as JSON");
+                    }
+                  } catch (e) {
+                    console.error("Error parsing SnapTrade error response", e);
+                  }
+                });
+              }
+            });
+          },
         },
       },
       hmr: {
@@ -77,23 +186,12 @@ export default defineConfig(({ mode }) => {
     define: {
       // Expose env variables to the client
       "process.env": {
-        VITE_APP_ENV: JSON.stringify(env.VITE_APP_ENV),
-        VITE_API_BASE_URL: JSON.stringify(env.VITE_API_BASE_URL),
-        VITE_SUPABASE_URL: JSON.stringify(env.VITE_SUPABASE_URL),
-        VITE_SUPABASE_ANON_KEY: JSON.stringify(env.VITE_SUPABASE_ANON_KEY),
-        VITE_APP_NAME: JSON.stringify(env.VITE_APP_NAME),
-        VITE_LOG_LEVEL: JSON.stringify(env.VITE_LOG_LEVEL),
-        VITE_ENABLE_REAL_TIME_TRADING: JSON.stringify(
-          env.VITE_ENABLE_REAL_TIME_TRADING
-        ),
-        VITE_ENABLE_PAPER_TRADING: JSON.stringify(
-          env.VITE_ENABLE_PAPER_TRADING
-        ),
-        VITE_ENABLE_ANALYTICS: JSON.stringify(env.VITE_ENABLE_ANALYTICS),
-        VITE_SNAPTRADE_CLIENT_ID: JSON.stringify(env.VITE_SNAPTRADE_CLIENT_ID),
-        VITE_SNAPTRADE_CONSUMER_KEY: JSON.stringify(
-          env.VITE_SNAPTRADE_CONSUMER_KEY
-        ),
+        // Add other env vars as needed
+        NODE_ENV: JSON.stringify(env.NODE_ENV),
+        SNAPTRADE_CLIENT_ID: JSON.stringify(env.SNAPTRADE_CLIENT_ID),
+        SNAPTRADE_CONSUMER_KEY: JSON.stringify(env.SNAPTRADE_CONSUMER_KEY),
+        SUPABASE_URL: JSON.stringify(env.SUPABASE_URL),
+        SUPABASE_ANON_KEY: JSON.stringify(env.SUPABASE_ANON_KEY),
       },
     },
   };

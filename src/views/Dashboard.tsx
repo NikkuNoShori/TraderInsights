@@ -6,10 +6,7 @@ import { FilterBar } from "@/components/trades/FilterBar";
 import { useFilteredTrades } from "@/hooks/useFilteredTrades";
 import { useFilterStore } from "@/stores/filterStore";
 import { PageHeader } from "@/components/ui";
-import { useBrokerDataStore } from "@/stores/brokerDataStore";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui";
-import { ArrowRight, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function Dashboard() {
   const { user } = useAuthStore();
@@ -119,6 +116,19 @@ export default function Dashboard() {
       {renderBrokerSection()}
       <div className="space-y-6">
         <DashboardCards trades={filteredTrades} timeframe={filters.timeframe || "1M"} />
+      </div>
+      
+      {/* Button to navigate to broker dashboard instead of embedding component */}
+      <div className="mt-12">
+        <h3 className="text-lg font-bold mb-2">Broker Connections</h3>
+        <div className="p-6 border rounded-md bg-gray-50">
+          <p className="text-muted-foreground mb-4">
+            Connect to your brokers and view your portfolio information on the Broker Dashboard.
+          </p>
+          <Button>
+            <a href="/app/broker-dashboard" className="w-full text-center">Go to Broker Dashboard</a>
+          </Button>
+        </div>
       </div>
     </div>
   );

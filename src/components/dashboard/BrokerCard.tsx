@@ -1,7 +1,7 @@
 import { type ReactNode } from "@/lib/react";
-import { Card } from "@/components/ui";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card, Skeleton } from "@/components/ui";
 import { useBrokerDataStore } from "@/stores/brokerDataStore";
+import { ErrorMessage } from "@/components/ui/error-message";
 
 interface BrokerCardProps {
   title: string;
@@ -42,7 +42,7 @@ export function BrokerCard({
             <Skeleton className="h-4 w-1/2" />
           </div>
         ) : error ? (
-          <div className="text-sm text-destructive">{error}</div>
+          <ErrorMessage message={error} />
         ) : (
           children
         )}

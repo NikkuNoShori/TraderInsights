@@ -24,6 +24,7 @@ import MarketData from "./views/MarketData";
 import Stocks from "./views/Stocks";
 import Playbook from "./views/Playbook";
 import Portfolios from "./views/Portfolios";
+import BrokerDashboard from "./views/BrokerDashboard";
 import { useResetFilters } from "./hooks/useResetFilters";
 import { BrokerDashboard } from "./components/broker/BrokerDashboard";
 import { SnapTradeTest } from "./components/test/SnapTradeTest";
@@ -111,7 +112,7 @@ export default function App() {
               <Route path="performance" element={<Performance />} />
               <Route path="broker-dashboard" element={<BrokerDashboard />} />
               <Route path="settings/*" element={<Settings />} />
-              <Route path="snaptrade-test" element={<SnapTradeTest />} />
+              <Route path="broker-dashboard" element={<BrokerDashboard />} />
 
               {/* Feature Routes */}
               <Route path="playbook" element={<Playbook />} />
