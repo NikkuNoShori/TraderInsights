@@ -26,6 +26,12 @@ const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     detectSessionInUrl: true,
   },
+  global: {
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+  },
 });
 
 // Test connection

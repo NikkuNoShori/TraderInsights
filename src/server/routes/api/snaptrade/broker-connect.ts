@@ -1,11 +1,23 @@
-import { Router, Request, Response, RequestHandler } from "express";
-import axios, { AxiosError } from "axios";
+import { Router, RequestHandler } from "express";
+import axios from "axios";
 import crypto from "crypto";
 
 const router = Router();
 
+// Create a stable, immutable signature string format as per SnapTrade documentation
+const generateSignature = (
+  clientId: string,
+  timestamp: string,
+  secretKey: string
+): string => {
+  return crypto
+    .createHmac("sha256", secretKey)
+    .update(`${clientId}${timestamp}`)
+    .digest("hex");
+};
+
 // Handle POST requests to /api/snaptrade/broker-connect
-const brokerConnectHandler: RequestHandler = async (req, res, next) => {
+const brokerConnectHandler: RequestHandler = async (req, res, _next) => {
   if (req.method !== "POST") {
     res.status(405).json({ error: "Method not allowed" });
     return;
@@ -49,10 +61,10 @@ const brokerConnectHandler: RequestHandler = async (req, res, next) => {
     }
 
     // Get SnapTrade credentials - prefer those from the request if provided
-    const clientId = requestClientId || process.env.VITE_SNAPTRADE_CLIENT_ID;
+    const apiClientId = requestClientId || process.env.VITE_SNAPTRADE_CLIENT_ID;
     const consumerKey = process.env.VITE_SNAPTRADE_CONSUMER_KEY;
 
-    if (!clientId || !consumerKey) {
+    if (!apiClientId || !consumerKey) {
       res.status(500).json({
         error: "Missing SnapTrade API credentials",
         message:
@@ -66,7 +78,7 @@ const brokerConnectHandler: RequestHandler = async (req, res, next) => {
       userId: userId.substring(0, 8) + "...",
       brokerId: brokerId || "ALL",
       hasRedirectUri: !!redirectUri,
-      hasClientId: !!clientId,
+      hasClientId: !!apiClientId,
       userSecretLength: userSecret ? userSecret.length : 0,
     });
 
@@ -93,17 +105,14 @@ const brokerConnectHandler: RequestHandler = async (req, res, next) => {
 
     // Generate timestamp and signature for auth method 1
     const timestamp = Math.floor(Date.now() / 1000).toString();
-    const signature = crypto
-      .createHmac("sha256", consumerKey)
-      .update(`${clientId}${timestamp}`)
-      .digest("hex");
+    const signature = generateSignature(apiClientId, timestamp, consumerKey);
 
     // Log the SnapTrade request details for debugging
     console.log("SnapTrade request details:", {
       url: "https://api.snaptrade.com/api/v1/snapTrade/login",
       hasTimestamp: !!timestamp,
       hasSignature: !!signature,
-      hasClientId: !!clientId,
+      hasClientId: !!apiClientId,
       consumerKeyLength: consumerKey ? consumerKey.length : 0,
       body: {
         hasUserId: !!requestBody.userId,
@@ -117,6 +126,10 @@ const brokerConnectHandler: RequestHandler = async (req, res, next) => {
     const queryParams = new URLSearchParams();
     queryParams.append("userId", userId);
     queryParams.append("userSecret", userSecret);
+    queryParams.append("clientId", apiClientId);
+    queryParams.append("consumerKey", consumerKey);
+    queryParams.append("timestamp", timestamp);
+    queryParams.append("signature", signature);
     if (requestBody.broker) {
       queryParams.append("broker", requestBody.broker);
     }
@@ -138,11 +151,10 @@ const brokerConnectHandler: RequestHandler = async (req, res, next) => {
         Accept: "application/json",
         // Include both authentication methods to ensure one works
         "x-api-key": consumerKey,
-        "Client-Id": clientId,
-        // Also include signature-based authentication as backup
+        "Client-Id": apiClientId,
         Signature: signature,
         Timestamp: timestamp,
-        ClientId: clientId,
+        ClientId: apiClientId,
       },
     });
 

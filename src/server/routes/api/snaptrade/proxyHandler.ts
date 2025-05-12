@@ -6,7 +6,7 @@ import crypto from "crypto";
  * Handle SnapTrade API proxy requests
  * This allows us to securely make SnapTrade API calls while keeping credentials on the server
  */
-export const handleSnapTradeProxy: RequestHandler = async (req, res, next) => {
+export const handleSnapTradeProxy: RequestHandler = async (req, res, _next) => {
   try {
     // Get the API endpoint from query parameters
     const endpoint = req.query.endpoint as string;

@@ -322,6 +322,9 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       name: "trader-insights-auth",
       partialize: (state) => ({
         snapTradeCredentials: state.snapTradeCredentials,
+        user: state.user,
+        profile: state.profile,
+        isInitialized: state.isInitialized,
       }),
     }
   )
