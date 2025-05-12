@@ -13,7 +13,7 @@ import Settings from "./views/Settings";
 import Login from "./views/auth/Login";
 import RequestPasswordReset from "./views/auth/RequestPasswordReset";
 import ResetPassword from "./views/auth/ResetPassword";
-import SnapTradeCallback from "./pages/snaptrade-callback";
+import BrokerCallback from "./views/auth/BrokerCallback";
 import { AuthGuard } from "./components/AuthGuard";
 import { AuthLayout } from "./components/auth/AuthLayout";
 import { AppProvider } from "./providers/AppProvider";
@@ -26,8 +26,7 @@ import Playbook from "./views/Playbook";
 import Portfolios from "./views/Portfolios";
 import BrokerDashboard from "./views/BrokerDashboard";
 import { useResetFilters } from "./hooks/useResetFilters";
-import { BrokerDashboard } from "./components/broker/BrokerDashboard";
-import { SnapTradeTest } from "./components/test/SnapTradeTest";
+import { BrokerDashboard as BrokerConnectionManager } from "./components/broker/BrokerDashboard";
 import ContactPage from "./views/ContactUs";
 
 function ProtectedLayout() {
@@ -96,12 +95,15 @@ export default function App() {
                     title="Connecting to Broker"
                     subtitle="Please wait while we complete the connection..."
                   >
-                    <SnapTradeCallback />
+                    <BrokerCallback />
                   </AuthLayout>
                 }
               />
               <Route index element={<Navigate to="login" replace />} />
             </Route>
+
+            {/* Also add the broker-callback route outside of /auth to handle direct callbacks */}
+            <Route path="/broker-callback" element={<BrokerCallback />} />
 
             {/* Protected routes - all under /app/* */}
             <Route path="/app" element={<ProtectedLayout />}>
@@ -113,6 +115,7 @@ export default function App() {
               <Route path="broker-dashboard" element={<BrokerDashboard />} />
               <Route path="settings/*" element={<Settings />} />
               <Route path="broker-dashboard" element={<BrokerDashboard />} />
+              <Route path="broker-connection" element={<BrokerConnectionManager />} />
 
               {/* Feature Routes */}
               <Route path="playbook" element={<Playbook />} />

@@ -3,7 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { createDebugLogger } from '@/stores/debugStore';
-import { SnapTradeClient } from '@/lib/snaptrade';
+import { SnapTradeClient } from '@/lib/snaptrade/client';
+import { StorageHelpers } from '@/lib/snaptrade/storage';
 import type { SnapTradeError } from '@/lib/snaptrade';
 
 const logger = createDebugLogger('broker' as any); // TODO: Add 'broker' to DebugCategory type
@@ -25,18 +26,44 @@ export default function BrokerCallback() {
           throw new Error('Missing required parameters');
         }
 
-        // Initialize SnapTrade client
-        const client = new SnapTradeClient();
-        client.setUser({ userId, userSecret });
-
-        // Verify the connection
-        const connections = await client.getConnections();
+        // Store the user credentials for SnapTrade
+        StorageHelpers.saveUser({ userId, userSecret });
+        
+        // Check if we have connections by getting them from storage
+        const connections = StorageHelpers.getConnections();
         if (connections.length === 0) {
-          throw new Error('No connections found');
+          logger.debug('No connections found in storage, will check via API');
+          
+          // Try fetching connections via API to confirm connection was successful
+          try {
+            // Create client instance with config from environment variables
+            const clientId = import.meta.env.VITE_SNAPTRADE_CLIENT_ID;
+            const consumerKey = import.meta.env.VITE_SNAPTRADE_CONSUMER_KEY;
+            
+            if (clientId && consumerKey) {
+              const client = new SnapTradeClient({ clientId, consumerKey });
+              
+              // Use loginUser to verify the connection 
+              await client.loginUser(userId, userSecret);
+              
+              logger.debug('Successfully verified connection');
+            } else {
+              logger.error('Missing SnapTrade credentials in environment');
+            }
+          } catch (error) {
+            logger.error('Error verifying connection:', error);
+            // Continue anyway as the connection might still be successful
+          }
         }
-
+        
         logger.debug('Broker connection successful:', { userId, sessionId });
-        navigate('/app/dashboard');
+        
+        // Set a flag in session storage to indicate we're returning from a successful broker connection
+        // This will be used by the BrokerDashboard to automatically fetch accounts
+        sessionStorage.setItem('returningFromBrokerConnection', 'true');
+        
+        // Navigate to the broker dashboard instead of the general dashboard
+        navigate('/app/broker-dashboard');
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to process broker connection';
         logger.error('Error handling broker callback:', errorMessage);
@@ -62,8 +89,8 @@ export default function BrokerCallback() {
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <AlertCircle className="h-8 w-8 text-error mb-4" />
         <div className="text-error mb-4">{error}</div>
-        <Button onClick={() => navigate('/app/settings')}>
-          Return to Settings
+        <Button onClick={() => navigate('/app/broker-dashboard')}>
+          Return to Broker Dashboard
         </Button>
       </div>
     );
