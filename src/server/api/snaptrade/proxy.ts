@@ -20,7 +20,10 @@ export const handleSnapTradeProxy = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  console.log(`Proxying API request: ${req.method} ${req.path}`);
+  console.log(
+    `Proxying API request: ${req.method} ${req.path}, query:`,
+    req.query
+  );
 
   // Extract the target endpoint from the path - more robust handling
   let path = req.path;
@@ -33,6 +36,15 @@ export const handleSnapTradeProxy = async (
   // Handle /api/snaptrade/proxy/referenceData/brokerages
   else if (path.includes("/proxy/referenceData/brokerages")) {
     endpoint = "/referenceData/brokerages";
+  }
+  // Handle direct /accounts endpoint
+  else if (path.includes("/proxy/accounts")) {
+    endpoint = "/accounts";
+  }
+  // Handle specific account endpoints
+  else if (path.match(/\/proxy\/accounts\/[a-zA-Z0-9-]+/)) {
+    const accountId = path.split("/accounts/")[1];
+    endpoint = `/accounts/${accountId}`;
   }
   // Handle generic proxy paths
   else {
@@ -49,6 +61,8 @@ export const handleSnapTradeProxy = async (
       }
     }
   }
+
+  console.log(`Resolved endpoint: ${endpoint}`);
 
   try {
     // Special case for /debug endpoint - don't forward to SnapTrade
@@ -122,12 +136,14 @@ export const handleSnapTradeProxy = async (
       Signature: signature,
       Timestamp: timestamp,
       ClientId: SNAPTRADE_CLIENT_ID,
+      "x-api-key": SNAPTRADE_CONSUMER_KEY, // Add API key header for all requests
     };
 
     // Handle specific account-related endpoints differently
     // These endpoints require userId and userSecret in the request body
     const isAccountsEndpoint =
-      endpoint.includes("/accounts") ||
+      endpoint === "/accounts" ||
+      endpoint.startsWith("/accounts/") ||
       endpoint.includes("/positions") ||
       endpoint.includes("/balances");
 
@@ -202,30 +218,68 @@ export const handleSnapTradeProxy = async (
           method: req.method,
           isInQueryParams: !!(queryParams.userId && queryParams.userSecret),
           isInBody: !!(req.body && req.body.userId && req.body.userSecret),
+          endpoint: endpoint,
         });
 
-        // Ensure all account endpoints use POST with credentials in body
-        if (req.method === "GET") {
-          // Convert GET to POST
-          safeLogger.log(
-            "Converting GET to POST for account endpoint with credentials in body"
+        // Always use GET for account endpoints with API key authentication
+        const actualMethod = "GET";
+        safeLogger.log(
+          `Using ${actualMethod} for account endpoint with API key auth`
+        );
+
+        // Build the target URL carefully
+        const targetUrl = `${SNAPTRADE_API_BASE}${endpoint}`;
+        console.log(`Making API call to: ${targetUrl}`);
+
+        try {
+          // Make the API call with credentials as query parameters
+          const response = await axios({
+            method: actualMethod,
+            url: targetUrl,
+            params: {
+              ...queryParams,
+              clientId: SNAPTRADE_CLIENT_ID,
+              userId,
+              userSecret,
+              timestamp,
+            },
+            headers: headers,
+          });
+
+          // Return the response
+          res.status(response.status).json(response.data);
+          console.log(
+            `API response: ${response.status} for ${actualMethod} ${endpoint}`
           );
-          req.method = "POST"; // Change method internally
+          return;
+        } catch (error) {
+          if (axios.isAxiosError(error)) {
+            console.error("Account API request failed:", {
+              status: error.response?.status,
+              data: error.response?.data,
+              headers: error.response?.headers,
+            });
+
+            if (error.response) {
+              res.status(error.response.status).json(error.response.data);
+            } else {
+              res.status(500).json({
+                error: "Failed to fetch account data",
+                details: error.message,
+              });
+            }
+            return;
+          }
+
+          res.status(500).json({
+            error: "Unknown error processing account endpoint",
+            details: error instanceof Error ? error.message : String(error),
+          });
+          return;
         }
-
-        // Always ensure credentials are in the request body
-        requestData = {
-          ...requestData,
-          userId,
-          userSecret,
-          clientId: SNAPTRADE_CLIENT_ID, // Always include clientId for account endpoints
-        };
-
-        // Remove from query params to avoid duplication
-        delete queryParams.userId;
-        delete queryParams.userSecret;
       } else {
         safeLogger.warn("Missing credentials for accounts endpoint", {
+          endpoint,
           hasQueryUserId: !!queryParams.userId,
           hasQueryUserSecret: !!queryParams.userSecret,
           hasBodyUserId: !!(req.body && req.body.userId),
@@ -242,35 +296,55 @@ export const handleSnapTradeProxy = async (
       }
     }
 
-    // Log request details safely
-    safeLogger.log(`Server proxy handling: ${req.method} ${endpoint}`, {
-      method: req.method,
-      endpoint,
-      hasClientId: !!requestData.clientId,
-      hasTimestamp: !!timestamp,
-    });
-
     // Build full URL
     const targetUrl = `${SNAPTRADE_API_BASE}${endpoint}`;
+    console.log(`Making API call to: ${targetUrl}`);
 
     // Make the request to SnapTrade
-    const response = await axios({
-      method: req.method,
-      url: targetUrl,
-      params:
-        req.method === "GET"
-          ? { ...queryParams, clientId: SNAPTRADE_CLIENT_ID, timestamp }
-          : undefined,
-      data: req.method !== "GET" ? requestData : undefined,
-      headers: headers,
-    });
+    try {
+      const response = await axios({
+        method: req.method,
+        url: targetUrl,
+        params:
+          req.method === "GET"
+            ? { ...queryParams, clientId: SNAPTRADE_CLIENT_ID, timestamp }
+            : undefined,
+        data: req.method !== "GET" ? requestData : undefined,
+        headers: headers,
+      });
 
-    // Return the response
-    res.status(response.status).json(response.data);
-    console.log(
-      `API response: ${response.status} for ${req.method} ${endpoint}`
-    );
-    return;
+      // Return the response
+      res.status(response.status).json(response.data);
+      console.log(
+        `API response: ${response.status} for ${req.method} ${endpoint}`
+      );
+      return;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error(`API error for ${req.path}:`, {
+          status: error.response?.status,
+          data: error.response?.data,
+          headers: error.response?.headers,
+        });
+
+        if (error.response) {
+          res.status(error.response.status).json(error.response.data);
+        } else {
+          res.status(500).json({
+            error: "Failed to proxy request to SnapTrade API",
+            details: error.message,
+          });
+        }
+        return;
+      }
+
+      // Handle generic errors
+      console.error(`Generic error for ${req.path}:`, error);
+      res.status(500).json({
+        error: "Failed to proxy request to SnapTrade API",
+        details: error instanceof Error ? error.message : String(error),
+      });
+    }
   } catch (error) {
     console.error(`API error for ${req.path}:`, error);
 
@@ -288,6 +362,5 @@ export const handleSnapTradeProxy = async (
       error: "Failed to proxy request to SnapTrade API",
       details: error instanceof Error ? error.message : String(error),
     });
-    return;
   }
 };

@@ -37,3 +37,17 @@ export class SnapTradeError extends Error {
     this.details = details;
   }
 }
+
+// SnapTrade user credentials
+export interface SnapTradeUserCredentials {
+  userId: string;
+  userSecret: string;
+}
+
+// Connection session data
+export interface ConnectionSession {
+  sessionId: string;
+  userId: string;
+  userSecret: string;
+  brokerSlug: string;
+}

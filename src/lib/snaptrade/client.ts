@@ -1,6 +1,7 @@
 import axios from "axios";
 import { Configuration, Snaptrade } from "snaptrade-typescript-sdk";
-import { SnapTradeConfig, SnapTradeError, SnapTradeErrorCode } from "./types";
+import { SnapTradeConfig, SnapTradeError, SnapTradeErrorCode, SnapTradeUserCredentials } from "./types";
+import { StorageHelpers } from "./storage";
 
 // Helper to mask sensitive data in logs
 const maskId = (id: string): string => {
@@ -52,8 +53,13 @@ if (typeof window !== "undefined") {
 export class SnapTradeClient {
   private client: Snaptrade;
   private useProxy: boolean;
+  private clientId: string;
+  private consumerKey: string;
 
   constructor(config: SnapTradeConfig) {
+    this.clientId = config.clientId;
+    this.consumerKey = config.consumerKey;
+    
     // Use proxy in development, direct access in production
     this.useProxy =
       typeof import.meta !== "undefined" &&
@@ -72,6 +78,11 @@ export class SnapTradeClient {
     this.client = new Snaptrade(sdkConfig);
   }
 
+  // Get stored user credentials
+  getUser(): SnapTradeUserCredentials | null {
+    return StorageHelpers.getUser();
+  }
+
   async registerUser(userId: string) {
     try {
       console.log(`Registering user with SnapTrade: ${maskId(userId)}`);
@@ -87,12 +98,12 @@ export class SnapTradeClient {
       try {
         // Always use our server API endpoint for registration to handle auth properly
         console.log("Using server API endpoint for registration");
-        const response = await fetch("/api/snaptrade/registerUser", {
+        const response = await fetch("/api/snaptrade/register", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ userId }),
+          body: JSON.stringify({ userId, clientId: this.clientId }),
         });
 
         if (!response.ok && response.status !== 200) {
@@ -116,11 +127,16 @@ export class SnapTradeClient {
           );
         }
 
-        // Normal successful registration
-        return {
+        // Store user credentials
+        const credentials = {
           userId: data.userId,
           userSecret: data.userSecret,
         };
+        
+        StorageHelpers.saveUser(credentials);
+
+        // Normal successful registration
+        return credentials;
       } catch (error: any) {
         // If there's a userAlreadyExists error, throw it for handling
         if (
@@ -163,261 +179,98 @@ export class SnapTradeClient {
     }
   }
 
-  async loginUser(userId: string, userSecret: string, broker?: string) {
+  // Get user accounts via the API
+  async listUserAccounts(userId: string, userSecret: string) {
     try {
-      console.log(
-        `SnapTradeClient.loginUser called for user: ${maskId(userId)}`
-      );
-      if (broker) {
-        console.log(`Broker selected: ${broker}`);
-      } else {
-        console.log("No specific broker selected (showing all brokers)");
-      }
-      console.log(`Using proxy: ${this.useProxy ? "Yes" : "No"}`);
-
-      // Check if credentials are valid
-      if (!userId || !userSecret) {
-        throw new SnapTradeError(
-          "Missing credentials: userId and userSecret are required",
-          SnapTradeErrorCode.AUTHENTICATION_ERROR
-        );
-      }
-
-      // Always use the more reliable server endpoint for broker connections
-      try {
-        console.log("Using dedicated broker-connect endpoint");
-        const response = await fetch("/api/snaptrade/broker-connect", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userId,
-            userSecret,
-            broker,
-          }),
-        });
-
-        if (!response.ok) {
-          const responseData = await response.json();
-          console.log("Broker connect failed:", responseData);
-          throw new Error(
-            responseData.error || responseData.message || "Connection failed"
-          );
-        }
-
-        const responseData = await response.json();
-
-        console.log("Broker connect response:", {
-          status: response.status,
-          hasRedirectUri: !!responseData.redirectUri,
-        });
-
-        // Check for redirect URI
-        const redirectUri = responseData.redirectUri;
-
-        if (!redirectUri) {
-          throw new Error("No redirect URI returned from SnapTrade API");
-        }
-
-        return { redirectUri };
-      } catch (error) {
-        console.error("Broker connect endpoint failed:", error);
-
-        // Fall back to SDK implementation as last resort
-        console.log("Falling back to SDK implementation");
-
-        const params: any = {
-          userId,
-          userSecret,
-          connectionType: "trade",
-        };
-
-        // Only add broker parameter if it's provided
-        if (broker) {
-          params.broker = broker;
-        }
-
-        console.log("Sending loginSnapTradeUser request via SDK");
-
-        const startTime = Date.now();
-        const response = await this.client.authentication.loginSnapTradeUser(
-          params
-        );
-        const endTime = Date.now();
-        console.log(`Login request took ${endTime - startTime}ms`);
-
-        // Access the response data - the SDK types may have redirectUri or redirectURI
-        const responseData = response.data as any;
-        if (response.status) {
-          console.log(`Login response status: ${response.status}`);
-        }
-
-        if (!responseData.redirectUri && !responseData.redirectURI) {
-          throw new SnapTradeError(
-            "No redirect URI returned",
-            SnapTradeErrorCode.API_ERROR
-          );
-        }
-
-        return {
-          redirectUri: responseData.redirectUri || responseData.redirectURI,
-        };
-      }
-    } catch (error) {
-      console.error("SnapTrade login error:", error);
-
-      if (axios.isAxiosError(error)) {
-        const status = error.response?.status || 0;
-        const responseData = error.response?.data || {};
-
-        console.error("Axios error details:", {
-          status,
-          statusText: error.response?.statusText,
-          data: responseData,
-        });
-
-        // Provide specific error messages based on status codes
-        if (status === 400) {
-          console.error("Bad request error - possibly incorrect parameters");
-          throw new SnapTradeError(
-            "Invalid request to SnapTrade API. Please check your parameters.",
-            SnapTradeErrorCode.API_ERROR,
-            responseData
-          );
-        } else if (status === 401 || status === 403) {
-          console.error("Authentication error - credentials might be invalid");
-          throw new SnapTradeError(
-            "Authentication failed. Your SnapTrade user credentials might be invalid or expired.",
-            SnapTradeErrorCode.AUTHENTICATION_ERROR,
-            responseData
-          );
-        } else if (status === 404) {
-          console.error("User not found - may need to register first");
-          throw new SnapTradeError(
-            "User not found in SnapTrade. Please register this user first.",
-            SnapTradeErrorCode.AUTHENTICATION_ERROR,
-            responseData
-          );
-        } else if (status >= 500) {
-          console.error("Server error from SnapTrade API");
-          throw new SnapTradeError(
-            "SnapTrade server error. Please try again later.",
-            SnapTradeErrorCode.API_ERROR,
-            responseData
-          );
-        }
-      }
-
-      // Provide more detailed error info for debugging
-      let errorMessage = "Failed to login with SnapTrade";
-      if (error instanceof Error) {
-        errorMessage += `: ${error.message}`;
-      }
-
-      throw new SnapTradeError(
-        errorMessage,
-        SnapTradeErrorCode.API_ERROR,
-        error
-      );
-    }
-  }
-
-  async getBrokerages() {
-    try {
-      console.log("Fetching available brokerages from SnapTrade");
-
-      // Use direct API call through our proxy - most reliable approach
-      // Update to use /api/snaptrade/brokerages which is registered in the router
-      const apiUrl = "/api/snaptrade/brokerages";
-
-      const response = await fetch(apiUrl, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch brokerages: ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error("Error fetching brokerages:", error);
-
-      throw new SnapTradeError(
-        "Failed to fetch available brokerages",
-        SnapTradeErrorCode.API_ERROR,
-        error
-      );
-    }
-  }
-
-  async getUserAccounts(userId: string, userSecret: string) {
-    try {
-      console.log(`Fetching accounts for user: ${maskId(userId)}`);
-
-      if (!userId || !userSecret) {
-        throw new SnapTradeError(
-          "Missing credentials: userId and userSecret are required",
-          SnapTradeErrorCode.AUTHENTICATION_ERROR
-        );
-      }
-
-      const response = await this.client.accountInformation.listUserAccounts({
+      // Use the direct endpoint instead of the SDK
+      const params = new URLSearchParams({
         userId,
         userSecret,
+        clientId: this.clientId,
+        timestamp: Math.floor(Date.now() / 1000).toString()
       });
-
-      return response.data;
+      
+      const response = await fetch(`/api/snaptrade/accounts?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch accounts: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return { data };
     } catch (error) {
-      console.error("Error fetching user accounts:", error);
-
+      console.error("Error fetching accounts:", error);
       throw new SnapTradeError(
-        "Failed to fetch user accounts",
+        error instanceof Error ? error.message : "Failed to fetch accounts",
         SnapTradeErrorCode.ACCOUNTS_ERROR,
         error
       );
     }
   }
 
-  async getAccountHoldings(
-    userId: string,
-    userSecret: string,
-    accountId: string
-  ) {
+  // Get brokerages list for display
+  async getBrokerages() {
     try {
-      console.log(`Fetching holdings for account: ${maskId(accountId)}`);
-
-      if (!userId || !userSecret || !accountId) {
-        throw new SnapTradeError(
-          "Missing parameters: userId, userSecret, and accountId are required",
-          SnapTradeErrorCode.AUTHENTICATION_ERROR
-        );
+      const response = await fetch("/api/snaptrade/brokerages");
+      if (!response.ok) {
+        throw new Error(`Failed to fetch brokerages: ${response.status}`);
       }
+      return await response.json();
+    } catch (error) {
+      console.error("Error fetching brokerages:", error);
+      throw new SnapTradeError(
+        error instanceof Error ? error.message : "Failed to fetch brokerages",
+        SnapTradeErrorCode.API_ERROR,
+        error
+      );
+    }
+  }
 
-      // Use getUserAccountPositions since getAccountHoldings may not exist in all versions
-      const response =
-        await this.client.accountInformation.getUserAccountPositions({
+  // Create connection link for broker auth
+  async createConnectionLink(userId: string, userSecret: string, brokerId: string, options: any = {}) {
+    try {
+      const response = await fetch("/api/snaptrade/broker-connect", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
           userId,
           userSecret,
-          accountId,
-        });
-
-      return response.data;
+          brokerId,
+          redirectUri: options.redirectUri || window.location.origin + '/app/broker-callback'
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to get connection URL: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (!data.redirectUri) {
+        throw new Error("No redirect URL returned");
+      }
+      
+      return {
+        redirectURI: data.redirectUri,
+        sessionId: data.sessionId || ''
+      };
     } catch (error) {
-      console.error("Error fetching account holdings:", error);
-
+      console.error("Error creating connection link:", error);
       throw new SnapTradeError(
-        "Failed to fetch account holdings",
-        SnapTradeErrorCode.POSITIONS_ERROR,
+        error instanceof Error ? error.message : "Failed to create connection link",
+        SnapTradeErrorCode.CONNECTION_ERROR,
         error
       );
     }
   }
 }
 
-// Export the client classes/instances
+// Export the client instances
 export { snaptrade, snapTradeClient };

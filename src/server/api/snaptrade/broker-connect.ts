@@ -27,7 +27,7 @@ export const getBrokerConnectionUrl = async (
   }
 
   try {
-    const { userId, userSecret, broker } = req.body;
+    const { userId, userSecret, brokerId, redirectUri } = req.body;
 
     // Validate inputs
     if (!userId || !userSecret) {
@@ -52,7 +52,8 @@ export const getBrokerConnectionUrl = async (
     // Log the request (safely) - only log essential info, not the entire request
     safeLogger.log("Broker connection request:", {
       userId: maskSensitiveData(userId),
-      broker: broker || "ALL",
+      brokerId: brokerId || "ALL",
+      hasRedirectUri: !!redirectUri,
     });
 
     // Prepare the API request
@@ -63,12 +64,12 @@ export const getBrokerConnectionUrl = async (
       userId,
       userSecret,
       connectionType: "trade", // Always use trade connection type
-      redirectUri: "http://localhost:5173/broker-callback", // Explicitly define the redirect URI
+      redirectUri: redirectUri || "http://localhost:5173/broker-callback", // Use provided redirect URI or fallback
     };
 
-    // Add broker if specified
-    if (broker && broker !== "ALL") {
-      requestBody.broker = broker;
+    // Add broker if specified (convert brokerId to broker parameter expected by API)
+    if (brokerId && brokerId !== "ALL") {
+      requestBody.broker = brokerId;
     }
 
     // Log the request details (safely)
@@ -76,7 +77,7 @@ export const getBrokerConnectionUrl = async (
       apiUrl,
       hasUserId: !!userId,
       hasUserSecret: !!userSecret,
-      broker: broker || "ALL",
+      broker: brokerId || "ALL",
       hasRedirectUri: !!requestBody.redirectUri,
     });
 
@@ -100,9 +101,10 @@ export const getBrokerConnectionUrl = async (
     });
 
     // Extract the redirect URI from the response
-    const redirectUri = response.data.redirectUri || response.data.redirectURI;
+    const responseRedirectUri =
+      response.data.redirectUri || response.data.redirectURI;
 
-    if (!redirectUri) {
+    if (!responseRedirectUri) {
       safeLogger.error("No redirect URI in response", response.data);
       res.status(500).json({
         error: "Invalid response from SnapTrade",
@@ -113,13 +115,13 @@ export const getBrokerConnectionUrl = async (
 
     // Log the redirectUri (safely)
     safeLogger.log("Received redirect URI", {
-      uriLength: redirectUri.length,
-      uriStart: redirectUri.substring(0, 30) + "...",
+      uriLength: responseRedirectUri.length,
+      uriStart: responseRedirectUri.substring(0, 30) + "...",
     });
 
     // Success - return the redirect URI
     res.status(200).json({
-      redirectUri,
+      redirectUri: responseRedirectUri,
       status: "success",
     });
   } catch (error) {

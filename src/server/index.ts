@@ -4,7 +4,8 @@ import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { authRouter } from "./routes/auth";
-import snapTradeRouter from "./api/snaptrade";
+import apiRouter from "./routes/api";
+import snapTradeRouter from "./api/snaptrade"; // Keep this for backward compatibility
 import { serverEnv } from "./utils/env";
 
 const app = express();
@@ -21,6 +22,12 @@ app.use(
 );
 app.use(express.json());
 
+// Add debug middleware to log all requests
+app.use((req, res, next) => {
+  console.log(`[SERVER] Received request: ${req.method} ${req.originalUrl}`);
+  next();
+});
+
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -30,6 +37,9 @@ app.use(limiter);
 
 // Routes
 app.use("/api/auth", authRouter);
+app.use("/api", apiRouter); // Use the API router that includes SnapTrade routes
+
+// Keep this for backward compatibility
 app.use("/api/snaptrade", snapTradeRouter);
 
 // Error handling

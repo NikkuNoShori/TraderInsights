@@ -170,11 +170,7 @@ export const useBrokerDataStore = create<BrokerDataStore>((set, get) => ({
 
       // Use our server proxy instead of direct SDK for consistency
       try {
-        // Use POST request with credentials in body - more reliable for SnapTrade
-        const apiUrl = `/api/snaptrade/proxy/accounts`;
-        logger.info("Using server-side proxy for accounts with POST method");
-
-        // Include clientId, userId and userSecret in the request body
+        // Use GET request with credentials in query parameters - aligned with proxy handling
         const clientId =
           typeof import.meta !== "undefined" && import.meta.env
             ? import.meta.env.VITE_SNAPTRADE_CLIENT_ID || ""
@@ -184,24 +180,31 @@ export const useBrokerDataStore = create<BrokerDataStore>((set, get) => ({
           logger.warn("Missing clientId for accounts request");
         }
 
+        const timestamp = Math.floor(Date.now() / 1000).toString();
+        const queryParams = new URLSearchParams({
+          userId,
+          userSecret,
+          clientId,
+          timestamp,
+        });
+
         logger.info(
-          "Making POST request to accounts endpoint with credentials in body"
+          "Making GET request to accounts endpoint with credentials in query params"
         );
+
+        // Use the direct endpoint we registered in the router
+        const apiUrl = `/api/snaptrade/accounts?${queryParams.toString()}`;
+        logger.info(`Accounts request URL: ${apiUrl}`);
+
         const response = await fetch(apiUrl, {
-          method: "POST",
+          method: "GET",
           headers: {
-            "Content-Type": "application/json",
+            Accept: "application/json",
           },
-          body: JSON.stringify({
-            userId,
-            userSecret,
-            clientId,
-            timestamp: Date.now(),
-          }),
         });
 
         if (!response.ok) {
-          // If POST fails, try alternative approach with SDK
+          // If GET fails, try alternative approach with SDK
           throw new Error(`Failed to fetch accounts: ${response.status}`);
         }
 
@@ -296,22 +299,30 @@ export const useBrokerDataStore = create<BrokerDataStore>((set, get) => ({
       logger.info(`Fetching data for account ${accountId}`);
 
       try {
-        // Fetch positions using POST with proxy
-        logger.info("Fetching positions via proxy");
-        const positionsResponse = await fetch(
-          `/api/snaptrade/proxy/accounts/${accountId}/positions`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              userId,
-              userSecret,
-              timestamp: Date.now(),
-            }),
-          }
-        );
+        // Get client ID and prepare common query parameters
+        const clientId =
+          typeof import.meta !== "undefined" && import.meta.env
+            ? import.meta.env.VITE_SNAPTRADE_CLIENT_ID || ""
+            : process.env.VITE_SNAPTRADE_CLIENT_ID || "";
+
+        const timestamp = Math.floor(Date.now() / 1000).toString();
+        const queryParams = new URLSearchParams({
+          userId,
+          userSecret,
+          clientId,
+          timestamp
+        });
+
+        // Fetch positions using GET with query parameters
+        logger.info("Fetching positions via direct endpoint");
+        const positionsUrl = `/api/snaptrade/accounts/${accountId}/positions?${queryParams.toString()}`;
+        
+        const positionsResponse = await fetch(positionsUrl, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+        });
 
         if (!positionsResponse.ok) {
           throw new Error(
@@ -350,36 +361,35 @@ export const useBrokerDataStore = create<BrokerDataStore>((set, get) => ({
           positions.push({
             id: position.id || "",
             symbol: symbolStr,
-            symbolId: symbolId,
-            openQuantity: position.units || 0,
-            currentMarketValue: position.marketValue || 0,
-            currentPrice: position.price || 0,
-            averageEntryPrice: position.averageEntryPrice || 0,
-            closedPnl: position.closedPnl || 0,
-            openPnl: position.openPnl || 0,
-            totalCost: position.totalCost || 0,
-            dayPnl: position.dayPnl || 0,
-            dayPnlPercent: position.dayPnlPercent || 0,
-            currency: currency,
+            symbolId,
+            openQuantity: parseFloat(position.units || "0"),
+            currentMarketValue: parseFloat(position.currentMarketValue || "0"),
+            currentPrice: parseFloat(position.currentPrice || "0"),
+            averageEntryPrice: parseFloat(position.averageEntryPrice || "0"),
+            closedPnl: parseFloat(position.closedPnl || "0"),
+            openPnl: parseFloat(position.openPnl || "0"),
+            totalCost: parseFloat(position.totalCost || "0"),
+            dayPnl: parseFloat(position.dayPnl || "0"),
+            dayPnlPercent: parseFloat(position.dayPnlPercent || "0"),
+            currency,
           });
         }
 
-        // Fetch balances using POST with proxy
-        logger.info("Fetching balances via proxy");
-        const balancesResponse = await fetch(
-          `/api/snaptrade/proxy/accounts/${accountId}/balances`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              userId,
-              userSecret,
-              timestamp: Date.now(),
-            }),
-          }
+        setPositions(accountId, positions);
+        logger.info(
+          `Found ${positions.length} positions for account ${accountId}`
         );
+
+        // Now fetch balances with the same approach
+        logger.info("Fetching balances");
+        const balancesUrl = `/api/snaptrade/accounts/${accountId}/balances?${queryParams.toString()}`;
+
+        const balancesResponse = await fetch(balancesUrl, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+        });
 
         if (!balancesResponse.ok) {
           throw new Error(
@@ -389,178 +399,89 @@ export const useBrokerDataStore = create<BrokerDataStore>((set, get) => ({
 
         const balancesData = await balancesResponse.json();
 
-        // Process balances data
-        const balances = (balancesData || []).map((balance: any) => ({
-          currency: balance.currency?.code || "",
-          cash: balance.cash || 0,
-          marketValue: balance.marketValue || 0,
-          totalEquity: balance.totalValue || 0,
-          buyingPower: balance.buyingPower || 0,
+        // Process balances
+        const balances: AccountBalance[] = balancesData.map((balance: any) => ({
+          currency: balance.currency?.code || "USD",
+          cash: parseFloat(balance.cash || "0"),
+          marketValue: parseFloat(balance.marketValue || "0"),
+          totalEquity: parseFloat(balance.totalEquity || "0"),
+          buyingPower: parseFloat(balance.buyingPower || "0"),
         }));
 
-        // Set the data in the store
-        setPositions(accountId, positions);
         setBalances(accountId, balances);
-
-        // For now, we'll skip orders as they might need more complex handling
-        setOrders(accountId, []);
-
         logger.info(
-          `Fetched ${positions.length} positions, ${balances.length} balances via proxy`
-        );
-      } catch (proxyError) {
-        // If proxy fails, fall back to SDK
-        logger.error(
-          "Proxy fetch failed for account data, falling back to SDK",
-          proxyError
+          `Found ${balances.length} balance records for account ${accountId}`
         );
 
-        // Get a valid client
-        const client = getSnapTradeClient();
+        // Finally fetch orders
+        logger.info("Fetching orders");
+        const ordersUrl = `/api/snaptrade/accounts/${accountId}/orders?${queryParams.toString()}`;
 
-        // Check if client is available
-        if (!client || !client.accountInformation) {
-          logger.error(
-            "SnapTrade client not initialized or accountInformation not available"
-          );
-          setError("SnapTrade client not initialized. Please try again later.");
-          return;
+        const ordersResponse = await fetch(ordersUrl, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+        });
+
+        if (!ordersResponse.ok) {
+          throw new Error(`Failed to fetch orders: ${ordersResponse.status}`);
         }
 
-        // Fetch positions
-        const positionsResponse =
-          await client.accountInformation.getUserAccountPositions({
-            userId,
-            userSecret,
-            accountId,
-          });
+        const ordersData = await ordersResponse.json();
 
-        const positions: AccountPosition[] = [];
-        for (const position of positionsResponse.data || []) {
+        // Process orders
+        const orders: AccountOrder[] = [];
+        for (const order of ordersData || []) {
           const symbolStr =
-            typeof position.symbol === "object" &&
-            position.symbol &&
-            typeof position.symbol.symbol === "string"
-              ? position.symbol.symbol
+            typeof order.symbol === "object" &&
+            order.symbol &&
+            typeof order.symbol.symbol === "string"
+              ? order.symbol.symbol
               : "";
 
           const symbolId =
-            typeof position.symbol === "object" &&
-            position.symbol &&
-            typeof position.symbol.id === "string"
-              ? position.symbol.id
+            typeof order.symbol === "object" &&
+            order.symbol &&
+            typeof order.symbol.id === "string"
+              ? order.symbol.id
               : "";
 
-          const currency =
-            typeof position.symbol === "object" &&
-            position.symbol &&
-            typeof position.symbol.currency === "object" &&
-            position.symbol.currency &&
-            typeof position.symbol.currency.code === "string"
-              ? position.symbol.currency.code
-              : "";
-
-          positions.push({
-            id: position.id || "",
+          orders.push({
+            id: order.id || "",
             symbol: symbolStr,
-            symbolId: symbolId,
-            openQuantity: position.units || 0,
-            currentMarketValue: position.marketValue || 0,
-            currentPrice: position.price || 0,
-            averageEntryPrice: position.averageEntryPrice || 0,
-            closedPnl: position.closedPnl || 0,
-            openPnl: position.openPnl || 0,
-            totalCost: position.totalCost || 0,
-            dayPnl: position.dayPnl || 0,
-            dayPnlPercent: position.dayPnlPercent || 0,
-            currency: currency,
+            symbolId,
+            status: order.status || "PENDING",
+            action: order.action || "",
+            totalQuantity: parseFloat(order.totalQuantity || "0"),
+            openQuantity: parseFloat(order.openQuantity || "0"),
+            filledQuantity: parseFloat(order.filledQuantity || "0"),
+            limitPrice: order.limitPrice
+              ? parseFloat(order.limitPrice)
+              : undefined,
+            stopPrice: order.stopPrice
+              ? parseFloat(order.stopPrice)
+              : undefined,
+            orderType: order.orderType || "",
+            timeInForce: order.timeInForce || "",
+            createdAt: order.createdAt || "",
+            updatedAt: order.updatedAt || "",
           });
         }
 
-        // Fetch balances
-        const balancesResponse =
-          await client.accountInformation.getUserAccountBalance({
-            userId,
-            userSecret,
-            accountId,
-          });
-
-        const balances = (balancesResponse.data || []).map((balance) => ({
-          currency: balance.currency?.code || "",
-          cash: balance.cash || 0,
-          marketValue: balance.marketValue || 0,
-          totalEquity: balance.totalValue || 0,
-          buyingPower: balance.buyingPower || 0,
-        }));
-
-        // Fetch orders
-        const ordersResponse =
-          await client.accountInformation.getUserAccountOrders({
-            userId,
-            userSecret,
-            accountId,
-            state: "all",
-            days: 30,
-          });
-
-        const orders: AccountOrder[] = [];
-
-        // Use careful type checking for each order
-        if (Array.isArray(ordersResponse.data)) {
-          for (const orderData of ordersResponse.data) {
-            // Type assertion for symbol property which might be an object
-            let symbolStr = "";
-            let symbolId = "";
-
-            // Handle symbol information from the API response
-            const orderSymbol = orderData.symbol as unknown as
-              | {
-                  symbol?: string;
-                  id?: string;
-                }
-              | undefined;
-
-            if (orderSymbol) {
-              symbolStr = orderSymbol.symbol || "";
-              symbolId = orderSymbol.id || "";
-            }
-
-            orders.push({
-              id: orderData.id || "",
-              symbol: symbolStr,
-              symbolId: symbolId,
-              status: (orderData.status || "PENDING") as AccountOrder["status"],
-              action: orderData.action || "",
-              totalQuantity: parseFloat(
-                orderData.totalQuantity?.toString() || "0"
-              ),
-              openQuantity: parseFloat(
-                orderData.openQuantity?.toString() || "0"
-              ),
-              filledQuantity: parseFloat(
-                orderData.filledQuantity?.toString() || "0"
-              ),
-              limitPrice: orderData.limitPrice,
-              stopPrice: orderData.stopPrice,
-              orderType: orderData.orderType || "",
-              timeInForce: orderData.timeInForce || "",
-              createdAt: orderData.time || "",
-              updatedAt: orderData.updatedAt || "",
-            });
-          }
-        }
-
-        setPositions(accountId, positions);
-        setBalances(accountId, balances);
         setOrders(accountId, orders);
-
-        logger.info(
-          `Fetched ${positions.length} positions, ${balances.length} balances, ${orders.length} orders via SDK fallback`
-        );
+        logger.info(`Found ${orders.length} orders for account ${accountId}`);
+      } catch (error) {
+        logger.error("Error fetching account data:", error);
+        setError(`Failed to fetch account data: ${error instanceof Error ? error.message : String(error)}`);
+        
+        // Try SDK fallback or fail
       }
     } catch (error) {
-      logger.error("Error fetching account data:", error);
-      setError("Failed to fetch account data. Please try again.");
+      logger.error(`Error fetching data for account ${accountId}:`, error);
+      setError(
+        `Failed to fetch data for account ${accountId}. Please try again.`
+      );
     } finally {
       setLoading(false);
     }

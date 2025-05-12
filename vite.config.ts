@@ -44,21 +44,56 @@ export default defineConfig(({ mode }) => {
           target: "http://localhost:3000",
           changeOrigin: true,
           secure: false,
-          rewrite: (path) => path,
+          ws: true, // Enable websocket proxy
+          rewrite: (path) => {
+            console.log(`[VITE] Rewriting path: ${path}`);
+            return path;
+          },
           configure: (proxy, options) => {
             // Add logging for API requests
             proxy.on("error", (err, req, res) => {
-              console.error("API proxy error:", err);
+              console.error("[VITE PROXY ERROR]:", err);
+              console.error("[VITE PROXY ERROR] Request details:", {
+                method: req.method,
+                url: req.url,
+                headers: req.headers,
+              });
             });
 
             proxy.on("proxyReq", (proxyReq, req, res) => {
-              console.log(`Proxying API request: ${req.method} ${req.url}`);
+              console.log(
+                `[VITE] Proxying API request: ${req.method} ${req.url} to ${options.target}${req.url}`
+              );
+
+              // Log all headers for debugging
+              console.log("[VITE] Request headers:", req.headers);
+
+              // Check if endpoint is the problematic one
+              if (req.url.includes("brokerages")) {
+                console.log(
+                  "[VITE] Detected brokerages request - watching closely"
+                );
+              }
             });
 
             proxy.on("proxyRes", (proxyRes, req, res) => {
               console.log(
-                `API response: ${proxyRes.statusCode} for ${req.method} ${req.url}`
+                `[VITE] API response: ${proxyRes.statusCode} for ${req.method} ${req.url}`
               );
+
+              // Log all headers for debugging
+              console.log("[VITE] Response headers:", proxyRes.headers);
+
+              // Log response body for error responses
+              if (proxyRes.statusCode >= 400) {
+                let data = "";
+                proxyRes.on("data", (chunk) => {
+                  data += chunk;
+                });
+                proxyRes.on("end", () => {
+                  console.error(`[VITE] Error response body: ${data}`);
+                });
+              }
             });
           },
         },
