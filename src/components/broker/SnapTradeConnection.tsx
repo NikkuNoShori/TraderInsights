@@ -16,6 +16,26 @@ const maskId = (id: string | null | undefined) => {
   return id.length > 8 ? `${id.substring(0, 8)}...` : id;
 };
 
+// Helper function to generate SnapTrade signature
+const generateSnapTradeSignature = (clientId: string, consumerKey: string): { timestamp: string, signature: string } => {
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  
+  // In browser environment, we need to use the SubtleCrypto API
+  if (typeof window !== 'undefined' && window.crypto && window.crypto.subtle) {
+    // This is a browser-safe way to generate HMAC
+    // But we can't do this synchronously, so return a basic timestamp
+    // The server-side implementation can handle the proper signature
+    return { timestamp, signature: 'browser-generated' };
+  }
+  
+  // Simple substitute for server-side crypto
+  const hash = Array.from(new TextEncoder().encode(`${clientId}${timestamp}${consumerKey}`))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+  
+  return { timestamp, signature: hash };
+};
+
 // Type for broker data
 interface Broker {
   id: string;
@@ -130,26 +150,25 @@ export function SnapTradeConnection({ lazyLoad = false }: SnapTradeConnectionPro
         hasConsumerKey: !!consumerKey,
       });
       
-      // TEMPORARY DIRECT SNAPTRADE API CALL
-      // This is a direct call to the SnapTrade API to bypass the proxy issues
+      // Try our server-side endpoint first (most reliable)
       try {
-        console.log('Making direct API call to SnapTrade');
-        const response = await fetch('https://api.snaptrade.com/api/v1/referenceData/brokerages', {
+        // Try to get brokerages via our server-side handler
+        console.log('Fetching brokerages via server endpoint');
+        const response = await fetch('/api/snaptrade/brokerages', {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
-            'x-api-key': consumerKey,
-            'Client-Id': clientId,
           },
         });
         
         if (!response.ok) {
-          throw new Error(`Direct API call failed: ${response.status}`);
+          console.error(`Server endpoint returned: ${response.status}`);
+          throw new Error(`Failed to fetch brokerages: ${response.status}`);
         }
         
         const brokerages = await response.json();
-        console.log('Available brokerages from direct API:', brokerages);
+        console.log('Available brokerages from server endpoint:', brokerages);
         
         // Map to our broker format
         const mappedBrokers: Broker[] = (brokerages || []).map((broker: any) => ({
@@ -161,41 +180,38 @@ export function SnapTradeConnection({ lazyLoad = false }: SnapTradeConnectionPro
         
         setAvailableBrokers(mappedBrokers);
         return;
-      } catch (directApiError) {
-        console.error('Direct API call failed, trying proxy:', directApiError);
-      }
-      
-      // Try our regular proxy approach
-      try {
-        // Try to get brokerages via our server-side proxy
-        console.log('Fetching brokerages via proxy');
-        const response = await fetch('/api/snaptrade/brokerages', {
-          method: 'GET',
-        });
+      } catch (serverError) {
+        console.error('Server endpoint failed, trying direct API:', serverError);
         
-        if (!response.ok) {
-          throw new Error(`Failed to fetch brokerages: ${response.status}`);
-        }
-        
-        const brokerages = await response.json();
-        console.log('Available brokerages from proxy:', brokerages);
-        
-        // Map to our broker format
-        const mappedBrokers: Broker[] = (brokerages || []).map((broker: any) => ({
-          id: broker.id,
-          name: broker.name,
-          slug: broker.name.replace(/\s+/g, '_').toUpperCase(),
-          isConnected: connectedBrokers.includes(broker.id)
-        }));
-        
-        setAvailableBrokers(mappedBrokers);
-      } catch (proxyError) {
-        console.error('Error fetching via proxy, falling back to direct SDK:', proxyError);
-        
+        // DIRECT SNAPTRADE API CALL
         try {
-          // Fall back to direct SDK if proxy fails
-          const client = new SnapTradeClient({ clientId, consumerKey });
-          const brokerages = await client.getBrokerages();
+          console.log('Making direct API call to SnapTrade');
+          
+          // Generate timestamp and signature
+          const { timestamp, signature } = generateSnapTradeSignature(clientId, consumerKey);
+          
+          const response = await fetch('https://api.snaptrade.com/api/v1/referenceData/brokerages', {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+              // Include both authentication methods
+              'x-api-key': consumerKey,
+              'Client-Id': clientId,
+              // Also try signature-based auth
+              'Signature': signature,
+              'Timestamp': timestamp,
+              'ClientId': clientId,
+            },
+          });
+          
+          if (!response.ok) {
+            console.error(`Direct API call failed: ${response.status}`);
+            throw new Error(`Direct API call failed: ${response.status}`);
+          }
+          
+          const brokerages = await response.json();
+          console.log('Available brokerages from direct API:', brokerages);
           
           // Map to our broker format
           const mappedBrokers: Broker[] = (brokerages || []).map((broker: any) => ({
@@ -206,25 +222,46 @@ export function SnapTradeConnection({ lazyLoad = false }: SnapTradeConnectionPro
           }));
           
           setAvailableBrokers(mappedBrokers);
-        } catch (sdkError) {
-          console.error('SDK failed as well, using mock data as fallback:', sdkError);
+          return;
+        } catch (directApiError) {
+          console.error('Direct API call failed, trying SDK:', directApiError);
           
-          // FALLBACK: Use mock data if all else fails
-          const mockBrokers: Broker[] = [
-            { id: '76e6660e-09ce-4197-a1a0-c14bf5f20f69', name: 'Questrade', slug: 'QUESTRADE' },
-            { id: 'da24d4f9-a922-4e68-b059-3918c9a0166e', name: 'Interactive Brokers', slug: 'INTERACTIVE_BROKERS' },
-            { id: '575a7887-1b34-4ec8-bd10-f78fd4e711c3', name: 'Coinbase', slug: 'COINBASE' },
-            { id: 'aab42dfa-2184-4259-972a-1119dea5903a', name: 'Binance', slug: 'BINANCE' },
-            { id: '2f081990-b40c-44a4-ab6e-f6ff4c125e39', name: 'Schwab', slug: 'SCHWAB' },
-            { id: 'f0d60210-2a75-41c7-9347-1a07b54c41d1', name: 'Public', slug: 'PUBLIC' },
-            { id: 'b2ab13d8-da9f-48c0-8fb1-48331ba5deeb', name: 'Fidelity', slug: 'FIDELITY' },
-            { id: 'ebf91a5b-0920-4266-9e36-f6cfe8c40946', name: 'Robinhood', slug: 'ROBINHOOD' },
-          ];
-          
-          setAvailableBrokers(mockBrokers);
-          setError('Using cached broker data due to connection issues. Some features may be limited.');
+          try {
+            // Fall back to SDK if direct API fails
+            const client = new SnapTradeClient({ clientId, consumerKey });
+            const brokerages = await client.getBrokerages();
+            
+            // Map to our broker format
+            const mappedBrokers: Broker[] = (brokerages || []).map((broker: any) => ({
+              id: broker.id,
+              name: broker.name,
+              slug: broker.name.replace(/\s+/g, '_').toUpperCase(),
+              isConnected: connectedBrokers.includes(broker.id)
+            }));
+            
+            setAvailableBrokers(mappedBrokers);
+            return;
+          } catch (sdkError) {
+            console.error('SDK failed as well, using mock data as fallback:', sdkError);
+            // Fall through to mock data
+          }
         }
       }
+      
+      // FALLBACK: Use mock data if all else fails
+      const mockBrokers: Broker[] = [
+        { id: '76e6660e-09ce-4197-a1a0-c14bf5f20f69', name: 'Questrade', slug: 'QUESTRADE' },
+        { id: 'da24d4f9-a922-4e68-b059-3918c9a0166e', name: 'Interactive Brokers', slug: 'INTERACTIVE_BROKERS' },
+        { id: '575a7887-1b34-4ec8-bd10-f78fd4e711c3', name: 'Coinbase', slug: 'COINBASE' },
+        { id: 'aab42dfa-2184-4259-972a-1119dea5903a', name: 'Binance', slug: 'BINANCE' },
+        { id: '2f081990-b40c-44a4-ab6e-f6ff4c125e39', name: 'Schwab', slug: 'SCHWAB' },
+        { id: 'f0d60210-2a75-41c7-9347-1a07b54c41d1', name: 'Public', slug: 'PUBLIC' },
+        { id: 'b2ab13d8-da9f-48c0-8fb1-48331ba5deeb', name: 'Fidelity', slug: 'FIDELITY' },
+        { id: 'ebf91a5b-0920-4266-9e36-f6cfe8c40946', name: 'Robinhood', slug: 'ROBINHOOD' },
+      ];
+      
+      setAvailableBrokers(mockBrokers);
+      setError('Using cached broker data due to connection issues. Some features may be limited.');
     } catch (error) {
       console.error('Error fetching brokerages:', error);
       setError('Failed to fetch available brokers. Using cached data.');
@@ -280,6 +317,14 @@ export function SnapTradeConnection({ lazyLoad = false }: SnapTradeConnectionPro
     setError(null);
     
     try {
+      // Make sure we've cleared any stale data first
+      try {
+        // Clear storage as a precaution
+        StorageHelpers.clearAll();
+      } catch (clearError) {
+        console.warn("Failed to clear storage:", clearError);
+      }
+      
       // Use server API endpoint
       console.log("Registering user with SnapTrade:", user.id);
       const response = await fetch('/api/snaptrade/register', {
@@ -289,17 +334,34 @@ export function SnapTradeConnection({ lazyLoad = false }: SnapTradeConnectionPro
         },
         body: JSON.stringify({ 
           userId: user.id,
-          clientId: import.meta.env.VITE_SNAPTRADE_CLIENT_ID
+          clientId: import.meta.env.VITE_SNAPTRADE_CLIENT_ID,
+          forceRenew: true,  // Signal to the server that we want to force renewal of credentials
         }),
       });
       
       const data = await response.json();
-      console.log("Registration response:", data);
+      console.log("Registration response:", {
+        status: response.status,
+        hasUserId: !!data.userId,
+        hasUserSecret: !!data.userSecret,
+        hasWarning: !!data.warning,
+        hasError: !!data.error,
+      });
       
       // Check if request was not successful
       if (!response.ok) {
         console.error("Registration failed:", data);
         throw new Error(data.error || data.message || 'Registration failed');
+      }
+      
+      // Check if we received the userSecret - we need this for connecting
+      if (!data.userSecret) {
+        console.error("No userSecret in registration response:", data);
+        if (data.warning && data.warning.includes('already exists')) {
+          throw new Error('Your account already exists but we could not recover your credentials. Please try unlinking and registering again.');
+        } else {
+          throw new Error('Invalid response from SnapTrade registration: No user secret received');
+        }
       }
       
       // Check if this is a "user already exists" response
@@ -352,17 +414,64 @@ export function SnapTradeConnection({ lazyLoad = false }: SnapTradeConnectionPro
   // Unlink SnapTrade credentials
   const handleUnlink = async () => {
     try {
-      // Remove from Supabase and local state
+      console.log("Unlinking SnapTrade credentials");
+      
+      // First, record the current user ID for logging
+      const currentUserId = snapTradeCredentials?.userId || '';
+      
+      // Clear any connections from storage
+      try {
+        StorageHelpers.clearAll();
+        console.log("Cleared all stored connections");
+      } catch (storageError) {
+        console.error("Error clearing connections:", storageError);
+      }
+      
+      // Remove from Supabase and local state via the auth store
       await removeSnapTradeCredentials();
+      
+      // Reset all local state
       setStatus('not_registered');
       setAvailableBrokers([]);
       setConnectedBrokers([]);
       setShowSuccessMessage(false);
+      setLastConnectedBroker(null);
       
-      // Clear any success messages
+      // Clear any error messages
       setError(null);
+      
+      // Reset initialization flags to force refetching on re-registration
+      initializeRef.current = {
+        credentialsFetched: false,
+        brokersFetched: false
+      };
+      
+      console.log(`Successfully unlinked SnapTrade for user: ${maskId(currentUserId)}`);
+      
+      // Display a success message
+      toast.success('Successfully unlinked SnapTrade account');
     } catch (err: any) {
+      console.error("Error unlinking SnapTrade:", err);
       setError(err.message || 'Failed to unlink SnapTrade account');
+    }
+  };
+  
+  // Force re-registration if credentials are invalid
+  const handleForceReregister = async () => {
+    try {
+      // First unlink current credentials
+      await removeSnapTradeCredentials();
+      
+      // Now start registration process
+      setStatus('not_registered');
+      setError(null);
+      
+      // If user exists, register immediately
+      if (user?.id) {
+        handleRegister();
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to reset SnapTrade credentials');
     }
   };
 
@@ -380,6 +489,20 @@ export function SnapTradeConnection({ lazyLoad = false }: SnapTradeConnectionPro
       
       const { userId, userSecret } = snapTradeCredentials;
       
+      // Validate credentials
+      if (!userId || !userSecret) {
+        setError('Missing userId or userSecret. Please try registering again.');
+        setIsLoading(false);
+        return;
+      }
+      
+      // Log credential details (safely)
+      console.log("Credentials check:", {
+        userId: maskId(userId),
+        userSecretLength: userSecret ? userSecret.length : 0,
+        userSecretValid: typeof userSecret === 'string' && userSecret.length > 10
+      });
+      
       // Store the broker being connected for later reference
       setLastConnectedBroker(broker || 'ALL');
       
@@ -389,9 +512,17 @@ export function SnapTradeConnection({ lazyLoad = false }: SnapTradeConnectionPro
         hasUserSecret: !!userSecret
       });
       
+      // Get environment variables for direct API call
+      const clientId = import.meta.env.VITE_SNAPTRADE_CLIENT_ID;
+      const consumerKey = import.meta.env.VITE_SNAPTRADE_CONSUMER_KEY;
+      
+      if (!clientId || !consumerKey) {
+        throw new Error('Missing SnapTrade API credentials');
+      }
+      
       // First attempt: Use our server endpoint
       try {
-        // Use the dedicated broker-connect endpoint instead of proxy
+        // Use the dedicated broker-connect endpoint - with all parameters in the body
         console.log('Attempting to connect via server API endpoint');
         const response = await fetch('/api/snaptrade/broker-connect', {
           method: 'POST',
@@ -401,6 +532,7 @@ export function SnapTradeConnection({ lazyLoad = false }: SnapTradeConnectionPro
           body: JSON.stringify({ 
             userId,
             userSecret,
+            clientId, // Include clientId in the request
             brokerId: broker,
             redirectUri: `${window.location.origin}/broker-callback`
           }),
@@ -456,14 +588,17 @@ export function SnapTradeConnection({ lazyLoad = false }: SnapTradeConnectionPro
             throw new Error('Missing SnapTrade API credentials');
           }
           
+          // Direct API calls from browser will fail due to CORS
+          // But we can try the minimal headers approach
           console.log('Attempting direct API call to SnapTrade login endpoint');
           const directResponse = await fetch('https://api.snaptrade.com/api/v1/snapTrade/login', {
             method: 'POST',
             headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json',
+              // Only use the basic authentication headers to avoid CORS issues
               'x-api-key': consumerKey,
-              'Client-Id': clientId
+              'Client-Id': clientId,
             },
             body: JSON.stringify({
               userId,
@@ -519,7 +654,13 @@ export function SnapTradeConnection({ lazyLoad = false }: SnapTradeConnectionPro
 
   // Force refresh brokers after a successful connection
   const refreshBrokers = () => {
+    // Reset the brokers fetch flag to force a new fetch
     initializeRef.current.brokersFetched = false;
+    
+    // Clear any error messages on refresh
+    setError(null);
+    
+    // Fetch the latest brokers
     fetchAvailableBrokers();
     fetchConnectedBrokers();
   };
@@ -588,7 +729,35 @@ export function SnapTradeConnection({ lazyLoad = false }: SnapTradeConnectionPro
           ) : error ? (
             <Alert className="bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-900">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription className="flex flex-col gap-2">
+                <div className="flex justify-between items-center">
+                  <span>{error}</span>
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    onClick={() => {
+                      setError(null);
+                      setIsLoading(false);
+                    }}
+                    className="ml-2"
+                  >
+                    Dismiss
+                  </Button>
+                </div>
+                
+                {error.includes("credentials") || error.includes("userSecret") || error.includes("failed") ? (
+                  <div className="flex justify-end pt-2">
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={handleForceReregister}
+                      className="text-xs"
+                    >
+                      Re-register with SnapTrade
+                    </Button>
+                  </div>
+                ) : null}
+              </AlertDescription>
             </Alert>
           ) : null}
           

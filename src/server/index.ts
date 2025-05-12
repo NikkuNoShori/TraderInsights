@@ -5,7 +5,7 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { authRouter } from "./routes/auth";
 import apiRouter from "./routes/api";
-import snapTradeRouter from "./api/snaptrade"; // Keep this for backward compatibility
+// import snapTradeRouter from "./api/snaptrade"; // Old implementation - removing to avoid duplication
 import { serverEnv } from "./utils/env";
 
 const app = express();
@@ -39,8 +39,9 @@ app.use(limiter);
 app.use("/api/auth", authRouter);
 app.use("/api", apiRouter); // Use the API router that includes SnapTrade routes
 
-// Keep this for backward compatibility
-app.use("/api/snaptrade", snapTradeRouter);
+// IMPORTANT: We now use ONLY the routes/api implementation of SnapTrade
+// The old implementation in src/server/api/snaptrade is no longer used
+// app.use("/api/snaptrade", snapTradeRouter); // Removed to avoid endpoint duplication
 
 // Error handling
 app.use(

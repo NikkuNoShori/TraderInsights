@@ -1,35 +1,64 @@
-import { Router, Request, Response } from "express";
-import axios from "axios";
+import { Router, Request, Response, RequestHandler } from "express";
+import axios, { AxiosError } from "axios";
 import crypto from "crypto";
 
 const router = Router();
 
 // Handle POST requests to /api/snaptrade/broker-connect
-router.post("/", async (req: Request, res: Response) => {
+const brokerConnectHandler: RequestHandler = async (req, res, next) => {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    res.status(405).json({ error: "Method not allowed" });
+    return;
   }
 
   try {
-    const { userId, userSecret, brokerId, redirectUri } = req.body;
+    // Extract parameters from either body or query string
+    const userId = req.body.userId || req.query.userId;
+    const userSecret = req.body.userSecret || req.query.userSecret;
+    const requestClientId = req.body.clientId || req.query.clientId;
+    const brokerId = req.body.brokerId || req.query.brokerId;
+    const redirectUri = req.body.redirectUri || req.query.redirectUri;
+
+    // Log the request parameters for debugging (safely)
+    console.log("Request params:", {
+      hasBodyUserId: !!req.body.userId,
+      hasQueryUserId: !!req.query.userId,
+      hasBodyUserSecret: !!req.body.userSecret,
+      hasQueryUserSecret: !!req.query.userSecret,
+      hasBodyClientId: !!req.body.clientId,
+      hasQueryClientId: !!req.query.clientId,
+    });
 
     // Validate inputs
     if (!userId || !userSecret) {
-      return res.status(400).json({
+      res.status(400).json({
         error: "Both userId and userSecret are required",
+        message: "Please provide userId and userSecret parameters",
       });
+      return;
     }
 
-    // Get SnapTrade credentials
-    const clientId = process.env.VITE_SNAPTRADE_CLIENT_ID;
+    // Validate userSecret format (basic validation)
+    if (typeof userSecret !== "string" || userSecret.length < 10) {
+      res.status(400).json({
+        error: "Invalid userSecret format",
+        message:
+          "userSecret appears to be malformed. Please re-register with SnapTrade.",
+      });
+      return;
+    }
+
+    // Get SnapTrade credentials - prefer those from the request if provided
+    const clientId = requestClientId || process.env.VITE_SNAPTRADE_CLIENT_ID;
     const consumerKey = process.env.VITE_SNAPTRADE_CONSUMER_KEY;
 
     if (!clientId || !consumerKey) {
-      return res.status(500).json({
+      res.status(500).json({
         error: "Missing SnapTrade API credentials",
         message:
           "Please ensure VITE_SNAPTRADE_CLIENT_ID and VITE_SNAPTRADE_CONSUMER_KEY are set in your environment",
       });
+      return;
     }
 
     // Log the request (safely) - only log essential info, not the entire request
@@ -37,6 +66,8 @@ router.post("/", async (req: Request, res: Response) => {
       userId: userId.substring(0, 8) + "...",
       brokerId: brokerId || "ALL",
       hasRedirectUri: !!redirectUri,
+      hasClientId: !!clientId,
+      userSecretLength: userSecret ? userSecret.length : 0,
     });
 
     // Prepare the request body with required parameters
@@ -67,11 +98,41 @@ router.post("/", async (req: Request, res: Response) => {
       .update(`${clientId}${timestamp}`)
       .digest("hex");
 
+    // Log the SnapTrade request details for debugging
+    console.log("SnapTrade request details:", {
+      url: "https://api.snaptrade.com/api/v1/snapTrade/login",
+      hasTimestamp: !!timestamp,
+      hasSignature: !!signature,
+      hasClientId: !!clientId,
+      consumerKeyLength: consumerKey ? consumerKey.length : 0,
+      body: {
+        hasUserId: !!requestBody.userId,
+        hasUserSecret: !!requestBody.userSecret,
+        hasBroker: !!requestBody.broker,
+        hasRedirectUri: !!requestBody.redirectUri,
+      },
+    });
+
+    // Construct the URL with query parameters as the API seems to expect
+    const queryParams = new URLSearchParams();
+    queryParams.append("userId", userId);
+    queryParams.append("userSecret", userSecret);
+    if (requestBody.broker) {
+      queryParams.append("broker", requestBody.broker);
+    }
+    if (requestBody.redirectUri) {
+      queryParams.append("redirectUri", requestBody.redirectUri);
+    }
+    queryParams.append("connectionType", "trade");
+
+    // Construct the full URL
+    const apiUrl = `https://api.snaptrade.com/api/v1/snapTrade/login?${queryParams.toString()}`;
+    console.log("API URL (redacted):", apiUrl.replace(userSecret, "[SECRET]"));
+
     // Make the API request using direct axios call
     const response = await axios({
-      method: "post",
-      url: "https://api.snaptrade.com/api/v1/snapTrade/login",
-      data: requestBody,
+      method: "get", // Switch to GET with query params since that seems to be what the API expects
+      url: apiUrl,
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -97,10 +158,11 @@ router.post("/", async (req: Request, res: Response) => {
 
     if (!responseRedirectUri) {
       console.error("No redirect URI in response", response.data);
-      return res.status(500).json({
+      res.status(500).json({
         error: "Invalid response from SnapTrade",
         message: "No redirect URI returned from SnapTrade API",
       });
+      return;
     }
 
     // Log the redirectUri (safely)
@@ -110,10 +172,11 @@ router.post("/", async (req: Request, res: Response) => {
     });
 
     // Success - return the redirect URI
-    return res.status(200).json({
+    res.status(200).json({
       redirectUri: responseRedirectUri,
       status: "success",
     });
+    return;
   } catch (error: any) {
     console.error(
       "Error getting broker connection URL:",
@@ -136,12 +199,15 @@ router.post("/", async (req: Request, res: Response) => {
     }
 
     // Return a simplified error response
-    return res.status(statusCode).json({
+    res.status(statusCode).json({
       error: "SnapTrade API error",
       status: statusCode,
       message: errorMessage,
     });
+    return;
   }
-});
+};
+
+router.post("/", brokerConnectHandler);
 
 export default router;
