@@ -4,11 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Loader2, ExternalLink, RefreshCw, AlertCircle, InfoIcon } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { SnapTradeCredentials } from '@/stores/authStore';
-import { ErrorMessage } from '@/components/ui/error-message';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { SnapTradeReact } from 'snaptrade-react';
-import useSnapTradeMessages, { ErrorData } from '@/hooks/useSnapTradeMessages';
 import { SnapTradeClient } from '@/lib/snaptrade/client';
 import { toast } from '@/components/ui/toast';
 
@@ -38,7 +34,6 @@ export function SnapTradeConnection({ lazyLoad = false }: SnapTradeConnectionPro
   const { 
     user, 
     snapTradeCredentials, 
-    setSnapTradeCredentials, 
     saveSnapTradeCredentials, 
     removeSnapTradeCredentials,
     fetchSnapTradeCredentials
@@ -52,9 +47,7 @@ export function SnapTradeConnection({ lazyLoad = false }: SnapTradeConnectionPro
   // State for available brokers
   const [availableBrokers, setAvailableBrokers] = useState<Broker[]>([]);
   
-  // State for SnapTradeReact modal
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [redirectUri, setRedirectUri] = useState<string | null>(null);
+  // State for broker connection
   const [lastConnectedBroker, setLastConnectedBroker] = useState<string | null>(null);
   
   // Use ref to track initialization state and prevent duplicate fetches
@@ -132,9 +125,11 @@ export function SnapTradeConnection({ lazyLoad = false }: SnapTradeConnectionPro
       
       // Prefer using the proxy for better security and reliability
       try {
-        // First try to get brokerages via our server-side proxy
+        // Try to get brokerages via our server-side proxy
+        // IMPORTANT: We're updating this to use the direct /api/snaptrade/brokerages endpoint
+        // which we specifically registered in the router
         console.log('Fetching brokerages via proxy');
-        const response = await fetch('/api/snaptrade/proxy/brokerages', {
+        const response = await fetch('/api/snaptrade/brokerages', {
           method: 'GET',
         });
         
@@ -330,9 +325,6 @@ export function SnapTradeConnection({ lazyLoad = false }: SnapTradeConnectionPro
           throw new Error('No redirect URI returned from SnapTrade API');
         }
         
-        // Set the redirect URI
-        setRedirectUri(uri);
-        
         // Open the redirect URI in a new tab
         console.log(`Opening broker connection URL in new tab: ${uri.substring(0, 30)}...`);
         window.open(uri, '_blank');
@@ -354,24 +346,6 @@ export function SnapTradeConnection({ lazyLoad = false }: SnapTradeConnectionPro
       setError('Failed to connect broker. Please try again.');
       setIsLoading(false);
     }
-  };
-
-  // Handle successful connection
-  const handleConnectionSuccess = (authorizationId: string) => {
-    console.log('Successfully connected brokerage with authorization ID:', authorizationId);
-    setIsModalOpen(false);
-    setRedirectUri(null);
-    
-    // Show success message
-    setError(`Successfully connected to ${lastConnectedBroker === 'ALL' ? 'broker' : lastConnectedBroker}! Authorization ID: ${authorizationId.substring(0, 8)}...`);
-  };
-
-  // Handle connection error
-  const handleConnectionError = (data: any) => {
-    console.error('Connection error:', data);
-    setIsModalOpen(false);
-    setRedirectUri(null);
-    setError(`Connection error: ${data.message || 'Unknown error'}`);
   };
 
   // Force refresh brokers after a successful connection

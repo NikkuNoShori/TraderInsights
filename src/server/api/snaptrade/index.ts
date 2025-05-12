@@ -9,16 +9,18 @@ const router = Router();
 // Parse JSON request bodies
 router.use(express.json());
 
-// Direct endpoints for SnapTrade operations
-router.post("/registerUser", registerUser);
+// Register specific API handlers
+router.post("/register", registerUser);
 router.post("/login", login);
-
-// New dedicated endpoint for reliable broker connections
 router.post("/broker-connect", getBrokerConnectionUrl);
 
-// Generic proxy for all SnapTrade API endpoints
-router.use("/proxy", handleSnapTradeProxy);
-router.use("/proxy/*", handleSnapTradeProxy);
+// Handle proxy requests - ensure we use wildcard matching
+// This will match both /proxy and /proxy/* requests
+router.all("/proxy", handleSnapTradeProxy);
+router.all("/proxy/*", handleSnapTradeProxy);
+
+// Special case for brokerages endpoint directly
+router.get("/brokerages", handleSnapTradeProxy);
 
 // Endpoint for listing users
 router.get("/listUsers", (req, res) => {
@@ -26,4 +28,5 @@ router.get("/listUsers", (req, res) => {
   handleSnapTradeProxy(req, res);
 });
 
+// Export the router
 export default router;

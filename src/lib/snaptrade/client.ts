@@ -328,7 +328,8 @@ export class SnapTradeClient {
       console.log("Fetching available brokerages from SnapTrade");
 
       // Use direct API call through our proxy - most reliable approach
-      const apiUrl = "/api/snaptrade/proxy/brokerages";
+      // Update to use /api/snaptrade/brokerages which is registered in the router
+      const apiUrl = "/api/snaptrade/brokerages";
 
       const response = await fetch(apiUrl, {
         method: "GET",

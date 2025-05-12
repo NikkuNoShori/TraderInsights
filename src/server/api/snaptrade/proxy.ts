@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import axios from "axios";
-import dotenv from "dotenv";
 import { safeLogger, maskSensitiveData } from "../../../lib/utils/security";
+import crypto from "crypto";
 
-// Load environment variables
-dotenv.config();
+// Create a safe logger that masks sensitive data
+// const safeLogger = { log: console.log, error: console.error, warn: console.warn };
 
 // Get SnapTrade credentials from server environment - explicitly use VITE_ prefixed variables
 const SNAPTRADE_CLIENT_ID = process.env.VITE_SNAPTRADE_CLIENT_ID;
@@ -20,9 +20,35 @@ export const handleSnapTradeProxy = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  // Extract the target endpoint from the path
-  const path = req.path.replace("/api/snaptrade/proxy", "");
-  const endpoint = path || (req.query.endpoint as string) || "";
+  console.log(`Proxying API request: ${req.method} ${req.path}`);
+
+  // Extract the target endpoint from the path - more robust handling
+  let path = req.path;
+  let endpoint = "";
+
+  // Handle /api/snaptrade/proxy/brokerages directly
+  if (path.includes("/proxy/brokerages")) {
+    endpoint = "/brokerages";
+  }
+  // Handle /api/snaptrade/proxy/referenceData/brokerages
+  else if (path.includes("/proxy/referenceData/brokerages")) {
+    endpoint = "/referenceData/brokerages";
+  }
+  // Handle generic proxy paths
+  else {
+    // Extract from /proxy/ prefix in the path
+    const proxyMatch = path.match(/\/proxy\/(.*)/);
+    if (proxyMatch && proxyMatch[1]) {
+      endpoint = "/" + proxyMatch[1];
+    }
+    // Try query parameter if path doesn't contain the endpoint
+    else if (req.query.endpoint && typeof req.query.endpoint === "string") {
+      endpoint = req.query.endpoint;
+      if (!endpoint.startsWith("/")) {
+        endpoint = "/" + endpoint;
+      }
+    }
+  }
 
   try {
     // Special case for /debug endpoint - don't forward to SnapTrade
@@ -42,6 +68,8 @@ export const handleSnapTradeProxy = async (
     if (!endpoint) {
       res.status(400).json({
         error: "Missing endpoint path or query parameter",
+        path: req.path,
+        query: req.query,
       });
       return;
     }
@@ -65,15 +93,35 @@ export const handleSnapTradeProxy = async (
       consumerKey: maskSensitiveData(SNAPTRADE_CONSUMER_KEY || ""),
     });
 
-    // Get query parameters from request
+    // Generate timestamp for authentication
+    const timestamp = Math.floor(Date.now() / 1000).toString();
+
+    // Generate signature using the clientId + timestamp format
+    const signatureContent = `${SNAPTRADE_CLIENT_ID}${timestamp}`;
+    const signature = crypto
+      .createHmac("sha256", SNAPTRADE_CONSUMER_KEY)
+      .update(signatureContent)
+      .digest("hex");
+
+    // Get query parameters from request (excluding endpoint)
     const queryParams = { ...req.query };
     delete queryParams.endpoint; // Remove endpoint from query params
 
-    // Prepare headers - always include x-api-key as it's required for most endpoints
+    // Always add clientId and timestamp to queryParams for GET requests
+    if (!queryParams.clientId) {
+      queryParams.clientId = SNAPTRADE_CLIENT_ID;
+    }
+    if (!queryParams.timestamp) {
+      queryParams.timestamp = timestamp;
+    }
+
+    // Prepare headers with authentication
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       Accept: "application/json",
-      "x-api-key": SNAPTRADE_CONSUMER_KEY,
+      Signature: signature,
+      Timestamp: timestamp,
+      ClientId: SNAPTRADE_CLIENT_ID,
     };
 
     // Handle specific account-related endpoints differently
@@ -88,6 +136,56 @@ export const handleSnapTradeProxy = async (
     // All requests need clientId
     if (!requestData.clientId) {
       requestData.clientId = SNAPTRADE_CLIENT_ID;
+    }
+
+    // Special case for brokerages endpoint - ensure it works
+    if (
+      endpoint === "/brokerages" ||
+      endpoint === "/referenceData/brokerages"
+    ) {
+      // Simple GET request with authentication headers
+      console.log("Handling special brokerages endpoint");
+      try {
+        // Target URL is different for the two endpoints
+        const targetUrl = `${SNAPTRADE_API_BASE}${
+          endpoint === "/brokerages"
+            ? "/brokerages"
+            : "/referenceData/brokerages"
+        }`;
+
+        // Make the request to SnapTrade with proper authentication
+        const response = await axios({
+          method: "GET",
+          url: targetUrl,
+          params: {
+            clientId: SNAPTRADE_CLIENT_ID,
+            timestamp,
+          },
+          headers: headers,
+        });
+
+        // Return the response
+        res.status(response.status).json(response.data);
+        console.log(`API response: ${response.status} for GET ${endpoint}`);
+        return;
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          console.error("Brokerages request failed:", {
+            status: error.response?.status,
+            data: error.response?.data,
+          });
+
+          if (error.response) {
+            res.status(error.response.status).json(error.response.data);
+          } else {
+            res.status(500).json({ error: "Failed to fetch brokerages" });
+          }
+          return;
+        }
+
+        res.status(500).json({ error: "Unknown error fetching brokerages" });
+        return;
+      }
     }
 
     // For accounts endpoints, ensure we handle authentication correctly
@@ -147,9 +245,9 @@ export const handleSnapTradeProxy = async (
     // Log request details safely
     safeLogger.log(`Server proxy handling: ${req.method} ${endpoint}`, {
       method: req.method,
-      apiKey: "Using x-api-key authentication",
-      isAccountsEndpoint,
+      endpoint,
       hasClientId: !!requestData.clientId,
+      hasTimestamp: !!timestamp,
     });
 
     // Build full URL
@@ -159,78 +257,36 @@ export const handleSnapTradeProxy = async (
     const response = await axios({
       method: req.method,
       url: targetUrl,
-      params: req.method === "GET" ? queryParams : undefined,
+      params:
+        req.method === "GET"
+          ? { ...queryParams, clientId: SNAPTRADE_CLIENT_ID, timestamp }
+          : undefined,
       data: req.method !== "GET" ? requestData : undefined,
       headers: headers,
     });
 
     // Return the response
     res.status(response.status).json(response.data);
+    console.log(
+      `API response: ${response.status} for ${req.method} ${endpoint}`
+    );
     return;
   } catch (error) {
-    safeLogger.error("Server-side SnapTrade proxy error", {
-      endpoint,
-      error: error instanceof Error ? error.message : "Unknown error",
-    });
+    console.error(`API error for ${req.path}:`, error);
 
-    // Handle axios errors
+    // Format axios errors
     if (axios.isAxiosError(error) && error.response) {
-      const status = error.response.status;
-      const data = error.response.data;
-
-      // Log detailed error for debugging
-      safeLogger.error("SnapTrade API error details:", {
-        status,
-        data: typeof data === "object" ? JSON.stringify(data) : String(data),
-        endpoint,
-      });
-
-      // Handle user already exists specially
-      if (
-        status === 400 &&
-        typeof data === "object" &&
-        data !== null &&
-        "detail" in data &&
-        typeof data.detail === "string" &&
-        (data.detail.includes("already exist") ||
-          data.detail.includes("already registered"))
-      ) {
-        // Return a nicer response for user already exists cases
-        res.status(200).json({
-          userId:
-            typeof req.body === "object" &&
-            req.body !== null &&
-            "userId" in req.body
-              ? req.body.userId
-              : undefined,
-          userSecret: "USER_ALREADY_EXISTS",
-          warning: "User already exists in SnapTrade",
-          detail: data.detail,
-        });
-        return;
-      }
-
-      // Return a simplified error response
-      res.status(status).json({
-        error: "SnapTrade API error",
-        status: status,
-        message:
-          typeof data === "object" && data !== null && "detail" in data
-            ? String(data.detail)
-            : typeof data === "object" && data !== null && "message" in data
-            ? String(data.message)
-            : "Error communicating with SnapTrade API",
-        endpoint,
+      res.status(error.response.status).json({
+        error: `SnapTrade API error: ${error.response.status}`,
+        details: error.response.data,
       });
       return;
     }
 
-    // Handle non-axios errors
+    // Handle generic errors
     res.status(500).json({
-      error: "Server-side proxy error",
-      message:
-        error instanceof Error ? error.message : "An unexpected error occurred",
-      endpoint,
+      error: "Failed to proxy request to SnapTrade API",
+      details: error instanceof Error ? error.message : String(error),
     });
     return;
   }
